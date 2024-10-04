@@ -1,0 +1,216 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r include=FALSE}
+library(readr)
+library(dplyr)
+library(readxl)
+library(arrow)
+library(lubridate)
+library(estimatr)
+library(stargazer)
+library(ggplot2)
+library(forecast)
+library(gridExtra)
+Sys.setenv(lang = "en_US")
+```
+
+
+```{r}
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_repo_gitlab/DATA/macro_data/fr")
+
+my_files <- list.files()
+# Obtenez la liste des fichiers .parquet
+parquet_files <- my_files[grep("\\.parquet$", my_files)]
+
+# Supprimez les fichiers .parquet de la liste des fichiers
+my_files <- setdiff(my_files, parquet_files)
+
+# Create a data frame with specified column names
+dates <- data.frame(serie = character(),
+                    start_date = as.Date(character()),
+                    end_date = as.Date(character()),
+                    stringsAsFactors = FALSE)
+
+VAR_series <- NULL
+
+plots <- list()
+
+for (file in my_files){
+  print(file)
+  # Split the file name by underscore
+  split_file <-  strsplit(file, split = "[_.]")
+  # Extract the parts (strsplit returns a list)
+  split_parts <- unlist(split_file)
+  split_parts <- split_parts[3:length(split_parts)-1]
+  name <- paste(split_parts, collapse = " ")
+    # Concatenate the split parts with automatic line breaks
+  title_text <- paste(strwrap(name, width = 30), collapse = "\n")
+  
+  excel_file <- read_excel(file, skip=10)
+  
+  # print(class(excel_file %>% head(1)))
+  # print(colnames(excel_file %>% head(1)))
+  
+  start_date <- excel_file %>% head(1) %>% select(observation_date)
+  end_date <- excel_file %>% tail(1) %>% select(observation_date)
+  dates <<- rbind(dates, c(file, start_date[[1]], end_date[[1]]))
+  
+  if(is.null(VAR_series)){
+    VAR_series <- excel_file
+  }else{
+    VAR_series <- merge( VAR_series ,excel_file, by= 'observation_date')
+  }
+  
+  library(rlang)
+
+  # Get the column name
+  y_column <- colnames(excel_file)[2]
+
+  #  Create the plot using aes and !!sym()
+  my_plot <- ggplot(data = excel_file, aes(x = observation_date, y = !!sym(y_column))) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = title_text,
+       x = 'Time',
+       y = y_column)
+  
+  # my_plot <- ggplot(data = excel_file, aes_string(
+  #   x = 'observation_date', y= colnames(excel_file)[2]))+
+  #   geom_line()+
+  #   theme_minimal()+
+  #   labs(title= title_text,
+  #        x= 'Time',
+  #        y= colnames(excel_file)[2])
+  # Add the plot to the list
+  plots <- c(plots, list(my_plot))
+
+}
+# Specify the column names
+colnames(dates) <- c('serie', 'start_date', 'end_date')
+dates
+```
+
+
+```{r}
+colnames(VAR_series) <- c('datetime', dates$serie )
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_repo_gitlab/DATA/macro_data/fr")
+
+write_parquet(VAR_series, 'macro_data_monthly_index.parquet')
+```
+
+```{r}
+# Arrange the plots in a 2x2 grid
+do.call(grid.arrange, c(plots[1:4], ncol=2))
+```
+
+```{r}
+# Arrange the plots in a 2x2 grid
+do.call(grid.arrange, c(plots[5:8], ncol=2))
+```
+
+I notice that some of the series about inflation have a seasonality. I want to get rid of it.
+
+```{r}
+library(xts)
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_repo_gitlab/DATA/macro_data/fr")
+print(list.files())
+non_energ_inflation <- read_excel(
+  "energy_index_ENRGY0FRM086NEST.xls", skip=10)
+
+```
+
+
+```{r}
+
+non_energ_inflation$date <- as.Date(non_energ_inflation$observation_date)
+# non_energ_inflation <- ts(non_energ_inflation)
+print(class(non_energ_inflation$date))
+# Create xts object with monthly frequency
+xts_data <- zoo(non_energ_inflation$ENRGY0FRM086NEST, order.by = non_energ_inflation$date)
+
+# Set the frequency explicitly
+#frequency(xts_data) <- 12
+
+# method 1 sommaire
+# differentiate it
+seasonality_adjusted <- diff(xts_data, lag = 12, na.rm = TRUE)
+season_adj_data <- cbind(non_energ_inflation$date[-c(1:12)], as.data.frame(seasonality_adjusted))
+colnames(season_adj_data)[1] <- c('date')
+
+my_plot <- ggplot()+
+  theme_minimal()+
+  labs(title= 'Seasonal Adjustment', 
+       x= 'Time',
+       y= 'Energy Inflation')
+
+# Plot original and seasonality-adjusted series
+my_plot <- my_plot + geom_line(data=non_energ_inflation, 
+    aes(x= date, y= ENRGY0FRM086NEST, color='Original-Data'))+
+   geom_line(data= season_adj_data,
+    aes(x= date, y= seasonality_adjusted, color='Seasonality-Adjusted'))
+
+my_plot
+```
+
+Je transforme la serie a la main faute de savoir manier les packages de time series.
+
+```{r}
+# Load necessary packages
+library(xts)
+# serie_decomp<-decompose(serie,type=c("additive","mutliplicative"))
+# test <- diff(xts_data,lag=12,difference=1)
+
+seasonally_adjusted <- non_energ_inflation %>%
+  filter(date >= as.POSIXct('1999-01-01')) %>% 
+  mutate(month = month(date))
+
+# Calcul de la moyenne mensuelle
+monthly_means <- seasonally_adjusted %>%
+  group_by(month) %>%
+  summarise(mean_value = mean(ENRGY0FRM086NEST))
+
+# Jointure des moyennes mensuelles avec le DataFrame original
+seasonally_adjusted <- seasonally_adjusted %>%
+  left_join(monthly_means, by = "month") %>%
+  mutate(deflated_ENRGY0FRM086NEST = ENRGY0FRM086NEST - mean_value,
+ first_difference = ENRGY0FRM086NEST - lag(ENRGY0FRM086NEST))
+
+my_plot <- ggplot()+
+  theme_minimal()+
+  labs(title= 'Seasonal Adjustment', 
+       x= 'Time',
+       y= 'Energy Inflation')
+
+# Plot original and seasonality-adjusted series
+my_plot <- my_plot + geom_line(data=seasonally_adjusted , 
+    aes(x= date, y= ENRGY0FRM086NEST - mean(ENRGY0FRM086NEST), group='Original-Data'), color='darkblue')+ 
+  geom_line(data=seasonally_adjusted,
+    aes(x= date, y= deflated_ENRGY0FRM086NEST, group='Seasonality-Adjusted'), linetype = 'dashed', color = 'lightblue')
+  # +geom_line(data=seasonally_adjusted,
+  #   aes(x= date, y= first_difference, group='First Difference'), linetype = 'dashed', color = 'blue')
+
+my_plot
+
+```
+
+
+
+<!-- ```{r} -->
+<!-- colnames(VAR_series_season_adj) <- c('datetime', dates$serie ) -->
+
+<!-- setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_repo_gitlab/DATA/macro_data/fr") -->
+
+<!-- write_parquet(VAR_series_season_adj, 'macro_data_monthly_index.parquet') -->
+<!-- ``` -->
+
+
+
+
+
+
