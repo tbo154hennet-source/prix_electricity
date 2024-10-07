@@ -1,4 +1,4 @@
-# Sample GitLab Project
+# L'impact de chocs d'offre et de demande d'électricité sur la production industrielle et les prix
 
 La crise de l'énergie en Europe a rappelé l'importance de l'énergie pour la production industrielle. 
   Les scénarios de transition écologique requièrent par ailleurs une décarbonation de la production d’électricité et une électrification à grande échelle des usages sur une période courte relativement à la durée de vie du parc de production électrique.
