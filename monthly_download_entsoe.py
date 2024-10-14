@@ -2,15 +2,17 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
 from entsoe import EntsoePandasClient
-
+import os
 client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
-country_code = 'FR'  
+country_code = 'FR'
 
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant'  # Remplacez par votre chemin
+os.chdir(path)
 os.getcwd()
 # Define start and end dates
-start_date = pd.Timestamp('20190401', tz='Europe/Brussels')
-end_date = pd.Timestamp('20190501', tz='Europe/Brussels')
-#end_date = pd.Timestamp('20160101', tz='Europe/Brussels')
+start_date = pd.Timestamp('20210501', tz='Europe/Brussels')
+end_date = pd.Timestamp('20211001', tz='Europe/Brussels')
+#end_date = pd.Timestamp('20150201', tz='Europe/Brussels')
 
 # Generate monthly date ranges
 monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
@@ -24,13 +26,14 @@ for date in monthly_dates:
     print(end_month)
 
     string = start_month.strftime('%Y-%m') + '.parquet'
-    day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_month, end=end_month)
+    #day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_month, end=end_month)
 
-#   generation = client.query_generation_per_plant(country_code, start=start_month, end=end_month, psr_type=None, include_eic=False)
+    generation_by_plant = client.query_generation_per_plant(country_code, start=start_month, end=end_month, psr_type=None, include_eic=False)
 
-    day_ahead_prices_table = pa.Table.from_pandas(day_ahead_prices.to_frame())
+    #table = pa.Table.from_pandas(day_ahead_prices.to_frame())
+    my_table = pa.Table.from_pandas(generation_by_plant)
     # Write the table to a Parquet file
-    pq.write_table(day_ahead_prices_table, string)
+    pq.write_table(my_table, string)
     # Print a message indicating the successful query
     print(f"Data queried successfully for the month: {start_month.strftime('%Y-%m')}")
 

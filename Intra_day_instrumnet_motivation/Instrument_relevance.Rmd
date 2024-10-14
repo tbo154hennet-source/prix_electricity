@@ -1,0 +1,99 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Final notebook to have the figure from the report
+
+
+```{r include=FALSE}
+library(readr)
+library(dplyr)
+library(readxl)
+library(arrow)
+library(lubridate)
+library(estimatr)
+library(stargazer)
+
+Sys.setenv(lang = "en_US")
+```
+
+
+```{r}
+setwd('C:/Users/nchu/Desktop/DATA/merged_data')
+my_reg_data <- read_parquet('updated_first_stage_data.parquet')
+
+setwd('C:/Users/nchu/Desktop/DATA/merged_data')
+renewable_shock_series <- read_parquet(
+              'renewable_shock_series.parquet')
+
+
+# add the information from the renewable shock series 
+
+first_stage_combined <- merge(my_reg_data, renewable_shock_series,
+  by= c('datetime', 'gen_tot'))
+
+
+first_stage_combined <-first_stage_combined %>% 
+  select("price", 'price_diff', "delivery_date", "log_price_diff", 'creneau', 'datetime' , "uncertainty_shock" ,"uncertainty_shock_relative" , 'auction_before', "real_unavailability_share",     "theoretical_unavailability_share", "centrale_unavailability_share",  'gen_tot' ,
+"idcode") %>% 
+  rename(renew_gen_shock = uncertainty_shock,
+         renew_gen_rel_shock = uncertainty_shock_relative) %>% 
+  mutate(gen_tot = gen_tot/1000)
+
+first_stage_combined_5 <- first_stage_combined %>% 
+    filter(auction_before == 5)
+
+
+head(first_stage_combined,5)
+# colnames(first_stage_combined)
+```
+
+
+Complete models that include plant unavailabilities as well as the renewable based instrument
+
+
+```{r}
+
+# perform first stage regression
+m_basic <- lm(
+  log_price_diff ~ real_unavailability_share + renew_gen_rel_shock + gen_tot,
+  data= first_stage_combined)
+# use controls
+# put a dummy for the number of the auction
+# put a dummy for the creneau
+m_date <- lm(
+  log_price_diff ~ real_unavailability_share+ renew_gen_rel_shock + gen_tot + factor(delivery_date) ,
+  data= first_stage_combined)
+
+# dummy for creneau
+
+m_creneau <- lm(
+  log_price_diff ~ real_unavailability_share+ renew_gen_rel_shock + gen_tot + factor(creneau) ,
+  data= first_stage_combined)
+
+# warning cannot put a dummy for date + creneau + auction
+# full determination, no variation
+m_control <- lm(
+  log_price_diff ~ real_unavailability_share+ renew_gen_rel_shock + gen_tot + factor(creneau) + factor(auction_before),
+  data= first_stage_combined)
+
+```
+
+Interpretation
+for the basic model,
+for a given unavailability of 1 percentage point,
+the electricity price increases by 0.9 %
+
+
+
+```{r, results = 'asis'}
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic, m_date, m_creneau, m_control, 
+    type = "html",
+    title = "Regression Results",
+    column.labels = c("Basic", "Date FE", "Timeslot FE", 'Timeslot + Auction FE'),
+    keep = c('Constant','real_unavailability_share', 'renew_gen_rel_shock', 'gen_tot')
+ )
+```
+

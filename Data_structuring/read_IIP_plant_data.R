@@ -6,8 +6,8 @@ library(arrow)
 library(lubridate)
 
 Sys.setenv(lang = "en_US")
-
-setwd('C:/Users/nchu/Desktop/DATA/power-plant/IIP_indispo')
+read_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/IIP_indispo'
+setwd(read_path )
 
 indispo_IIP_data <- NULL
 my_files <- list.files()
@@ -485,6 +485,9 @@ final_active_unplanned_IIP_indispo <- final_active_unplanned_IIP_indispo %>%
 pure_indispo_data <- final_active_unplanned_IIP_indispo  %>% 
   filter(auction_before!=auction_after)
 
+save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo'
+
+setwd(save_path)
 write_parquet(pure_indispo_data, 'pure_indispo_data.parquet')
 
 
