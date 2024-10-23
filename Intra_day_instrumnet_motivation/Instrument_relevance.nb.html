@@ -1757,153 +1757,1688 @@ display: none;
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc2V0d2QoJ0M6L1VzZXJzL25jaHUvRGVza3RvcC9EQVRBL21lcmdlZF9kYXRhJylcbmBgYFxuYGBgIn0= -->
-<pre class="r"><code>```r
-setwd(&#39;C:/Users/nchu/Desktop/DATA/merged_data&#39;)</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZzogVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdhcyBjaGFuZ2VkIHRvIEM6L1VzZXJzL25jaHUvRGVza3RvcC9EQVRBL21lcmdlZF9kYXRhIGluc2lkZSBhIG5vdGVib29rIGNodW5rLiBUaGUgd29ya2luZyBkaXJlY3Rvcnkgd2lsbCBiZSByZXNldCB3aGVuIHRoZSBjaHVuayBpcyBmaW5pc2hlZCBydW5uaW5nLiBVc2UgdGhlIGtuaXRyIHJvb3QuZGlyIG9wdGlvbiBpbiB0aGUgc2V0dXAgY2h1bmsgdG8gY2hhbmdlIHRoZSB3b3JraW5nIGRpcmVjdG9yeSBmb3Igbm90ZWJvb2sgY2h1bmtzLlxuIn0= --&gt;
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoZmlyc3Rfc3RhZ2VfY29tYmluZWQpXG5cbmBgYCJ9 -->
+<pre class="r"><code>colnames(first_stage_combined)
 </code></pre>
-<p>Warning: The working directory was changed to
-C:/Users/nchu/Desktop/DATA/merged_data inside a notebook chunk. The
-working directory will be reset when the chunk is finished running. Use
-the knitr root.dir option in the setup chunk to change the working
-directory for notebook chunks.</p>
-<pre><code>
-
-
-&lt;!-- rnb-output-end --&gt;
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubXlfcmVnX2RhdGEgPC0gcmVhZF9wYXJxdWV0KCd1cGRhdGVkX2ZpcnN0X3N0YWdlX2RhdGEucGFycXVldCcpXG5cbnNldHdkKCdDOi9Vc2Vycy9uY2h1L0Rlc2t0b3AvREFUQS9tZXJnZWRfZGF0YScpXG5yZW5ld2FibGVfc2hvY2tfc2VyaWVzIDwtIHJlYWRfcGFycXVldChcbiAgICAgICAgICAgICAgJ3JlbmV3YWJsZV9zaG9ja19zZXJpZXMucGFycXVldCcpXG5cblxuIyBhZGQgdGhlIGluZm9ybWF0aW9uIGZyb20gdGhlIHJlbmV3YWJsZSBzaG9jayBzZXJpZXMgXG5cbmZpcnN0X3N0YWdlX2NvbWJpbmVkIDwtIG1lcmdlKG15X3JlZ19kYXRhLCByZW5ld2FibGVfc2hvY2tfc2VyaWVzLFxuICBieT0gYygnZGF0ZXRpbWUnLCAnZ2VuX3RvdCcpKVxuXG5cbmZpcnN0X3N0YWdlX2NvbWJpbmVkIDwtZmlyc3Rfc3RhZ2VfY29tYmluZWQgJT4lIFxuICBzZWxlY3QoXFxwcmljZVxcLCAncHJpY2VfZGlmZicsIFxcZGVsaXZlcnlfZGF0ZVxcLCBcXGxvZ19wcmljZV9kaWZmXFwsICdjcmVuZWF1JywgJ2RhdGV0aW1lJyAsIFxcdW5jZXJ0YWludHlfc2hvY2tcXCAsXFx1bmNlcnRhaW50eV9zaG9ja19yZWxhdGl2ZVxcICwgJ2F1Y3Rpb25fYmVmb3JlJywgXFxyZWFsX3VuYXZhaWxhYmlsaXR5X3NoYXJlXFwsICAgICBcXHRoZW9yZXRpY2FsX3VuYXZhaWxhYmlsaXR5X3NoYXJlXFwsIFxcY2VudHJhbGVfdW5hdmFpbGFiaWxpdHlfc2hhcmVcXCwgICdnZW5fdG90JyAsXG5cXGlkY29kZVxcKSAlPiUgXG4gIHJlbmFtZShyZW5ld19nZW5fc2hvY2sgPSB1bmNlcnRhaW50eV9zaG9jayxcbiAgICAgICAgIHJlbmV3X2dlbl9yZWxfc2hvY2sgPSB1bmNlcnRhaW50eV9zaG9ja19yZWxhdGl2ZSkgJT4lIFxuICBtdXRhdGUoZ2VuX3RvdCA9IGdlbl90b3QvMTAwMClcblxuZmlyc3Rfc3RhZ2VfY29tYmluZWRfNSA8LSBmaXJzdF9zdGFnZV9jb21iaW5lZCAlPiUgXG4gICAgZmlsdGVyKGF1Y3Rpb25fYmVmb3JlID09IDUpXG5cblxuaGVhZChmaXJzdF9zdGFnZV9jb21iaW5lZCw1KVxuYGBgXG5gYGByXG4jIGNvbG5hbWVzKGZpcnN0X3N0YWdlX2NvbWJpbmVkKVxuYGBgXG5gYGAifQ== --&gt;
-
-```r
-```r
-my_reg_data &lt;- read_parquet(&#39;updated_first_stage_data.parquet&#39;)
-
-setwd(&#39;C:/Users/nchu/Desktop/DATA/merged_data&#39;)
-renewable_shock_series &lt;- read_parquet(
-              &#39;renewable_shock_series.parquet&#39;)
-
-
-# add the information from the renewable shock series 
-
-first_stage_combined &lt;- merge(my_reg_data, renewable_shock_series,
-  by= c(&#39;datetime&#39;, &#39;gen_tot&#39;))
-
-
-first_stage_combined &lt;-first_stage_combined %&gt;% 
-  select(\price\, &#39;price_diff&#39;, \delivery_date\, \log_price_diff\, &#39;creneau&#39;, &#39;datetime&#39; , \uncertainty_shock\ ,\uncertainty_shock_relative\ , &#39;auction_before&#39;, \real_unavailability_share\,     \theoretical_unavailability_share\, \centrale_unavailability_share\,  &#39;gen_tot&#39; ,
-\idcode\) %&gt;% 
-  rename(renew_gen_shock = uncertainty_shock,
-         renew_gen_rel_shock = uncertainty_shock_relative) %&gt;% 
-  mutate(gen_tot = gen_tot/1000)
-
-first_stage_combined_5 &lt;- first_stage_combined %&gt;% 
-    filter(auction_before == 5)
-
-
-head(first_stage_combined,5)</code></pre>
-<pre class="r"><code># colnames(first_stage_combined)</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjoiZGF0YS5mcmFtZSIsIm5yb3ciOjUsIm5jb2wiOjE0LCJzdW1tYXJ5Ijp7IkRlc2NyaXB0aW9uIjoiZGYgWzUgw5cgMTRdIn19LCJyZGYiOiJINHNJQUFBQUFBQUFCcjFVVFdnVFFSU2Vack9KWFVrcXRwY2VDa1VRUk1tU2JFcC9EbVVqaG9vZ0tMYUZDc0l5M1owa1N6YXpZYk5wcktmaXlZTmdycVVXQ2lwZWJVVXZIbHFFNnFVSDhWSXYvb0FIOFdMQmd4WXFxVE9ibWQxa2hlckpnZUY3NzV2MzNyejM1dWRhZmk0cnpVa0FBQUZFSXdJUVJDSUNjWFptS2pVT0NFT1VIaEFGdlJSdkVxTitJaVRKUEVHdDJJSTRNaWFQanZuS2hLd29YTWxPeUtOcGZ5VXJaOU1kS3lOcEZreFV0MS9ldTNIbUIxRDNkK2pZMmpxK0swMVdIN3pKSlpicGFLcWV1a3V6OU94emJ6TTBUZkEzREZVZzZoYXMxVmoybkl6bW9Zc0l0dnhrS25tbCtUMFAxTFY1SWIzNU9yZjVyRGxRUFd3dHFjL2ZmOWxUTG41U2IrODBQdjQ2U2FNbnZDN1FXTzBaWVZQZ2laN2ZQVmhlSWtJSHJrYTdjZTJPbjJqa2tPVVdZYm5GcjE2WnZqU251MHlOZWFvYnJzcTlaV01VcWtxWW5iblFXZFRXL2J2ZU5nRys2OGFWQWRheHR2M214dVRVdDhzdnp2cjQ5UHJYYzZjT1R2dTQvdFBlSGhyOEVMb0tQUmt1S0VjeGJCUHc3K08vMk9jbUhxNDgrank5NytONCtkWGp2ZFdOQU5kTHpwUGhiZEJkdEpBWnpnUWlMMU5RQWxZSjJDeGhRK2VIWVFYeFc1bmtaTlV4ZGNRVXlWTTB3eXdVR0pNd2tHVXVJR2RSTStqdGJaTkp5eTVxZjVqR2RRZGhCT3RNUFVZZFhMUENuZnJvYWtNcklxelZTclplWm5SL1FEdkk2bHBLd3JydW1qYlc1bEhCZG5pY1FRZEJTNnRqdUFCTkM4NmJsdWt1RWpmb0d3eTdKVVRNWFZNLzJtNUlSOWgxb0lXT01vclR4RnpiZnhpbW9kc0dDalcyMTdFYk1tOHVmYXFScGZaaGk2SG54aDBrMGhzb0Z4emlBcnkzMHhVdWJsZHAyU1JZaFA2Q3NaQnpqeE1pK3VxWWJtNms5RklkbDFPWjBMSlF4VVc2SndpK2p3UkRzVU5PdHJPSThseGp2R1NFaXlibS9SQkpsNURGSXh0b2daOFZhWUhYQVpuY0M4emJKUkcySnBQMlFlNGk2YmJGbWZhdjBmb05kRkVwQVJvR0FBQT0ifQ== --&gt;
-
-&lt;div data-pagedtable=&quot;false&quot;&gt;
-  &lt;script data-pagedtable-source type=&quot;application/json&quot;&gt;
-{&quot;columns&quot;:[{&quot;label&quot;:[&quot;&quot;],&quot;name&quot;:[&quot;_rn_&quot;],&quot;type&quot;:[&quot;&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;price&quot;],&quot;name&quot;:[1],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;price_diff&quot;],&quot;name&quot;:[2],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;delivery_date&quot;],&quot;name&quot;:[3],&quot;type&quot;:[&quot;date&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;log_price_diff&quot;],&quot;name&quot;:[4],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;creneau&quot;],&quot;name&quot;:[5],&quot;type&quot;:[&quot;int&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;datetime&quot;],&quot;name&quot;:[6],&quot;type&quot;:[&quot;S3: POSIXct&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;renew_gen_shock&quot;],&quot;name&quot;:[7],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;renew_gen_rel_shock&quot;],&quot;name&quot;:[8],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;auction_before&quot;],&quot;name&quot;:[9],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;real_unavailability_share&quot;],&quot;name&quot;:[10],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;theoretical_unavailability_share&quot;],&quot;name&quot;:[11],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;centrale_unavailability_share&quot;],&quot;name&quot;:[12],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;gen_tot&quot;],&quot;name&quot;:[13],&quot;type&quot;:[&quot;dbl&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;idcode&quot;],&quot;name&quot;:[14],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]}],&quot;data&quot;:[{&quot;1&quot;:&quot;47.67&quot;,&quot;2&quot;:&quot;0.17&quot;,&quot;3&quot;:&quot;2021-01-01&quot;,&quot;4&quot;:&quot;0.003572558&quot;,&quot;5&quot;:&quot;1&quot;,&quot;6&quot;:&quot;2021-01-01 00:00:00&quot;,&quot;7&quot;:&quot;-1827&quot;,&quot;8&quot;:&quot;-0.07124751&quot;,&quot;9&quot;:&quot;1&quot;,&quot;10&quot;:&quot;0&quot;,&quot;11&quot;:&quot;0&quot;,&quot;12&quot;:&quot;0&quot;,&quot;13&quot;:&quot;25.643&quot;,&quot;14&quot;:&quot;1 1&quot;,&quot;_rn_&quot;:&quot;1&quot;},{&quot;1&quot;:&quot;49.22&quot;,&quot;2&quot;:&quot;1.55&quot;,&quot;3&quot;:&quot;2021-01-01&quot;,&quot;4&quot;:&quot;0.031997776&quot;,&quot;5&quot;:&quot;1&quot;,&quot;6&quot;:&quot;2021-01-01 00:00:00&quot;,&quot;7&quot;:&quot;-1827&quot;,&quot;8&quot;:&quot;-0.07124751&quot;,&quot;9&quot;:&quot;2&quot;,&quot;10&quot;:&quot;0&quot;,&quot;11&quot;:&quot;0&quot;,&quot;12&quot;:&quot;0&quot;,&quot;13&quot;:&quot;25.643&quot;,&quot;14&quot;:&quot;1 2&quot;,&quot;_rn_&quot;:&quot;2&quot;},{&quot;1&quot;:&quot;39.60&quot;,&quot;2&quot;:&quot;-3.48&quot;,&quot;3&quot;:&quot;2021-01-01&quot;,&quot;4&quot;:&quot;-0.084229734&quot;,&quot;5&quot;:&quot;2&quot;,&quot;6&quot;:&quot;2021-01-01 01:00:00&quot;,&quot;7&quot;:&quot;-1846&quot;,&quot;8&quot;:&quot;-0.07559068&quot;,&quot;9&quot;:&quot;1&quot;,&quot;10&quot;:&quot;0&quot;,&quot;11&quot;:&quot;0&quot;,&quot;12&quot;:&quot;0&quot;,&quot;13&quot;:&quot;24.421&quot;,&quot;14&quot;:&quot;2 1&quot;,&quot;_rn_&quot;:&quot;3&quot;},{&quot;1&quot;:&quot;43.30&quot;,&quot;2&quot;:&quot;3.70&quot;,&quot;3&quot;:&quot;2021-01-01&quot;,&quot;4&quot;:&quot;0.089323517&quot;,&quot;5&quot;:&quot;2&quot;,&quot;6&quot;:&quot;2021-01-01 01:00:00&quot;,&quot;7&quot;:&quot;-1846&quot;,&quot;8&quot;:&quot;-0.07559068&quot;,&quot;9&quot;:&quot;2&quot;,&quot;10&quot;:&quot;0&quot;,&quot;11&quot;:&quot;0&quot;,&quot;12&quot;:&quot;0&quot;,&quot;13&quot;:&quot;24.421&quot;,&quot;14&quot;:&quot;2 2&quot;,&quot;_rn_&quot;:&quot;4&quot;},{&quot;1&quot;:&quot;39.40&quot;,&quot;2&quot;:&quot;0.36&quot;,&quot;3&quot;:&quot;2021-01-01&quot;,&quot;4&quot;:&quot;0.009179055&quot;,&quot;5&quot;:&quot;3&quot;,&quot;6&quot;:&quot;2021-01-01 02:00:00&quot;,&quot;7&quot;:&quot;-1733&quot;,&quot;8&quot;:&quot;-0.07018183&quot;,&quot;9&quot;:&quot;1&quot;,&quot;10&quot;:&quot;0&quot;,&quot;11&quot;:&quot;0&quot;,&quot;12&quot;:&quot;0&quot;,&quot;13&quot;:&quot;24.693&quot;,&quot;14&quot;:&quot;3 1&quot;,&quot;_rn_&quot;:&quot;5&quot;}],&quot;options&quot;:{&quot;columns&quot;:{&quot;min&quot;:{},&quot;max&quot;:[10],&quot;total&quot;:[14]},&quot;rows&quot;:{&quot;min&quot;:[10],&quot;max&quot;:[10],&quot;total&quot;:[5]},&quot;pages&quot;:{}}}
-  &lt;/script&gt;
-&lt;/div&gt;
-
-&lt;!-- rnb-frame-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-
-Complete models that include plant unavailabilities as well as the renewable based instrument
-
-
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuXG4jIHBlcmZvcm0gZmlyc3Qgc3RhZ2UgcmVncmVzc2lvblxubV9iYXNpYyA8LSBsbShcbiAgbG9nX3ByaWNlX2RpZmYgfiByZWFsX3VuYXZhaWxhYmlsaXR5X3NoYXJlICsgcmVuZXdfZ2VuX3JlbF9zaG9jayArIGdlbl90b3QsXG4gIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKVxuIyB1c2UgY29udHJvbHNcbiMgcHV0IGEgZHVtbXkgZm9yIHRoZSBudW1iZXIgb2YgdGhlIGF1Y3Rpb25cbiMgcHV0IGEgZHVtbXkgZm9yIHRoZSBjcmVuZWF1XG5tX2RhdGUgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eV9zaGFyZSsgcmVuZXdfZ2VuX3JlbF9zaG9jayArIGdlbl90b3QgKyBmYWN0b3IoZGVsaXZlcnlfZGF0ZSkgLFxuICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZClcblxuIyBkdW1teSBmb3IgY3JlbmVhdVxuXG5tX2NyZW5lYXUgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eV9zaGFyZSsgcmVuZXdfZ2VuX3JlbF9zaG9jayArIGdlbl90b3QgKyBmYWN0b3IoY3JlbmVhdSkgLFxuICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZClcblxuIyB3YXJuaW5nIGNhbm5vdCBwdXQgYSBkdW1teSBmb3IgZGF0ZSArIGNyZW5lYXUgKyBhdWN0aW9uXG4jIGZ1bGwgZGV0ZXJtaW5hdGlvbiwgbm8gdmFyaWF0aW9uXG5tX2NvbnRyb2wgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eV9zaGFyZSsgcmVuZXdfZ2VuX3JlbF9zaG9jayArIGdlbl90b3QgKyBmYWN0b3IoY3JlbmVhdSkgKyBmYWN0b3IoYXVjdGlvbl9iZWZvcmUpLFxuICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZClcblxuYGBgXG5gYGAifQ== --&gt;
-
-```r
-```r
-
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiIFsxXSBcInByaWNlXCIgICAgICAgICAgICAgICAgICAgICAgICAgICBcInByaWNlX2RpZmZcIiAgICAgICAgICAgICAgICAgICAgIFxuIFszXSBcImRlbGl2ZXJ5X2RhdGVcIiAgICAgICAgICAgICAgICAgICBcImxvZ19wcmljZV9kaWZmXCIgICAgICAgICAgICAgICAgIFxuIFs1XSBcImF1Y3Rpb25fYmVmb3JlXCIgICAgICAgICAgICAgICAgICBcImF1Y3Rpb25fYWZ0ZXJcIiAgICAgICAgICAgICAgICAgIFxuIFs3XSBcImNyZW5lYXVcIiAgICAgICAgICAgICAgICAgICAgICAgICBcInJlYWxfdW5hdmFpbGFiaWxpdHlcIiAgICAgICAgICAgIFxuIFs5XSBcIm51Y2xlYXJfcmVhbF91bmF2YWlsYWJpbGl0eVwiICAgICBcInByZWRpY3RlZF9yZWFsX3VuYXZhaWxhYmlsaXR5XCIgIFxuWzExXSBcIlVuYXZhaWxhYmxlLkNhcGFjaXR5XCIgICAgICAgICAgICBcImRhdGV0aW1lXCIgICAgICAgICAgICAgICAgICAgICAgIFxuWzEzXSBcIlVuYXZhaWxhYmxlLlNoYXJlXCIgICAgICAgICAgICAgICBcIkZvcmVfV2luZFwiICAgICAgICAgICAgICAgICAgICAgIFxuWzE1XSBcIkZvcmVfU29sYXJcIiAgICAgICAgICAgICAgICAgICAgICBcIkludHJhZGF5X0ZvcmVfV2luZFwiICAgICAgICAgICAgIFxuWzE3XSBcIkludHJhZGF5X0ZvcmVfU29sYXJcIiAgICAgICAgICAgICBcImdlbl90b3RcIiAgICAgICAgICAgICAgICAgICAgICAgIFxuWzE5XSBcImdlbl91bmNvbnRyb2xsZWRcIiAgICAgICAgICAgICAgICBcIlNvbGFyXCIgICAgICAgICAgICAgICAgICAgICAgICAgIFxuWzIxXSBcIldpbmQgT25zaG9yZVwiICAgICAgICAgICAgICAgICAgICBcIldpbmQgT2Zmc2hvcmVcIiAgICAgICAgICAgICAgICAgIFxuWzIzXSBcIkh5ZHJvIFJ1bi1vZi1yaXZlciBhbmQgcG91bmRhZ2VcIiBcInJlbmV3YWJsZV9mb3JlY2FzdFwiICAgICAgICAgICAgIFxuWzI1XSBcInVuZXhwZWN0ZWRfcmVuZXdhYmxlc1wiICAgICAgICAgICBcImludHJhZGF5X3VwZGF0ZV9yZW5ld2FibGVzXCIgICAgIFxuWzI3XSBcImlkY29kZVwiICAgICAgICAgICAgICAgICAgICAgICAgIFxuIn0= -->
+<pre><code> [1] &quot;price&quot;                           &quot;price_diff&quot;                     
+ [3] &quot;delivery_date&quot;                   &quot;log_price_diff&quot;                 
+ [5] &quot;auction_before&quot;                  &quot;auction_after&quot;                  
+ [7] &quot;creneau&quot;                         &quot;real_unavailability&quot;            
+ [9] &quot;nuclear_real_unavailability&quot;     &quot;predicted_real_unavailability&quot;  
+[11] &quot;Unavailable.Capacity&quot;            &quot;datetime&quot;                       
+[13] &quot;Unavailable.Share&quot;               &quot;Fore_Wind&quot;                      
+[15] &quot;Fore_Solar&quot;                      &quot;Intraday_Fore_Wind&quot;             
+[17] &quot;Intraday_Fore_Solar&quot;             &quot;gen_tot&quot;                        
+[19] &quot;gen_uncontrolled&quot;                &quot;Solar&quot;                          
+[21] &quot;Wind Onshore&quot;                    &quot;Wind Offshore&quot;                  
+[23] &quot;Hydro Run-of-river and poundage&quot; &quot;renewable_forecast&quot;             
+[25] &quot;unexpected_renewables&quot;           &quot;intraday_update_renewables&quot;     
+[27] &quot;idcode&quot;                         </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Complete models that include plant unavailabilities as well as the
+renewable based instrument</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaGVhZChmaXJzdF9zdGFnZV9jb21iaW5lZCw1KVxuYGBgIn0= -->
+<pre class="r"><code>head(first_stage_combined,5)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbImdyb3VwZWRfZGYiLCJ0YmxfZGYiLCJ0YmwiLCJkYXRhLmZyYW1lIl0sIm5yb3ciOjUsIm5jb2wiOjI3LCJzdW1tYXJ5Ijp7IkEgdGliYmxlIjpbIjUgw5cgMjciXSwiR3JvdXBzIjpbImRlbGl2ZXJ5X2RhdGUsIGNyZW5lYXUgWzNdIl19fSwicmRmIjoiSDRzSUFBQUFBQUFBQnFWV1hXZ2NWUlMrKzV0a05XR2JSSkNzcGF1STlHWFgzZG44YkNveWtZYldJaEpwR3QySHduQXpjM2N6ZG5Kbm5KM1paS3RJS0Q3VUJ6SGlneFFwQkZUVUY2bWl2bGhNV3ByMnBZVVNoRHhJcWVKRDhVR3JwYmFWMUt6M3pzeTlPek8xcWRhQjRUcy8zejF6enJsL3MzKzhVa3BWVWdDQUdJakhJeUNXSUNKSVRCM1lreXNERUk4U0pRTGlvSXZpUENIMUVTRkQzalJsZVk3RTRFaCtlSVFybzNsQllFcHBORDljNEo1U3ZsVHdlUVlMUk9paGlyaDYrdTJETzI4QThkWjUrcXlzUExDZWV0cjQ0T0pZOXpINkxJcU91azZ6ZFBoamEwV2FKcmdYaGlwSXlCcXMxNzNzbVRFK0RpMUVjSk1uTXpzdUxGNGJCK0xTZEt5d2ZHNXMrYXZGZnFPMXVTQitmZW5LVldIdkQrS1I4M09YYi9lQ1VCY2lSU1lJVzFsQ2c3aW50SlVGeExxZFFlMDM2YjBkb1JLVEdtb2dqZGI0SzNuOW5nRm9tdnJjcmwwRVlGT3FXNmFLYTFJRHlaWnVocGdKaCtrWnV4MkhtL1dtaHdNZU1Tb1V1U1J3cWNTbHdiczNnaGZIT1VOTUdHWUNXMUtSTWhOR1dlaGlnVXM4aFNKUG9jaFRLQTV5YVloTHcxd2E0VktaUy93YkF2K0d3SE1ydUYyZ0xZKzJRZ3NwV1lWZU0vbFNBdi8rdVMvK2dxZmNDLzk3ZkhlZlBiTytjWXpHOE9IeGVCQ1hqanI4NEQ2ekR1dVk3cW0wenhpYk9yQTcxTG1vNStwNFlXSnlYMFcyV0NNZDFRTC9vNUZqbmE3Q0VZUXdIZUtmYXJwMmpsOEc4ZlFyUVg0NFhnakYzMEx4djdubytobWVGSUw0YlRiSUgvM3cvWTkrbXJ6RnNYem83TWRYajMvUnhzOW56QlBaVmM3UFhqLzU4dXQvZnMveDBkbWVGK01Qdjh2eHNWTnZqangzOWhQR0Y0L2c5OTZhdVB3VXh6Y08vN2ozcy81WE9YcDJIditSU1BMeFMwOW1PRzZuTUxERWNjZUZ0ZDgvM2JnQzduTyt4SnV2L2ZJT3FhaU5UL3c4LzkxZjF6bmVPSkU5UXpyQjh6bFRXWEQ2eHZGb0VGZkxnZmpMTFRkUGpyZWRpK1lDeDV0T1czT012NUk2dVBNUGNpZTFzWktlZm43dEdzZXVJWkZtQ29MSGVheVlMYlpGZGg3RmhMWlZhRnRMeFByUEowbEtnUmJNVjAwNGkwSTdxNHNjekhsTTdQU0VwMGR6bEpiYmFyVTJ3bHVRa1dqY0RETWFwaW9qOWhGSGtSUzFXdlVzM1FyUzFBWXltNUpDcjBUWDJLUHBOZWtPYWcrMFpVdlZzVFNOcXJySnVOM01DcXNXTXRubWxrMkVFYlE5dGM5RVVKTnNEQnRRMWVDMHFxbFcwM05sc0MxckNKclMzU25iRFJNcHFtd2haUXRTL3hTemFpaS9HeHBRYnZzNmFXbVdPc3RTM3ViblRzNUFYa3ZYSGxLWDlKS0tGZFl2eHpDcGE1QlYxcnNQV3laVXlHMGE1dllGUGY1QkhUV0VKVXRuWjEyYXFqYVdkVEpBMXpURUlpVDhZeDZrb2JNVHVEN2o2N1ZycTFiOXhoM1BOaFZUeis2M2NVNnY1a3c2bVZsSWFJWnVZd1hXR0syWHpzZ2NMVm1pc3lmRE9rdm5JUnVqZVFONURmWklkZllIb2JLcWJJTzI4VTVHVWxWa1hmSCtwZ0xyc1VNMzZNb2dLekpLZnlHVG9SVWZNVU9HdEkzcENsWnk4b3lORCtWS3BaQS9adUFhblJUZy9wMEEwUDVUU2Zqa2pKdEdKOXRoU1pZb3dqVVZzMzRreVBRampVVldVSU90Y3JMYm5IMlVKeHNBc3g2bGlMV2VKMU1JMlpDVXJHdk00bDVhbTM4RDZQa1U2RmdMQUFBPSJ9 -->
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["price"],"name":[1],"type":["chr"],"align":["left"]},{"label":["price_diff"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["delivery_date"],"name":[3],"type":["date"],"align":["right"]},{"label":["log_price_diff"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["auction_before"],"name":[5],"type":["chr"],"align":["left"]},{"label":["auction_after"],"name":[6],"type":["chr"],"align":["left"]},{"label":["creneau"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["real_unavailability"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["nuclear_real_unavailability"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["predicted_real_unavailability"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["Unavailable.Capacity"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["datetime"],"name":[12],"type":["S3: POSIXct"],"align":["right"]},{"label":["Unavailable.Share"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["Fore_Wind"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["Fore_Solar"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["Intraday_Fore_Wind"],"name":[16],"type":["dbl"],"align":["right"]},{"label":["Intraday_Fore_Solar"],"name":[17],"type":["dbl"],"align":["right"]},{"label":["gen_tot"],"name":[18],"type":["dbl"],"align":["right"]},{"label":["gen_uncontrolled"],"name":[19],"type":["dbl"],"align":["right"]},{"label":["Solar"],"name":[20],"type":["dbl"],"align":["right"]},{"label":["Wind Onshore"],"name":[21],"type":["dbl"],"align":["right"]},{"label":["Wind Offshore"],"name":[22],"type":["dbl"],"align":["right"]},{"label":["Hydro Run-of-river and poundage"],"name":[23],"type":["dbl"],"align":["right"]},{"label":["renewable_forecast"],"name":[24],"type":["dbl"],"align":["right"]},{"label":["unexpected_renewables"],"name":[25],"type":["dbl"],"align":["right"]},{"label":["intraday_update_renewables"],"name":[26],"type":["dbl"],"align":["right"]},{"label":["idcode"],"name":[27],"type":["chr"],"align":["left"]}],"data":[{"1":"47.67","2":"0.17","3":"2021-01-01","4":"0.003572558","5":"1","6":"2","7":"1","8":"0","9":"0","10":"0","11":"0","12":"2021-01-01 00:00:00","13":"0","14":"3","15":"8946","16":"2","17":"7120","18":"25.643","19":"8.478","20":"0.009","21":"7.001","22":"0","23":"1.468","24":"10417","25":"-1.939","26":"-3.295","27":"1 1"},{"1":"49.22","2":"1.55","3":"2021-01-01","4":"0.031997776","5":"2","6":"3","7":"1","8":"0","9":"0","10":"0","11":"0","12":"2021-01-01 00:00:00","13":"0","14":"3","15":"8946","16":"2","17":"7120","18":"25.643","19":"8.478","20":"0.009","21":"7.001","22":"0","23":"1.468","24":"10417","25":"-1.939","26":"-3.295","27":"1 2"},{"1":"39.60","2":"-3.48","3":"2021-01-01","4":"-0.084229734","5":"1","6":"2","7":"2","8":"0","9":"0","10":"0","11":"0","12":"2021-01-01 01:00:00","13":"0","14":"2","15":"9064","16":"2","17":"7218","18":"24.421","19":"8.713","20":"0.010","21":"7.256","22":"0","23":"1.447","24":"10513","25":"-1.800","26":"-3.293","27":"2 1"},{"1":"43.30","2":"3.70","3":"2021-01-01","4":"0.089323517","5":"2","6":"3","7":"2","8":"0","9":"0","10":"0","11":"0","12":"2021-01-01 01:00:00","13":"0","14":"2","15":"9064","16":"2","17":"7218","18":"24.421","19":"8.713","20":"0.010","21":"7.256","22":"0","23":"1.447","24":"10513","25":"-1.800","26":"-3.293","27":"2 2"},{"1":"39.40","2":"0.36","3":"2021-01-01","4":"0.009179055","5":"1","6":"2","7":"3","8":"0","9":"0","10":"0","11":"0","12":"2021-01-01 02:00:00","13":"0","14":"4","15":"9442","16":"1","17":"7712","18":"24.693","19":"9.378","20":"0.009","21":"7.951","22":"0","23":"1.418","24":"10864","25":"-1.486","26":"-3.151","27":"3 1"}],"options":{"columns":{"min":{},"max":[10],"total":[27]},"rows":{"min":[10],"max":[10],"total":[5]},"pages":{}}}
+  </script>
+</div>
+<!-- rnb-frame-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoZmlyc3Rfc3RhZ2VfY29tYmluZWQpXG5gYGAifQ== -->
+<pre class="r"><code>colnames(first_stage_combined)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiIFsxXSBcInByaWNlXCIgICAgICAgICAgICAgICAgICAgICAgICAgICBcInByaWNlX2RpZmZcIiAgICAgICAgICAgICAgICAgICAgIFxuIFszXSBcImRlbGl2ZXJ5X2RhdGVcIiAgICAgICAgICAgICAgICAgICBcImxvZ19wcmljZV9kaWZmXCIgICAgICAgICAgICAgICAgIFxuIFs1XSBcImF1Y3Rpb25fYmVmb3JlXCIgICAgICAgICAgICAgICAgICBcImF1Y3Rpb25fYWZ0ZXJcIiAgICAgICAgICAgICAgICAgIFxuIFs3XSBcImNyZW5lYXVcIiAgICAgICAgICAgICAgICAgICAgICAgICBcInJlYWxfdW5hdmFpbGFiaWxpdHlcIiAgICAgICAgICAgIFxuIFs5XSBcIm51Y2xlYXJfcmVhbF91bmF2YWlsYWJpbGl0eVwiICAgICBcInByZWRpY3RlZF9yZWFsX3VuYXZhaWxhYmlsaXR5XCIgIFxuWzExXSBcIlVuYXZhaWxhYmxlLkNhcGFjaXR5XCIgICAgICAgICAgICBcImRhdGV0aW1lXCIgICAgICAgICAgICAgICAgICAgICAgIFxuWzEzXSBcIlVuYXZhaWxhYmxlLlNoYXJlXCIgICAgICAgICAgICAgICBcIkZvcmVfV2luZFwiICAgICAgICAgICAgICAgICAgICAgIFxuWzE1XSBcIkZvcmVfU29sYXJcIiAgICAgICAgICAgICAgICAgICAgICBcIkludHJhZGF5X0ZvcmVfV2luZFwiICAgICAgICAgICAgIFxuWzE3XSBcIkludHJhZGF5X0ZvcmVfU29sYXJcIiAgICAgICAgICAgICBcImdlbl90b3RcIiAgICAgICAgICAgICAgICAgICAgICAgIFxuWzE5XSBcImdlbl91bmNvbnRyb2xsZWRcIiAgICAgICAgICAgICAgICBcIlNvbGFyXCIgICAgICAgICAgICAgICAgICAgICAgICAgIFxuWzIxXSBcIldpbmQgT25zaG9yZVwiICAgICAgICAgICAgICAgICAgICBcIldpbmQgT2Zmc2hvcmVcIiAgICAgICAgICAgICAgICAgIFxuWzIzXSBcIkh5ZHJvIFJ1bi1vZi1yaXZlciBhbmQgcG91bmRhZ2VcIiBcInJlbmV3YWJsZV9mb3JlY2FzdFwiICAgICAgICAgICAgIFxuWzI1XSBcInVuZXhwZWN0ZWRfcmVuZXdhYmxlc1wiICAgICAgICAgICBcImludHJhZGF5X3VwZGF0ZV9yZW5ld2FibGVzXCIgICAgIFxuWzI3XSBcImlkY29kZVwiICAgICAgICAgICAgICAgICAgICAgICAgIFxuIn0= -->
+<pre><code> [1] &quot;price&quot;                           &quot;price_diff&quot;                     
+ [3] &quot;delivery_date&quot;                   &quot;log_price_diff&quot;                 
+ [5] &quot;auction_before&quot;                  &quot;auction_after&quot;                  
+ [7] &quot;creneau&quot;                         &quot;real_unavailability&quot;            
+ [9] &quot;nuclear_real_unavailability&quot;     &quot;predicted_real_unavailability&quot;  
+[11] &quot;Unavailable.Capacity&quot;            &quot;datetime&quot;                       
+[13] &quot;Unavailable.Share&quot;               &quot;Fore_Wind&quot;                      
+[15] &quot;Fore_Solar&quot;                      &quot;Intraday_Fore_Wind&quot;             
+[17] &quot;Intraday_Fore_Solar&quot;             &quot;gen_tot&quot;                        
+[19] &quot;gen_uncontrolled&quot;                &quot;Solar&quot;                          
+[21] &quot;Wind Onshore&quot;                    &quot;Wind Offshore&quot;                  
+[23] &quot;Hydro Run-of-river and poundage&quot; &quot;renewable_forecast&quot;             
+[25] &quot;unexpected_renewables&quot;           &quot;intraday_update_renewables&quot;     
+[27] &quot;idcode&quot;                         </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>First give one example with different specifications</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jIHBlcmZvcm0gZmlyc3Qgc3RhZ2UgcmVncmVzc2lvblxubV9iYXNpYyA8LSBsbShcbiAgbG9nX3ByaWNlX2RpZmYgfiByZWFsX3VuYXZhaWxhYmlsaXR5ICtnZW5fdW5jb250cm9sbGVkICt1bmV4cGVjdGVkX3JlbmV3YWJsZXMgKyBnZW5fdG90LFxuICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZClcblxuIyBkdW1teSBmb3IgY3JlbmVhdVxuXG5tX2NyZW5lYXUgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eSArZ2VuX3VuY29udHJvbGxlZCArdW5leHBlY3RlZF9yZW5ld2FibGVzICsgZ2VuX3RvdCArIGNyZW5lYXUgLFxuICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZClcblxuIyB1c2UgY29udHJvbHNcbiMgcHV0IGEgZHVtbXkgZm9yIHRoZSBudW1iZXIgb2YgdGhlIGF1Y3Rpb25cbiMgcHV0IGEgZHVtbXkgZm9yIHRoZSBjcmVuZWF1XG5cbiMgd2FybmluZyBjYW5ub3QgcHV0IGEgZHVtbXkgZm9yIGRhdGUgKyBjcmVuZWF1ICsgYXVjdGlvblxuIyBmdWxsIGRldGVybWluYXRpb24sIG5vIHZhcmlhdGlvblxubV9jb250cm9sIDwtIGxtKFxuICBsb2dfcHJpY2VfZGlmZiB+IHJlYWxfdW5hdmFpbGFiaWxpdHkgK2dlbl91bmNvbnRyb2xsZWQgK3VuZXhwZWN0ZWRfcmVuZXdhYmxlcyArIGdlbl90b3QrXG4gICAgY3JlbmVhdSArIGZhY3RvcihhdWN0aW9uX2JlZm9yZSksXG4gIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKVxuXG5gYGAifQ== -->
+<pre class="r"><code>
 # perform first stage regression
 m_basic &lt;- lm(
-  log_price_diff ~ real_unavailability_share + renew_gen_rel_shock + gen_tot,
-  data= first_stage_combined)
-# use controls
-# put a dummy for the number of the auction
-# put a dummy for the creneau
-m_date &lt;- lm(
-  log_price_diff ~ real_unavailability_share+ renew_gen_rel_shock + gen_tot + factor(delivery_date) ,
+  log_price_diff ~ real_unavailability +gen_uncontrolled +unexpected_renewables + gen_tot,
   data= first_stage_combined)
 
 # dummy for creneau
 
 m_creneau &lt;- lm(
-  log_price_diff ~ real_unavailability_share+ renew_gen_rel_shock + gen_tot + factor(creneau) ,
+  log_price_diff ~ real_unavailability +gen_uncontrolled +unexpected_renewables + gen_tot + creneau ,
   data= first_stage_combined)
+
+# use controls
+# put a dummy for the number of the auction
+# put a dummy for the creneau
 
 # warning cannot put a dummy for date + creneau + auction
 # full determination, no variation
 m_control &lt;- lm(
-  log_price_diff ~ real_unavailability_share+ renew_gen_rel_shock + gen_tot + factor(creneau) + factor(auction_before),
+  log_price_diff ~ real_unavailability +gen_uncontrolled +unexpected_renewables + gen_tot+
+    creneau + factor(auction_before),
   data= first_stage_combined)
 </code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-Interpretation
-for the basic model,
-for a given unavailability of 1 percentage point,
-the electricity price increases by 0.9 %
-
-
-
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuIyBDcmVhdGUgTGFUZVggY29kZSB3aXRoIHJlZ3Jlc3Npb24gcmVzdWx0c1xucmVnX3RhYmxlIDwtIHN0YXJnYXplcihtX2Jhc2ljLCBtX2RhdGUsIG1fY3JlbmVhdSwgbV9jb250cm9sLCBcbiAgICB0eXBlID0gXFxodG1sXFwsXG4gICAgdGl0bGUgPSBcXFJlZ3Jlc3Npb24gUmVzdWx0c1xcLFxuICAgIGNvbHVtbi5sYWJlbHMgPSBjKFxcQmFzaWNcXCwgXFxEYXRlIEZFXFwsIFxcVGltZXNsb3QgRkVcXCwgJ1RpbWVzbG90ICsgQXVjdGlvbiBGRScpLFxuICAgIGtlZXAgPSBjKCdDb25zdGFudCcsJ3JlYWxfdW5hdmFpbGFiaWxpdHlfc2hhcmUnLCAncmVuZXdfZ2VuX3JlbF9zaG9jaycsICdnZW5fdG90JylcbiApXG5gYGBcbmBgYCJ9 --&gt;
-
-```r
-```r
-# Create LaTeX code with regression results
-reg_table &lt;- stargazer(m_basic, m_date, m_creneau, m_control, 
-    type = \html\,
-    title = \Regression Results\,
-    column.labels = c(\Basic\, \Date FE\, \Timeslot FE\, &#39;Timeslot + Auction FE&#39;),
-    keep = c(&#39;Constant&#39;,&#39;real_unavailability_share&#39;, &#39;renew_gen_rel_shock&#39;, &#39;gen_tot&#39;)
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Interpretation for the basic model, for a given unavailability of 1
+percentage point, the electricity price increases by 0.9 %</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBDcmVhdGUgTGFUZVggY29kZSB3aXRoIHJlZ3Jlc3Npb24gcmVzdWx0c1xucmVnX3RhYmxlIDwtIHN0YXJnYXplcihtX2Jhc2ljLCBtX2NyZW5lYXUsIG1fY29udHJvbCwgXG4gICAgdHlwZSA9IFwiaHRtbFwiLFxuICAgIHRpdGxlID0gXCJSZWdyZXNzaW9uIFJlc3VsdHNcIixcbiAgICBjb2x1bW4ubGFiZWxzID0gYyhcIkJhc2ljXCIsIFwiRGF0ZSBGRVwiLCBcIlRpbWVzbG90IEZFXCIsICdUaW1lc2xvdCArIEF1Y3Rpb24gRkUnKSxcbiAgICBrZWVwID0gYygnQ29uc3RhbnQnLCAndW5leHBlY3RlZF9yZW5ld2FibGVzJywncmVhbF91bmF2YWlsYWJpbGl0eScsICdnZW5fdW5jb250cm9sbGVkJywgJ2dlbl90b3QnKVxuIClcbmBgYCJ9 -->
+<pre class="r"><code># Create LaTeX code with regression results
+reg_table &lt;- stargazer(m_basic, m_creneau, m_control, 
+    type = &quot;html&quot;,
+    title = &quot;Regression Results&quot;,
+    column.labels = c(&quot;Basic&quot;, &quot;Date FE&quot;, &quot;Timeslot FE&quot;, &#39;Timeslot + Auction FE&#39;),
+    keep = c(&#39;Constant&#39;, &#39;unexpected_renewables&#39;,&#39;real_unavailability&#39;, &#39;gen_uncontrolled&#39;, &#39;gen_tot&#39;)
  )</code></pre>
-<p>```</p>
+<!-- rnb-source-end -->
+<table style="text-align:center">
+<caption>
+<strong>Regression Results</strong>
+</caption>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="3">
+<em>Dependent variable:</em>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td colspan="3" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="3">
+log_price_diff
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+Basic
+</td>
+<td>
+Date FE
+</td>
+<td>
+Timeslot FE
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(1)
+</td>
+<td>
+(2)
+</td>
+<td>
+(3)
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+real_unavailability
+</td>
+<td>
+-0.001
+</td>
+<td>
+-0.001
+</td>
+<td>
+0.024
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.041)
+</td>
+<td>
+(0.041)
+</td>
+<td>
+(0.041)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+gen_uncontrolled
+</td>
+<td>
+-0.0003
+</td>
+<td>
+-0.001<sup>*</sup>
+</td>
+<td>
+-0.001<sup>*</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+unexpected_renewables
+</td>
+<td>
+-0.004<sup>***</sup>
+</td>
+<td>
+-0.003<sup>***</sup>
+</td>
+<td>
+-0.003<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+gen_tot
+</td>
+<td>
+0.0004<sup>*</sup>
+</td>
+<td>
+0.0002
+</td>
+<td>
+0.0002
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Constant
+</td>
+<td>
+-0.017<sup>**</sup>
+</td>
+<td>
+-0.006
+</td>
+<td>
+0.010
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.007)
+</td>
+<td>
+(0.009)
+</td>
+<td>
+(0.009)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Observations
+</td>
+<td>
+73,008
+</td>
+<td>
+73,008
+</td>
+<td>
+73,008
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+R<sup>2</sup>
+</td>
+<td>
+0.0003
+</td>
+<td>
+0.001
+</td>
+<td>
+0.003
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Adjusted R<sup>2</sup>
+</td>
+<td>
+0.0002
+</td>
+<td>
+0.0004
+</td>
+<td>
+0.002
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Residual Std. Error
+</td>
+<td>
+0.247 (df = 73003)
+</td>
+<td>
+0.247 (df = 72979)
+</td>
+<td>
+0.246 (df = 72973)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+F Statistic
+</td>
+<td>
+5.285<sup>***</sup> (df = 4; 73003)
+</td>
+<td>
+1.941<sup>***</sup> (df = 28; 72979)
+</td>
+<td>
+5.669<sup>***</sup> (df = 34; 72973)
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<em>Note:</em>
+</td>
+<td colspan="3" style="text-align:right">
+<sup><em></sup>p&lt;0.1; <sup><strong></sup>p&lt;0.05;
+<sup></strong></em></sup>p&lt;0.01
+</td>
+</tr>
+</table>
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Compare the different unavailability shocks</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubV91bmF2YWlsIDwtIGxtKFxuICBsb2dfcHJpY2VfZGlmZiB+IFVuYXZhaWxhYmxlLkNhcGFjaXR5ICtnZW5fdW5jb250cm9sbGVkICt1bmV4cGVjdGVkX3JlbmV3YWJsZXMgKyBnZW5fdG90K1xuICAgIGNyZW5lYXUgKyBmYWN0b3IoYXVjdGlvbl9iZWZvcmUpLFxuICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZClcblxubV9yZWFsX3VuYXZhaWwgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eSArZ2VuX3VuY29udHJvbGxlZCArdW5leHBlY3RlZF9yZW5ld2FibGVzICsgZ2VuX3RvdCtcbiAgICBjcmVuZWF1ICsgZmFjdG9yKGF1Y3Rpb25fYmVmb3JlKSxcbiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWQpXG5cbm1fcHJlZF9yZWFsX3VuYXZhaWwgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gcHJlZGljdGVkX3JlYWxfdW5hdmFpbGFiaWxpdHkgICsgZ2VuX3VuY29udHJvbGxlZCArdW5leHBlY3RlZF9yZW5ld2FibGVzICsgZ2VuX3RvdCtcbiAgICBjcmVuZWF1ICsgZmFjdG9yKGF1Y3Rpb25fYmVmb3JlKSxcbiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWQpXG5cbm1fc2hhcmUgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gVW5hdmFpbGFibGUuU2hhcmUrZ2VuX3VuY29udHJvbGxlZCArdW5leHBlY3RlZF9yZW5ld2FibGVzICsgZ2VuX3RvdCtcbiAgICBjcmVuZWF1ICsgZmFjdG9yKGF1Y3Rpb25fYmVmb3JlKSxcbiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWQpXG5cbmBgYCJ9 -->
+<pre class="r"><code>m_unavail &lt;- lm(
+  log_price_diff ~ Unavailable.Capacity +gen_uncontrolled +unexpected_renewables + gen_tot+
+    creneau + factor(auction_before),
+  data= first_stage_combined)
+
+m_real_unavail &lt;- lm(
+  log_price_diff ~ real_unavailability +gen_uncontrolled +unexpected_renewables + gen_tot+
+    creneau + factor(auction_before),
+  data= first_stage_combined)
+
+m_pred_real_unavail &lt;- lm(
+  log_price_diff ~ predicted_real_unavailability  + gen_uncontrolled +unexpected_renewables + gen_tot+
+    creneau + factor(auction_before),
+  data= first_stage_combined)
+
+m_share &lt;- lm(
+  log_price_diff ~ Unavailable.Share+gen_uncontrolled +unexpected_renewables + gen_tot+
+    creneau + factor(auction_before),
+  data= first_stage_combined)
+</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBDcmVhdGUgTGFUZVggY29kZSB3aXRoIHJlZ3Jlc3Npb24gcmVzdWx0c1xucmVnX3VuYXZhaWxhYmlsaXR5IDwtIHN0YXJnYXplcihtX3VuYXZhaWwsIG1fcmVhbF91bmF2YWlsLCBcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgbV9wcmVkX3JlYWxfdW5hdmFpbCwgbV9zaGFyZSxcbiAgICB0eXBlID0gXCJodG1sXCIsXG4gICAgdGl0bGUgPSBcIlJlZ3Jlc3Npb24gUmVzdWx0c1wiLFxuICAgIGNvbHVtbi5sYWJlbHMgPSBjKFwiVW5hdmFpbGFiaWxpdHlcIiwgXCJBY3RpdmVcIiwgXCJSRiBwcmVkaWN0ZWRcIiwgJ1NoYXJlJyksXG4gICAga2VlcCA9IGMoJ0NvbnN0YW50JywgJ3VuZXhwZWN0ZWRfcmVuZXdhYmxlcycsJ1VuYXZhaWxhYmxlLkNhcGFjaXR5JywncmVhbF91bmF2YWlsYWJpbGl0eScsXG4gICAgICAgICAgICAgJ3ByZWRpY3RlZF9yZWFsX3VuYXZhaWxhYmlsaXR5JywgJ1VuYXZhaWxhYmxlLlNoYXJlJywgXG4gICAgICAgICAgICAgJ2dlbl91bmNvbnRyb2xsZWQnLCAnZ2VuX3RvdCcpLFxuICAgIG9yZGVyID0gYygnQ29uc3RhbnQnLCAndW5leHBlY3RlZF9yZW5ld2FibGVzJywgJ1VuYXZhaWxhYmxlLkNhcGFjaXR5JywgJ3JlYWxfdW5hdmFpbGFiaWxpdHknLFxuICAgICAgICAgICAgICAncHJlZGljdGVkX3JlYWxfdW5hdmFpbGFiaWxpdHknLCAnVW5hdmFpbGFibGUuU2hhcmUnLCBcbiAgICAgICAgICAgICAgJ2dlbl91bmNvbnRyb2xsZWQnLCAnZ2VuX3RvdCcpXG4gKVxuYGBgIn0= -->
+<pre class="r"><code># Create LaTeX code with regression results
+reg_unavailability &lt;- stargazer(m_unavail, m_real_unavail, 
+                                m_pred_real_unavail, m_share,
+    type = &quot;html&quot;,
+    title = &quot;Regression Results&quot;,
+    column.labels = c(&quot;Unavailability&quot;, &quot;Active&quot;, &quot;RF predicted&quot;, &#39;Share&#39;),
+    keep = c(&#39;Constant&#39;, &#39;unexpected_renewables&#39;,&#39;Unavailable.Capacity&#39;,&#39;real_unavailability&#39;,
+             &#39;predicted_real_unavailability&#39;, &#39;Unavailable.Share&#39;, 
+             &#39;gen_uncontrolled&#39;, &#39;gen_tot&#39;),
+    order = c(&#39;Constant&#39;, &#39;unexpected_renewables&#39;, &#39;Unavailable.Capacity&#39;, &#39;real_unavailability&#39;,
+              &#39;predicted_real_unavailability&#39;, &#39;Unavailable.Share&#39;, 
+              &#39;gen_uncontrolled&#39;, &#39;gen_tot&#39;)
+ )</code></pre>
+<!-- rnb-source-end -->
+<table style="text-align:center">
+<caption>
+<strong>Regression Results</strong>
+</caption>
+<tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="4">
+<em>Dependent variable:</em>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="4">
+log_price_diff
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+Unavailability
+</td>
+<td>
+Active
+</td>
+<td>
+RF predicted
+</td>
+<td>
+Share
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(1)
+</td>
+<td>
+(2)
+</td>
+<td>
+(3)
+</td>
+<td>
+(4)
+</td>
+</tr>
+<tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Constant
+</td>
+<td>
+0.010
+</td>
+<td>
+0.010
+</td>
+<td>
+0.010
+</td>
+<td>
+0.010
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.009)
+</td>
+<td>
+(0.009)
+</td>
+<td>
+(0.009)
+</td>
+<td>
+(0.009)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+unexpected_renewables
+</td>
+<td>
+-0.003<sup>***</sup>
+</td>
+<td>
+-0.003<sup>***</sup>
+</td>
+<td>
+-0.003<sup>***</sup>
+</td>
+<td>
+-0.003<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Unavailable.Capacity
+</td>
+<td>
+-0.004
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.009)
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+real_unavailability
+</td>
+<td>
+</td>
+<td>
+0.024
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+(0.041)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+predicted_real_unavailability
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+0.124
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+(0.133)
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Unavailable.Share
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+-0.050
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+(0.053)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+gen_uncontrolled
+</td>
+<td>
+-0.001<sup>*</sup>
+</td>
+<td>
+-0.001<sup>*</sup>
+</td>
+<td>
+-0.001<sup>*</sup>
+</td>
+<td>
+-0.001<sup>*</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+gen_tot
+</td>
+<td>
+0.0002
+</td>
+<td>
+0.0002
+</td>
+<td>
+0.0002
+</td>
+<td>
+0.0002
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+<td>
+(0.0003)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Observations
+</td>
+<td>
+73,008
+</td>
+<td>
+73,008
+</td>
+<td>
+73,008
+</td>
+<td>
+73,008
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+R<sup>2</sup>
+</td>
+<td>
+0.003
+</td>
+<td>
+0.003
+</td>
+<td>
+0.003
+</td>
+<td>
+0.003
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Adjusted R<sup>2</sup>
+</td>
+<td>
+0.002
+</td>
+<td>
+0.002
+</td>
+<td>
+0.002
+</td>
+<td>
+0.002
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Residual Std. Error (df = 72973)
+</td>
+<td>
+0.246
+</td>
+<td>
+0.246
+</td>
+<td>
+0.246
+</td>
+<td>
+0.246
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+F Statistic (df = 34; 72973)
+</td>
+<td>
+5.666<sup>***</sup>
+</td>
+<td>
+5.669<sup>***</sup>
+</td>
+<td>
+5.685<sup>***</sup>
+</td>
+<td>
+5.685<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td colspan="5" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<em>Note:</em>
+</td>
+<td colspan="4" style="text-align:right">
+<sup><em></sup>p&lt;0.1; <sup><strong></sup>p&lt;0.05;
+<sup></strong></em></sup>p&lt;0.01
+</td>
+</tr>
+</table>
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Use the revision of the forecast as an instrument</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBwZXJmb3JtIGZpcnN0IHN0YWdlIHJlZ3Jlc3Npb25cbm1faW50cmFkYXlfaW5mb3JtYXRpb25fc2hvY2sgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eSArIGludHJhZGF5X3VwZGF0ZV9yZW5ld2FibGVzIFxuICArZ2VuX3VuY29udHJvbGxlZCAgKyBnZW5fdG90LFxuICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZF81IClcblxubV9pbnRyYWRheV9jb250cm9sIDwtIGxtKFxuICBsb2dfcHJpY2VfZGlmZiB+IHJlYWxfdW5hdmFpbGFiaWxpdHkgKyBpbnRyYWRheV91cGRhdGVfcmVuZXdhYmxlcyBcbiAgK2dlbl91bmNvbnRyb2xsZWQgK3VuZXhwZWN0ZWRfcmVuZXdhYmxlcyArIGdlbl90b3QgKyBmYWN0b3IoY3JlbmVhdSksXG4gIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkXzUgKVxuXG5tX2ludHJhZGF5X3dpdGhvdXRfcmVuZXcgPC0gbG0oXG4gIGxvZ19wcmljZV9kaWZmIH4gaW50cmFkYXlfdXBkYXRlX3JlbmV3YWJsZXMgKyByZWFsX3VuYXZhaWxhYmlsaXR5ICsgZ2VuX3RvdCArIGZhY3RvcihjcmVuZWF1KSxcbiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWRfNSApXG5cbmBgYCJ9 -->
+<pre class="r"><code># perform first stage regression
+m_intraday_information_shock &lt;- lm(
+  log_price_diff ~ real_unavailability + intraday_update_renewables 
+  +gen_uncontrolled  + gen_tot,
+  data= first_stage_combined_5 )
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpGaW5hbCBub3RlYm9vayB0byBoYXZlIHRoZSBmaWd1cmUgZnJvbSB0aGUgcmVwb3J0DQoNCg0KYGBge3IgaW5jbHVkZT1GQUxTRX0NCmxpYnJhcnkocmVhZHIpDQpsaWJyYXJ5KGRwbHlyKQ0KbGlicmFyeShyZWFkeGwpDQpsaWJyYXJ5KGFycm93KQ0KbGlicmFyeShsdWJyaWRhdGUpDQpsaWJyYXJ5KGVzdGltYXRyKQ0KbGlicmFyeShzdGFyZ2F6ZXIpDQoNClN5cy5zZXRlbnYobGFuZyA9ICJlbl9VUyIpDQpgYGANCg0KDQpgYGB7cn0NCnNldHdkKCdDOi9Vc2Vycy9uY2h1L0Rlc2t0b3AvREFUQS9tZXJnZWRfZGF0YScpDQpteV9yZWdfZGF0YSA8LSByZWFkX3BhcnF1ZXQoJ3VwZGF0ZWRfZmlyc3Rfc3RhZ2VfZGF0YS5wYXJxdWV0JykNCg0Kc2V0d2QoJ0M6L1VzZXJzL25jaHUvRGVza3RvcC9EQVRBL21lcmdlZF9kYXRhJykNCnJlbmV3YWJsZV9zaG9ja19zZXJpZXMgPC0gcmVhZF9wYXJxdWV0KA0KICAgICAgICAgICAgICAncmVuZXdhYmxlX3Nob2NrX3Nlcmllcy5wYXJxdWV0JykNCg0KDQojIGFkZCB0aGUgaW5mb3JtYXRpb24gZnJvbSB0aGUgcmVuZXdhYmxlIHNob2NrIHNlcmllcyANCg0KZmlyc3Rfc3RhZ2VfY29tYmluZWQgPC0gbWVyZ2UobXlfcmVnX2RhdGEsIHJlbmV3YWJsZV9zaG9ja19zZXJpZXMsDQogIGJ5PSBjKCdkYXRldGltZScsICdnZW5fdG90JykpDQoNCg0KZmlyc3Rfc3RhZ2VfY29tYmluZWQgPC1maXJzdF9zdGFnZV9jb21iaW5lZCAlPiUgDQogIHNlbGVjdCgicHJpY2UiLCAncHJpY2VfZGlmZicsICJkZWxpdmVyeV9kYXRlIiwgImxvZ19wcmljZV9kaWZmIiwgJ2NyZW5lYXUnLCAnZGF0ZXRpbWUnICwgInVuY2VydGFpbnR5X3Nob2NrIiAsInVuY2VydGFpbnR5X3Nob2NrX3JlbGF0aXZlIiAsICdhdWN0aW9uX2JlZm9yZScsICJyZWFsX3VuYXZhaWxhYmlsaXR5X3NoYXJlIiwgICAgICJ0aGVvcmV0aWNhbF91bmF2YWlsYWJpbGl0eV9zaGFyZSIsICJjZW50cmFsZV91bmF2YWlsYWJpbGl0eV9zaGFyZSIsICAnZ2VuX3RvdCcgLA0KImlkY29kZSIpICU+JSANCiAgcmVuYW1lKHJlbmV3X2dlbl9zaG9jayA9IHVuY2VydGFpbnR5X3Nob2NrLA0KICAgICAgICAgcmVuZXdfZ2VuX3JlbF9zaG9jayA9IHVuY2VydGFpbnR5X3Nob2NrX3JlbGF0aXZlKSAlPiUgDQogIG11dGF0ZShnZW5fdG90ID0gZ2VuX3RvdC8xMDAwKQ0KDQpmaXJzdF9zdGFnZV9jb21iaW5lZF81IDwtIGZpcnN0X3N0YWdlX2NvbWJpbmVkICU+JSANCiAgICBmaWx0ZXIoYXVjdGlvbl9iZWZvcmUgPT0gNSkNCg0KDQpoZWFkKGZpcnN0X3N0YWdlX2NvbWJpbmVkLDUpDQojIGNvbG5hbWVzKGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KYGBgDQoNCg0KQ29tcGxldGUgbW9kZWxzIHRoYXQgaW5jbHVkZSBwbGFudCB1bmF2YWlsYWJpbGl0aWVzIGFzIHdlbGwgYXMgdGhlIHJlbmV3YWJsZSBiYXNlZCBpbnN0cnVtZW50DQoNCg0KYGBge3J9DQoNCiMgcGVyZm9ybSBmaXJzdCBzdGFnZSByZWdyZXNzaW9uDQptX2Jhc2ljIDwtIGxtKA0KICBsb2dfcHJpY2VfZGlmZiB+IHJlYWxfdW5hdmFpbGFiaWxpdHlfc2hhcmUgKyByZW5ld19nZW5fcmVsX3Nob2NrICsgZ2VuX3RvdCwNCiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWQpDQojIHVzZSBjb250cm9scw0KIyBwdXQgYSBkdW1teSBmb3IgdGhlIG51bWJlciBvZiB0aGUgYXVjdGlvbg0KIyBwdXQgYSBkdW1teSBmb3IgdGhlIGNyZW5lYXUNCm1fZGF0ZSA8LSBsbSgNCiAgbG9nX3ByaWNlX2RpZmYgfiByZWFsX3VuYXZhaWxhYmlsaXR5X3NoYXJlKyByZW5ld19nZW5fcmVsX3Nob2NrICsgZ2VuX3RvdCArIGZhY3RvcihkZWxpdmVyeV9kYXRlKSAsDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KDQojIGR1bW15IGZvciBjcmVuZWF1DQoNCm1fY3JlbmVhdSA8LSBsbSgNCiAgbG9nX3ByaWNlX2RpZmYgfiByZWFsX3VuYXZhaWxhYmlsaXR5X3NoYXJlKyByZW5ld19nZW5fcmVsX3Nob2NrICsgZ2VuX3RvdCArIGZhY3RvcihjcmVuZWF1KSAsDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KDQojIHdhcm5pbmcgY2Fubm90IHB1dCBhIGR1bW15IGZvciBkYXRlICsgY3JlbmVhdSArIGF1Y3Rpb24NCiMgZnVsbCBkZXRlcm1pbmF0aW9uLCBubyB2YXJpYXRpb24NCm1fY29udHJvbCA8LSBsbSgNCiAgbG9nX3ByaWNlX2RpZmYgfiByZWFsX3VuYXZhaWxhYmlsaXR5X3NoYXJlKyByZW5ld19nZW5fcmVsX3Nob2NrICsgZ2VuX3RvdCArIGZhY3RvcihjcmVuZWF1KSArIGZhY3RvcihhdWN0aW9uX2JlZm9yZSksDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KDQpgYGANCg0KSW50ZXJwcmV0YXRpb24NCmZvciB0aGUgYmFzaWMgbW9kZWwsDQpmb3IgYSBnaXZlbiB1bmF2YWlsYWJpbGl0eSBvZiAxIHBlcmNlbnRhZ2UgcG9pbnQsDQp0aGUgZWxlY3RyaWNpdHkgcHJpY2UgaW5jcmVhc2VzIGJ5IDAuOSAlDQoNCg0KDQpgYGB7ciwgcmVzdWx0cyA9ICdhc2lzJ30NCiMgQ3JlYXRlIExhVGVYIGNvZGUgd2l0aCByZWdyZXNzaW9uIHJlc3VsdHMNCnJlZ190YWJsZSA8LSBzdGFyZ2F6ZXIobV9iYXNpYywgbV9kYXRlLCBtX2NyZW5lYXUsIG1fY29udHJvbCwgDQogICAgdHlwZSA9ICJodG1sIiwNCiAgICB0aXRsZSA9ICJSZWdyZXNzaW9uIFJlc3VsdHMiLA0KICAgIGNvbHVtbi5sYWJlbHMgPSBjKCJCYXNpYyIsICJEYXRlIEZFIiwgIlRpbWVzbG90IEZFIiwgJ1RpbWVzbG90ICsgQXVjdGlvbiBGRScpLA0KICAgIGtlZXAgPSBjKCdDb25zdGFudCcsJ3JlYWxfdW5hdmFpbGFiaWxpdHlfc2hhcmUnLCAncmVuZXdfZ2VuX3JlbF9zaG9jaycsICdnZW5fdG90JykNCiApDQpgYGANCg0K</div>
+m_intraday_control &lt;- lm(
+  log_price_diff ~ real_unavailability + intraday_update_renewables 
+  +gen_uncontrolled +unexpected_renewables + gen_tot + factor(creneau),
+  data= first_stage_combined_5 )
+
+m_intraday_without_renew &lt;- lm(
+  log_price_diff ~ intraday_update_renewables + real_unavailability + gen_tot + factor(creneau),
+  data= first_stage_combined_5 )
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBDcmVhdGUgTGFUZVggY29kZSB3aXRoIHJlZ3Jlc3Npb24gcmVzdWx0c1xucmVnX2ludHJhZGF5IDwtIHN0YXJnYXplcihtX2ludHJhZGF5X2luZm9ybWF0aW9uX3Nob2NrLCBtX2ludHJhZGF5X2NvbnRyb2wsIFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBtX2ludHJhZGF5X3dpdGhvdXRfcmVuZXcsXG4gICAgdHlwZSA9IFwiaHRtbFwiLFxuICAgIHRpdGxlID0gXCJSZWdyZXNzaW9uIFJlc3VsdHNcIixcbiAgICBjb2x1bW4ubGFiZWxzID0gYyhcIkludHJhZGF5IFJldmlzaW9uXCIsIFwiRkVcIiwgXCJ3aXRob3V0IHJlbmV3YWJsZXNcIiksXG4gICAga2VlcCA9IGMoJ0NvbnN0YW50JywgJ3VuZXhwZWN0ZWRfcmVuZXdhYmxlcycsJ3JlYWxfdW5hdmFpbGFiaWxpdHknLCdpbnRyYWRheV91cGRhdGVfcmVuZXdhYmxlcycsICdnZW5fdW5jb250cm9sbGVkJywgJ2dlbl90b3QnKVxuIClcbmBgYCJ9 -->
+<pre class="r"><code># Create LaTeX code with regression results
+reg_intraday &lt;- stargazer(m_intraday_information_shock, m_intraday_control, 
+                                m_intraday_without_renew,
+    type = &quot;html&quot;,
+    title = &quot;Regression Results&quot;,
+    column.labels = c(&quot;Intraday Revision&quot;, &quot;FE&quot;, &quot;without renewables&quot;),
+    keep = c(&#39;Constant&#39;, &#39;unexpected_renewables&#39;,&#39;real_unavailability&#39;,&#39;intraday_update_renewables&#39;, &#39;gen_uncontrolled&#39;, &#39;gen_tot&#39;)
+ )</code></pre>
+<!-- rnb-source-end -->
+<table style="text-align:center">
+<caption>
+<strong>Regression Results</strong>
+</caption>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="3">
+<em>Dependent variable:</em>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td colspan="3" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="3">
+log_price_diff
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+Intraday Revision
+</td>
+<td>
+FE
+</td>
+<td>
+without renewables
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(1)
+</td>
+<td>
+(2)
+</td>
+<td>
+(3)
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+real_unavailability
+</td>
+<td>
+-0.293<sup>**</sup>
+</td>
+<td>
+-0.292<sup>**</sup>
+</td>
+<td>
+-0.291<sup>**</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.123)
+</td>
+<td>
+(0.123)
+</td>
+<td>
+(0.123)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+intraday_update_renewables
+</td>
+<td>
+-0.015<sup>***</sup>
+</td>
+<td>
+-0.010<sup>*</sup>
+</td>
+<td>
+-0.015<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.005)
+</td>
+<td>
+(0.005)
+</td>
+<td>
+(0.005)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+gen_uncontrolled
+</td>
+<td>
+-0.0005
+</td>
+<td>
+-0.0001
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+unexpected_renewables
+</td>
+<td>
+</td>
+<td>
+-0.008<sup>**</sup>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+(0.004)
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+gen_tot
+</td>
+<td>
+-0.001
+</td>
+<td>
+-0.001
+</td>
+<td>
+-0.002<sup>*</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Constant
+</td>
+<td>
+0.018
+</td>
+<td>
+0.024
+</td>
+<td>
+0.032
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.024)
+</td>
+<td>
+(0.029)
+</td>
+<td>
+(0.028)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Observations
+</td>
+<td>
+8,661
+</td>
+<td>
+8,661
+</td>
+<td>
+8,661
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+R<sup>2</sup>
+</td>
+<td>
+0.002
+</td>
+<td>
+0.004
+</td>
+<td>
+0.003
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Adjusted R<sup>2</sup>
+</td>
+<td>
+0.002
+</td>
+<td>
+0.002
+</td>
+<td>
+0.002
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Residual Std. Error
+</td>
+<td>
+0.281 (df = 8656)
+</td>
+<td>
+0.281 (df = 8643)
+</td>
+<td>
+0.281 (df = 8645)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+F Statistic
+</td>
+<td>
+5.132<sup>***</sup> (df = 4; 8656)
+</td>
+<td>
+2.051<sup>***</sup> (df = 17; 8643)
+</td>
+<td>
+1.881<sup>**</sup> (df = 15; 8645)
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<em>Note:</em>
+</td>
+<td colspan="3" style="text-align:right">
+<sup><em></sup>p&lt;0.1; <sup><strong></sup>p&lt;0.05;
+<sup></strong></em></sup>p&lt;0.01
+</td>
+</tr>
+</table>
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Disentangle which of the few instruments I have for supply are
+driving the relevance of my gen_uncontrolled instrument</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmlyc3Rfc3RhZ2VfY29tYmluZWQkcHJpY2UgPC0gYXMubnVtZXJpYyhmaXJzdF9zdGFnZV9jb21iaW5lZCRwcmljZSlcbiMgcGVyZm9ybSBmaXJzdCBzdGFnZSByZWdyZXNzaW9uXG5tX3JlbmV3YWJsZXMgPC0gbG0oXG4gIGxvZyhwcmljZSkgfiBTb2xhciArIGBXaW5kIE9uc2hvcmVgKyBgSHlkcm8gUnVuLW9mLXJpdmVyIGFuZCBwb3VuZGFnZWAsXG4gIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKVxuXG5tX3JlbmV3YWJsZXNfRkUgPC0gbG0oXG4gIGxvZyhwcmljZSkgfiBTb2xhciArIGBXaW5kIE9uc2hvcmVgICsgYEh5ZHJvIFJ1bi1vZi1yaXZlciBhbmQgcG91bmRhZ2VgICsgZ2VuX3RvdCArIGZhY3RvcihjcmVuZWF1KSxcbiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWQgKVxuXG5gYGAifQ== -->
+<pre class="r"><code>first_stage_combined$price &lt;- as.numeric(first_stage_combined$price)
+# perform first stage regression
+m_renewables &lt;- lm(
+  log(price) ~ Solar + `Wind Onshore`+ `Hydro Run-of-river and poundage`,
+  data= first_stage_combined)
+
+m_renewables_FE &lt;- lm(
+  log(price) ~ Solar + `Wind Onshore` + `Hydro Run-of-river and poundage` + gen_tot + factor(creneau),
+  data= first_stage_combined )
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBDcmVhdGUgTGFUZVggY29kZSB3aXRoIHJlZ3Jlc3Npb24gcmVzdWx0c1xucmVnX3JlbmV3YWJsZXMgPC0gc3RhcmdhemVyKG1fcmVuZXdhYmxlcywgbV9yZW5ld2FibGVzX0ZFLFxuICAgIHR5cGUgPSBcImh0bWxcIixcbiAgICB0aXRsZSA9IFwiUmVncmVzc2lvbiBSZXN1bHRzXCIsXG4gICAgY29sdW1uLmxhYmVscyA9IGMoXCJJbnRyYWRheSBSZXZpc2lvblwiLCBcIkZFXCIsIFwid2l0aG91dCByZW5ld2FibGVzXCIpLFxuICAgIGtlZXAgPSBjKCdDb25zdGFudCcsJ1NvbGFyJywnV2luZCBPbnNob3JlJywgJ0h5ZHJvIFJ1bi1vZi1yaXZlciBhbmQgcG91bmRhZ2UnLCAndW5leHBlY3RlZF9yZW5ld2FibGVzJywncmVhbF91bmF2YWlsYWJpbGl0eScsJ2ludHJhZGF5X3VwZGF0ZV9yZW5ld2FibGVzJywgJ2dlbl91bmNvbnRyb2xsZWQnLCAnZ2VuX3RvdCcpXG4gKVxuYGBgIn0= -->
+<pre class="r"><code># Create LaTeX code with regression results
+reg_renewables &lt;- stargazer(m_renewables, m_renewables_FE,
+    type = &quot;html&quot;,
+    title = &quot;Regression Results&quot;,
+    column.labels = c(&quot;Intraday Revision&quot;, &quot;FE&quot;, &quot;without renewables&quot;),
+    keep = c(&#39;Constant&#39;,&#39;Solar&#39;,&#39;Wind Onshore&#39;, &#39;Hydro Run-of-river and poundage&#39;, &#39;unexpected_renewables&#39;,&#39;real_unavailability&#39;,&#39;intraday_update_renewables&#39;, &#39;gen_uncontrolled&#39;, &#39;gen_tot&#39;)
+ )</code></pre>
+<!-- rnb-source-end -->
+<table style="text-align:center">
+<caption>
+<strong>Regression Results</strong>
+</caption>
+<tr>
+<td colspan="3" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="2">
+<em>Dependent variable:</em>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td colspan="2" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="2">
+log(price)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+Intraday Revision
+</td>
+<td>
+FE
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(1)
+</td>
+<td>
+(2)
+</td>
+</tr>
+<tr>
+<td colspan="3" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Solar
+</td>
+<td>
+-0.029<sup>***</sup>
+</td>
+<td>
+-0.063<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<code>Wind Onshore</code>
+</td>
+<td>
+-0.044<sup>***</sup>
+</td>
+<td>
+-0.063<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.001)
+</td>
+<td>
+(0.001)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<code>Hydro Run-of-river and poundage</code>
+</td>
+<td>
+-0.929<sup>***</sup>
+</td>
+<td>
+-0.978<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.008)
+</td>
+<td>
+(0.008)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+gen_tot
+</td>
+<td>
+</td>
+<td>
+0.036<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+(0.001)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Constant
+</td>
+<td>
+5.959<sup>***</sup>
+</td>
+<td>
+5.294<sup>***</sup>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.009)
+</td>
+<td>
+(0.027)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td colspan="3" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Observations
+</td>
+<td>
+73,008
+</td>
+<td>
+73,008
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+R<sup>2</sup>
+</td>
+<td>
+0.217
+</td>
+<td>
+0.269
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Adjusted R<sup>2</sup>
+</td>
+<td>
+0.217
+</td>
+<td>
+0.268
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Residual Std. Error
+</td>
+<td>
+0.721 (df = 73004)
+</td>
+<td>
+0.697 (df = 72979)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+F Statistic
+</td>
+<td>
+6,743.254<sup>***</sup> (df = 3; 73004)
+</td>
+<td>
+957.928<sup>***</sup> (df = 28; 72979)
+</td>
+</tr>
+<tr>
+<td colspan="3" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<em>Note:</em>
+</td>
+<td colspan="2" style="text-align:right">
+<sup><em></sup>p&lt;0.1; <sup><strong></sup>p&lt;0.05;
+<sup></strong></em></sup>p&lt;0.01
+</td>
+</tr>
+</table>
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpGaW5hbCBub3RlYm9vayB0byBoYXZlIHRoZSBmaWd1cmUgZnJvbSB0aGUgcmVwb3J0DQoNCg0KYGBge3IgaW5jbHVkZT1GQUxTRX0NCmxpYnJhcnkocmVhZHIpDQpsaWJyYXJ5KGRwbHlyKQ0KbGlicmFyeShyZWFkeGwpDQpsaWJyYXJ5KGFycm93KQ0KbGlicmFyeShsdWJyaWRhdGUpDQpsaWJyYXJ5KGVzdGltYXRyKQ0KbGlicmFyeShzdGFyZ2F6ZXIpDQoNClN5cy5zZXRlbnYobGFuZyA9ICJlbl9VUyIpDQpgYGANCg0KDQpgYGB7cn0NCnNhdmVfcGF0aF9lc3AgPC0gJ0M6L1VzZXJzL0RCVDNLRC9EZXNrdG9wL0V0dWRlX21hY3JvX2VsZWMvcHJpeF9lbGVjdHJpY2l0ZV9naXRsYWIvSW50cmFfZGF5X2luc3RydW1uZXRfbW90aXZhdGlvbi9vdXRwdXRzJw0Kc2V0d2Qoc2F2ZV9wYXRoX2VzcCkNCg0KZmlyc3Rfc3RhZ2VfZGF0YSA8LSByZWFkX3BhcnF1ZXQoJ2ZpcnN0X3N0YWdlX2RhdGEucGFycXVldCcpDQoNCnJlbmV3YWJsZV9mb3JlY2FzdHMgPC0gcmVhZF9wYXJxdWV0KCdyZW5ld2FibGVfZm9yZWNhc3RzLnBhcnF1ZXQnKQ0KDQpmaXJzdF9zdGFnZV9jb21iaW5lZCA8LSBsZWZ0X2pvaW4oZmlyc3Rfc3RhZ2VfZGF0YSAlPiUgc2VsZWN0KC1jKCdnZW5fdG90JywgJ2dlbl91bmNvbnRyb2xsZWQnKSkscmVuZXdhYmxlX2ZvcmVjYXN0cywgDQogICAgICBieSA9IGMoJ2RhdGV0aW1lJyA9ICdfX2luZGV4X2xldmVsXzBfXycpKQ0KDQpteV9maWVsZHMgPC0gYygnZ2VuX3RvdCcsICdnZW5fdW5jb250cm9sbGVkJywgDQogICdVbmF2YWlsYWJsZS5DYXBhY2l0eScsIA0KICAncmVhbF91bmF2YWlsYWJpbGl0eScsIA0KICAnaW50cmFkYXlfdXBkYXRlX3JlbmV3YWJsZXMnLCANCiAgICdwcmVkaWN0ZWRfcmVhbF91bmF2YWlsYWJpbGl0eScsIA0KICAgJ3VuZXhwZWN0ZWRfcmVuZXdhYmxlcycsDQogICJTb2xhciIgLCJXaW5kIE9uc2hvcmUiLCJXaW5kIE9mZnNob3JlIiwiSHlkcm8gUnVuLW9mLXJpdmVyIGFuZCBwb3VuZGFnZSINCiAgKQ0KDQpmaXJzdF9zdGFnZV9jb21iaW5lZCA8LSBmaXJzdF9zdGFnZV9jb21iaW5lZCAlPiUNCiAgZmlsdGVyKGlzLmZpbml0ZShsb2dfcHJpY2VfZGlmZikgJiANCiAgICAgICAgICAgaXMuZmluaXRlKFVuYXZhaWxhYmxlLkNhcGFjaXR5KSklPiUgDQogICBtdXRhdGUoYWNyb3NzKGFsbF9vZihteV9maWVsZHMpLCANCiAgICAgICAgICAgICAgICB+IC4gLyAxMDAwKSkNCg0KIyBjcmVhdGUgdW5pcXVlIGNyZW5lYXUgYXVjdGlvbiBjb2RlIGZvciBjbHVzdGVyaW5nDQpmaXJzdF9zdGFnZV9jb21iaW5lZCRpZGNvZGUgPC0gYXMuY2hhcmFjdGVyKHBhc3RlKGZpcnN0X3N0YWdlX2NvbWJpbmVkJGNyZW5lYXUsDQogICAgICAgICAgICAgICAgICBmaXJzdF9zdGFnZV9jb21iaW5lZCRhdWN0aW9uX2JlZm9yZSApKQ0KDQpmaXJzdF9zdGFnZV9jb21iaW5lZCRwcmVkaWN0ZWRfcmVhbF91bmF2YWlsYWJpbGl0eSA8LSAtZmlyc3Rfc3RhZ2VfY29tYmluZWQkcHJlZGljdGVkX3JlYWxfdW5hdmFpbGFiaWxpdHkNCiAgDQpmaXJzdF9zdGFnZV9jb21iaW5lZF81IDwtIGZpcnN0X3N0YWdlX2NvbWJpbmVkICU+JSANCiAgICBmaWx0ZXIoYXVjdGlvbl9iZWZvcmUgPT0gNSkNCmBgYA0KDQoNCkNvbXBsZXRlIG1vZGVscyB0aGF0IGluY2x1ZGUgcGxhbnQgdW5hdmFpbGFiaWxpdGllcyBhcyB3ZWxsIGFzIHRoZSByZW5ld2FibGUgYmFzZWQgaW5zdHJ1bWVudA0KYGBge3J9DQpoZWFkKGZpcnN0X3N0YWdlX2NvbWJpbmVkLDUpDQpjb2xuYW1lcyhmaXJzdF9zdGFnZV9jb21iaW5lZCkNCmBgYA0KRmlyc3QgZ2l2ZSBvbmUgZXhhbXBsZSB3aXRoIGRpZmZlcmVudCBzcGVjaWZpY2F0aW9ucw0KDQoNCmBgYHtyfQ0KDQojIHBlcmZvcm0gZmlyc3Qgc3RhZ2UgcmVncmVzc2lvbg0KbV9iYXNpYyA8LSBsbSgNCiAgbG9nX3ByaWNlX2RpZmYgfiByZWFsX3VuYXZhaWxhYmlsaXR5ICtnZW5fdW5jb250cm9sbGVkICt1bmV4cGVjdGVkX3JlbmV3YWJsZXMgKyBnZW5fdG90LA0KICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZCkNCg0KIyBkdW1teSBmb3IgY3JlbmVhdQ0KDQptX2NyZW5lYXUgPC0gbG0oDQogIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eSArZ2VuX3VuY29udHJvbGxlZCArdW5leHBlY3RlZF9yZW5ld2FibGVzICsgZ2VuX3RvdCArIGNyZW5lYXUgLA0KICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZCkNCg0KIyB1c2UgY29udHJvbHMNCiMgcHV0IGEgZHVtbXkgZm9yIHRoZSBudW1iZXIgb2YgdGhlIGF1Y3Rpb24NCiMgcHV0IGEgZHVtbXkgZm9yIHRoZSBjcmVuZWF1DQoNCiMgd2FybmluZyBjYW5ub3QgcHV0IGEgZHVtbXkgZm9yIGRhdGUgKyBjcmVuZWF1ICsgYXVjdGlvbg0KIyBmdWxsIGRldGVybWluYXRpb24sIG5vIHZhcmlhdGlvbg0KbV9jb250cm9sIDwtIGxtKA0KICBsb2dfcHJpY2VfZGlmZiB+IHJlYWxfdW5hdmFpbGFiaWxpdHkgK2dlbl91bmNvbnRyb2xsZWQgK3VuZXhwZWN0ZWRfcmVuZXdhYmxlcyArIGdlbl90b3QrDQogICAgY3JlbmVhdSArIGZhY3RvcihhdWN0aW9uX2JlZm9yZSksDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KDQpgYGANCg0KSW50ZXJwcmV0YXRpb24NCmZvciB0aGUgYmFzaWMgbW9kZWwsDQpmb3IgYSBnaXZlbiB1bmF2YWlsYWJpbGl0eSBvZiAxIHBlcmNlbnRhZ2UgcG9pbnQsDQp0aGUgZWxlY3RyaWNpdHkgcHJpY2UgaW5jcmVhc2VzIGJ5IDAuOSAlDQoNCg0KDQpgYGB7ciwgcmVzdWx0cyA9ICdhc2lzJ30NCiMgQ3JlYXRlIExhVGVYIGNvZGUgd2l0aCByZWdyZXNzaW9uIHJlc3VsdHMNCnJlZ190YWJsZSA8LSBzdGFyZ2F6ZXIobV9iYXNpYywgbV9jcmVuZWF1LCBtX2NvbnRyb2wsIA0KICAgIHR5cGUgPSAiaHRtbCIsDQogICAgdGl0bGUgPSAiUmVncmVzc2lvbiBSZXN1bHRzIiwNCiAgICBjb2x1bW4ubGFiZWxzID0gYygiQmFzaWMiLCAiRGF0ZSBGRSIsICJUaW1lc2xvdCBGRSIsICdUaW1lc2xvdCArIEF1Y3Rpb24gRkUnKSwNCiAgICBrZWVwID0gYygnQ29uc3RhbnQnLCAndW5leHBlY3RlZF9yZW5ld2FibGVzJywncmVhbF91bmF2YWlsYWJpbGl0eScsICdnZW5fdW5jb250cm9sbGVkJywgJ2dlbl90b3QnKQ0KICkNCmBgYA0KDQoNCkNvbXBhcmUgdGhlIGRpZmZlcmVudCB1bmF2YWlsYWJpbGl0eSBzaG9ja3MNCg0KDQpgYGB7cn0NCm1fdW5hdmFpbCA8LSBsbSgNCiAgbG9nX3ByaWNlX2RpZmYgfiBVbmF2YWlsYWJsZS5DYXBhY2l0eSArZ2VuX3VuY29udHJvbGxlZCArdW5leHBlY3RlZF9yZW5ld2FibGVzICsgZ2VuX3RvdCsNCiAgICBjcmVuZWF1ICsgZmFjdG9yKGF1Y3Rpb25fYmVmb3JlKSwNCiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWQpDQoNCm1fcmVhbF91bmF2YWlsIDwtIGxtKA0KICBsb2dfcHJpY2VfZGlmZiB+IHJlYWxfdW5hdmFpbGFiaWxpdHkgK2dlbl91bmNvbnRyb2xsZWQgK3VuZXhwZWN0ZWRfcmVuZXdhYmxlcyArIGdlbl90b3QrDQogICAgY3JlbmVhdSArIGZhY3RvcihhdWN0aW9uX2JlZm9yZSksDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KDQptX3ByZWRfcmVhbF91bmF2YWlsIDwtIGxtKA0KICBsb2dfcHJpY2VfZGlmZiB+IHByZWRpY3RlZF9yZWFsX3VuYXZhaWxhYmlsaXR5ICArIGdlbl91bmNvbnRyb2xsZWQgK3VuZXhwZWN0ZWRfcmVuZXdhYmxlcyArIGdlbl90b3QrDQogICAgY3JlbmVhdSArIGZhY3RvcihhdWN0aW9uX2JlZm9yZSksDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KDQptX3NoYXJlIDwtIGxtKA0KICBsb2dfcHJpY2VfZGlmZiB+IFVuYXZhaWxhYmxlLlNoYXJlK2dlbl91bmNvbnRyb2xsZWQgK3VuZXhwZWN0ZWRfcmVuZXdhYmxlcyArIGdlbl90b3QrDQogICAgY3JlbmVhdSArIGZhY3RvcihhdWN0aW9uX2JlZm9yZSksDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkKQ0KDQpgYGANCg0KDQpgYGB7ciwgcmVzdWx0cyA9ICdhc2lzJ30NCiMgQ3JlYXRlIExhVGVYIGNvZGUgd2l0aCByZWdyZXNzaW9uIHJlc3VsdHMNCnJlZ191bmF2YWlsYWJpbGl0eSA8LSBzdGFyZ2F6ZXIobV91bmF2YWlsLCBtX3JlYWxfdW5hdmFpbCwgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG1fcHJlZF9yZWFsX3VuYXZhaWwsIG1fc2hhcmUsDQogICAgdHlwZSA9ICJodG1sIiwNCiAgICB0aXRsZSA9ICJSZWdyZXNzaW9uIFJlc3VsdHMiLA0KICAgIGNvbHVtbi5sYWJlbHMgPSBjKCJVbmF2YWlsYWJpbGl0eSIsICJBY3RpdmUiLCAiUkYgcHJlZGljdGVkIiwgJ1NoYXJlJyksDQogICAga2VlcCA9IGMoJ0NvbnN0YW50JywgJ3VuZXhwZWN0ZWRfcmVuZXdhYmxlcycsJ1VuYXZhaWxhYmxlLkNhcGFjaXR5JywncmVhbF91bmF2YWlsYWJpbGl0eScsDQogICAgICAgICAgICAgJ3ByZWRpY3RlZF9yZWFsX3VuYXZhaWxhYmlsaXR5JywgJ1VuYXZhaWxhYmxlLlNoYXJlJywgDQogICAgICAgICAgICAgJ2dlbl91bmNvbnRyb2xsZWQnLCAnZ2VuX3RvdCcpLA0KICAgIG9yZGVyID0gYygnQ29uc3RhbnQnLCAndW5leHBlY3RlZF9yZW5ld2FibGVzJywgJ1VuYXZhaWxhYmxlLkNhcGFjaXR5JywgJ3JlYWxfdW5hdmFpbGFiaWxpdHknLA0KICAgICAgICAgICAgICAncHJlZGljdGVkX3JlYWxfdW5hdmFpbGFiaWxpdHknLCAnVW5hdmFpbGFibGUuU2hhcmUnLCANCiAgICAgICAgICAgICAgJ2dlbl91bmNvbnRyb2xsZWQnLCAnZ2VuX3RvdCcpDQogKQ0KYGBgDQoNClVzZSB0aGUgcmV2aXNpb24gb2YgdGhlIGZvcmVjYXN0IGFzIGFuIGluc3RydW1lbnQNCg0KYGBge3J9DQojIHBlcmZvcm0gZmlyc3Qgc3RhZ2UgcmVncmVzc2lvbg0KbV9pbnRyYWRheV9pbmZvcm1hdGlvbl9zaG9jayA8LSBsbSgNCiAgbG9nX3ByaWNlX2RpZmYgfiByZWFsX3VuYXZhaWxhYmlsaXR5ICsgaW50cmFkYXlfdXBkYXRlX3JlbmV3YWJsZXMgDQogICtnZW5fdW5jb250cm9sbGVkICArIGdlbl90b3QsDQogIGRhdGE9IGZpcnN0X3N0YWdlX2NvbWJpbmVkXzUgKQ0KDQptX2ludHJhZGF5X2NvbnRyb2wgPC0gbG0oDQogIGxvZ19wcmljZV9kaWZmIH4gcmVhbF91bmF2YWlsYWJpbGl0eSArIGludHJhZGF5X3VwZGF0ZV9yZW5ld2FibGVzIA0KICArZ2VuX3VuY29udHJvbGxlZCArdW5leHBlY3RlZF9yZW5ld2FibGVzICsgZ2VuX3RvdCArIGZhY3RvcihjcmVuZWF1KSwNCiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWRfNSApDQoNCm1faW50cmFkYXlfd2l0aG91dF9yZW5ldyA8LSBsbSgNCiAgbG9nX3ByaWNlX2RpZmYgfiBpbnRyYWRheV91cGRhdGVfcmVuZXdhYmxlcyArIHJlYWxfdW5hdmFpbGFiaWxpdHkgKyBnZW5fdG90ICsgZmFjdG9yKGNyZW5lYXUpLA0KICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZF81ICkNCg0KYGBgDQoNCg0KYGBge3IsIHJlc3VsdHMgPSAnYXNpcyd9DQojIENyZWF0ZSBMYVRlWCBjb2RlIHdpdGggcmVncmVzc2lvbiByZXN1bHRzDQpyZWdfaW50cmFkYXkgPC0gc3RhcmdhemVyKG1faW50cmFkYXlfaW5mb3JtYXRpb25fc2hvY2ssIG1faW50cmFkYXlfY29udHJvbCwgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG1faW50cmFkYXlfd2l0aG91dF9yZW5ldywNCiAgICB0eXBlID0gImh0bWwiLA0KICAgIHRpdGxlID0gIlJlZ3Jlc3Npb24gUmVzdWx0cyIsDQogICAgY29sdW1uLmxhYmVscyA9IGMoIkludHJhZGF5IFJldmlzaW9uIiwgIkZFIiwgIndpdGhvdXQgcmVuZXdhYmxlcyIpLA0KICAgIGtlZXAgPSBjKCdDb25zdGFudCcsICd1bmV4cGVjdGVkX3JlbmV3YWJsZXMnLCdyZWFsX3VuYXZhaWxhYmlsaXR5JywnaW50cmFkYXlfdXBkYXRlX3JlbmV3YWJsZXMnLCAnZ2VuX3VuY29udHJvbGxlZCcsICdnZW5fdG90JykNCiApDQpgYGANCkRpc2VudGFuZ2xlIHdoaWNoIG9mIHRoZSBmZXcgaW5zdHJ1bWVudHMgSSBoYXZlIGZvciBzdXBwbHkgYXJlIGRyaXZpbmcgdGhlIHJlbGV2YW5jZSBvZiBteSBnZW5fdW5jb250cm9sbGVkIGluc3RydW1lbnQNCg0KYGBge3J9DQpmaXJzdF9zdGFnZV9jb21iaW5lZCRwcmljZSA8LSBhcy5udW1lcmljKGZpcnN0X3N0YWdlX2NvbWJpbmVkJHByaWNlKQ0KIyBwZXJmb3JtIGZpcnN0IHN0YWdlIHJlZ3Jlc3Npb24NCm1fcmVuZXdhYmxlcyA8LSBsbSgNCiAgbG9nKHByaWNlKSB+IFNvbGFyICsgYFdpbmQgT25zaG9yZWArIGBIeWRybyBSdW4tb2Ytcml2ZXIgYW5kIHBvdW5kYWdlYCwNCiAgZGF0YT0gZmlyc3Rfc3RhZ2VfY29tYmluZWQpDQoNCm1fcmVuZXdhYmxlc19GRSA8LSBsbSgNCiAgbG9nKHByaWNlKSB+IFNvbGFyICsgYFdpbmQgT25zaG9yZWAgKyBgSHlkcm8gUnVuLW9mLXJpdmVyIGFuZCBwb3VuZGFnZWAgKyBnZW5fdG90ICsgZmFjdG9yKGNyZW5lYXUpLA0KICBkYXRhPSBmaXJzdF9zdGFnZV9jb21iaW5lZCApDQoNCmBgYA0KDQoNCmBgYHtyLCByZXN1bHRzID0gJ2FzaXMnfQ0KIyBDcmVhdGUgTGFUZVggY29kZSB3aXRoIHJlZ3Jlc3Npb24gcmVzdWx0cw0KcmVnX3JlbmV3YWJsZXMgPC0gc3RhcmdhemVyKG1fcmVuZXdhYmxlcywgbV9yZW5ld2FibGVzX0ZFLA0KICAgIHR5cGUgPSAiaHRtbCIsDQogICAgdGl0bGUgPSAiUmVncmVzc2lvbiBSZXN1bHRzIiwNCiAgICBjb2x1bW4ubGFiZWxzID0gYygiSW50cmFkYXkgUmV2aXNpb24iLCAiRkUiLCAid2l0aG91dCByZW5ld2FibGVzIiksDQogICAga2VlcCA9IGMoJ0NvbnN0YW50JywnU29sYXInLCdXaW5kIE9uc2hvcmUnLCAnSHlkcm8gUnVuLW9mLXJpdmVyIGFuZCBwb3VuZGFnZScsICd1bmV4cGVjdGVkX3JlbmV3YWJsZXMnLCdyZWFsX3VuYXZhaWxhYmlsaXR5JywnaW50cmFkYXlfdXBkYXRlX3JlbmV3YWJsZXMnLCAnZ2VuX3VuY29udHJvbGxlZCcsICdnZW5fdG90JykNCiApDQpgYGANCg0K</div>
 
 
 

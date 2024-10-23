@@ -8,8 +8,8 @@ library(stargazer)
 
 Sys.setenv(lang = "en_US")
 
-save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo'
-setwd(save_path)
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+setwd(save_path_esp)
 final_indispo <- read_parquet('final_indispo.parquet')
 
 final_indispo <- final_indispo %>% 
@@ -19,14 +19,6 @@ final_indispo <- final_indispo %>%
 auction_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/intra_day_prices/OMIE-auction-market-data'
 setwd(auction_path)
 price_data <- read_parquet('auction_price_data_21_22.parquet')
-
-
-# price_data <- price_data %>% 
-#   mutate(datetime = as.POSIXct(
-#          paste(year, month, day, creneau-1), format="%Y %m %d %H", tz='UTC')
-#   )
-
-# Compute log difference
 
 
 price_diff_data <- price_data %>%
@@ -42,10 +34,11 @@ price_diff_data <- price_data %>%
 
 final_indispo <- final_indispo %>% 
   mutate( auction_after = ifelse(auction_before == 6 & auction_after == 2,
-                 7, auction_after))
+                 7, auction_after),
+          datetime = as.POSIXct(paste(electricity_delivery_date, creneau-1)
+              , format="%Y-%m-%d %H", tz = 'UTC'))
 
-colnames(final_indispo)
-colnames(price_diff_data)
+
 first_stage_data <- left_join(price_diff_data, final_indispo,
   by= c('auction_before', 'auction_after', 'datetime', 'creneau'))
 
@@ -78,12 +71,12 @@ reg_data$idcode <- as.character(paste(reg_data$creneau,
          reg_data$auction_before ))
 
 
-setwd(save_path)
+setwd(save_path_esp)
 write_parquet(reg_data, 'first_stage_data.parquet')
 
 
 
-setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp')
+
 updated_final_indispo <- read_parquet('updated_final_indispo.parquet')
 updated_final_indispo <- updated_final_indispo %>% 
   mutate(datetime = as.POSIXct(paste(electricity_delivery_date, creneau-1)
@@ -103,7 +96,7 @@ first_stage_data <- first_stage_data %>%
 # on commence a regarder des normalisations alternatives
 # on peut aller chercher la puissance totale dans l'heure
 
-setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp')
 
 generation_by_fuel <-  read_parquet('generation_by_fuel.parquet')
 
@@ -146,8 +139,7 @@ my_reg_data <- my_reg_data %>%
 my_reg_data$idcode <- as.character(paste(my_reg_data$creneau,
                                          my_reg_data$auction_before ))
 
-# test <- my_reg_data %>% filter(real_unavailability_share>0)
+test <- my_reg_data %>% filter(real_unavailability_share>0)
 # View(test[, c('real_unavailability_share','centrale_unavailability_share')])
-setwd('C:/Users/nchu/Desktop/DATA/merged_data')
 
 write_parquet(my_reg_data, 'updated_first_stage_data.parquet')

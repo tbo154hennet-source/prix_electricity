@@ -6,7 +6,7 @@ library(lubridate)
 
 Sys.setenv(lang = "en_US")
 
-save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo'
+save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 
 setwd(save_path)
 pure_indispo_data <- read_parquet('pure_indispo_data.parquet')
@@ -20,10 +20,10 @@ colnames(pure_indispo_data)
 # des deuxiemes ou troisiemes versions
 # qui ne traduisent que des ajustements d'indisponibilites deja connues
 
-n_bre <- nchar('REPSOLEYG------2021VI0915')
-
-indispo_IIP_data %>% 
-  filter(substr(Message.ID, 1, n_bre)=='REPSOLEYG------2021VI0915')
+# n_bre <- nchar('REPSOLEYG------2021VI0915')
+# 
+# indispo_IIP_data %>% 
+#   filter(substr(Message.ID, 1, n_bre)=='REPSOLEYG------2021VI0915')
 
 # pour quelques exemples, n'a pas l'air d'etre le cas
 
@@ -153,8 +153,10 @@ headers <- final_headers[-which(final_headers %in%
 non_duplicated_indispo <- non_duplicated_indispo %>%
   select(all_of(final_headers))
 
-# write_parquet(non_duplicated_indispo, 'non_duplicated_indispo.parquet')
+write_parquet(non_duplicated_indispo, 'non_duplicated_indispo.parquet')
 
+
+non_duplicated_indispo <- read_parquet('non_duplicated_indispo.parquet')
 
 # get long format for every hour of the day
 # get the corresponding line with unavailability
@@ -187,15 +189,18 @@ long_format <- function(row){
 }
 
 
+
+
+
 # test <- non_duplicated_indispo[1:5,]
 # 
 # result_hours <- apply(test, 1, long_format)
 
 result_hours <- apply(non_duplicated_indispo, 1, long_format)
 
-# write_parquet(long_format_indispo, 'long_format_indispo.parquet')
+write_parquet(long_format_indispo, 'long_format_indispo.parquet')
 
-
+#test <- long_format_indispo %>% filter(electricity_delivery_date=='2021-09-25')
 
 # 1st_affec_tim_period","last_affec_tim_period"
 # "chevauche", in auction time
@@ -207,6 +212,7 @@ final_indispo <- long_format_indispo %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
+#test <- final_indispo %>% filter(electricity_delivery_date=='2021-09-25')
 
 write_parquet(final_indispo, 'final_indispo.parquet')
 

@@ -10,8 +10,8 @@ path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant'  # R
 os.chdir(path)
 os.getcwd()
 # Define start and end dates
-start_date = pd.Timestamp('20210501', tz='Europe/Brussels')
-end_date = pd.Timestamp('20211001', tz='Europe/Brussels')
+start_date = pd.Timestamp('20210801', tz='Europe/Brussels')
+end_date = pd.Timestamp('20210901', tz='Europe/Brussels')
 #end_date = pd.Timestamp('20150201', tz='Europe/Brussels')
 
 # Generate monthly date ranges
@@ -36,5 +36,6 @@ for date in monthly_dates:
     pq.write_table(my_table, string)
     # Print a message indicating the successful query
     print(f"Data queried successfully for the month: {start_month.strftime('%Y-%m')}")
+
 
   

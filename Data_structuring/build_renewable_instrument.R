@@ -23,8 +23,8 @@ price_data <-unique(price_data)
 colnames(price_data) <- c('spot_price', 'datetime')
 
 
-#setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Intraday_wind_and_solar_forecasts')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/fr')
+
 generation_data <- NULL
 my_files <- list.files()
 headers <- c("('Wind Onshore', 'Actual Aggregated')",
@@ -70,13 +70,14 @@ weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
 }
 
-print(class(generation_data))
-nrow(generation_data)
 
 my_generation_data <- generation_data %>% 
   ungroup() %>%  # Ungroup the row-wise data frame
   as.data.frame()  # Convert to standard data frame
 # Sample the data
+
+
+
 
 renewable_data <- my_generation_data %>% 
   mutate(month= month(datetime),
@@ -124,7 +125,10 @@ price_renew <- merge(price_data,
 price_renew_hors_crise <- price_renew %>% 
   filter(year!='2022')
 
+save_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo"
 setwd(save_path)
+
+write_parquet(my_generation_data , 'generation_data.parquet')
 
 write_parquet(price_renew, 'price_renew.parquet')
 

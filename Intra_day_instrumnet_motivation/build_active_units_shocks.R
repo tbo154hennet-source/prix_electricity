@@ -14,7 +14,8 @@ library(tidyr)
 library(lubridate)
 
 Sys.setenv(lang = "en_US")
-setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp/data_generation_by_plant')
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant/esp')
 
 
 generation_per_unit <- NULL
@@ -72,8 +73,8 @@ generation_per_unit$`__index_level_0__` <-
 generation_per_unit <- generation_per_unit %>% 
   mutate(`ABOÑO 1`= ifelse(is.na(`ABOÑO 1`), `ABO¿O 1`, `ABOÑO 1`),
          `ABOÑO 2`= ifelse(is.na(`ABOÑO 2`), `ABO¿O 2`, `ABOÑO 2`)
-         ) %>% 
-select(-`ABO¿O 1`, `ABO¿O 2`)
+  ) %>% 
+  select(-`ABO¿O 1`, `ABO¿O 2`)
 
 my_exact_names <- my_exact_names %>% 
   filter(output1!='ABO¿O 1' & output1!='ABO¿O 2')
@@ -94,8 +95,6 @@ my_exact_names <- my_exact_names %>%
 # en comparamt les codes excel et les noms deformes
 
 
-setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp/data_generation_by_plant')
-
 corres <- read_csv('TABLE_CORRES.csv')
 
 colnames(corres) <- c('name', 'prod_type', 'code')
@@ -107,15 +106,19 @@ corres$code <- gsub("\\?", " ", corres$code)
 # Replace '??' with n tilde in the 'strings' column
 corres$name <- gsub("\\?\\?", "Ñ", corres$name)
 
-
-setwd('C:/Users/nchu/Desktop/DATA/power-plant/IIP_indispo')
-long_format_indispo <- read_parquet('long_format_indispo.parquet')
-
-
 # j'ai besoin de long_format_indispo
 # le format indispo heure par heure,
 # ou je n'ai pas encore tout aggrege en sommant les indispos
 # utiliser read_IPP_plant_suite
+
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+setwd(save_path_esp)
+
+
+long_format_indispo <- read_parquet('long_format_indispo.parquet')
+
+
+
 
 
 long_format_indispo_up <- long_format_indispo %>% 
@@ -139,17 +142,8 @@ long_format_indispo_up <- long_format_indispo_up %>%
            ifelse(substr(Affected.Asset.or.Unit, 1, 1)=='C', 
                   substr(Affected.Asset.or.Unit,2, nchar(Affected.Asset.or.Unit)),
                   Affected.Asset.or.Unit))
-setwd('C:/Users/nchu/Desktop/DATA/power-plant/IIP_indispo')
-non_duplicated_indispo <- read_parquet('non_duplicated_indispo.parquet')
-nuclear_is_cool <- non_duplicated_indispo %>% 
-  filter(Fuel.Type=='Nuclear')
-# test <- non_duplicated_indispo_up %>% 
-#   arrange(Affected.Asset.or.Unit)%>% 
-#   distinct(as.numeric(Installed.Capacity)             
-#                            ,Fuel.Type                      
-#                            ,Affected.Asset.or.Unit
-#                            , .keep_all = TRUE)
-# View(test)
+
+
 
 long_format_indispo_up <- merge(long_format_indispo_up, corres,
          by.x = c("Fuel.Type","Affected.Asset.or.Unit"),
@@ -168,7 +162,7 @@ long_format_indispo_up <- merge(long_format_indispo_up, corres,
 # for instance the last four tuesdays
 
 long_format_indispo_up$day_of_week <- 
-  weekdays(long_format_indispo_up$datetime_slot)
+  as.factor(weekdays(long_format_indispo_up$datetime_slot))
 
 
 # unit <- "BESOS 3"
@@ -246,14 +240,19 @@ long_format_indispo_up <- long_format_indispo_up %>%
   mutate(centrale = sapply(strsplit(name, " "), function(x) trimws(x[1])),
          centrale = substr(centrale, 1, 3))
 
-
-test <- long_format_indispo_up[125:150,]
+#on peut faire mieux avec un mini modèle de prévision
+#notamment pour tenir compte des renouvelables disponibles
 
 
 # Remove rows with NA in datetime_slot
 long_format_indispo_up <- long_format_indispo_up %>%
   filter(!is.na(datetime_slot))
-colnames(test)
+
+setwd(save_path_esp)
+
+write_parquet(long_format_indispo_up,'long_format_indispo_up.parquet')
+
+
 my_true_indispo <- long_format_indispo_up %>%
 # my_test <- test %>%
   rowwise() %>%
@@ -274,13 +273,12 @@ my_true_indispo <- long_format_indispo_up %>%
 #        sum_d_centrale_prod = get_prod_centrale(name,centrale, datetime_slot)[[4]]) %>%
 # 
 
-setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp')
 
 
 # write_parquet(my_true_indispo, 'true_indispo.parquet')
 
 
-
+setwd(save_path_esp)
 my_true_indispo <- read_parquet('true_indispo.parquet')
 
 
@@ -324,21 +322,16 @@ my_true_indispo <- my_true_indispo %>%
   )
  
 
-updated_final_indispo <- my_true_indispo %>% 
+updated_non_duplicated_indispo <- my_true_indispo %>% 
   # seuil contestable pour enlever les variations parasites
-  filter(real_unavailability > 50 )
+  filter(real_unavailability > 50 ) %>% 
+  distinct()
 
-# setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp')
-# 
-# write_parquet(updated_final_indispo,
-#               'short_indispo_2021_2022.parquet')
-# 
-# nuclear_indispo <- updated_final_indispo %>% 
-#   filter(Fuel.Type == 'Nuclear')
-# write_parquet(nuclear_indispo,
-#               'nuclear_indispo.parquet')
+write_parquet(updated_non_duplicated_indispo,
+              'updated_non_duplicated_indispo.parquet')
+
 # colnames(updated_final_indispo)
-updated_final_indispo <- updated_final_indispo %>% 
+updated_final_indispo <- updated_non_duplicated_indispo %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(Installed.Capacity = sum(as.numeric(Installed.Capacity)),
@@ -347,34 +340,30 @@ updated_final_indispo <- updated_final_indispo %>%
             centrale_unavailability = sum(as.numeric(centrale_unavailability))) %>%
   ungroup()
 
-setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp')
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+setwd(save_path_esp)
+
+
+#spicifically nuclear
+
+nuclear_indispo <- my_true_indispo %>%
+  filter(Fuel.Type == 'Nuclear')%>% 
+  # seuil contestable pour enlever les variations parasites
+  filter(real_unavailability > 50 )
+
+nuclear_final_indispo <- nuclear_indispo %>% 
+  group_by(electricity_delivery_date, auction_before,
+           auction_after, creneau) %>% 
+  summarise(Installed.Capacity = sum(as.numeric(Installed.Capacity)),
+            theoretical_unavailability = sum(as.numeric(Unavailable.Capacity)),
+            real_unavailability = sum(as.numeric(real_unavailability)),
+            centrale_unavailability = sum(as.numeric(centrale_unavailability))) %>%
+  ungroup()
+
+write_parquet(nuclear_final_indispo,
+              'nuclear_final_indispo.parquet')
 
 write_parquet(updated_final_indispo,
               'updated_final_indispo.parquet')
 
-# 
-# 
-# setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp/installed_capacity')
-# 
-# unique_installed_units <- read_csv('unique_installed_units.csv')
-# 
-# 
-# # Pivot the dataframe longer to have codes in rows
-# df_long <- pivot_longer(df, cols = starts_with("Code"), names_to = "Code_Num", values_to = "Code")
-# 
-# # Remove rows with NA codes
-# df_long <- df_long[complete.cases(df_long$Code), ]
-# 
-# # Merge with the original dataframe to repeat information
-# result <- merge(df_long, df[c("Nom", "Puissance")], by = c("Nom", "Puissance"))
-# 
-# # Reorder columns if necessary
-# result <- result[c("Nom", "Puissance", "Code", "Code_Num")]
-# 
-# # we take at magnitude of the shock the power of the last day 
-# # for the same time slot
-# 
-# View(test[,c('Installed.Capacity'             
-#              ,'Fuel.Type'                      
-#              ,'Affected.Asset.or.Unit')])
 

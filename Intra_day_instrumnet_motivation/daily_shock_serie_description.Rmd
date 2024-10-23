@@ -1,0 +1,371 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Load all the relevant packages
+```{r include=FALSE}
+library(readr)
+library(dplyr)
+library(readxl)
+library(arrow)
+library(lubridate)
+# Load the psych package
+library(psych)
+
+Sys.setenv(lang = "en_US")
+
+```
+
+# Presentation of the shock series
+
+Load the data
+```{r}
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+setwd(save_path_esp)
+
+final_indispo <- read_parquet( 'final_indispo.parquet')
+
+updated_non_duplicated_indispo <- read_parquet('updated_non_duplicated_indispo.parquet')
+
+non_duplicated_indispo <- read_parquet('non_duplicated_indispo.parquet')
+
+
+real_indispo_rf <- read_parquet('real_indispo_rf.parquet')
+
+real_non_zero_previous_indispo <- read_parquet('real_non_zero_previous_indispo.parquet')
+
+complete_data <- read_parquet('complete_indispo_data.parquet')
+
+
+```
+
+Some summary statistics on the shocks themselves
+
+```{r}
+
+summary_stat <- non_duplicated_indispo %>% 
+  mutate(hours_affected = as.numeric(last_affec_tim_period) - as.numeric(first_affec_tim_period),
+         Fuel.Type = factor(Fuel.Type),
+         duration = as.numeric(duration),
+          Unavailable.Capacity = as.numeric( Unavailable.Capacity)
+         ) %>% 
+  select(hours_affected, Fuel.Type,
+         duration, Unavailable.Capacity, datetime_pub,
+         electricity_delivery_date)
+# summary_stat[, c()] 
+ 
+# Get summary statistics for the data frame
+# Example usage with the built-in mtcars dataset
+describe(summary_stat)
+```
+
+
+
+```{r}
+# Charger le package patchwork pour combiner les graphiques
+library(patchwork)
+library(cowplot)
+library(gridExtra)
+library(grid)
+library(latex2exp)
+library(ggplot2)
+
+non_duplicated_indispo$year <- year(non_duplicated_indispo$datetime_pub)
+updated_non_duplicated_indispo <- updated_non_duplicated_indispo %>% 
+  mutate(datetime_pub = as.POSIXct(paste(electricity_delivery_date, creneau-1)
+              , format="%Y-%m-%d %H", tz = 'UTC'),
+         year = year(datetime_pub))
+
+
+updated_plot_data <- updated_non_duplicated_indispo %>% 
+  select(datetime_pub, real_unavailability, Fuel.Type, year) %>% 
+  group_by(year, Fuel.Type) %>% 
+  summarise(real_unavailability.mean = mean(as.numeric(real_unavailability)),
+         n_indispo = n())
+
+plot_data <- non_duplicated_indispo %>% 
+  select(datetime_pub, Unavailable.Capacity, Fuel.Type, year) %>% 
+  group_by(year, Fuel.Type) %>% 
+  summarise(Unavailable.Capacity.mean = mean(as.numeric(Unavailable.Capacity)),
+         n_indispo = n()) %>% 
+  filter(Fuel.Type %in% updated_plot_data$Fuel.Type) 
+
+# Premier graphique: Unavailable Capacity par Fuel Type
+plot1 <- ggplot() +
+  geom_bar(data = plot_data, aes(x = as.factor(year), y = Unavailable.Capacity.mean, fill = Fuel.Type), alpha=0.4,
+           stat = "identity", position = "dodge") +
+  
+  geom_bar(data = updated_plot_data, aes(x = as.factor(year), y = real_unavailability.mean, fill = Fuel.Type), 
+           stat = "identity", position = "dodge") +
+  
+  labs(x = 'Date de publication', y = "Unavailable Capacity") +
+  theme_minimal()
+
+custom_legend <- cowplot::get_legend(plot1)
+
+plot1 <-plot1 +
+  theme(legend.position = "none")
+  
+# Deuxième graphique: Nombre d'indisponibilités (n_indispo)
+plot2 <- ggplot() +
+  geom_bar(data = plot_data, aes(x = as.factor(year), y = -n_indispo, fill = Fuel.Type), alpha=0.4, 
+           stat = "identity", position = "dodge") +
+  geom_bar(data = updated_plot_data, aes(x = as.factor(year), y = -n_indispo, fill = Fuel.Type), 
+           stat = "identity", position = "dodge") +
+  labs(y = "Nombre d\'indisponibilités") +
+  theme_minimal()+
+  theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
+        axis.text.x = element_blank(),
+        legend.position = "none")  # Désactiver les ticks de l'axe des x
+  # Ajouter un titre personnalisé comme annotation
+  #+annotate("text", x = Inf, y = -Inf, label = "Number of Power Outages", 
+           #hjust = 1.4, vjust = -1.5, size = 5)
+# Assembler les deux graphiques verticalement avec patchwork
+combined_plot <- plot1 / plot2 #+ draw_plot(custom_legend, x = 0.8, y = 0.5, width = 0.2, height = 0.5)
+# Combine the grid with the legend
+final_plot <- plot_grid(combined_plot, custom_legend ,
+                        ncol = 2, rel_heights = c(1, 0.1))
+
+
+
+# Afficher le graphique combiné
+final_plot
+
+```
+
+Deuxième graphique avec la méthode de prévision par random forest
+
+```{r}
+
+real_plot_pred_data <- real_indispo_rf %>% 
+  mutate(year=year(datetime)) %>%
+  distinct(predicted_real_unavailability, name, year, Fuel.Type) %>%
+  group_by(year, Fuel.Type) %>% 
+  summarise(predicted_real_unavailability.mean = mean(as.numeric(predicted_real_unavailability)),
+         n_indispo = n())
+
+plot_data <- plot_data %>% 
+  filter(Fuel.Type %in% real_plot_pred_data$Fuel.Type) 
+
+updated_plot_data <- updated_plot_data %>% 
+  filter(Fuel.Type %in% real_plot_pred_data$Fuel.Type) 
+
+```
+
+On combine toutes les informations sur un même graphique
+
+
+```{r}
+
+# Premier graphique: Unavailable Capacity par Fuel Type
+plot1 <- ggplot() +
+  geom_bar(data = plot_data, aes(x = as.factor(year), y = Unavailable.Capacity.mean, fill = Fuel.Type), alpha=0.4,
+           stat = "identity", position = "dodge") +
+  
+  geom_bar(data = updated_plot_data, aes(x = as.factor(year), y = real_unavailability.mean, fill = Fuel.Type), 
+           stat = "identity", position = "dodge",alpha=0.8, color= 'black' ) 
+plot1 <- plot1 +
+  geom_point(data= real_plot_pred_data, mapping = aes(x = as.factor(year), y = -predicted_real_unavailability.mean, color = Fuel.Type), size = 3, position = position_dodge(width = 0.85)) +  
+  # Ajouter des points pour la moyenne et espacer
+  geom_linerange(data= real_plot_pred_data, 
+                 aes(x= as.factor(year), 
+      ymin = 0, ymax = -predicted_real_unavailability.mean, color = Fuel.Type), 
+                 size = 1,
+                 position = position_dodge(width = 0.85)) + 
+    labs(x = 'Date de publication', y = "Unavailable Capacity") +
+  theme_minimal()
+
+custom_legend <- cowplot::get_legend(plot1)
+
+plot1 <-plot1 +
+  theme(legend.position = "none")
+  
+# Deuxième graphique: Nombre d'indisponibilités (n_indispo)
+plot2 <- ggplot() +
+  geom_bar(data = plot_data, aes(x = as.factor(year), y = -n_indispo, fill = Fuel.Type), alpha=0.4, 
+           stat = "identity", position = "dodge") +
+  geom_bar(data = updated_plot_data, aes(x = as.factor(year), y = -n_indispo, fill = Fuel.Type), 
+           stat = "identity", position = "dodge",alpha=0.8, color= 'black') +
+  labs(y = "Nombre d\'indisponibilités") +
+  theme_minimal() # Désactiver les ticks de l'axe des x
+
+
+plot2 <- plot2 +
+  geom_point(data= real_plot_pred_data, mapping = aes(x = as.factor(year), y = -n_indispo, color = Fuel.Type), size = 3, position = position_dodge(width = 0.85)) +  
+  # Ajouter des points pour la moyenne et espacer
+  geom_linerange(data= real_plot_pred_data, 
+                 aes(x= as.factor(year), 
+      ymin = 0, ymax = -n_indispo, color = Fuel.Type), 
+                 size = 1,
+                 position = position_dodge(width = 0.85)) + 
+  
+  theme_minimal()+
+  theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
+        axis.text.x = element_blank(),
+        legend.position = "none") 
+
+  # Ajouter un titre personnalisé comme annotation
+  #+annotate("text", x = Inf, y = -Inf, label = "Number of Power Outages", 
+           #hjust = 1.4, vjust = -1.5, size = 5)
+# Assembler les deux graphiques verticalement avec patchwork
+combined_plot <- plot1 / plot2 #+ draw_plot(custom_legend, x = 0.8, y = 0.5, width = 0.2, height = 0.5)
+# Combine the grid with the legend
+final_plot <- plot_grid(combined_plot, custom_legend ,
+                        ncol = 2, rel_heights = c(1, 0.1))
+
+
+
+# Afficher le graphique combiné
+final_plot
+
+
+```
+
+Je peux faire une légende des formes
+
+On plotte maintenant les séries en question
+
+
+```{r}
+my_plot <- ggplot() +
+  geom_line(data= complete_data, aes(x =datetime , y = Unavailable.Capacity),
+            stat = "identity", position = "dodge") +
+  labs(x= 'Electricity delivery date', y = "Unavailable Capacity (in MW)",
+       title = "Power outages news shock") +
+  geom_line(data= complete_data, aes(x =datetime , y = real_unavailability),
+    stat = "identity", position = "dodge", color = 'blue')+
+  geom_line(data= complete_data, aes(x =datetime , y = nuclear_real_unavailability),
+    stat = "identity", position = "dodge", color = 'red')+
+    geom_line(data= complete_data, aes(x =datetime , y = -predicted_real_unavailability),
+    stat = "identity", position = "dodge", color = 'green')+
+  theme_minimal()
+
+my_plot
+```
+
+
+
+Those figures are to be compared with the total capacity installed in Spain that is between 120 (ENTSOE platform data for 2024) and 150 GW (sum of IIP installed capacity).
+The daily generation of energy is about 80 GWh.
+The hourly generation power ranges between 20 GW at the night without wind and 40 GW during the day
+(not very clear on the entsoe website)
+
+Thus, the kind of shocks that we are looking at are in magnitude of 500 MW to 2GW that is at most 2% of electricity generation.
+
+Nota bene: it could depend on whether this plant was supposed to generate electricity, maybe get the generation schedule, to deduce which have low marginal cost,
+maybe it depends from fuel type and whether or not 'pilotable'
+
+This magnitude is rather small.
+Yet, we expect that the price setting mechanism of marginal pricing will have a substantial (and maybe discontinuous) impact on prices by forcing a new high-cost unit to produce on the market.
+
+
+
+
+```{r}
+setwd('C:/Users/nchu/Desktop/DATA/power-plant/IIP_indispo')
+write_parquet(complete_data, 'completed_shock_series.parquet')
+```
+
+# Renewable intermittence shock serie
+
+Load associated data
+```{r}
+setwd('C:/Users/nchu/Desktop/DATA/merged_data')
+renewable_shock_series <- read_parquet(
+              'renewable_shock_series.parquet')
+```
+
+Get some summary statistics
+
+```{r}
+# some summary stat
+describe(renewable_shock_series)
+```
+
+
+
+Plot the difference between the two graphs
+
+```{r}
+date_time_string <- "2021/01/07 00:00:00"
+
+# Convert to POSIXct
+posixct_date_time <- as.POSIXct(date_time_string, format = "%Y/%m/%d %H:%M:%S")
+
+renewable_shock_first_week <- renewable_shock_series%>% 
+  filter(datetime < posixct_date_time )
+
+my_plot <- ggplot(data =renewable_shock_first_week)+
+  geom_line(aes(x =datetime , y = intraday_solar_forecast), color = 'darkblue') +
+geom_line(aes(x =datetime , y = day_before_solar_forecast), color = 'lightblue') +
+  geom_line(aes(x =datetime , y = intraday_wind_forecast), color = 'darkgreen') +
+  geom_line(aes(x =datetime , y = day_before_wind_forecast), color = 'lightgreen') +
+  labs(x= 'Electricity delivery date', y = "Difference between the two predictions", 
+       title = "Intermittence uncertainty news shock") +
+  theme_minimal()
+
+my_plot
+```
+
+
+
+
+Plot the suprise series
+```{r}
+
+
+library(tidyverse)
+colnames(renewable_shock_series)
+# print(class(plot_data$electricity_delivery_date))
+
+my_plot <- ggplot(renewable_shock_series, aes(x =datetime , y = uncertainty_shock)) +
+  geom_line(stat = "identity", position = "dodge") +
+  labs(x= 'Electricity delivery date', y = "Difference between the two predictions", 
+       title = "INtermittence uncertainty news shock") +
+  theme_minimal()
+
+my_plot
+```
+
+
+# Presentation of the price series
+
+```{r}
+auction_path <- 'C:/Users/nchu/Desktop/DATA/elec_market_data/OMIE-auction-market-data'
+setwd(auction_path)
+price_data <- read_parquet('auction_price_data_21_22.parquet')
+price_data$price <- as.numeric(price_data$price)
+```
+
+The 7 auctions can give rise to different price series.
+
+Let's look at it first on a single day window
+
+```{r}
+price_data_2021_09_09 <- price_data %>% 
+  filter(year=='2021' & month=='6' & day == '24')
+
+my_plot <- ggplot(price_data_2021_09_09, aes(x =datetime , y = price, color= auction)) +
+  geom_line() +
+  labs(x= 'Date', y = "Price (in €)", 
+       title = "Electricty price series on the auction intra-day market") +
+  theme_minimal()
+
+my_plot
+```
+
+
+This is an overview of what it looks like on the whole time span
+
+```{r}
+# rm(auction, envir = .GlobalEnv)
+my_plot <- ggplot(price_data, aes(x =datetime , y = price, color= auction)) +
+  geom_line() +
+  labs(x= 'Date', y = "Price (in €)", 
+       title = "Electricty price series on the auction intra-day market") +
+  theme_minimal()
+
+my_plot
+```
+
