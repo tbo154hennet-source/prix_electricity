@@ -75,6 +75,11 @@ setwd(save_path_fr)
 write_parquet(generation_per_unit, 'generation_per_unit_format.parquet')
 
 
+generation_per_unit <- read_parquet('generation_per_unit_format.parquet')
+
+print(class(my_exact_names))
+print(colnames(my_exact_names))
+View(my_exact_names %>% arrange(output1) %>% distinct())
 
 # probleme les power plant sont referencees par un code
 # qui varie dans le indispo_dataset
@@ -84,29 +89,20 @@ write_parquet(generation_per_unit, 'generation_per_unit_format.parquet')
 
 
 
-# MANIERTE PLUS ARTISANALE
-# en comparamt les codes excel et les noms deformes
-
-
-corres <- read_csv('TABLE_CORRES.csv')
-
-colnames(corres) <- c('name', 'prod_type', 'code')
-corres <- corres %>% filter(!is.na(code))
-
-
-# Replace '?' with spaces in the 'strings' column
-corres$code <- gsub("\\?", " ", corres$code)
-# Replace '??' with n tilde in the 'strings' column
-corres$name <- gsub("\\?\\?", "Ñ", corres$name)
-
 # j'ai besoin de long_format_indispo
 # le format indispo heure par heure,
 # ou je n'ai pas encore tout aggrege en sommant les indispos
 # utiliser read_IPP_plant_suite
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo')
+save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_path_fr)
+bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet")
 
-long_format_indispo <- read_parquet('long_format_indispo.parquet')
 
+
+
+
+
+colnames(bout_indispo_ENTSOE_data)
 
 long_format_indispo_up <- long_format_indispo %>% 
   # create date correponding to the beginning of the timeslot

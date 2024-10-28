@@ -108,6 +108,8 @@ setwd(save_path_fr)
 
 write_parquet(bout_indispo_ENTSOE_data, "indispo_ENTSOE_data.parquet")
 
+bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet")
+
 
 
 
