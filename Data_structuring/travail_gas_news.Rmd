@@ -38,11 +38,18 @@ labeled_news %>%
   filter(event_type=="supply") %>% 
   filter(datetime == "2022-02-04")
 ```
+```{r}
+filtered_news_distinct %>% 
+  filter(datetime == "2022-02-24")
+
+```
+
 
 ```{r}
 labeled_news %>% 
   filter(event_type=="supply") %>% 
   filter(datetime == "2022-02-24")
+
 ```
 ```{r}
 labeled_news %>% 

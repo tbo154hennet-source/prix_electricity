@@ -73,9 +73,18 @@ IV_data <- IV_data %>%
   rename(gas_price = avg_price,
          log_elec_price = log_price,
          elec_growth_rate = log_diff,
-         non_energy_index_00XE00FRM086NEST.xls = `non-energy_index_00XE00FRM086NEST.xls`) %>% 
-  mutate(log_gas_price = log(gas_price)) %>% 
+         ECB_rate= ECBMRRFR_interest_rate.xls,
+         IPI = Industrial_prod_FRAPROINDMISMEI.xls,
+         NE_Index= `non-energy_index_00XE00FRM086NEST.xls`,
+         UnE = unemployment_LRHUTTTTFRM156S.xls,
+         Exp_pi = Inflation_expectation_CSINFT02FRM460S.xls, 
+         demand_growth_rate = demand_growth_period) %>% 
+  mutate(log_gas_price = log(gas_price),
+         ipi_growth_rate = log(IPI)- log(lag(IPI)),
+         ne_growth_rate = log(NE_Index) - log(lag(NE_Index)),
+         mp_action = log(ECB_rate+1) - log(lag(ECB_rate+1))) %>% 
   select(-X)
+
 
 IV_data[is.na(IV_data)] <- 0
 
@@ -87,7 +96,7 @@ write_parquet(IV_data, 'low_freq_data.parquet')
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
-IV_data <- read_parquet('IV_data.parquet')
+IV_data <- read_parquet('low_freq_data.parquet')
 # meme chose pour IV demand
 
 # on prend le niveau en pourcentage au dessus ou au dessous de la moyenne

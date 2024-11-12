@@ -22,7 +22,7 @@ uncertainty_news = GoogleNews()
 def get_gas_news(date_str):
 
     date_str = "02/24/2022"
-    date_str = my_datetime.strftime('%m/%d/%Y')
+    #date_str = my_datetime.strftime('%m/%d/%Y')
     #news_data = supply_news
     # Convert the string to a datetime object
     date_obj = datetime.strptime(date_str, '%m/%d/%Y')
@@ -49,7 +49,8 @@ def get_gas_news(date_str):
     supply_news['event_type'] = 'supply'
     uncertainty_news['event_type'] = 'uncertainty'
 
-
+    #['date']
+    df_gas_news.to_csv('df_gas_news.csv', index=False)
     df_gas_news = pd.concat([demand_news, supply_news, uncertainty_news])
     if df_gas_news.empty==False:
         df_gas_news = df_gas_news[['title', 'date', 'datetime', 'media', 'event_type']]

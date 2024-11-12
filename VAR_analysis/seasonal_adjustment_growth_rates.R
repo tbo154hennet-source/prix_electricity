@@ -3,11 +3,12 @@ library(tidyr)
 library(stats)
 library(ggplot2)
 library(forecast)
+library(arrow)
 Sys.setenv(lang = "en_US")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
-IV_data <- read_parquet('IV_data.parquet')
+IV_data <- read_parquet('low_freq_data.parquet')
 # meme chose pour IV demand
 colnames(IV_data)
 index_variables <- c("month","year", "datetime")
