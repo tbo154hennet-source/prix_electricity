@@ -3,10 +3,6 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-The aim is to plot the different series and check as well that there is no remaining seasonality (for temperature for instance)
 
-```{r}
-plot(cars)
-```
 
 

@@ -118,7 +118,7 @@ temperature_instrument <- merge(temperature_instrument,
 temperature_instrument <- merge(temperature_instrument,
                                 HDD_excess_instrument)
 
-save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo'
+save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 
 setwd(save_path)
 write.csv(temperature_instrument, 

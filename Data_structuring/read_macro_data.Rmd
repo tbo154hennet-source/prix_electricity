@@ -20,7 +20,7 @@ Sys.setenv(lang = "en_US")
 
 ```{r}
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_repo_gitlab/DATA/macro_data/fr")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/fr")
 
 my_files <- list.files()
 # Obtenez la liste des fichiers .parquet
@@ -98,8 +98,7 @@ dates
 ```{r}
 colnames(VAR_series) <- c('datetime', dates$serie )
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_repo_gitlab/DATA/macro_data/fr")
-
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output")
 write_parquet(VAR_series, 'macro_data_monthly_index.parquet')
 ```
 

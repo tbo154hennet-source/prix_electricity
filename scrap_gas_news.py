@@ -15,9 +15,9 @@ import os
 demand_news = GoogleNews()
 supply_news = GoogleNews()
 uncertainty_news = GoogleNews()
-demand_news.get_news('gas demand')
-supply_news.get_news('gas supply')
-uncertainty_news.get_news('gas uncertainty')
+#demand_news.get_news('gas demand')
+#supply_news.get_news('gas supply')
+#uncertainty_news.get_news('gas uncertainty')
 
 def get_gas_news(date_str):
     #date_str = my_datetime.strftime('%m/%d/%Y')
@@ -61,16 +61,16 @@ store_news_data = pd.DataFrame(columns = ['title', 'date', 'datetime', 'media', 
 # Search from 1st Jan 2000
 # Search until 12th December 2023
 #attention format de date américaine mm/dd/yyyy
-jour_initial = "01/01/2006"
+jour_initial = "02/03/2021"
 my_datetime = datetime.strptime(jour_initial, '%m/%d/%Y')
 
 #test = get_gas_news(date)
 
-while (my_datetime < datetime(2023, 12, 31)):
+while (my_datetime < datetime(2022, 9, 30)):
     
     # Convert back to American date format string
     date_str = my_datetime.strftime('%m/%d/%Y')
-    if my_datetime.day == 1:
+    if my_datetime.day ==1 or my_datetime.day == 2:
         print(f"{date_str}")
     date_news = get_gas_news(date_str)
     # Use pd.concat to append the new row
@@ -79,9 +79,9 @@ while (my_datetime < datetime(2023, 12, 31)):
     my_datetime += timedelta(days=2)
     
 
-os.chdir("C:/Users/DBT3KD/Desktop/uncertainty_shocks/DATA/news_data")
+os.chdir("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data")
 os.getcwd()
-store_news_data.to_csv('store_news_data.csv', index=False)
+store_news_data.to_csv('store_news_data_dix_neuf.csv', index=False)
 
 
 

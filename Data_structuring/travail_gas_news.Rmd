@@ -1,0 +1,173 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+labeled_news %>% 
+  group_by(media) %>% 
+  summarize(n_articles = n()) %>% 
+  arrange(desc(n_articles))
+```
+
+
+```{r}
+library(stringr)
+labeled_news %>%
+  filter(str_starts(media, "Reuters"))
+```
+
+```{r}
+
+
+labeled_news %>% 
+  filter(event_type=="supply") %>% 
+  filter(datetime == "2021-12-21")
+
+```
+
+```{r}
+labeled_news %>% 
+  filter(event_type=="supply") %>% 
+  filter(datetime == "2022-04-27")
+```
+
+
+```{r}
+labeled_news %>% 
+  filter(event_type=="supply") %>% 
+  filter(datetime == "2022-02-04")
+```
+
+```{r}
+labeled_news %>% 
+  filter(event_type=="supply") %>% 
+  filter(datetime == "2022-02-24")
+```
+```{r}
+labeled_news %>% 
+  filter(event_type=="supply") %>% 
+  filter(datetime == "2022-02-25")
+```
+```{r}
+labeled_news %>% 
+  filter(event_type=="supply") %>% 
+  filter(datetime == "2022-03-01")
+```
+
+
+```{r}
+labeled_news %>% 
+  filter(event_type=="supply") %>% 
+  filter(datetime == "2022-03-02")
+```
+
+
+```{r}
+base <- complete_data %>% 
+  filter(news_per_day > 0 & 
+datetime < as.Date("2019-12-31"))%>% 
+  arrange(desc(news_per_day)) %>%
+  slice(1:10)
+base
+```
+
+```{r}
+base <- complete_data %>% 
+  filter(news_per_day > 0 & 
+datetime < as.Date("2017-12-31"))%>% 
+  arrange(desc(news_per_day)) %>%
+  slice(1:20)
+base
+```
+
+```{r}
+instrument_days <- shock_data %>% 
+  filter(binary_shock ==TRUE)
+nrow(instrument_days)
+head(instrument_days, 10)
+```
+
+
+
+```{r}
+event_complete_data %>% 
+  filter(event_type == "demand") %>%
+  arrange(desc(news_per_day)) %>%
+  head(30)
+```
+
+```{r}
+ggplot(event_complete_data %>% filter(event_type=="demand"), 
+       aes(x = datetime, y = news_per_day)) +
+  geom_line(color ='red') +
+  labs(title = "Number of news per day",
+       x = "Date",
+       y = "Number of news") +
+  theme_minimal()
+```
+
+
+
+
+```{r}
+ale_gass_data <- merge(events_data_serie,gas_instrument_data %>% select(-news_per_day),
+      by = "Date")
+ale_gass_data <- merge(ale_gass_data, full_news_count,
+                       by.x = "Date", by.y ="datetime" )
+ale_gass_data[,c("Date", "Value", "shock_serie", "news_per_day")]
+```
+
+
+```{r}
+gas_instrument_data %>% 
+  filter(binary_shock==TRUE) %>% 
+  select(shock_serie, news_per_day, Date)
+```
+
+
+```{r}
+shock_series_all %>% 
+  arrange(Date) %>% 
+  filter(Delta !=0) %>% 
+  select(shock, Delta, Date)
+```
+
+On essaye de tricher, voir si je suis nul ou si la base est nulle,
+je regarde les plus grosses fluctuations de prix du gas et le nombre de nouvelles qui leur est associé
+
+
+```{r}
+
+test <- gas_instrument_data %>% 
+  mutate(order = abs(shock_serie)) %>% 
+  arrange(desc(order)) %>% 
+  slice(1:20)
+
+test[, c("order", "news_per_day")]
+
+```
+
+
+```{r}
+colnames(shock_data)
+colnames(gas_data_shock)
+print(class(gas_data_shock$Date))
+print(class(shock_data$datetime))
+
+info <- merge(gas_data_shock, shock_data, 
+      by.x = "Date", by.y = "datetime" ) %>% 
+  select(Date, shock_serie, supply_news, 
+         moving_avg_news, moving_std_news, day_type, Gas_TTF)
+
+colnames(info)
+test2 <- merge(gas_data_shock, shock_data, 
+      by.x = "Date", by.y = "datetime" ) %>% 
+  mutate(order = abs(shock_serie)) %>% 
+  arrange(desc(order)) %>% 
+  slice(1:20)
+test2[, c("Date", "order", "news_per_day", "event_type")]
+```
+
+
+

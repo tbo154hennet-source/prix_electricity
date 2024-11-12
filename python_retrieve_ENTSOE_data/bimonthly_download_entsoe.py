@@ -6,9 +6,10 @@ from entsoe import EntsoePandasClient
 client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
 country_code = 'FR'  
 
+#2016-03
 # Define start and end dates
-start_date = pd.Timestamp('20160801', tz='Europe/Brussels')
-end_date = pd.Timestamp('20201231', tz='Europe/Brussels')
+start_date = pd.Timestamp('20201001', tz='Europe/Brussels')
+end_date = pd.Timestamp('20203101', tz='Europe/Brussels')
 # Generate monthly date ranges
 monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
 import os

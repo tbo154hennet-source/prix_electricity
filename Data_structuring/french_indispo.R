@@ -1,5 +1,6 @@
 
 library(arrow)
+library(purrr)
 Sys.setenv(lang = "en_US")
 read_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/ENTSOE'
 setwd(read_path )
@@ -101,16 +102,27 @@ bout_indispo_ENTSOE_data <- indispo_ENTSOE_data %>%
   summarise(datetime_debut = min(datetime_debut),
             datetime_fin = max(datetime_fin))
 
-
+bout_indispo_ENTSOE_data$duration <- bout_indispo_ENTSOE_data$datetime_fin- bout_indispo_ENTSOE_data$datetime_debut
+  
 #test4 <- bout_indispo_ENTSOE_data %>% filter(mrid =="uOKJuRKj0o1N8nLBuxbBvw")
 save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 
 write_parquet(bout_indispo_ENTSOE_data, "indispo_ENTSOE_data.parquet")
 
-bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet")
+#on cherche le profil des indispos pour voir si l'indispo
+#d'aggrég tion des indispos par mois fait du sens
 
+duration_in_days <-as.numeric(bout_indispo_ENTSOE_data$duration, units = "days")
+duration_in_days <- as.data.frame(duration_in_days)
+library(ggplot2)
+# Plotting the distribution of 'duration'
+ggplot(duration_in_days, aes(x = log(duration_in_days))) +
+  geom_histogram(binwidth = 0.1, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Duration", x = "Duration (days)", y = "Log Count") +
+  theme_minimal()
 
-
-
+#description de la distribution
+#qui montre que la plupart des indispos sont de très courte durée
+#on filtre donc les indispos de longue durée
 

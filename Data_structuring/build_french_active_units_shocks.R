@@ -69,6 +69,9 @@ colnames(generation_per_unit) <- my_exact_names$output1
 generation_per_unit$`__index_level_0__` <- 
   with_tz(generation_per_unit$`__index_level_0__`, tzone = "UTC")
 
+View(data.frame(generation_per_unit$`__index_level_0__`))
+min(generation_per_unit$`__index_level_0__`, tzone = "UTC")
+max(generation_per_unit$`__index_level_0__`, tzone = "UTC", na.rm=TRUE)
 save_path_fr <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output"
 setwd(save_path_fr)
 
@@ -97,38 +100,114 @@ save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitla
 setwd(save_path_fr)
 bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet")
 
+# on va chercher la prod pour cette unite
+# a l'heure dite pour le journee d'indispo
+# et pour le jour d'avant a la meme heure
+
+# looking for the closest comparable day in the past
+# if I control by wind and solar generation I could use a local average
+# for instance the last four tuesdays
+
+bout_indispo_ENTSOE_data$day_of_week <- weekdays(bout_indispo_ENTSOE_data$datetime_debut)
+
+#gérer le cas AMFARD14 accoler
+#gérer le cas DK6-TG1
+my_exact_names$output_4 <- sub("-.*$", "", gsub("\\d+$", "", my_exact_names$output_3))
 
 
 
-
-
-colnames(bout_indispo_ENTSOE_data)
-
-long_format_indispo_up <- long_format_indispo %>% 
-  # create date correponding to the beginning of the timeslot
-  mutate(datetime_slot= as.POSIXct(
-    paste(electricity_delivery_date, creneau-1),
-    format="%Y-%m-%d %H", tz = 'UTC')) %>% 
-  select(Fuel.Type, Installed.Capacity, Affected.Asset.or.Unit,
-         datetime_slot, Unavailable.Capacity,creneau,
-         first_affec_tim_period,last_affec_tim_period,
-         auction_before, auction_after,
- Affected.Asset.or.Unit.EIC.code, electricity_delivery_date) %>% 
-  arrange(Affected.Asset.or.Unit)
+get_prod <- function(unit, datetime, day_of_week ){
+  datetime <- as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S", tz= 'UTC')
+  d_day_prod <- generation_per_unit %>% 
+    select(unit, `__index_level_0__`) %>% 
+    filter(`__index_level_0__`  == as.POSIXct(datetime))
   
-long_format_indispo_up <- long_format_indispo_up %>% 
-  mutate(Affected.Asset.or.Unit= 
-           ifelse(substr(Affected.Asset.or.Unit, 1, 2)=='CC', 
-         substr(Affected.Asset.or.Unit,3, nchar(Affected.Asset.or.Unit)),
-         Affected.Asset.or.Unit)) %>% 
-  mutate(Affected.Asset.or.Unit= 
-           ifelse(substr(Affected.Asset.or.Unit, 1, 1)=='C', 
-                  substr(Affected.Asset.or.Unit,2, nchar(Affected.Asset.or.Unit)),
-                  Affected.Asset.or.Unit))
+  # find the most comparable day
+  if (day_of_week=='lundi'){
+    # Retrancher trois jour (24 heures)
+    datetime_closest_day <- datetime - 3*24*60*60
+  }else if (day_of_week=='samedi'){
+    datetime_closest_day <- datetime - 6*24*60*60
+  }else{
+    datetime_closest_day <- datetime - 24*60*60
+  }
+  last_day_prod <- generation_per_unit %>% 
+    select(unit, `__index_level_0__`) %>% 
+    filter(`__index_level_0__`  == as.POSIXct(datetime_closest_day))
+  # if no day before
+  # return day after
+  if (nrow(last_day_prod) == 0){
+    last_day_prod <- NA
+  }
+  
+  return(list(last_day_prod = last_day_prod[[1]],
+              d_day_prod  = d_day_prod[[1]]))
+}
 
-# non_duplicated_indispo <- read_parquet('non_duplicated_indispo.parquet')
-# nuclear_is_cool <- non_duplicated_indispo %>% 
-#   filter(Fuel.Type=='Nuclear')
+View(generation_per_unit[, c("AIGLE 6", "__index_level_0__")])
+
+my_true_indispo <- bout_indispo_ENTSOE_data %>%
+  # my_test <- test %>%
+  rowwise() %>%
+  mutate(prod_results =  list(get_prod(production_resource_psr_name, 
+                                       datetime_debut, day_of_week)),
+         last_day_prod = prod_results[[1]],
+         d_day_prod = prod_results[[2]]
+         # ,sum_last_centrale_prod = prod_results[[3]],
+         # sum_d_centrale_prod = prod_results[[4]]
+         ) %>%
+  select(-prod_results) %>%
+  ungroup()
+
+get_prod_centrale <- function(unit, centrale, datetime, day_of_week){
+  print(unit)
+  unit_names <- my_exact_names %>%
+    filter(output_4==centrale) %>%
+    select(output1)
+  sum_last_centrale_prod <- 0
+  sum_d_centrale_prod <- 0
+  # Transforming the tibble column into a list
+  unit_names <- unit_names %>% pull(output1) %>% as.list()
+  for (unit_bis in unit_names){
+    prod_results_unit = get_prod(unit_bis, datetime, day_of_week)
+    if (unit_bis==unit){
+      last_day_prod = prod_results_unit[[1]]
+      d_day_prod = prod_results_unit[[2]]
+    }
+    sum_last_centrale_prod = sum_last_centrale_prod + prod_results_unit[[1]]
+    sum_d_centrale_prod = sum_d_centrale_prod + prod_results_unit[[2]]
+  }
+  
+  return(list(last_day_prod = last_day_prod[[1]],
+              d_day_prod  = d_day_prod[[1]],
+              sum_last_centrale_prod = sum_last_centrale_prod,
+              sum_d_centrale_prod = sum_d_centrale_prod))
+  
+}
+
+my_true_indispo2 <- bout_indispo_ENTSOE_data %>%
+  # my_test <- test %>%
+  rowwise() %>%
+  mutate(prod_results =  list(get_prod_centrale(
+    production_resource_psr_name,production_resource_name,
+     datetime_debut, day_of_week)),
+         last_day_prod = prod_results[[1]],
+         d_day_prod = prod_results[[2]],
+         sum_last_centrale_prod = prod_results[[3]],
+         sum_d_centrale_prod = prod_results[[4]]) %>%
+  select(-prod_results) %>%
+  ungroup()
+
+
+
+unit <- "REVIN 3"
+datetime <- "2021-01-02 18:00:00"
+centrale <- 'REVIN'
+get_prod(unit, datetime, weekdays(as.POSIXct(datetime)))
+prod_results <- get_prod_centrale(unit, centrale, datetime, weekdays(as.POSIXct(datetime)) )
+
+
+prod_results_unit = get_prod(unit_bis, datetime, day_of_week)
 
 # test <- non_duplicated_indispo_up %>% 
 #   arrange(Affected.Asset.or.Unit)%>% 
@@ -164,102 +243,7 @@ long_format_indispo_up$day_of_week <-
 # get_prod_centrale(unit, centrale, datetime, weekdays(datetime))
 # get_prod(unit, datetime, 'Wednesday')
 
-# true_indispo$day_of_week <- weekdays(true_indispo$datetime_slot)
 
-
-get_prod <- function(unit, datetime, day_of_week ){
-  datetime <- as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S", tz= 'UTC')
-  d_day_prod <- generation_per_unit %>% 
-    select(unit, `__index_level_0__`) %>% 
-    filter(`__index_level_0__`  == as.POSIXct(datetime))
-  
-  # find the most comparable day
-  if (day_of_week=='Monday'){
-    # Retrancher trois jour (24 heures)
-    datetime_closest_day <- datetime - 3*24*60*60
-  }else if (day_of_week=='Saturday'){
-    datetime_closest_day <- datetime - 6*24*60*60
-  }else{
-    datetime_closest_day <- datetime - 24*60*60
-  }
-  last_day_prod <- generation_per_unit %>% 
-    select(unit, `__index_level_0__`) %>% 
-    filter(`__index_level_0__`  == as.POSIXct(datetime_closest_day))
-  # if no day before
-  # return day after
-  if (nrow(last_day_prod) == 0){
-      last_day_prod <- NA
-  }
-  
-  return(list(last_day_prod = last_day_prod[[1]],
-              d_day_prod  = d_day_prod[[1]]))
-}
-
-get_prod_centrale <- function(unit, centrale, datetime, day_of_week){
-  
-  unit_names <- my_exact_names %>%
-                       filter(output_4==centrale) %>%
-                       select(output1)
-  sum_last_centrale_prod <- 0
-  sum_d_centrale_prod <- 0
-  # Transforming the tibble column into a list
-  unit_names <- unit_names %>% pull(output1) %>% as.list()
-  for (unit_bis in unit_names){
-    prod_results_unit = get_prod(unit_bis, datetime, day_of_week)
-    if (unit_bis==unit){
-      last_day_prod = prod_results_unit[[1]]
-      d_day_prod = prod_results_unit[[2]]
-    }
-    sum_last_centrale_prod = sum_last_centrale_prod + prod_results_unit[[1]]
-    sum_d_centrale_prod = sum_d_centrale_prod + prod_results_unit[[2]]
-  }
-  
-  return(list(last_day_prod = last_day_prod[[1]],
-              d_day_prod  = d_day_prod[[1]],
-         sum_last_centrale_prod = sum_last_centrale_prod,
-         sum_d_centrale_prod = sum_d_centrale_prod))
-  
-}
-
-# # Apply the function to each element and return a dataframe
-# my_exact_names  <- map_df(exact_names, ~ clean_string(.x))
-# 
-# my_data <- generation_per_unit %>%
-#   select(unit, `__index_level_0__`)
-
-my_exact_names$output_4 <- substr(my_exact_names$output_3, 1, 3)
-
-long_format_indispo_up <- long_format_indispo_up %>%
-  mutate(centrale = sapply(strsplit(name, " "), function(x) trimws(x[1])),
-         centrale = substr(centrale, 1, 3))
-
-#on peut faire mieux avec un mini modèle de prévision
-#notamment pour tenir compte des renouvelables disponibles
-
-
-# Remove rows with NA in datetime_slot
-long_format_indispo_up <- long_format_indispo_up %>%
-  filter(!is.na(datetime_slot))
-
-my_true_indispo <- long_format_indispo_up %>%
-# my_test <- test %>%
-  rowwise() %>%
-  mutate(prod_results =  list(get_prod_centrale(name,
-             centrale, datetime_slot, day_of_week)),
-         last_day_prod = prod_results[[1]],
-         d_day_prod = prod_results[[2]],
-         sum_last_centrale_prod = prod_results[[3]],
-         sum_d_centrale_prod = prod_results[[4]]) %>%
-  select(-prod_results) %>%
-   ungroup()
-
-
-# mutate(last_day_prod = get_prod_centrale(name, centrale, datetime_slot)[[1]],
-#        d_day_prod = get_prod_centrale(name,centrale, datetime_slot)[[2]],
-#        d_day_prod = get_prod_centrale(name,centrale, datetime_slot)[[2]],
-#        sum_last_centrale_prod = get_prod_centrale(name,centrale, datetime_slot)[[3]],
-#        sum_d_centrale_prod = get_prod_centrale(name,centrale, datetime_slot)[[4]]) %>%
-# 
 
 setwd('C:/Users/nchu/Desktop/DATA/ENTSOE_python_data/esp')
 

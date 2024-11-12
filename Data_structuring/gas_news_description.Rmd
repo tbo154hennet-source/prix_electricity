@@ -1,0 +1,386 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(readxl)
+library(tidyr)
+library(dplyr)
+library(arrow)
+library(ggplot2)
+library(dplyr)
+library(zoo)
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
+# Import the functions from 'my_functions.R'
+Sys.setenv(lang = "en_US")
+
+news_data <- read_parquet("store_full_news_data.parquet")
+```
+
+Etant donné le corpus qui grossit au cours du temps,
+J'ai besoin d'un benchmark qui permet de normaliser
+le nombre de nouvelles par jour.
+
+```{r}
+
+#english reading system
+Sys.setlocale("LC_TIME", "English")
+
+news_data$datetime <- as.Date(format(as.Date(news_data$date, "%b %d, %Y"), "%Y-%m-%d"))
+
+news_data$datetime <- ifelse( is.na(news_data$datetime), as.Date(format(as.Date(news_data$date, "%d %b %Y"), "%Y-%m-%d")), news_data$datetime)
+
+news_data <- news_data %>% 
+  mutate(datetime = as.Date(datetime)) %>% 
+  arrange(datetime)
+
+# Define keywords as a list
+gas_keywords <- c("gas", "Gazprom", "LNG")
+# Create a regular expression pattern from the list
+gas_pattern <- paste(gas_keywords, collapse = "|")
+# Filter rows in news_data based on the title containing any keyword
+filtered_news <- news_data[grepl(gas_pattern, news_data$title, ignore.case = TRUE), ]
+
+#  Look for Typical Sentence Structures
+# Affirmative sentences often follow a [subject-verb-object (SVO)] structure, like "The cat sits on the mat."
+
+# Define the keywords you want to exclude
+exclude_keywords <- c( "edible",  "food", "biofuel",
+                       "\\?", "station", "gasoline", "diesel")
+# ? most often are title of opinion pieces
+#that don't bring new informations
+
+# Create a single pattern from the keywords
+exclude_pattern <- paste(exclude_keywords, collapse = "|")
+# Filter out rows where 'title' contains any of the exclude keywords
+filtered_news <- filtered_news[!grepl(exclude_pattern, filtered_news$title, ignore.case = TRUE), ]
+
+
+filtered_news_distinct <- filtered_news %>% 
+  select(-event_type) %>% 
+  distinct() %>% 
+  arrange(desc(datetime))
+# news_data <- news_data %>% 
+#   select(-datetime)
+
+demand_keywords <- c("demand ", "inventory", "stocks")
+demand_pattern <- paste(demand_keywords, collapse = "|")
+demand_filtered_news  <- filtered_news_distinct[grepl(demand_pattern, filtered_news_distinct$title, ignore.case = TRUE), ]%>% 
+  mutate(event_type = "demand")
+
+supply_keywords <- c("supply", "production", "Iraq","Iran", "Russia", "Ukraine","Israel", "Libya", "crisis", "attack", "Qatar",
+                     "violence", "conflict", "war ","reserves", "refinery", "pipeline","facility", "ban", "shale")
+supply_pattern <- paste(supply_keywords, collapse = "|")
+supply_filtered_news <- filtered_news_distinct[grepl(supply_pattern, filtered_news_distinct$title, ignore.case = TRUE), ]%>% 
+  mutate(event_type = "supply")
+
+uncertainty_keywords <- c("uncertainty", "fear", "concern",
+                          "threaten", "risk", "turmoil",
+                          "tension", "worr", "turmoil",
+                          "surprise", "shock")
+uncertainty_pattern <- paste(uncertainty_keywords, collapse = "|")
+uncertainty_filtered_news <- filtered_news_distinct[grepl(uncertainty_pattern, filtered_news_distinct$title, ignore.case = TRUE), ]%>% 
+  mutate(event_type = "uncertainty")
+
+```
+
+
+Try to detect and affirmative structure in the news titles
+
+```{r}
+#library(spacyr)
+
+# Initialize spacyr (make sure spaCy is installed in your environment)
+# Install spaCy (this might take a few minutes)
+# spacy_install()
+# spacy_initialize()
+# 
+# # Function to check if a sentence has an affirmative structure
+# is_affirmative_structure <- function(sentence) {
+#   # Parse the sentence
+#   parsed <- spacy_parse(sentence)
+#   
+#   # Look for basic SVO structure (subject-verb-object)
+#   has_subject <- FALSE
+#   has_verb <- FALSE
+#   
+#   for (i in 1:nrow(parsed)) {
+#     # Check if the word is a noun and acts as a subject
+#     if (parsed$pos[i] == "NOUN") {
+#       has_subject <- TRUE
+#     }
+#     # Check if there is a verb following the noun subject
+#     if (has_subject && parsed$pos[i] == "VERB") {
+#       has_verb <- TRUE
+#       break
+#     }
+#   }
+#   
+#   # Return TRUE if both subject and verb are present, indicating an affirmative structure
+#   return(has_subject && has_verb)
+# }
+# 
+# # Example usage
+# sentence <- "PA Might See Lower Gas Prices In 2024"
+# is_affirmative_structure(sentence) 
+```
+
+Browsing the news titles, you can assess that the news titles are not very reliable.
+Sometimes the connection with supply or demand is weak,
+sometimes it is obviously wrong.
+
+Thus, I filter again my news corpus by keywords
+
+```{r}
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
+
+labeled_news <- rbind(demand_filtered_news, supply_filtered_news, uncertainty_filtered_news)%>% arrange(datetime)
+
+write_parquet(labeled_news , "labeled_news_data.parquet")
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/')
+write.csv(labeled_news, "labeled_news_data.csv")
+
+
+full_news_count <- labeled_news %>% 
+  select(media, datetime) %>%
+  distinct() %>% 
+  group_by(datetime) %>% 
+  summarise(news_per_day = n())
+
+event_news_count <- labeled_news %>% 
+  select(media, datetime, event_type) %>%
+  distinct() %>% 
+  group_by(datetime, event_type) %>% 
+  summarise(news_per_day = n())
+
+```
+
+
+```{r}
+full_dates <- tibble(datetime = seq(min(news_data$datetime, na.rm=TRUE), max(news_data$datetime, na.rm=TRUE), by = "day"))
+
+# Fusionner le DataFrame original avec la séquence complète de dates
+complete_data <- full_dates %>%
+  left_join(full_news_count , by = "datetime") %>%
+  replace_na(list(news_per_day = 0))
+
+
+ggplot(complete_data, aes(x = datetime, y = news_per_day)) +
+  geom_line() +
+  labs(title = "Number of news per day",
+       x = "Date",
+       y = "Number of news") +
+  theme_minimal()
+
+```
+
+On fait de même en ayant classé les news par thème
+
+```{r}
+
+# Créer un dataframe avec les types d'événements
+event_types <- data.frame(event_type = c("supply", "demand", "uncertainty"))
+
+# Créer toutes les combinaisons de dates et d'événements
+full_event_dates <- full_dates %>%
+  crossing(event_types)
+
+# Joindre avec les données de nouvelles
+event_complete_data <- full_event_dates %>%
+  left_join(event_news_count, by = c("datetime", "event_type")) %>%
+  replace_na(list(news_per_day = 0))
+
+ggplot(event_complete_data, aes(x = datetime, y = news_per_day, color = event_type)) +
+  geom_line() +
+  labs(title = "Number of news per day",
+       x = "Date",
+       y = "Number of news") +
+  theme_minimal()
+
+```
+
+On affiche les quelques jours avec le plus de nouvelles
+
+```{r}
+base <- complete_data %>% filter(news_per_day > 0)
+base %>% 
+  group_by(news_per_day) %>% 
+  mutate(n = n()) 
+
+base %>% 
+  arrange(desc(news_per_day)) %>%
+  slice(1:10)
+  
+#Jun 18, 2014
+#Jun 12, 2014
+# Northern Iraq offensive
+
+#Feb 23, 2011 oil
+#Lybia supply disruptions
+
+```
+
+
+```{r}
+
+rough_news_count <- filtered_news_distinct %>% 
+  select(media, datetime, date) %>%
+  distinct() %>% 
+  group_by(datetime, date) %>% 
+  summarise(news_per_day = n())
+
+
+full_dates <- tibble(datetime = seq(min(news_data$datetime, na.rm=TRUE), max(news_data$datetime, na.rm=TRUE), by = "day"))
+
+# Fusionner le DataFrame original avec la séquence complète de dates
+complete_data <- full_dates %>%
+  left_join(rough_news_count , by = "datetime") %>%
+  replace_na(list(news_per_day = 0))
+
+
+ggplot(complete_data, aes(x = datetime, y = news_per_day)) +
+  geom_line() +
+  labs(title = "Number of news per day",
+       x = "Date",
+       y = "Number of news") +
+  theme_minimal()
+```
+
+
+Il faut se fixer un seuil d'identification des chocs potentiellement variable avec le temps. Une normalisation par rapport à la quantité de news disponibles.
+Il peut être différent pour les supply and demand, puisqu'il semble qu'il y ait plus de nouvelles de supply que de demand.
+
+
+Definir un seuil flottant
+par supérieur à 3 fois la moyenne du mois
+On double checke en regardant le nombre de jours d'annonce que cela permet de sélectionner.
+
+
+
+```{r}
+
+shock_data <- event_complete_data %>%
+  arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
+  mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA, align = "right"),
+        moving_std_news = rollapply(news_per_day, width = 30, FUN = sd, fill = NA, align = "right"),
+       binary_shock= (news_per_day >  moving_avg_news + 4*moving_std_news),
+       intensity_shock = ifelse(binary_shock, news_per_day/moving_avg_news, 0)
+       )
+
+instrument_days <- shock_data %>% 
+  filter(binary_shock ==TRUE) %>% 
+  filter(event_type== 'demand' | news_per_day > 2)
+
+```
+
+```{r}
+
+instrument_results <- full_dates %>% 
+  left_join(instrument_days, by = "datetime") %>%
+  mutate(across(where(is.numeric), ~replace_na(., 0)))
+
+
+ggplot(instrument_days, aes(x = datetime)) +
+  geom_line(data= instrument_results, aes(x = datetime, y = intensity_shock)) +
+  #geom_line(aes(y = news_per_day), color = 'yellow') +
+  geom_line(aes(y = moving_avg_news), linetype='dashed') +
+  labs(title = "Number of news per day",
+       x = "Date",
+       y = "Number of news") +
+  theme_minimal()
+```
+
+
+
+```{r}
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+setwd(save_var_path)
+write_parquet(instrument_results, "instrument_news_shock.parquet")
+
+```
+
+```{r}
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
+gas_instrument_data <-read_parquet("gas_instrument_data.parquet")
+surprise_serie <- read_parquet("surprise_serie.parquet")
+
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
+events_data <- read.csv("alex_gassani_shocks.csv")
+
+events_data_serie <- events_data %>% 
+  mutate(month = month(Date), year= year(Date))%>%
+  group_by(month, year) %>% 
+  summarize(Value= sum(Value), Date = first(Date)) %>% 
+  arrange(Date)
+events_data_serie 
+```
+
+```{r}
+
+shock_series_all <- left_join(surprise_serie ,events_data_serie%>% select(-Date), by = c("month", 'year')) 
+# Remplir les NA avec 0
+shock_series_all[is.na(shock_series_all)] <- 0
+shock_series_all
+```
+
+
+
+```{r}
+my_plot <- ggplot()+
+  geom_line(data= shock_series_all, aes(x= as.POSIXct.Date(Date) , y= Value, color='Alessandrini and Gazani'), linetype = 'dashed')+
+  geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=Delta, color='Scrap relative terms'), linetype = 'dashed')+
+  geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=shock, color='Scrap absolute value'), linetype = 'dashed')+
+  labs(title = 'Gas shocks',
+      x = "Time") +
+  geom_line(data=gas_data_tot[1:(nrow(gas_data_tot)-600),], aes(x=time, y= Gas_TTF/10) )+
+  theme_minimal() +
+  scale_y_continuous(
+    name = "€/MW",
+    sec.axis = sec_axis(~ . * 10, name = "Shock Series")  # Adjust scaling factor if needed
+  )
+
+my_plot
+```
+
+
+On cherche à vérifier si les variations de prix sont plus importantes les jours indiqués par l'instrument par rapport aux jours lambdas
+
+
+```{r}
+fluct_abs_gas_normales <-  gas_instrument_data %>% 
+  filter(binary_shock == FALSE) %>%
+  pull(shock_serie) %>% 
+  sd(na.rm = TRUE)
+
+fluct_abs_gas_news <- gas_instrument_data %>% 
+  filter(binary_shock == TRUE) %>%
+  pull(shock_serie) %>% 
+  sd(na.rm = TRUE)
+
+print(fluct_abs_gas_normales)
+print(fluct_abs_gas_news)
+
+
+```
+Pour l'instant Alessandri and Gassani arrive à mieux repérer les évènements déterminants sur le marché du gaz.
+
+```{r}
+
+fluct_alex_gass <- merge(events_data_serie, gas_data_shock,
+      by="Date")
+
+sd(fluct_alex_gass$shock_serie)
+
+
+
+```
+
+
+
+
