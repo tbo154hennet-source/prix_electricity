@@ -76,11 +76,17 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 
 labeled_news <- rbind(demand_filtered_news, supply_filtered_news, uncertainty_filtered_news)%>% arrange(datetime)
 
+labeled_news_distinct <- labeled_news %>% 
+  select(-event_type) %>% 
+  distinct()
+
+write_parquet(labeled_news_distinct , "labeled_news_distinct.parquet")
+
 write_parquet(labeled_news , "labeled_news_data.parquet")
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/')
 write.csv(labeled_news, "labeled_news_data.csv")
-
+write.csv(labeled_news_distinct, "labeled_news_distinct.csv")
 
 full_news_count <- labeled_news %>% 
   select(media, datetime) %>%
