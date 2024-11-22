@@ -32,19 +32,19 @@ gas_elec_data <- IV_data %>%
 gas_elec_data[is.na(gas_elec_data)] <- 0
 
 
-cor(gas_elec_data$log_diff_gas, gas_elec_data$log_diff)
+cor(gas_elec_data$log_diff_gas, gas_elec_data$elec_growth_rate)
 cor(gas_elec_data$spot_price, gas_elec_data$gas_price)
 
 ```
 ```{r}
-gas_elec_data[, c("log_diff", "log_diff_gas", "Date")]
+gas_elec_data[, c("elec_growth_rate", "log_diff_gas", "Date")]
 ```
 
 Une remarque gas supply shocks should be a good instrument for gas growth not necessarily for gas price.
 But renewables should be good instrument for price levels.
 
 ```{r}
-model <- lm(data = gas_elec_data, log_diff ~ log_diff_gas)
+model <- lm(data = gas_elec_data, elec_growth_rate ~ log_diff_gas)
 summary(model)
 ```
 

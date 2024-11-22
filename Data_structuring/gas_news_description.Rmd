@@ -47,7 +47,7 @@ filtered_news <- news_data[grepl(gas_pattern, news_data$title, ignore.case = TRU
 # Affirmative sentences often follow a [subject-verb-object (SVO)] structure, like "The cat sits on the mat."
 
 # Define the keywords you want to exclude
-exclude_keywords <- c( "edible",  "food", "biofuel",
+exclude_keywords <- c( "edible",  "food", "biofuel", "continue", "still",
                        "\\?", "station", "gasoline", "diesel")
 # ? most often are title of opinion pieces
 #that don't bring new informations
@@ -56,12 +56,23 @@ exclude_keywords <- c( "edible",  "food", "biofuel",
 exclude_pattern <- paste(exclude_keywords, collapse = "|")
 # Filter out rows where 'title' contains any of the exclude keywords
 filtered_news <- filtered_news[!grepl(exclude_pattern, filtered_news$title, ignore.case = TRUE), ]
+# Expression régulière pour détecter un verbe conjugué à la voix active
+verbe_actif_regex <- "\\b(\\w+ed|\\w+s|\\w+ing)\\b"
 
+View(filtered_news %>% 
+  mutate(active = grepl(verbe_actif_regex, title)) %>% 
+    select(datetime, title, active))
 
 filtered_news_distinct <- filtered_news %>% 
   select(-event_type) %>% 
   distinct() %>% 
   arrange(desc(datetime))
+
+filtered_news_active <- filtered_news_distinct %>% 
+  mutate(active = grepl(verbe_actif_regex, title)) %>% 
+  filter(active==TRUE)
+
+
 # news_data <- news_data %>% 
 #   select(-datetime)
 
@@ -353,12 +364,12 @@ On cherche à vérifier si les variations de prix sont plus importantes les jour
 
 
 ```{r}
-fluct_abs_gas_normales <-  gas_instrument_data %>% 
+fluct_abs_gas_normales <-  info %>% 
   filter(binary_shock == FALSE) %>%
   pull(shock_serie) %>% 
   sd(na.rm = TRUE)
 
-fluct_abs_gas_news <- gas_instrument_data %>% 
+fluct_abs_gas_news <- info %>% 
   filter(binary_shock == TRUE) %>%
   pull(shock_serie) %>% 
   sd(na.rm = TRUE)

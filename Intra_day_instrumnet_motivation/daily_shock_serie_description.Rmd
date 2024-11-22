@@ -228,20 +228,23 @@ On plotte maintenant les séries en question
 
 
 ```{r}
-my_plot <- ggplot() +
-  geom_line(data= complete_data, aes(x =datetime , y = Unavailable.Capacity),
-            stat = "identity", position = "dodge") +
-  labs(x= 'Electricity delivery date', y = "Unavailable Capacity (in MW)",
-       title = "Power outages news shock") +
-  geom_line(data= complete_data, aes(x =datetime , y = real_unavailability),
-    stat = "identity", position = "dodge", color = 'blue')+
-  geom_line(data= complete_data, aes(x =datetime , y = nuclear_real_unavailability),
-    stat = "identity", position = "dodge", color = 'red')+
-    geom_line(data= complete_data, aes(x =datetime , y = -predicted_real_unavailability),
-    stat = "identity", position = "dodge", color = 'green')+
+
+
+my_plot <- ggplot(data = complete_data) +
+  geom_line(aes(x = datetime, y = Unavailable.Capacity, color = "Declared Unavailability")) +
+  geom_line(aes(x = datetime, y = real_unavailability, color = "Real Unavailability")) +
+  geom_line(aes(x = datetime, y = nuclear_real_unavailability, color = "Nuclear Real Unavailability")) +
+  geom_line(aes(x = datetime, y = -predicted_real_unavailability, color = "Predicted Real Unavailability")) +
+  labs(
+    x = 'Electricity delivery date',
+    y = "Unavailable Capacity (in MW)",
+    title = "Power Outages News Shock",
+    color = "Legend"  # Label for the legend
+  ) +
   theme_minimal()
 
 my_plot
+
 ```
 
 
@@ -271,9 +274,10 @@ write_parquet(complete_data, 'completed_shock_series.parquet')
 
 Load associated data
 ```{r}
-setwd('C:/Users/nchu/Desktop/DATA/merged_data')
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+setwd(save_path_esp)
 renewable_shock_series <- read_parquet(
-              'renewable_shock_series.parquet')
+              'renewable_forecasts.parquet')
 ```
 
 Get some summary statistics
@@ -294,15 +298,17 @@ date_time_string <- "2021/01/07 00:00:00"
 posixct_date_time <- as.POSIXct(date_time_string, format = "%Y/%m/%d %H:%M:%S")
 
 renewable_shock_first_week <- renewable_shock_series%>% 
+  rename(datetime =`__index_level_0__`) %>% 
   filter(datetime < posixct_date_time )
 
 my_plot <- ggplot(data =renewable_shock_first_week)+
-  geom_line(aes(x =datetime , y = intraday_solar_forecast), color = 'darkblue') +
-geom_line(aes(x =datetime , y = day_before_solar_forecast), color = 'lightblue') +
-  geom_line(aes(x =datetime , y = intraday_wind_forecast), color = 'darkgreen') +
-  geom_line(aes(x =datetime , y = day_before_wind_forecast), color = 'lightgreen') +
+  geom_line(aes(x =datetime , y = Intraday_Fore_Solar, color="Intraday Solar")) +
+geom_line(aes(x =datetime , y = Fore_Solar, color="Day Before Solar")) +
+  geom_line(aes(x =datetime , y = Intraday_Fore_Wind, color="Intraday Wind")) +
+  geom_line(aes(x =datetime , y = Fore_Wind, color="Day Before Wind")) +
   labs(x= 'Electricity delivery date', y = "Difference between the two predictions", 
        title = "Intermittence uncertainty news shock") +
+  scale_color_manual(values = c("Intraday Solar" = "darkblue", "Day Before Solar" = "blue", "Intraday Wind" = "darkgreen", "Day Before Wind" = "lightgreen")) +
   theme_minimal()
 
 my_plot
@@ -332,7 +338,9 @@ my_plot
 # Presentation of the price series
 
 ```{r}
-auction_path <- 'C:/Users/nchu/Desktop/DATA/elec_market_data/OMIE-auction-market-data'
+getwd()
+
+auction_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/intra_day_prices/OMIE-auction-market-data'
 setwd(auction_path)
 price_data <- read_parquet('auction_price_data_21_22.parquet')
 price_data$price <- as.numeric(price_data$price)

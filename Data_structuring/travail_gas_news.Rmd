@@ -22,7 +22,7 @@ labeled_news %>%
 
 labeled_news %>% 
   filter(event_type=="supply") %>% 
-  filter(datetime == "2021-12-21")
+  filter(datetime == "2016-09-06")
 
 ```
 

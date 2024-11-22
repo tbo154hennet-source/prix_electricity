@@ -12,9 +12,9 @@ import requests
 os.chdir("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data")
 os.getcwd()
 
-news_data = pd.read_parquet('store_full_news_data.parquet') #, engine='pyarrow')
+news_data = pd.read_parquet('labeled_news_data.parquet') #, engine='pyarrow')
 
-news_data['datetime'] = news_data['datetime'] = pd.to_datetime(news_data['date'], format='mixed', dayfirst=True, errors='coerce')
+news_data['datetime'] =pd.to_datetime(news_data['date'], format='mixed', dayfirst=True, errors='coerce')
 news_data.dropna(subset=['datetime'], inplace=True)
 # Correct way to drop a column
 news_data.drop(columns='event_type', inplace=True)

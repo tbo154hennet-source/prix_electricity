@@ -35,12 +35,6 @@ library(lubridate)
 # test <- sample_n(temp_instrument_data, 100)
 # 
 # colnames(test)
-country_temp_instrument <- st_drop_geometry(temp_instrument_data) %>%
-  group_by(Date) %>%
-  summarise(T_avg = weighted.mean(as.numeric(TM),
-                                  population, na.rm = TRUE))    
-
-
 
 #quantitative instrument for temperature
 

@@ -14,6 +14,8 @@ setwd(save_path_fr)
 
 monthly_indispo <- read_parquet('monthly_indispo.parquet')
 nuclear_monthly_indispo <- read_parquet('nuclear_monthly_indispo.parquet')
+unexpected_monthly_indispo <- read_parquet('unexpected_monthly_indispo.parquet')
+unexpected_nuclear_monthly_indispo <- read_parquet('unexpected_nuclear_monthly_indispo.parquet')
 price_renew_final <- read_parquet( 'price_renew.parquet')
 macro_data <- read_parquet( 'macro_data_monthly_index.parquet')
 temperature_data <- read.csv("temperature_instrument.csv")
@@ -33,6 +35,8 @@ colnames(macro_data)
 colnames(price_renew_final)
 colnames(monthly_indispo)
 colnames(nuclear_monthly_indispo)
+colnames(unexpected_monthly_indispo)
+colnames(unexpected_nuclear_monthly_indispo)
 colnames(surprise_serie)
 
 #merge indispos
@@ -42,7 +46,20 @@ monthly_indispo <- monthly_indispo %>%
 nuclear_monthly_indispo <- nuclear_monthly_indispo %>% 
   select(-Installed.Capacity) %>% 
   rename(nuclear_indispo = Unavailable.Capacity)
+unexpected_monthly_indispo <- unexpected_monthly_indispo %>% 
+  select(-Installed.Capacity) %>% 
+  rename(unexpected_tot_indispo = Unavailable.Capacity)
+unexpected_nuclear_monthly_indispo <- unexpected_nuclear_monthly_indispo %>% 
+  select(-Installed.Capacity) %>% 
+  rename(unexpected_nuclear_indispo = Unavailable.Capacity)
+
+
+
 plant_indispos <- merge(monthly_indispo, nuclear_monthly_indispo, 
+                        by= c('month', 'year'))
+plant_indispos <- left_join(plant_indispos, unexpected_monthly_indispo, 
+                            by= c('month', 'year'))
+plant_indispos <- left_join(plant_indispos, unexpected_nuclear_monthly_indispo, 
                         by= c('month', 'year'))
 
 
@@ -64,11 +81,6 @@ IV_data <- merge(IV_data, temperature_data,
 
 IV_data <- merge(IV_data, surprise_serie,
                  by= c('month', 'year'))
-
-colnames(IV_data)
-# VAR_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output"
-# setwd(VAR_path)
-IV_data$log_demand <- log(IV_data$gen_tot)
 IV_data <- IV_data %>% 
   rename(gas_price = avg_price,
          log_elec_price = log_price,
@@ -76,22 +88,18 @@ IV_data <- IV_data %>%
          ECB_rate= ECBMRRFR_interest_rate.xls,
          IPI = Industrial_prod_FRAPROINDMISMEI.xls,
          NE_Index= `non-energy_index_00XE00FRM086NEST.xls`,
+         E_Index = energy_index_ENRGY0FRM086NEST.xls,
          UnE = unemployment_LRHUTTTTFRM156S.xls,
          Exp_pi = Inflation_expectation_CSINFT02FRM460S.xls, 
-         demand_growth_rate = demand_growth_period) %>% 
-  mutate(log_gas_price = log(gas_price),
-         ipi_growth_rate = log(IPI)- log(lag(IPI)),
-         ne_growth_rate = log(NE_Index) - log(lag(NE_Index)),
-         mp_action = log(ECB_rate+1) - log(lag(ECB_rate+1))) %>% 
-  select(-X)
+         demand_growth_rate = demand_growth_period,
+         abs_gas_shock = abs_shock,
+         rel_gas_shock = relative_shock) %>%
+  select(-c("log_elec_price", "elec_growth_rate", 
+            "demand_growth_rate", "renewable_growth")) %>% 
+  arrange(Date)
 
-
-IV_data[is.na(IV_data)] <- 0
-
-IV_data <- IV_data %>% 
-  arrange(datetime)
+colnames(IV_data)
 write_parquet(IV_data, 'low_freq_data.parquet')
-
 
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
@@ -101,8 +109,6 @@ IV_data <- read_parquet('low_freq_data.parquet')
 
 # on prend le niveau en pourcentage au dessus ou au dessous de la moyenne
 # comme dans kilian
-
-
 
 
 

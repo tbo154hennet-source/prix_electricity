@@ -80,7 +80,6 @@ for (var in var_list) {
 
 library(pracma)
 
-print(class(adjusted_data))
 
 # Combine the seasonally adjusted data into a dataframe
 seasonally_adjusted_df <- as.data.frame(adjusted_data)

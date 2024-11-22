@@ -73,7 +73,7 @@ for (col in non_stationary_columns_filtered) {
   if (!is.na(col)){
     my_plot <- my_plot +
       geom_line(aes_string(x = IV_data[["datetime"]], 
-                           y = IV_data[[col]]/IV_data[[col]][1],
+                           y = IV_data[[col]]/mean(IV_data[[col]]),
                            color = shQuote(col))) 
   }
 }
@@ -83,11 +83,33 @@ my_plot
 # variables can all be detrended
 #that are not growth rates
 
+#ipi_growth rate is not stationary
+subset = c("ipi_growth_rate",                 
+          "ne_growth_rate",
+          "Exp_pi")
+subset_bis = c("IPI","Exp_pi","NE_Index" )
 
+colnames(IV_data)
 
+library(ggplot2)
+my_plot <- ggplot()+
+  ggtitle("Non-stationary columns")+
+  theme_minimal()+
+  labs(x = "Date", y = "Normalized Value")
 
-
-
+# Plot each non-stationary column
+for (col in subset_bis) {
+  #col="gas_price"
+  # col = non_stationary_columns[i]
+  # i= i+1
+  if (!is.na(col)){
+    my_plot <- my_plot +
+      geom_line(aes_string(x = IV_data[["datetime"]], 
+                           y = IV_data[[col]], #/mean(IV_data[[col]]),
+                           color = shQuote(col))) 
+  }
+}
+my_plot
 
 
 

@@ -58,7 +58,9 @@ indispo_ENTSOE_data <- indispo_ENTSOE_data %>%
 
 colnames(indispo_ENTSOE_data)
 
-distinct_values <- indispo_ENTSOE_data %>%  distinct(businesstype)
+distinct_values <- indispo_ENTSOE_data %>%  
+  group_by(businesstype) %>% 
+  summarize(n= n())
 #planned maintenance vs unplanned outage
 #for long term, both could be equally interesting
 
@@ -108,13 +110,23 @@ bout_indispo_ENTSOE_data$duration <- bout_indispo_ENTSOE_data$datetime_fin- bout
 save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 
+
+unexpected_indispo_ENTSOE_data <- bout_indispo_ENTSOE_data %>% 
+  filter(businesstype == "Unplanned outage")
+
 write_parquet(bout_indispo_ENTSOE_data, "indispo_ENTSOE_data.parquet")
+write_parquet(unexpected_indispo_ENTSOE_data, "unexpected_indispo_ENTSOE_data.parquet")
 
 #on cherche le profil des indispos pour voir si l'indispo
 #d'aggrég tion des indispos par mois fait du sens
 
 duration_in_days <-as.numeric(bout_indispo_ENTSOE_data$duration, units = "days")
 duration_in_days <- as.data.frame(duration_in_days)
+colnames(duration_in_days)
+
+unexpected_duration_in_days <-as.data.frame(as.numeric(
+  unexpected_indispo_ENTSOE_data$duration, units = "days"))
+colnames(unexpected_duration_in_days) <- c("duration")
 library(ggplot2)
 # Plotting the distribution of 'duration'
 ggplot(duration_in_days, aes(x = log(duration_in_days))) +
@@ -125,4 +137,12 @@ ggplot(duration_in_days, aes(x = log(duration_in_days))) +
 #description de la distribution
 #qui montre que la plupart des indispos sont de très courte durée
 #on filtre donc les indispos de longue durée
+
+ggplot()+
+  geom_histogram(data = duration_in_days,aes(x = log(duration_in_days)),
+                 binwidth = 0.1, fill = "red", color = "black") +
+  geom_histogram(data =unexpected_duration_in_days, aes(x = log(duration)),
+                 binwidth = 0.1, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Duration", x = "Duration (days)", y = "Log Count") +
+  theme_minimal()
 

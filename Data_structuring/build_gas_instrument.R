@@ -5,6 +5,7 @@ library(arrow)
 library(ggplot2)
 library(dplyr)
 library(zoo)
+library(lubridate)
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 # Import the functions from 'my_functions.R'
@@ -170,10 +171,14 @@ instrument_days <- info %>%
   filter(binary_shock ==TRUE) %>% 
   filter(supply_news > 3)
 
+colnames(full_dates)
+colnames(instrument_days)
+print(class(instrument_days$time))
+print(class(full_dates$datetime))
+print(class(instrument_days$Date))
 
-
-instrument_results <- full_dates %>% 
-  left_join(instrument_days, by = "datetime") %>%
+instrument_results <- left_join(full_dates, instrument_days, 
+                                   by = c("datetime" = "Date")) %>%
   mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
   replace_na(list(binary_shock=FALSE))
 
