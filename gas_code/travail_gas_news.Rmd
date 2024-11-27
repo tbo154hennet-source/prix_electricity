@@ -4,10 +4,15 @@ output: html_notebook
 ---
 
 ```{r}
-labeled_news %>% 
-  group_by(media) %>% 
-  summarize(n_articles = n()) %>% 
-  arrange(desc(n_articles))
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
+# Import the functions from 'my_functions.R'
+Sys.setenv(lang = "en_US")
+
+news_data <- read_parquet("store_full_news_data.parquet")
+news_data %>% 
+  filter(datetime == "2022-03-23")
+
+news_data 
 ```
 
 
@@ -15,21 +20,21 @@ labeled_news %>%
 library(stringr)
 labeled_news %>%
   filter(str_starts(media, "Reuters"))
-```
 
-```{r}
-
-
-labeled_news %>% 
-  filter(event_type=="supply") %>% 
-  filter(datetime == "2016-09-06")
+news_data_bert %>% 
+  filter(datetime == "2022-08-30")
 
 ```
 
 ```{r}
-labeled_news %>% 
-  filter(event_type=="supply") %>% 
-  filter(datetime == "2022-04-27")
+news_data_bert %>% 
+  filter(datetime == "2022-08-30")
+	
+```
+
+```{r}
+news_data_bert %>% 
+  filter(datetime == "2022-09-03")
 ```
 
 
@@ -175,6 +180,53 @@ test2 <- merge(gas_data_shock, shock_data,
   slice(1:20)
 test2[, c("Date", "order", "news_per_day", "event_type")]
 ```
+
+
+On regarde les pics de news
+
+```{r}
+full_news_count %>% 
+  arrange(desc(news_per_day)) %>% 
+  slice(1:20)
+```
+
+```{r}
+dates_top_10 <- full_news_count %>% 
+  arrange(desc(news_per_day)) %>% 
+  slice(1:20) %>% 
+  pull(datetime)
+
+# Assuming cluster_news_count is your dataframe and dates_top_10 is a vector of dates
+cluster_detailed_top_10 <- cluster_news_count[cluster_news_count$datetime %in% dates_top_10, ]
+
+cluster_top_10 <- cluster_news_count %>% 
+  ungroup() %>% 
+  arrange(desc(news_per_day)) %>% 
+  slice(1:20)
+cluster_top_10
+
+```
+
+
+
+
+```{r}
+shock_data <- cluster_complete_data %>%
+  arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
+  mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA, align = "right"),
+        moving_std_news = rollapply(news_per_day, width = 30, FUN = sd, fill = NA, align = "right"),
+       binary_shock= (news_per_day >  moving_avg_news + 1.96*moving_std_news),
+       intensity_shock = ifelse(binary_shock, news_per_day/moving_avg_news, 0)
+       )
+
+instrument_days <- shock_data %>% 
+  filter(binary_shock == TRUE & news_per_day>=3)
+  
+```
+
+
+
+
 
 
 

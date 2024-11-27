@@ -17,6 +17,10 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 Sys.setenv(lang = "en_US")
 
 news_data <- read_parquet("sorted_news_data.parquet")
+
+news_data_LLM <- news_data %>% 
+  distinct(title, datetime)
+news_data_LLM
 ```
 
 Etant donné le corpus qui grossit au cours du temps,
@@ -24,7 +28,7 @@ J'ai besoin d'un benchmark qui permet de normaliser
 le nombre de nouvelles par jour.
 
 ```{r}
-colnames(news_data)
+colnames(news_data_LLM)
 
 #english reading system
 Sys.setlocale("LC_TIME", "English")
@@ -33,7 +37,7 @@ Sys.setlocale("LC_TIME", "English")
 # print(class(news_data$datetime))
 # news_data$datetime <- ifelse( is.na(news_data$datetime), as.Date(format(as.Date(news_data$date, "%d %b %Y"), "%Y-%m-%d")), news_data$datetime)
 
-news_data <- news_data %>% 
+news_data_LLM <- news_data_LLM %>% 
   mutate(datetime = as.Date(datetime)) %>% 
   arrange(datetime)
 
@@ -41,8 +45,8 @@ news_data <- news_data %>%
 gas_keywords <- c("gas", "Gazprom", "LNG")
 # Create a regular expression pattern from the list
 gas_pattern <- paste(gas_keywords, collapse = "|")
-# Filter rows in news_data based on the title containing any keyword
-filtered_news <- news_data[grepl(gas_pattern, news_data$title, ignore.case = TRUE), ]
+# Filter rows in news_data_LLM based on the title containing any keyword
+filtered_news <- news_data_LLM[grepl(gas_pattern, news_data_LLM$title, ignore.case = TRUE), ]
 
 #  Look for Typical Sentence Structures
 # Affirmative sentences often follow a [subject-verb-object (SVO)] structure, like "The cat sits on the mat."
@@ -60,7 +64,7 @@ filtered_news <- filtered_news[!grepl(exclude_pattern, filtered_news$title, igno
 
 
 filtered_news_distinct <- filtered_news %>% 
-  select(-event_type) %>% 
+  #select(-event_type) %>% 
   distinct() %>% 
   arrange(desc(datetime))
 # news_data <- news_data %>% 
@@ -140,21 +144,20 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 
 labeled_news <- rbind(demand_filtered_news, supply_filtered_news, uncertainty_filtered_news)%>% arrange(datetime)
 
-write_parquet(labeled_news , "labeled_news_data.parquet")
+write_parquet(labeled_news , "sorted_labeled_news_data.parquet")
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/')
-write.csv(labeled_news, "labeled_news_data.csv")
+write.csv(labeled_news, "sorted_labeled_news_data.csv")
+
 
 
 full_news_count <- labeled_news %>% 
-  select(media, datetime) %>%
-  distinct() %>% 
+  distinct(title, datetime) %>% 
   group_by(datetime) %>% 
   summarise(news_per_day = n())
 
 event_news_count <- labeled_news %>% 
-  select(media, datetime, event_type) %>%
-  distinct() %>% 
+  distinct(title, datetime, event_type) %>% 
   group_by(datetime, event_type) %>% 
   summarise(news_per_day = n())
 
@@ -225,31 +228,6 @@ base %>%
 
 ```
 
-
-```{r}
-
-rough_news_count <- filtered_news_distinct %>% 
-  select(media, datetime, date) %>%
-  distinct() %>% 
-  group_by(datetime, date) %>% 
-  summarise(news_per_day = n())
-
-
-full_dates <- tibble(datetime = seq(min(news_data$datetime, na.rm=TRUE), max(news_data$datetime, na.rm=TRUE), by = "day"))
-
-# Fusionner le DataFrame original avec la séquence complète de dates
-complete_data <- full_dates %>%
-  left_join(rough_news_count , by = "datetime") %>%
-  replace_na(list(news_per_day = 0))
-
-
-ggplot(complete_data, aes(x = datetime, y = news_per_day)) +
-  geom_line() +
-  labs(title = "Number of news per day",
-       x = "Date",
-       y = "Number of news") +
-  theme_minimal()
-```
 
 
 Il faut se fixer un seuil d'identification des chocs potentiellement variable avec le temps. Une normalisation par rapport à la quantité de news disponibles.

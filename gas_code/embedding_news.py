@@ -51,11 +51,11 @@ import nltk
 from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
-nltk.download('stopwords')
+#nltk.download('stopwords')
 from nltk.corpus import stopwords
 
-sample_news_2021 = news_data[(news_data['datetime'].dt.year == 2021)]
-news_articles = list(sample_news_2021['title'].values)
+#sample_news_2021 = news_data[(news_data['datetime'].dt.year == 2021)]
+news_articles = list(news_data['title'].values)
 
 # Step 1: Vectorize the articles using TF-IDF
 vectorizer = TfidfVectorizer(stop_words=stopwords.words('english'))
@@ -96,8 +96,48 @@ clustered_articles = pd.DataFrame({
 # Assign textual labels to each article based on their cluster
 clustered_articles['cluster_label'] = clustered_articles['cluster'].apply(lambda x: cluster_labels[x])
 
-print(clustered_articles)
+clustered_articles.sort_values(by="cluster", inplace=True)
+
+os.chdir("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/gas_code")
+os.getcwd()
+clustered_articles.to_csv("clustered_articles_vdif.csv", index=False)
+
+
+
+#labels par cluster proposés par chatgpt
+cluster_labels = {
+    0: "Global Gas Trade and Regional Cooperation",
+    1: "Major Gas Supply Agreements",
+    2: "Supply Chain and Infrastructure Challenges in Oil & Gas",
+    3: "European Gas Crisis and Russia’s Role",
+    4: "Geopolitics of Gas in the Middle East and Asia",
+    5: "Gas Pipeline Disruptions and Cybersecurity",
+    6: "New Pipeline Projects and Developments",
+    7: "Energy Crisis and Gas Price Volatility",
+    8: "Natural Gas Market Trends and Demand Forecasts",
+    9: "Pipeline Projects in Developing Regions",
+    10: "Supply Chain and Emergency Response",
+    11: "Infrastructure Expansion and Gas Production"
+}
+
+clustered_articles['cluster_label'] = clustered_articles['cluster'].map(cluster_labels)
 
 clustered_articles['cluster_label'].value_counts()
+clustered_articles[clustered_articles['cluster']==1]
 
+type(clustered_articles)
 
+sample_news_2021.keys()
+clustered_articles.keys()
+# Merge two dataframes based on different columns
+clustered_articles_with_dates = pd.merge(
+    sample_news_2021,        # First dataframe
+    clustered_articles,      # Second dataframe
+    left_on="title",         # Column from the first dataframe
+    right_on="article",      # Column from the second dataframe
+    how="inner"              # Merge type: inner, outer, left, or right
+)
+len(clustered_articles_with_dates)
+len(clustered_articles)
+clustered_articles_with_dates.head(1)
+clustered_articles_with_dates.to_csv("clustered_articles_vdif_labeled.csv", index=False)
