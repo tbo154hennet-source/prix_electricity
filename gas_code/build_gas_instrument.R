@@ -81,16 +81,16 @@ labeled_news_distinct <- labeled_news %>%
   select(-event_type) %>% 
   distinct()
 
-write_parquet(labeled_news_distinct , "labeled_news_distinct.parquet")
+#write_parquet(labeled_news_distinct , "labeled_news_distinct.parquet")
 
 write_parquet(labeled_news , "labeled_news_data.parquet")
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/')
-write.csv(labeled_news, "labeled_news_data.csv")
-write.csv(labeled_news_distinct, "labeled_news_distinct.csv")
+# setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/')
+# write.csv(labeled_news, "labeled_news_data.csv")
+# write.csv(labeled_news_distinct, "labeled_news_distinct.csv")
 
-full_news_count <- labeled_news %>% 
-  select(media, datetime) %>%
+full_news_count <- labeled_news%>% 
+  select(media, datetime,title) %>%
   distinct() %>% 
   group_by(datetime) %>% 
   summarise(news_per_day = n())
@@ -103,11 +103,6 @@ event_news_count <- labeled_news %>%
 
 
 full_dates <- tibble(datetime = seq(min(news_data$datetime, na.rm=TRUE), max(news_data$datetime, na.rm=TRUE), by = "day"))
-
-# Fusionner le DataFrame original avec la séquence complète de dates
-complete_data <- full_dates %>%
-  left_join(full_news_count , by = "datetime") %>%
-  replace_na(list(news_per_day = 0))
 
 
 # Créer un dataframe avec les types d'événements
@@ -143,50 +138,38 @@ complete_data <- full_dates %>%
 
 
 
-shock_data <- complete_data %>%
+shock_data_supply <- complete_data %>%
   arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
   mutate(moving_avg_news = rollapply(supply_news, width = 30, FUN = mean, fill = NA),
          moving_std_news = rollapply(supply_news, width = 30, FUN = sd, fill = NA),
-         binary_shock= (supply_news >  moving_avg_news + 3*moving_std_news),
+         binary_shock= (supply_news >  moving_avg_news + 1.96*moving_std_news),
          intensity_shock = ifelse(binary_shock, supply_news/moving_avg_news, 0)
   )
 
 
 
+all_news_count <- news_data %>% 
+  select(media, datetime,title) %>%
+  distinct() %>% 
+  group_by(datetime) %>% 
+  summarise(news_per_day = n())
+# Fusionner le DataFrame original avec la séquence complète de dates
+complete_data_bis <- full_dates %>%
+  left_join(all_news_count , by = "datetime") %>%
+  replace_na(list(news_per_day = 0))
+shock_data_full <- complete_data_bis %>%
+  arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
+  mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA),
+         moving_std_news = rollapply(news_per_day, width = 30, FUN = sd, fill = NA),
+         binary_shock= (news_per_day >  moving_avg_news + 1.96*moving_std_news),
+         intensity_shock = ifelse(binary_shock, news_per_day/moving_avg_news, 0)
+  )
 # on s'interroge sur à quel point 
 #il ne faut pas aussi prendre en compte les news du lendemain
 
 #unification des sujets
 #est ce que cela traite de la même chose
 #on envoie le corpus du jour à chatgpt et on lui demande de faire le job
-
-
-info <- merge(gas_data_shock, shock_data, 
-              by.x = "Date", by.y = "datetime" ) 
-# %>% 
-#   select(Date, shock_serie, supply_news, 
-#          moving_avg_news, moving_std_news, day_type, Gas_TTF)
-
-instrument_days <- info %>% 
-  filter(binary_shock ==TRUE) %>% 
-  filter(supply_news > 3)
-
-colnames(full_dates)
-colnames(instrument_days)
-print(class(instrument_days$time))
-print(class(full_dates$datetime))
-print(class(instrument_days$Date))
-
-instrument_results <- left_join(full_dates, instrument_days, 
-                                   by = c("datetime" = "Date")) %>%
-  mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
-  replace_na(list(binary_shock=FALSE))
-
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
-setwd(save_var_path)
-write_parquet(instrument_results, "instrument_news_shock.parquet")
-
-
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 # Import the functions from 'my_functions.R'
@@ -204,19 +187,38 @@ gas_data_shock$Date <- as.Date(gas_data_shock$time)
 gas_data_shock$Gas_TTF_previous_day <- lag(gas_data_shock$Gas_TTF)
 gas_data_shock$Gas_TTF_next_day<- lead(gas_data_shock$Gas_TTF)
 gas_data_shock$shock_serie <-  gas_data_shock$Gas_TTF - gas_data_shock$Gas_TTF_previous_day
-        
-                                                  
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
-setwd(save_var_path)
-gas_instrument_data <- merge(gas_data_shock, instrument_results, by.x= c('Date'), by.y= c('datetime'))
+gas_data_shock$log_shock_serie <-  log(gas_data_shock$Gas_TTF) - log(gas_data_shock$Gas_TTF_previous_day)
 
-write_parquet(gas_instrument_data, "gas_instrument_data.parquet")
 
-surprise_serie <- gas_instrument_data %>% 
-  mutate(month = month(Date), year= year(Date)) %>% 
-  group_by(month, year) %>% 
-  summarize(shock = sum(shock_serie*binary_shock), avg_price= mean(Gas_TTF), Date = mean(Date)) 
-surprise_serie$Delta <- 100*surprise_serie$shock /surprise_serie$avg_price
+#write_parquet(gas_data_shock, "gas_data_shock.parquet")
 
-write_parquet(surprise_serie, "surprise_serie.parquet")
+info_supply <- merge(gas_data_shock, shock_data_supply, 
+              by.x = "Date", by.y = "datetime" ) 
+
+info_full<- merge(gas_data_shock, shock_data_full, 
+                     by.x = "Date", by.y = "datetime" ) 
+
+instrument_days_full <- info_full %>% 
+  filter(binary_shock ==TRUE) %>% 
+  filter(news_per_day > 3)
+# %>% 
+#   select(Date, shock_serie, supply_news, 
+#          moving_avg_news, moving_std_news, day_type, Gas_TTF)
+
+instrument_days_supply <- info_supply %>% 
+  filter(binary_shock ==TRUE) %>% 
+  filter(supply_news > 3)
+
+nrow(instrument_days_full)
+nrow(instrument_days_supply)
+
+save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+setwd(save_compare)
+
+write_parquet(info_supply, "info_supply.parquet")
+write_parquet(info_full, "info_full.parquet")
+
+#mesure la borne de pseudo t-stat pour en faire un shock
+# (news_per_day - moving avg) / moving_std
+
 

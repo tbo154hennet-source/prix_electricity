@@ -395,3 +395,4 @@ sd(fluct_alex_gass$shock_serie)
 
 
 
+

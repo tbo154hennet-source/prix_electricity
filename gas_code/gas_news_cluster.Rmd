@@ -265,15 +265,6 @@ ggplot(cluster_complete_data, aes(x = datetime, y = news_per_day, color = cluste
 
 
 
-```{r}
-ggplot(full_news_count, aes(x = datetime, y = news_per_day)) +
-  geom_line() +
-  labs(title = "Number of news per day",
-       x = "Date",
-       y = "Number of news") +
-  theme(legend.position = "none") 
-```
-
 
 ```{r}
 shock_data <- cluster_complete_data %>%

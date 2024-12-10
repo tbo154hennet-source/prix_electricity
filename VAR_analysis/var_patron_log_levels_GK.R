@@ -1,7 +1,7 @@
 library(vars)
 source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
-source("auxiliary_functions.R")
+source("auxiliary_functions_controls.R")
 source("bootstrap_auxiliary_log.R")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
@@ -50,15 +50,16 @@ matrix_12 <- rbind( diag(k) , zero_matrix)
 
 
 
-estimate <- first_var_estimation(x,y,p, proxies, irhor)
-theta_0 <- estimate$theta_0
-gamma <- estimate$gamma
-phi <- estimate$phi
-var_coef <- estimate$coef
 
-AL <- do.call(cbind, lapply(var_coef, function(df) df[, 1]))
+estimate_log <- first_var_estimation(x,y,p, proxies, irhor)
+theta_0_log <- estimate_log$theta_0
+gamma_log <- estimate_log$gamma
+phi_log <- estimate_log$phi
+var_coef_log <- estimate_log$coef
+
+AL <- do.call(cbind, lapply(var_coef_log, function(df) df[, 1]))
 # Optionally, set column names if needed
-names(AL) <- names(var_coef)
+names(AL) <- names(var_coef_log)
 p <- 4  # Number of lags in the VAR model
 hori <- 20 # Forecast horizon
 n<- ncol(y)
@@ -71,11 +72,10 @@ from <- (l+1)
 to <- l*p
 to_bis <- l*(p-1)
 
-lambda_0_log <- get_lambda_0(C, theta_0)
+lambda_0_log <- get_lambda_0(C, theta_0_log)
 
-nboot<-1000
-gamma_estimate_log_GK <- gamma_bootstrap_log_GK(nboot, vars)
-
+nboot<-100
+gamma_estimate_log_GK <- gamma_bootstrap_GK(nboot, vars, theta_0_log, log_level= TRUE)
 
 
 list_of_samples <- c("gamma", "psi", "ncvg_theta_0", "inv",
@@ -88,6 +88,11 @@ names(sample_matrices_log_GK) <- list_of_samples
 for (name in list_of_samples) {
   sample_matrices_log_GK[[name]] <- gamma_estimate_log_GK[[paste0("boot_", name)]]
 }
+
+save_mat_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/sample_matrices'
+setwd(save_mat_path)
+saveRDS(sample_matrices_log_GK, "sample_matrices_log_GK.rds")
+
 
 # Save bootstrapped samples
 # Initialize a 3D array to store the quantiles for both lambda_01 and lambda_02

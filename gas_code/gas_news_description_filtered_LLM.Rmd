@@ -94,43 +94,6 @@ uncertainty_filtered_news <- filtered_news_distinct[grepl(uncertainty_pattern, f
 
 Try to detect and affirmative structure in the news titles
 
-```{r}
-#library(spacyr)
-
-# Initialize spacyr (make sure spaCy is installed in your environment)
-# Install spaCy (this might take a few minutes)
-# spacy_install()
-# spacy_initialize()
-# 
-# # Function to check if a sentence has an affirmative structure
-# is_affirmative_structure <- function(sentence) {
-#   # Parse the sentence
-#   parsed <- spacy_parse(sentence)
-#   
-#   # Look for basic SVO structure (subject-verb-object)
-#   has_subject <- FALSE
-#   has_verb <- FALSE
-#   
-#   for (i in 1:nrow(parsed)) {
-#     # Check if the word is a noun and acts as a subject
-#     if (parsed$pos[i] == "NOUN") {
-#       has_subject <- TRUE
-#     }
-#     # Check if there is a verb following the noun subject
-#     if (has_subject && parsed$pos[i] == "VERB") {
-#       has_verb <- TRUE
-#       break
-#     }
-#   }
-#   
-#   # Return TRUE if both subject and verb are present, indicating an affirmative structure
-#   return(has_subject && has_verb)
-# }
-# 
-# # Example usage
-# sentence <- "PA Might See Lower Gas Prices In 2024"
-# is_affirmative_structure(sentence) 
-```
 
 Browsing the news titles, you can assess that the news titles are not very reliable.
 Sometimes the connection with supply or demand is weak,

@@ -1,8 +1,8 @@
 
 source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
-source("auxiliary_functions.R")
-source("bootstrap_auxiliary.R")
+source("auxiliary_control.R")
+source("bootstrap_auxiliary_control.R")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
@@ -79,7 +79,7 @@ to_bis <- n*(p-1)
 lambda_0 <- get_lambda_0(C, theta_0)
 
 nboot<-100
-gamma_estimate_GK <- gamma_bootstrap_GK(nboot, vars)
+gamma_estimate_GK <- gamma_bootstrap_GK(nboot, vars, theta_0)
 # Initialize variables
 
 #attention ces bootstrap ne convergent que sous des hypothèses
@@ -95,6 +95,10 @@ names(sample_matrices_GK) <- list_of_samples
 for (name in list_of_samples) {
   sample_matrices_GK[[name]] <- gamma_estimate_GK[[paste0("boot_", name)]]
 }
+
+save_mat_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/sample_matrices'
+setwd(save_mat_path)
+saveRDS(sample_matrices_GK, "sample_matrices_GK.rds")
 
 # Save bootstrapped samples
 # Initialize a 3D array to store the quantiles for both lambda_01 and lambda_02

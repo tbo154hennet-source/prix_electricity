@@ -8,64 +8,61 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 # Import the functions from 'my_functions.R'
 Sys.setenv(lang = "en_US")
 
-news_data <- read_parquet("store_full_news_data.parquet")
-news_data %>% 
+news_data_full <- read_parquet("store_full_news_data.parquet")
+news_data_full %>% 
   filter(datetime == "2022-03-23")
-
-news_data 
+ 
 ```
 
 
 ```{r}
 library(stringr)
-labeled_news %>%
-  filter(str_starts(media, "Reuters"))
-
-news_data_bert %>% 
-  filter(datetime == "2022-08-30")
-
+labeled_news %>% 
+  filter(datetime == "2022-03-23")
+ 
 ```
 
 ```{r}
-news_data_bert %>% 
+news_data %>% 
   filter(datetime == "2022-08-30")
 	
 ```
 
 ```{r}
-news_data_bert %>% 
-  filter(datetime == "2022-09-03")
-```
 
-
-```{r}
-labeled_news %>% 
-  filter(event_type=="supply") %>% 
-  filter(datetime == "2022-02-04")
-```
-```{r}
-filtered_news_distinct %>% 
-  filter(datetime == "2022-02-24")
-
-```
-
-
-```{r}
-labeled_news %>% 
-  filter(event_type=="supply") %>% 
-  filter(datetime == "2022-02-24")
-
-```
-```{r}
-labeled_news %>% 
-  filter(event_type=="supply") %>% 
+news_data %>% 
   filter(datetime == "2022-02-25")
-```
-```{r}
+
+news_data_all %>% 
+  filter(datetime == "2022-03-02")
+
 labeled_news %>% 
-  filter(event_type=="supply") %>% 
-  filter(datetime == "2022-03-01")
+  filter(datetime == "2020-08-28")
+
+news_data_bert %>% 
+  filter(datetime == "2020-08-28")
+
+
 ```
+
+
+
+
+```{r}
+
+news_data_clustered %>% 
+  filter(datetime == "2021-12-21")
+
+filtered_news_clustered %>% 
+  filter(datetime == "2021-12-21")
+
+news_data_bert %>% 
+  filter(datetime == "2021-10-05")
+
+
+
+```
+
 
 
 ```{r}
@@ -185,9 +182,8 @@ test2[, c("Date", "order", "news_per_day", "event_type")]
 On regarde les pics de news
 
 ```{r}
-full_news_count %>% 
-  arrange(desc(news_per_day)) %>% 
-  slice(1:20)
+news_data_bert %>% 
+  
 ```
 
 ```{r}
@@ -205,23 +201,36 @@ cluster_top_10 <- cluster_news_count %>%
   slice(1:20)
 cluster_top_10
 
+
 ```
 
 
 
 
 ```{r}
-shock_data <- cluster_complete_data %>%
-  arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
-  mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA, align = "right"),
-        moving_std_news = rollapply(news_per_day, width = 30, FUN = sd, fill = NA, align = "right"),
-       binary_shock= (news_per_day >  moving_avg_news + 1.96*moving_std_news),
-       intensity_shock = ifelse(binary_shock, news_per_day/moving_avg_news, 0)
-       )
+colnames(gas_data_shock)
+sd(gas_data_shock$shock_serie, na.rm=TRUE)
 
-instrument_days <- shock_data %>% 
-  filter(binary_shock == TRUE & news_per_day>=3)
-  
+sd(info_cluster%>% 
+  filter(binary_shock == TRUE & news_per_day>=3) %>% 
+    pull(shock_serie), na.rm=TRUE)
+
+sd(info_small_cluster%>% 
+  filter(binary_shock == TRUE & news_per_day>=3) %>% 
+    pull(shock_serie), na.rm=TRUE)
+
+sd(info_high_cluster%>% 
+  filter(binary_shock == TRUE & news_per_day>=3) %>% 
+    pull(shock_serie), na.rm=TRUE)
+sd(info_supply%>% 
+  filter(binary_shock == TRUE & supply_news>=3) %>% 
+    pull(shock_serie), na.rm=TRUE)
+
+sd(info_good %>% 
+  filter(binary_shock == TRUE & news_per_day>=3) %>% 
+    pull(shock_serie), na.rm=TRUE)
+
+
 ```
 
 

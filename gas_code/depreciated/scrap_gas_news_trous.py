@@ -88,7 +88,7 @@ my_datetime = datetime.strptime(jour_initial, '%m/%d/%Y')
 test = get_gas_news(date_str)
 
 test.keys()
-test['date']
+test[test['date']=="Aug 29, 2022"]
 test['datetime']
 
 test2 = get_gas_news(date_str)

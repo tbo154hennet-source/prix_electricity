@@ -1,0 +1,156 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+# Forecast Error Variance Decomposition
+
+
+```{r}
+library(ggplot2)
+irf_response_test <- as.data.frame(theta_0)
+irf_response_test$shock <- rep(names, length.out = length(theta_0[,1]))
+irf_response_test$shock <- factor(irf_response_test$shock, levels = rev(names))
+# fake plot just to construct the correct legend
+colors_shock <- c("blue", "red", "green", "yellow")
+
+
+plot_legend <- ggplot(data =irf_response_test, aes(x=V1, fill = shock))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+  values = rev(colors_shock),
+  labels = TeX(rev(names)))
+# Légende personnalisée (à ajuster selon vos besoins)
+custom_legend <- cowplot::get_legend(plot_legend)
+plot_legend
+```
+
+
+
+```{r}
+library(ggplot2)
+library(latex2exp)
+
+#names <- c("$Q_{elec}$" "$P_{elec}$" "IPI"        "$NE Index$")
+plot_fevd <- function(series){
+  
+  decomp_tot_data <- data.frame(
+    time= c(1:irhor),
+    fevd[,series,])
+  # Plot the decomposition
+  colnames(decomp_tot_data)[-1] <- names
+  
+  # Reshaper les données en format long pour ggplot2
+  library(tidyr)
+  long_data <- pivot_longer(decomp_tot_data, 
+                            cols = -time, names_to = "category",
+                            values_to = "value")
+  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'colors_shock'
+  # Modifier l'ordre des niveaux du facteur category
+  long_data$category <- factor(long_data$category, levels = rev(names))
+  
+  # Tracer des barres empilées avec ggplot2
+  my_plot <- ggplot()+
+    geom_bar(data= long_data, aes(x = time, y = value, fill = category),
+             stat = "identity", position = "stack") +  # Barres empilées
+    scale_fill_manual(
+      values = rev(colors_shock),
+      labels = TeX(rev(names)))+
+    #scale_fill_manual(values = c("blue", "red", "green"), labels = c("Supply", "Demand", "Other")) +
+    labs(#title=TeX(paste("Historical Decomposition of",names[[series]])) ,
+         x="Time", y=TeX(names[series]))+
+    theme(legend.position = "none")
+
+  return(my_plot)
+}
+plot_fevd(1)
+
+
+```
+
+
+
+```{r}
+
+# Apply the function to the sequence 3:10
+results <- lapply(c(1:n) , plot_fevd)
+
+# Arrange the plots in a grid
+plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
+
+# Combine the grid with the legend
+final_plot <- plot_grid(plots_grid, custom_legend, ncol = 1, rel_heights = c(1, 0.1))
+
+title <- ggdraw() + 
+  draw_label(TeX('Forecast Error Variance Decomposition'), fontface = 'bold', x = 0.5, hjust = 0.5)
+
+# Combine the title and the final plot with legend
+final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+# Display the final plot
+print(final_plot_with_title)
+```
+
+
+```{r}
+plot_fevd_iv <- function(series){
+  
+  decomp_tot_data <- data.frame(
+    time= c(1:irhor),
+    fevd_iv[,series,])
+  # Plot the decomposition
+  colnames(decomp_tot_data)[-1] <- names
+  
+  # Reshaper les données en format long pour ggplot2
+  library(tidyr)
+  long_data <- na.omit(pivot_longer(decomp_tot_data, 
+                            cols = -time, names_to = "category",
+                            values_to = "value"))
+  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'colors_shock'
+  long_data$category <- factor(long_data$category, levels = rev(names))
+  
+  # Tracer des barres empilées avec ggplot2
+  my_plot <- ggplot()+
+    geom_bar(data= long_data, aes(x = time, y = value, fill = category),
+             stat = "identity", position = "stack") +
+    geom_line(data = long_data, aes(x=time, y=1), linetype='dashed')+
+    # Barres empilées
+    scale_fill_manual(
+      values = rev(colors_shock[1:k]),
+      labels = TeX(rev(names)))+
+    #scale_fill_manual(values = c("blue", "red", "green"), labels = c("Supply", "Demand", "Other")) +
+    labs(#title=TeX(paste("Historical Decomposition of",names[[series]])) ,
+         x="Time", y=TeX(names[series]))+
+    theme(legend.position = "none")
+
+  return(my_plot)
+}
+plot_fevd_iv(series = 1)
+```
+
+
+
+```{r}
+# Apply the function to the sequence 3:10
+results <- lapply(c(1:n) , plot_fevd_iv)
+
+# Arrange the plots in a grid
+plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
+
+# Combine the grid with the legend
+final_plot <- plot_grid(plots_grid, custom_legend, ncol = 1, rel_heights = c(1, 0.1))
+
+title <- ggdraw() + 
+  draw_label(TeX('Forecast Error Variance Decomposition'), fontface = 'bold', x = 0.5, hjust = 0.5)
+
+# Combine the title and the final plot with legend
+final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+# Display the final plot
+print(final_plot_with_title)
+```
+
+

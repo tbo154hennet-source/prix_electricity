@@ -45,20 +45,32 @@ def get_bert_embedding(text):
 # Convert articles to BERT embeddings
 article_bert_vectors = np.array([get_bert_embedding(article) for article in news_articles])
 
+os.getcwd()
+article_bert_vectors.shape
+# save bert embeddings
+df = pd.DataFrame(article_bert_vectors)
+df.to_parquet("bert_embeddings.parquet", engine="pyarrow", index=False)
+
 # Step 5: Apply K-means Clustering
-num_clusters = 12  # Specify the number of clusters
-kmeans_bert = KMeans(n_clusters=num_clusters, random_state=42)
-kmeans_bert.fit(article_bert_vectors)
+small_num_clusters = 7  # Specify the number of clusters
+kmeans_bert_small = KMeans(n_clusters=small_num_clusters, random_state=42)
+kmeans_bert_small.fit(article_bert_vectors)
+
+# Step 5: Apply K-means Clustering
+high_num_clusters = 13  # Specify the number of clusters
+kmeans_bert_high = KMeans(n_clusters= high_num_clusters, random_state=42)
+kmeans_bert_high.fit(article_bert_vectors)
 
 # Step 6: Assign the Textual Labels to the Articles
 clustered_articles_bert = pd.DataFrame({
     'article': news_articles,
-    'cluster': kmeans_bert.labels_
+    'small_cluster': kmeans_bert_small.labels_,
+    'high_cluster': kmeans_bert_high.labels_
 })
 
 
 clustered_articles_bert_with_dates = pd.merge(
-    sample_news_2021,        # First dataframe
+    news_data,        # First dataframe
     clustered_articles_bert,      # Second dataframe
     left_on="title",         # Column from the first dataframe
     right_on="article",      # Column from the second dataframe

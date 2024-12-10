@@ -11,10 +11,7 @@ import os
 
 # à un moment date est repris par datetime
 
-#
-demand_news = GoogleNews()
-supply_news = GoogleNews()
-uncertainty_news = GoogleNews()
+
 #demand_news.get_news('gas demand')
 #supply_news.get_news('gas supply')
 #uncertainty_news.get_news('gas uncertainty')
@@ -61,7 +58,7 @@ store_news_data = pd.DataFrame(columns = ['title', 'date', 'datetime', 'media', 
 # Search from 1st Jan 2000
 # Search until 12th December 2023
 #attention format de date américaine mm/dd/yyyy
-jour_initial = "02/03/2021"
+jour_initial = "02/24/2022"
 my_datetime = datetime.strptime(jour_initial, '%m/%d/%Y')
 
 #test = get_gas_news(date)
@@ -89,3 +86,18 @@ store_news_data.to_csv('store_news_data_dix_neuf.csv', index=False)
 
 
 
+demand_news = GoogleNews(start=date_str,  end=new_date_str, region='US')
+demand_news.get_news('gas demand')
+demand_news = pd.DataFrame(demand_news.results())
+
+demand_news_UK = GoogleNews(start=date_str,  end=new_date_str, region='GB')
+demand_news_UK.get_news('gas demand')
+demand_news_UK = pd.DataFrame(demand_news_UK.results())
+
+demand_news_FR = GoogleNews(start=date_str,  end=new_date_str, region = 'FR')
+demand_news_FR.get_news('gas')
+demand_news_FR = pd.DataFrame(demand_news_FR.results())
+
+print(demand_news)
+print(demand_news_UK)
+print(demand_news_FR)
