@@ -1,0 +1,299 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#Partie Demand
+
+```{r}
+Sys.setenv(lang = "en_US")
+
+# Temperature is a demand instrument
+save_path_spain <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp'
+setwd(save_path_spain)
+
+IV_data <- read_parquet('low_freq_data.parquet')
+
+
+
+
+monthly_indispo <- read_parquet('spain_monthly_indispo.parquet')
+nuclear_monthly_indispo <- read_parquet('spain_nuclear_monthly_indispo.parquet')
+price_renew_final <- read_parquet( 'price_renew.parquet')
+
+temperature_instrument <- read.csv("temperature_instrument.csv")
+
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+setwd(save_var_path)
+surprise_serie<- read_parquet("surprise_serie.parquet") %>% 
+  rename(abs_shock = shock, relative_shock = Delta)
+
+```
+
+
+
+```{r}
+#temperature_instrument$HDD_excess_instrument
+plot_data <- merge(
+  IV_data %>% select(datetime, month, year, gen_tot), 
+  temperature_instrument %>% select(-Date)
+  ,by = c("month", "year")
+  )
+
+#colnames(plot_data)
+my_plot <- ggplot(plot_data)+
+  #geom_line( aes(x= datetime, y= T_year_month, color = "Temperature"))+
+  geom_line( aes(x= datetime, y= gen_tot/10**3, color = "Elec Demand"))+
+  geom_line( aes(x= datetime, y= T_avg, color = "Temperature"))+
+  scale_y_continuous(sec.axis = sec_axis(~. *1000, name = "Elec Demand(MWh)")) +
+  labs(x = "Date", y = "Temperature (°C)", color = "legend")+
+  theme_minimal()
+
+my_plot
+```
+
+
+On regarde si c'est vrai aussi à l'ordre 1
+
+```{r}
+
+
+library(forecast)
+library(pracma)
+cor(plot_data$gen_tot, plot_data$T_avg)
+cor(plot_data$gen_tot, plot_data$T_avg)
+cor(log(plot_data$gen_tot), plot_data$T_avg)
+
+cor(plot_data$gen_tot, plot_data$cold_excess_instrument)
+cor(plot_data$gen_tot, plot_data$heat_excess_instrument)
+cor(log(plot_data$gen_tot), plot_data$cold_excess_instrument)
+
+
+diff_col <- c("T_avg" , "T_min","T_max" , "gen_tot",                
+"cold_excess_instrument", "heat_excess_instrument")
+for (col in diff_col){
+  name <- paste0("diff_",col)
+  plot_data[name] <- c(NA,diff(as.numeric(plot_data[[col]])))
+
+}
+
+
+plot_data <- na.omit(plot_data)
+
+cor(plot_data$diff_gen_tot, plot_data$diff_cold_excess_instrument)
+cor(plot_data$diff_gen_tot, plot_data$diff_T_avg)
+
+
+vars_list <-c("diff_gen_tot", "diff_T_avg",
+              "gen_tot", "T_avg")
+
+
+adjusted_data <- list()
+for (var in vars_list) {
+  ts_data <- ts(plot_data[[var]], start = start_date, frequency = frequency)
+  # Perform STL decomposition
+  stl_fit <- stl(ts_data, s.window = "periodic")
+  
+  # Extract the seasonally adjusted component
+  adjusted_data[[var]] <- seasadj(stl_fit)
+}
+
+# Combine the seasonally adjusted data into a dataframe
+seasonally_adjusted_df <- as.data.frame(adjusted_data)
+
+cor(seasonally_adjusted_df$diff_gen_tot, seasonally_adjusted_df$diff_T_avg)
+cor(log(seasonally_adjusted_df$gen_tot), seasonally_adjusted_df$T_avg)
+  
+```
+
+```{r}
+
+my_plot <- ggplot(plot_data)+
+  #geom_line( aes(x= datetime, y= T_year_month, color = "Temperature"))+
+  geom_line( aes(x= datetime, y= diff_gen_tot/10**3, color = "Elec Demand Growth"))+
+  geom_line( aes(x= datetime, y= diff_T_avg, color = "Temperature Growth"))+
+  scale_y_continuous(sec.axis = sec_axis(~. *10**3, name = "Elec Demand(MWh)"))+
+  scale_color_manual(values = c("Elec Demand Growth" = "green", 
+                                "Temperature Growth" = "blue"
+                                #"Temperature" = "purple")
+                     )) +
+  labs(x = "Date", y = "Temperature (°C)", color = "legend")+
+  theme_minimal()
+
+my_plot
+```
+
+
+
+```{r}
+
+my_plot <- ggplot(plot_data)+
+  #geom_line( aes(x= datetime, y= T_year_month, color = "Temperature"))+
+  geom_line( aes(x= datetime, y= cold_excess_instrument, color = "Excess Cold"))+
+  geom_line( aes(x= datetime, y= heat_excess_instrument, color = "Excess Heat"))+
+  
+  geom_line( aes(x= datetime, y= (gen_tot - mean(gen_tot))/10**4 , color = "Elec Demand"))+
+  scale_y_continuous(sec.axis = sec_axis(~. *10000, name = "Elec Demand(MWh)"))+
+  scale_color_manual(values = c("Elec Demand" = "green", 
+                                "Excess Cold" = "blue", 
+                                "Excess Heat" = "red"
+                                #"Temperature" = "purple")
+                     )) +
+  labs(x = "Date", y = "Temperature (°C)", color = "legend")+
+  theme_minimal()
+
+my_plot
+  
+  
+```
+
+
+#Partie Supply
+
+## Renewable instruments
+
+```{r}
+colnames(IV_data)
+my_plot <- ggplot(IV_data)+
+  #geom_line( aes(x= datetime, y= T_year_month, color = "Temperature"))+
+  geom_line( aes(x= datetime, y= spot_price, color = "Elec Price"))+
+  geom_line( aes(x= datetime, y= renewable_generation/100, color = "Renew Gen"))+
+  scale_y_continuous(sec.axis = sec_axis(~. *100, name = "Elec Price")) +
+  labs(x = "Date", y = "Price($)", color = "legend")+
+  theme_minimal()
+
+my_plot
+
+```
+
+```{r}
+
+library(forecast)
+library(pracma)
+cor(IV_data$spot_price, IV_data$renewable_generation)
+cor(IV_data$spot_price, IV_data$renewable_generation)
+cor(log(IV_data$spot_price), IV_data$renewable_generation)
+
+for (col in colnames(IV_data)){
+  name <- paste0("diff_",col)
+  IV_data[name] <- c(NA,diff(IV_data[[col]]))
+  # Compute and assign difference
+IV_data[[name]] <- c(NA, diff(IV_data[[col]]))
+
+}
+
+
+IV_data <- na.omit(IV_data)
+
+
+cor(IV_data$diff_spot_price, IV_data$diff_renewable_generation)
+
+
+vars_list <-c("diff_spot_price", "diff_renewable_generation",
+              "spot_price", "renewable_generation")
+
+
+adjusted_data <- list()
+for (var in vars_list) {
+  ts_data <- ts(IV_data[[var]], start = start_date, frequency = frequency)
+  # Perform STL decomposition
+  stl_fit <- stl(ts_data, s.window = "periodic")
+  
+  # Extract the seasonally adjusted component
+  adjusted_data[[var]] <- seasadj(stl_fit)
+}
+
+# Combine the seasonally adjusted data into a dataframe
+seasonally_adjusted_df <- as.data.frame(adjusted_data)
+
+cor(seasonally_adjusted_df$diff_spot_price, seasonally_adjusted_df$diff_renewable_generation)
+
+cor(seasonally_adjusted_df$diff_spot_price[0:50], seasonally_adjusted_df$diff_renewable_generation[0:50])
+
+
+```
+Il semble y avoir un effet comme attendu sur le début de la période,
+Si l'on prend l'ensemble de l'échantillon, la corrélation est entièrement perdue à cause des derniers gros points à la fin.
+On remarque ici que l'instrument et l'endogène ont des tendances donc différencier est important
+
+
+```{r}
+
+my_plot <- ggplot(IV_data)+
+  #geom_line( aes(x= datetime, y= T_year_month, color = "Temperature"))+
+  geom_line( aes(x= datetime, y= diff_spot_price, color = "Elec Price"))+
+  geom_line( aes(x= datetime, y= diff_renewable_generation/100, color = "Renew Gen"))+
+  scale_y_continuous(sec.axis = sec_axis(~. *100, name = "Elec Price")) +
+  labs(x = "Date", y = "Price($)", color = "legend")+
+  theme_minimal()
+
+my_plot
+
+```
+
+
+## Indisponibilités
+
+
+```{r}
+#test4 <- bout_indispo_ENTSOE_data %>% filter(mrid =="uOKJuRKj0o1N8nLBuxbBvw")
+save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_path_fr)
+
+monthly_indispo <- read_parquet('monthly_indispo.parquet')
+nuclear_monthly_indispo <- read_parquet('nuclear_monthly_indispo.parquet')
+unexpected_monthly_indispo <- read_parquet('unexpected_monthly_indispo.parquet')
+unexpected_nuclear_monthly_indispo <- read_parquet('unexpected_nuclear_monthly_indispo.parquet')
+
+monthly_indispo <- merge(IV_data %>% select(month, year, datetime),
+                   monthly_indispo,
+                   by= c("month", "year"))
+
+nuclear_monthly_indispo <- merge(IV_data %>% select(month, year, datetime),
+                  nuclear_monthly_indispo,
+                   by= c("month", "year"))
+
+unexpected_monthly_indispo <- merge(IV_data %>% select(month, year, datetime),
+                   unexpected_monthly_indispo,
+                   by= c("month", "year"))
+unexpected_nuclear_monthly_indispo <- merge(IV_data %>% select(month, year, datetime),
+                   unexpected_nuclear_monthly_indispo,
+                   by= c("month", "year"))
+```
+
+```{r}
+
+my_plot <- ggplot(IV_data)+
+  #geom_line( aes(x= datetime, y= T_year_month, color = "Temperature"))+
+  geom_line( aes(x= datetime, y= spot_price*100, color = "Elec Price"))+
+  geom_line(data= monthly_indispo, aes(x= datetime, y= Unavailable.Capacity, color = "Tot"))+
+  geom_line(data= unexpected_monthly_indispo, aes(x= datetime, y= Unavailable.Capacity, color = "Unex Tot"))+
+  geom_line(data= nuclear_monthly_indispo, aes(x= datetime, y= Unavailable.Capacity, color = "Nuc Tot"))+
+  geom_line(data= unexpected_nuclear_monthly_indispo, aes(x= datetime, y= Unavailable.Capacity, color = "Nuc Unex Tot"))+
+  scale_y_continuous(sec.axis = sec_axis(~. /100, name = "Elec Price ($)")) +
+  labs(x = "Date", y = "Unavailability (MWh)", color = "legend")+
+  theme_minimal()
+
+my_plot
+
+```
+
+
+```{r}
+
+cor_data <- merge(unexpected_monthly_indispo, IV_data,
+      by=c("month", "year"))
+
+cor(IV_data$spot_price, monthly_indispo$Unavailable.Capacity)
+cor(IV_data$spot_price, nuclear_monthly_indispo$Unavailable.Capacity)
+cor_data <- merge(unexpected_monthly_indispo, IV_data,
+      by=c("month", "year"))
+cor(cor_data$spot_price, cor_data$Unavailable.Capacity)
+
+cor_data <- merge(unexpected_nuclear_monthly_indispo, IV_data,
+      by=c("month", "year"))
+cor(cor_data$spot_price, cor_data$Unavailable.Capacity)
+
+
+```
+

@@ -8,30 +8,33 @@ source("reliability_auxiliary.R")
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
-IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')
+
+IV_data_log <- read_parquet('low_freq_data_log.parquet')
 headers_proxies = c("cold_excess_instrument", 
-                    # "abs_gas_shock",                 
-                    # "rel_gas_shock" ,
-                    "heat_excess_instrument",        
-                    "renewable_generation_log_diff", 
-                    "tot_indispo_log_diff",          
-                    "nuclear_indispo_log_diff" 
+                    #"gas_supply_shock",
+                    #"heat_excess_instrument",
+                    "renewable_generation_log"
 )
 
-proxies <- ts(IV_data_log_diff[, c(headers_proxies)], frequency=12)
-headers_controls = c("gas_price_log_diff"
+colnames(IV_data_log)
+
+proxies <- ts(IV_data_log[, c(headers_proxies)], frequency=12)
+
+
+headers_var = c("gen_tot_log",
+                "spot_price_log",
+                "IPI_log",
+                # "ECB_rate_log",
+                # "E_Index_log",
+                # "Exp_pi_log",
+                # "UnE_log" ,
+                "NE_Index_log"
 )
-controls <- ts(IV_data_log_diff[, c(headers_controls)], frequency=12)
-headers_var = c("gen_tot_log_diff",
-                "spot_price_log_diff",
-                "IPI_log_diff",
-                # "ECB_rate_log_diff",
-                # "E_Index_log_diff",
-                # "Exp_pi_log_diff",
-                # "UnE_log_diff" ,
-                "NE_Index_log_diff"
+vars<- ts(IV_data_log[, c(headers_var)], frequency=12)
+headers_controls = c("gas_price_log"
 )
-vars<- ts(IV_data_log_diff[, c(headers_var)], frequency=12)
+controls <- ts(IV_data_log[, c(headers_controls)], frequency=12)
+
 
 p = 4     
 irhor = 20

@@ -1,0 +1,244 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Load packages
+
+```{r}
+library(tidyr)
+library(latex2exp)
+library(gridExtra)
+library(grid)
+library(cowplot)
+```
+
+
+Load data
+
+```{r}
+save_path_spain <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp'
+setwd(save_path_spain)
+long_format_ENTSOE_indispo <- 
+  read_parquet('all_format_ENTSOE_indispo_tot.parquet')
+
+final_indispo <- read_parquet('final_spain_indispo.parquet')%>% 
+  filter(indispo_day > start_date)
+
+#class(final_indispo$indispo_day)
+
+final_nuclear_indispo <- read_parquet( 'final_spain_nuclear_indispo.parquet')
+#class(final_nuclear_indispo$indispo_day)
+
+
+```
+
+
+
+```{r}
+plant_types <- long_format_ENTSOE_indispo %>%
+  group_by(plant_type) %>%
+  summarise(n=n())
+plant_types
+```
+```{r}
+long_format_ENTSOE_indispo %>%
+  group_by(businesstype) %>%
+  summarise(n=n())
+```
+```{r}
+
+# Convert year and month to a date object
+monthly_indispo$plot_date <- as.Date(paste(monthly_indispo$year, monthly_indispo$month, "01", sep = "-"))
+
+
+my_plot <- ggplot() +
+  geom_line(data =final_indispo , aes(x = indispo_day, y = Unavailable.Capacity, color = 'total')) +
+  geom_line(data =monthly_indispo, aes(x= plot_date, y = Unavailable.Capacity, color = 'total'), linetype= "dashed")+
+  #geom_line(data =monthly_indispo, aes(x= plot_date, y = tot_indispo, color = 'total'), linetype= "dashed")+
+  geom_line(data =final_nuclear_indispo, aes(x= indispo_day, y = Unavailable.Capacity, color = 'nuclear'))+
+  labs(title = "Spanish Daily Unavailable Capacity",
+       x = "Date",
+       y = "Unavailable Capacity (MW)",
+       color = "Frequency") +  # Add a legend title
+  scale_color_manual(values = c('total' = 'blue', 'nuclear' = 'red'))  # Set colors for each frequency
+
+
+my_plot
+```
+
+
+```{r}
+final_unplanned_indispo <- long_format_ENTSOE_indispo %>% 
+  filter(businesstype == "Unplanned outage")%>% 
+  group_by(indispo_day) %>% 
+  summarise(Installed.Capacity = sum(as.numeric(Installed.Capacity)),
+            Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
+  ungroup()%>% 
+  filter(indispo_day > start_date)
+```
+
+
+
+```{r}
+my_plot <- ggplot() +
+  geom_line(data =final_unplanned_indispo , aes(x = indispo_day, y = Unavailable.Capacity, color = 'unplanned')) +
+  geom_line(data =final_indispo, aes(x= indispo_day, y = Unavailable.Capacity, color = 'total'))+
+  geom_line(data =final_nuclear_indispo, aes(x= indispo_day, y = Unavailable.Capacity, color = 'nuclear'))+
+  labs(title = "French Daily Unavailable Capacity",
+       x = "Date",
+       y = "Unavailable Capacity (MW)",
+       color = "Frequency") +  # Add a legend title
+  scale_color_manual(values = c('total' = 'blue', 'nuclear' = 'red',
+                                'unplanned'= 'green'))  # Set colors for each frequency
+
+
+my_plot
+```
+
+on cherche à expliquer de manière anecdotique
+le pic d'indispo courant 2018.
+
+On se propose de réduire le nombre de catégories en se focalisant sur celles qui drivent les plus grosses variations. On fusionne donc toutes les catégories hydrauliques et l'on se débarrasse de Biomass.
+
+
+```{r}
+by_plant_indispo <- long_format_ENTSOE_indispo %>% 
+  group_by(indispo_day, plant_type) %>% 
+  summarise(Installed.Capacity = sum(as.numeric(Installed.Capacity)),
+            Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
+  ungroup()%>% 
+  filter(indispo_day > start_date)
+
+tot_unavailability <- final_indispo %>% 
+  select(indispo_day, Unavailable.Capacity)%>%
+  rename(total_unavailability = Unavailable.Capacity)
+
+by_plant_tot_indispo <- merge(by_plant_indispo, tot_unavailability , by="indispo_day")
+
+by_plant_tot_indispo <- by_plant_tot_indispo %>% 
+  mutate(share = Unavailable.Capacity/total_unavailability)
+
+colnames(by_plant_tot_indispo)
+
+# Define the hydro-related plant types
+hydro_types <- c("Hydro Pumped Storage", "Hydro Run-of-river and poundage", "Hydro Water Reservoir")
+
+final_by_plant_tot_indispo <- by_plant_tot_indispo %>%
+  group_by(indispo_day) %>% 
+  # Summarize the hydro-related rows into a single "Hydro" row
+  filter(plant_type %in% hydro_types) %>%
+  summarise(across(c(share, Installed.Capacity, Unavailable.Capacity, total_unavailability), sum, na.rm = TRUE),
+            plant_type = "Hydro") %>%
+  # Bind this new "Hydro" row with the rest of the data, excluding original hydro-related rows
+  bind_rows(by_plant_tot_indispo %>% filter(!plant_type %in% hydro_types))%>% 
+  ungroup() %>% 
+  arrange(indispo_day)
+
+other_types <- c("Other", "Biomass")
+final_by_plant_tot_indispo <- final_by_plant_tot_indispo %>%
+  group_by(indispo_day) %>% 
+  filter(plant_type %in% other_types) %>%
+  summarise(across(c(share, Installed.Capacity, Unavailable.Capacity, total_unavailability), sum, na.rm = TRUE),
+            plant_type = "Others") %>%
+  # Bind this new "Hydro" row with the rest of the data, excluding original hydro-related rows
+  bind_rows(final_by_plant_tot_indispo %>% filter(!plant_type %in% other_types))%>% 
+  ungroup() %>% 
+  arrange(indispo_day)
+
+
+
+```
+
+
+Get customized legend
+```{r}
+library(ggplot2)
+# fake plot just to construct the correct legend
+colors_plant <- c("blue", "red", "green", "yellow", "purple")
+names <- unique(final_by_plant_tot_indispo$plant_type)
+
+# Define plant types as a factor with specified levels to control the order
+example_data <- data.frame(
+  V1 = rnorm(100),  # Random numeric values
+  plant_type = factor(sample(names, 100, replace = TRUE), levels = names)  # Factor with levels
+)
+
+plot_legend <- ggplot(data =example_data, aes(x=V1, fill = plant_type))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+  values = colors_plant,
+  labels = rev(names))
+# Légende personnalisée (à ajuster selon vos besoins)
+custom_legend <- cowplot::get_legend(plot_legend)
+plot_legend
+```
+
+
+
+On regarde l'évolution de la composition des indispos 
+
+```{r}
+# Reshaper les données en format long pour ggplot2
+
+
+  # long_data <- pivot_longer(decomp_tot_data, 
+  #                           cols = -time, names_to = "category",
+  #                           values_to = "value")
+
+  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'colors_shock'
+  # Modifier l'ordre des niveaux du facteur category
+final_by_plant_tot_indispo$plant_type <- factor(final_by_plant_tot_indispo$plant_type, levels = unique(final_by_plant_tot_indispo$plant_type))
+  
+colnames(by_plant_tot_indispo)
+  # Tracer des barres empilées avec ggplot2
+  my_plot <- ggplot()+
+    geom_bar(data= final_by_plant_tot_indispo, aes(x = indispo_day, y = share, fill = plant_type),
+             stat = "identity", position = "stack") +  # Barres empilées
+    scale_fill_manual(
+      values = rev(colors_plant),
+      labels = rev(names))+
+
+    labs(title= "Share of Unavailability by Plant Type" ,
+         x="Time", y="Contribution")+
+    theme(legend.position = "none")
+
+my_plot
+   
+final_plot_with_title <- plot_grid(my_plot ,custom_legend, ncol = 1, rel_heights = c(1, 0.2))
+
+# Display the final plot
+print(final_plot_with_title)
+```
+
+On veut faire le même graphique non en %,
+mais en valeur absolue
+
+```{r}
+my_plot <- ggplot()+
+    geom_bar(data= final_by_plant_tot_indispo, aes(x = indispo_day, y = Unavailable.Capacity, fill = plant_type),
+             stat = "identity", position = "stack") +  # Barres empilées
+    scale_fill_manual(
+      values = rev(colors_plant),
+      labels = rev(names))+
+
+    labs(title= "Unavailability by Plant Type" ,
+         x="Time", y="Contribution")+
+    theme(legend.position = "none")
+   
+final_plot_with_title <- plot_grid(my_plot ,custom_legend, ncol = 1, rel_heights = c(1, 0.2))
+
+# Display the final plot
+print(final_plot_with_title)
+```
+
+
+
+
+
+
+
+
+
+

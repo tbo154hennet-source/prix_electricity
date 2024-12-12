@@ -1,0 +1,113 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Compare to other monthly gas series in the literature
+
+```{r}
+library(readxl)
+
+save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+setwd(save_compare)
+info_selected <- read_parquet("info_selected.parquet")
+colnames(info_selected)
+
+gas_data_tot <- read_excel("TTF_futures.xlsx")
+gas_data_shock <- read_parquet("gas_data_shock.parquet")
+
+gas_data_tot$dms_M1 <- log(gas_data_tot$DTFE1C.D7) - log(lead(gas_data_tot$DTFE1C.D7, 1))
+
+info_selected <- info_selected %>%
+    mutate(instrumented_day = ifelse(binary_shock == TRUE & news_per_day > 3, "supply_shock", 0),
+           instrumented_day = ifelse(Date %in% demand_news_days, "demand_shock", instrumented_day))
+ 
+info_selected <- left_join(info_selected, gas_data_tot %>% 
+                                  select(time, dms_M1), by = c( "time"))
+
+supply_shock_serie <- info_selected %>% 
+  filter(instrumented_day=="supply_shock") %>% 
+  mutate(month = month(Date), year= year(Date))%>%
+  group_by(month, year) %>% 
+  summarize(Value_PC1 = sum(PC1), Value_dms_M1= sum(dms_M1), Date = first(Date)) %>% 
+  arrange(Date)
+
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
+events_data <- read.csv("alex_gassani_shocks.csv")
+events_data <- events_data %>% 
+  mutate(Date = as.Date(Date)) %>% 
+  arrange(Date)
+colnames(gas_data_shock)
+gas_all <- merge(gas_data_shock, gas_data_tot, by="time")
+alex_gassani_benchmark <- left_join( events_data, gas_all %>% 
+                                      select(Date, dms_M1, PC1) ,
+                                by = c("Date"))
+
+events_data_serie <- alex_gassani_benchmark %>% 
+  mutate(month = month(Date), year= year(Date))%>%
+  group_by(month, year) %>% 
+  summarize(Value_PC1_AG = sum(PC1), Value_dms_M1_AG = sum(dms_M1), Date = first(Date)) %>% 
+  arrange(Date)
+events_data_serie 
+```
+
+
+
+```{r}
+
+shock_series_all <- full_join(supply_shock_serie ,events_data_serie%>% select(-Date),
+                              by = c("month", 'year')) %>% 
+  filter(as.numeric(year)> 2014)
+# Convert "Month_Year" to Date format (assume 1st day of the month)
+shock_series_all$Date <- as.Date(paste0(shock_series_all$year, "-",shock_series_all$month,  "-01"))
+
+
+# Get the min and max dates
+min_date <- min(shock_series_all$Date)
+max_date <- max(shock_series_all$Date)
+
+# Create a sequence of full months between min and max dates
+months_seq <- seq(min_date, max_date, by = "month")
+
+# Calculate the middle of each month (e.g., 15th day)
+middle_dates <- as.Date(paste0(format(months_seq, "%Y-%m-01")))
+
+
+shock_series_all <- left_join(tibble(Date = middle_dates), shock_series_all,  by = "Date")
+
+# Remplir les NA avec 0
+shock_series_all[is.na(shock_series_all)] <- 0
+
+shock_series_all
+  
+```
+
+
+
+
+```{r}
+my_plot <- ggplot()+
+  geom_line(data= shock_series_all, aes(x= as.POSIXct.Date(Date) , y= Value_PC1_AG, color='Alessandrini and Gazani'))+
+  geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=Value_PC1, color='Gas news corpus measure'))+
+  # geom_line(data= shock_series_all, aes(x= as.POSIXct.Date(Date) , y= Value_dms_M1_AG, color='Alessandrini and Gazani'), linetype = 'dashed')+
+  # geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=Value_dms_M1, color='Gas news corpus measure'), linetype = 'dashed')+
+  labs(title = 'Gas shocks',
+      x = "Time") +
+  geom_line(data=gas_data_tot[1:(nrow(gas_data_tot)-1500),], aes(x=time, y= DTFE1C.D7/100) )+
+  theme_minimal() +
+  scale_y_continuous(
+    name = "€/MW",
+    sec.axis = sec_axis(~ . * 100, name = "Shock Series")  # Adjust scaling factor if needed
+  )
+
+my_plot
+
+
+```
+
+
+```{r}
+cor(shock_series_all$Value_PC1, shock_series_all$Value_PC1_AG)
+```
+

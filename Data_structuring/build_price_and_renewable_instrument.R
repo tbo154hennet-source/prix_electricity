@@ -1,5 +1,5 @@
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/day_ahead_prices')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/day_ahead_prices/fr')
 
 price_data <- NULL
 my_files <- list.files()
@@ -51,9 +51,9 @@ for (file in my_files){
   generation_file <- parquet_file[, headers]
   
   colnames(generation_file)[1:2] <- c('wind' , 'solar')
-  generation_file$hydro_production <- generation_file %>%
-    select(all_of(hydro_headers )) %>%
-    rowSums(na.rm = TRUE)
+  # generation_file$hydro_production <- generation_file %>%
+  #   select(all_of(hydro_headers )) %>%
+  #   rowSums(na.rm = TRUE)
   
   if (is.null(generation_data)){
     generation_data<- generation_file
@@ -79,10 +79,6 @@ my_generation_data <- generation_data %>%
 
 
 
-renewable_data <- my_generation_data %>% 
-  mutate(month= month(datetime),
-         year = year(datetime))
-
 renewable_test <- renewable_data %>% 
   # select(datetime, month, year, solar, wind_actual) %>% 
   group_by(month, year) %>% 
@@ -94,6 +90,7 @@ renewable_test <- renewable_data %>%
 renewable_test$renewable_generation <- renewable_test$solar +
   renewable_test$wind
 
+
 renewable_test <- renewable_test %>% 
   arrange(year, month) %>% 
   mutate(demand_growth_period = log(gen_tot) - log(lag(gen_tot)),
@@ -104,7 +101,14 @@ renewable_test <- renewable_test %>%
 # renewable_test <- read_parquet('renewable_test.parquet')
 
 
-price_data <- merge(price_data, my_generation_data[, c("gen_tot", "datetime")], by='datetime')
+price_data <- merge(price_data, my_generation_data[, c("gen_tot", "wind",
+                                                       "solar", "datetime")], by='datetime')
+
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
+write_parquet(price_data, 'generation_data_fr.parquet')
+
+
 
 price_data <- price_data %>% 
   mutate(month= month(datetime),

@@ -58,12 +58,12 @@ store_news_data = pd.DataFrame(columns = ['title', 'date', 'datetime', 'media', 
 # Search from 1st Jan 2000
 # Search until 12th December 2023
 #attention format de date américaine mm/dd/yyyy
-jour_initial = "02/24/2022"
+jour_initial = "09/02/2022"
 my_datetime = datetime.strptime(jour_initial, '%m/%d/%Y')
 
 #test = get_gas_news(date)
 
-while (my_datetime < datetime(2022, 9, 30)):
+while (my_datetime < datetime(2023, 12, 31)):
     
     # Convert back to American date format string
     date_str = my_datetime.strftime('%m/%d/%Y')
@@ -78,7 +78,7 @@ while (my_datetime < datetime(2022, 9, 30)):
 
 os.chdir("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data")
 os.getcwd()
-store_news_data.to_csv('store_news_data_dix_neuf.csv', index=False)
+store_news_data.to_csv('store_news_data_dix_vingt.csv', index=False)
 
 
 

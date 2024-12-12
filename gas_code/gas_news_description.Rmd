@@ -216,50 +216,7 @@ ggplot(event_complete_data, aes(x = datetime, y = news_per_day, color = event_ty
 
 On affiche les quelques jours avec le plus de nouvelles
 
-```{r}
-base <- complete_data %>% filter(news_per_day > 0)
-base %>% 
-  group_by(news_per_day) %>% 
-  mutate(n = n()) 
 
-base %>% 
-  arrange(desc(news_per_day)) %>%
-  slice(1:10)
-  
-#Jun 18, 2014
-#Jun 12, 2014
-# Northern Iraq offensive
-
-#Feb 23, 2011 oil
-#Lybia supply disruptions
-
-```
-
-
-```{r}
-
-rough_news_count <- filtered_news_distinct %>% 
-  select(media, datetime, date) %>%
-  distinct() %>% 
-  group_by(datetime, date) %>% 
-  summarise(news_per_day = n())
-
-
-full_dates <- tibble(datetime = seq(min(news_data$datetime, na.rm=TRUE), max(news_data$datetime, na.rm=TRUE), by = "day"))
-
-# Fusionner le DataFrame original avec la séquence complète de dates
-complete_data <- full_dates %>%
-  left_join(rough_news_count , by = "datetime") %>%
-  replace_na(list(news_per_day = 0))
-
-
-ggplot(complete_data, aes(x = datetime, y = news_per_day)) +
-  geom_line() +
-  labs(title = "Number of news per day",
-       x = "Date",
-       y = "Number of news") +
-  theme_minimal()
-```
 
 
 Il faut se fixer un seuil d'identification des chocs potentiellement variable avec le temps. Une normalisation par rapport à la quantité de news disponibles.
@@ -271,92 +228,165 @@ par supérieur à 3 fois la moyenne du mois
 On double checke en regardant le nombre de jours d'annonce que cela permet de sélectionner.
 
 
-
 ```{r}
+supply_news_count <- event_news_count %>% 
+  pivot_wider(names_from = event_type, values_from = news_per_day) %>% 
+  mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
+  mutate(day_type = ifelse(supply < 3*demand, "ambiguous", "supply")) %>% 
+  select(supply, demand, day_type)
 
-shock_data <- event_complete_data %>%
+# Fusionner le DataFrame original avec la séquence complète de dates
+complete_data <- full_dates %>%
+  left_join(supply_news_count , by = "datetime") %>%
+  rename(supply_news = supply, demand_news = demand) %>%
+  replace_na(list(supply_news = 0, demand_news = 0))
+
+
+shock_data_supply <- complete_data %>%
   arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
-  mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA, align = "right"),
-        moving_std_news = rollapply(news_per_day, width = 30, FUN = sd, fill = NA, align = "right"),
-       binary_shock= (news_per_day >  moving_avg_news + 4*moving_std_news),
-       intensity_shock = ifelse(binary_shock, news_per_day/moving_avg_news, 0)
-       )
+  mutate(moving_avg_news_supply = rollapply(supply_news, width = 30, FUN = mean, fill = NA),
+         moving_std_news_supply = rollapply(supply_news, width = 30, FUN = sd, fill = NA),
+         supply_shock= (supply_news >  moving_avg_news_supply + 1.9*moving_std_news_supply),
+         moving_avg_news_demand = rollapply(demand_news, width = 30, FUN = mean, fill = NA),
+         moving_std_news_demand = rollapply(demand_news, width = 30, FUN = sd, fill = NA),
+         demand_shock= (demand_news >  moving_avg_news_demand + 1.9*moving_std_news_demand)
+         )
 
-instrument_days <- shock_data %>% 
-  filter(binary_shock ==TRUE) %>% 
-  filter(event_type== 'demand' | news_per_day > 2)
 
+info_supply <- merge(gas_data_shock, shock_data_supply, 
+              by.x = "Date", by.y = "datetime" ) 
+
+instrument_days_supply <- info_supply %>% 
+  filter(supply_shock ==TRUE) %>% 
+  filter(supply_news > 4) %>% 
+  filter(day_type == "supply")
+
+nrow(instrument_days_supply)
 ```
 
 ```{r}
+shock_info_supply <- info_supply %>% 
+  mutate(order = abs(shock_serie),
+         ptstat = (supply_news -moving_avg_news_supply)/moving_std_news_supply ) %>% 
+  arrange(desc(order)) %>% 
+  slice(1:20) %>% 
+  select(Date, order, supply_news, 
+          ptstat, supply_shock, demand_shock, day_type)
 
-instrument_results <- full_dates %>% 
-  left_join(instrument_days, by = "datetime") %>%
-  mutate(across(where(is.numeric), ~replace_na(., 0)))
+shock_info_supply
+```
+
+```{r}
+#il faut enlever les demand news shock
+#pour avoir un vrai comparatif de jours contrôle
 
 
-ggplot(instrument_days, aes(x = datetime)) +
-  geom_line(data= instrument_results, aes(x = datetime, y = intensity_shock)) +
-  #geom_line(aes(y = news_per_day), color = 'yellow') +
-  geom_line(aes(y = moving_avg_news), linetype='dashed') +
-  labs(title = "Number of news per day",
-       x = "Date",
-       y = "Number of news") +
-  theme_minimal()
+sd(instrument_days_supply %>% 
+     pull(log_shock_serie))
+
+sd(info_supply %>%
+ filter(demand_shock ==FALSE & supply_shock ==FALSE) %>% 
+     pull(log_shock_serie))
+
 ```
 
 
 
-```{r}
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
-setwd(save_var_path)
-write_parquet(instrument_results, "instrument_news_shock.parquet")
-
-```
+# Compare to other monthly gas series in the literature
 
 ```{r}
+save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+setwd(save_compare)
+info_selected <- read_parquet("info_selected.parquet")
+colnames(info_selected)
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
-gas_instrument_data <-read_parquet("gas_instrument_data.parquet")
-surprise_serie <- read_parquet("surprise_serie.parquet")
+gas_data_tot$dms_M1 <- log(gas_data_tot$DTFE1C.D7) - log(lead(gas_data_tot$DTFE1C.D7, 1))
+
+info_selected <- info_selected %>%
+    mutate(instrumented_day = ifelse(binary_shock == TRUE & news_per_day > 3, "supply_shock", 0),
+           instrumented_day = ifelse(Date %in% demand_news_days, "demand_shock", instrumented_day))
+ 
+info_selected <- left_join(info_selected, gas_data_tot %>% 
+                                  select(time, dms_M1), by = c( "time"))
+
+supply_shock_serie <- info_selected %>% 
+  filter(instrumented_day=="supply_shock") %>% 
+  mutate(month = month(Date), year= year(Date))%>%
+  group_by(month, year) %>% 
+  summarize(Value_PC1 = sum(PC1), Value_dms_M1= sum(dms_M1), Date = first(Date)) %>% 
+  arrange(Date)
 
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 events_data <- read.csv("alex_gassani_shocks.csv")
+events_data <- events_data %>% 
+  mutate(Date = as.Date(Date)) %>% 
+  arrange(Date)
+colnames(gas_data_shock)
+gas_all <- merge(gas_data_shock, gas_data_tot, by="time")
+alex_gassani_benchmark <- left_join( events_data, gas_all %>% 
+                                      select(Date, dms_M1, PC1) ,
+                                by = c("Date"))
 
-events_data_serie <- events_data %>% 
+events_data_serie <- alex_gassani_benchmark %>% 
   mutate(month = month(Date), year= year(Date))%>%
   group_by(month, year) %>% 
-  summarize(Value= sum(Value), Date = first(Date)) %>% 
+  summarize(Value_PC1_AG = sum(PC1), Value_dms_M1_AG = sum(dms_M1), Date = first(Date)) %>% 
   arrange(Date)
 events_data_serie 
 ```
 
+
 ```{r}
 
-shock_series_all <- left_join(surprise_serie ,events_data_serie%>% select(-Date), by = c("month", 'year')) 
+shock_series_all <- full_join(supply_shock_serie ,events_data_serie%>% select(-Date),
+                              by = c("month", 'year')) %>% 
+  filter(as.numeric(year)> 2014)
+# Convert "Month_Year" to Date format (assume 1st day of the month)
+shock_series_all$Date <- as.Date(paste0(shock_series_all$year, "-",shock_series_all$month,  "-15"))
+
+
+# Get the min and max dates
+min_date <- min(shock_series_all$Date)
+max_date <- max(shock_series_all$Date)
+
+# Create a sequence of full months between min and max dates
+months_seq <- seq(min_date, max_date, by = "month")
+
+# Calculate the middle of each month (e.g., 15th day)
+middle_dates <- as.Date(paste0(format(months_seq, "%Y-%m-15")))
+
+
+shock_series_all <- left_join(tibble(Date = middle_dates), shock_series_all,  by = "Date")
+
 # Remplir les NA avec 0
 shock_series_all[is.na(shock_series_all)] <- 0
+
 shock_series_all
+  
 ```
+
 
 
 
 ```{r}
 my_plot <- ggplot()+
-  geom_line(data= shock_series_all, aes(x= as.POSIXct.Date(Date) , y= Value, color='Alessandrini and Gazani'), linetype = 'dashed')+
-  geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=Delta, color='Scrap relative terms'), linetype = 'dashed')+
-  geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=shock, color='Scrap absolute value'), linetype = 'dashed')+
+  geom_line(data= shock_series_all, aes(x= as.POSIXct.Date(Date) , y= Value_PC1_AG, color='Alessandrini and Gazani'))+
+  geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=Value_PC1, color='Gas news corpus measure'))+
+  # geom_line(data= shock_series_all, aes(x= as.POSIXct.Date(Date) , y= Value_dms_M1_AG, color='Alessandrini and Gazani'), linetype = 'dashed')+
+  # geom_line(data = shock_series_all, aes(x=as.POSIXct.Date(Date), y=Value_dms_M1, color='Gas news corpus measure'), linetype = 'dashed')+
   labs(title = 'Gas shocks',
       x = "Time") +
-  geom_line(data=gas_data_tot[1:(nrow(gas_data_tot)-600),], aes(x=time, y= Gas_TTF/10) )+
+  geom_line(data=gas_data_tot[1:(nrow(gas_data_tot)-1500),], aes(x=time, y= DTFE1C.D7/100) )+
   theme_minimal() +
   scale_y_continuous(
     name = "€/MW",
-    sec.axis = sec_axis(~ . * 10, name = "Shock Series")  # Adjust scaling factor if needed
+    sec.axis = sec_axis(~ . * 100, name = "Shock Series")  # Adjust scaling factor if needed
   )
 
 my_plot
+
+
 ```
 
 

@@ -211,10 +211,10 @@ gamma_bootstrap_GK <- function(nboot, vars, theta_0, controls= NULL, log_level= 
     # varbsnew <- rbind(vars[1:p,],(fitted(vl) + res2*rr + mean(res)))
     varbsnew <- if (!log_level) {
       rbind(vars[1:p,],
-            iterate_var(vars[1:p,], centered_U_boot, vl, controls))
+            iterate_var(vars[1:p,], res2, vl, controls))
     } else {
       rbind(vars[1:p,],
-            iterate_var_bis(vars[1:p,], centered_U_boot, vl, controls))
+            iterate_var_bis(vars[1:p,], res2, vl, controls))
     }
     xnew =ts(varbsnew , start=c(2015,1), end=c(2023,12), frequency=12)
     ynew <- varbsnew[-1:-p, ]

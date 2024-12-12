@@ -9,39 +9,29 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 Sys.setenv(lang = "en_US")
 
 news_data_full <- read_parquet("store_full_news_data.parquet")
-news_data_full %>% 
-  filter(datetime == "2022-03-23")
+
+news_data_full$datetime <- as.Date(format(as.Date(news_data_full$date, "%b %d, %Y"), "%Y-%m-%d"))
+
+news_data_full$datetime <- ifelse( is.na(news_data_full$datetime), as.Date(format(as.Date(news_data_full$date, "%d %b %Y"), "%Y-%m-%d")), news_data_full$datetime)
+
+news_data_full <- news_data_full %>% 
+  mutate(datetime = as.Date(datetime)) %>% 
+  arrange(datetime)
+
  
 ```
 
 
 ```{r}
-library(stringr)
-labeled_news %>% 
-  filter(datetime == "2022-03-23")
- 
-```
-
-```{r}
-news_data %>% 
-  filter(datetime == "2022-08-30")
+news_data_all %>% 
+  filter(datetime == "2019-01-11")
 	
 ```
 
 ```{r}
 
-news_data %>% 
-  filter(datetime == "2022-02-25")
-
-news_data_all %>% 
-  filter(datetime == "2022-03-02")
-
 labeled_news %>% 
-  filter(datetime == "2020-08-28")
-
-news_data_bert %>% 
-  filter(datetime == "2020-08-28")
-
+  filter(datetime == "2019-01-11")
 
 ```
 

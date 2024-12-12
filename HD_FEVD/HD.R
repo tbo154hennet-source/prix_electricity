@@ -4,7 +4,7 @@ names <- c("$Q_{elec}$" ,"$P_{elec}$", "IPI",  "$NE Index$")
 #custom legend part
 vars_demeaned <- as.data.frame(apply(vars, 2, function(x) x - mean(x)))
 x = ts(vars_demeaned  , start=c(2015,1), end=c(2023,12), frequency=12)
-y_demeaned =vars_demeaned[-1:-p, ]
+y_demeaned = vars_demeaned[-1:-p, ]
 vl = vars::VAR(x, p, type = "none")
 k  = ncol(proxies)
 n = ncol(y)
@@ -61,8 +61,13 @@ for (j in c(1:n)){
 
 # The 'historical_decomp' array contains the contributions of each shock to each variable at each time step
 
-
 k <- ncol(proxies)
+
+#rename the log parameters
+gamma <- gamma_log
+theta_0 <- theta_0_log
+phi <- phi_log
+lambda_0 <- lambda_0_log
 
 
 #calculate sigma_aa
@@ -105,6 +110,7 @@ library(data.table)
 # lambda_0_iv[,,1] <- lambda_0_iv[,,1] * irf_model$irf[[1]][1,1]
 # lambda_0_iv[,,2] <- lambda_0_iv[,,2] * irf_model$irf[[2]][1,2]
 
+k<-2
 #j is the variable of interest
 for (j in c(1:n)){
   for (shock in c(1:k)){
@@ -127,19 +133,30 @@ for (j in c(1:n)){
   
 }
 
-hd_pelec <- plot_hd(historical_decomp_iv_tibo, series = 1)
+#hd_pelec <- plot_hd(historical_decomp_iv_tibo, series = 1)
 print(hd_pelec)
 
 
 
 
 
+#On se demande à quel point il ne faut pas ajuster les structural shocks IV en renormalisant
+#on regarde des summary stat
 
-decomposed_sum <- aggregate(value ~ time, data = long_data, sum)
+colnames(structural_shocks)
+as.data.frame(structural_shocks) %>% 
+  select(gen_tot_log, spot_price_log) %>% 
+  summary()
 
-# Merging with the original series
-check_data <- cbind(decomposed_sum, vars_demeaned[5:nrow(vars_demeaned),1])
+t(structural_shocks_IV) %>% 
+  summary()
 
-# Compare the summed decomposition with the original series
-check_data$diff <- check_data[,2] - check_data[,3] # original_value is the original series
-mean(check_data$diff)
+
+irf_model$irf[[1]]
+irf_model$irf[[2]]
+lambda_0_log
+
+#je pense que ça revient à multiplier et diviser par la sd
+# pas de correction à faire
+
+

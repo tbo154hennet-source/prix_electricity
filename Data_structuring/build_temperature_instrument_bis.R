@@ -19,11 +19,12 @@ colnames(temp_data)
 library(dplyr)
 library(tidyr)
 
+
 mini_stations <- stations %>% 
-  select("NOM_USUEL", "COMMUNE", "population")
+  dplyr::select(NOM_USUEL, COMMUNE, population)
 
 mini_temp_data <- temp_data %>% 
-  select("NOM_USUEL","AAAAMMJJ", "TM", "FFM", "RR")
+  dplyr::select(NOM_USUEL,AAAAMMJJ, TM, FFM, RR)
 
 mini_temp_data$Date <- as.Date(as.character(mini_temp_data$AAAAMMJJ), format = "%Y%m%d")
 
@@ -66,45 +67,49 @@ mean_temp_instrument <- country_temp_instrument %>%
   summarise(T_avg = mean(T_avg))
 
 mean_temp_instrument <- mean_temp_instrument %>% 
-  mutate(cold_excess_instrument = ifelse(month %in% cold_months, T_avg, 0),
-         heat_excess_instrument = ifelse(month %in% hot_months, T_avg, 0)
+  mutate(cold_excess_instrument = ifelse(month %in% cold_months, T_avg, NA),
+         heat_excess_instrument = ifelse(month %in% hot_months, T_avg, NA)
          )
 
 
 #CDD and HDDs
 #non-linear count 
 #ajoute un niveau de détail
-T_base_cold <- 5
+T_base_cold <- 10
 T_base_hot <- 15
 
-excess_CDD <- country_temp_instrument %>%
-  filter(T_avg < T_base_cold) %>%
-  group_by(month, year) %>% 
-  summarise(count = n()) %>%
-  rename(CDD_excess_instrument = count)
 
 excess_HDD <- country_temp_instrument %>%
   filter(T_avg > T_base_hot ) %>%
   group_by(month, year) %>% 
-  summarise(count = n())%>%  
-  rename(HDD_excess_instrument = count)
+  summarise(count = n(), intensity =  sum(pmax(0, (T_base_hot - T_avg)^2)))%>%  
+  rename(HDD_excess_instrument = count, HDD_intensity_instrument = intensity)
 
-CDD_excess_instrument <- left_join(temp_deviation, excess_CDD)%>% 
-  mutate_all(~ replace_na(., 0))
 
-HDD_excess_instrument <- left_join(temp_deviation, excess_HDD)%>% 
-  mutate_all(~ replace_na(., 0))
+excess_CDD <- country_temp_instrument %>%
+  filter(T_avg < T_base_cold) %>%
+  group_by(month, year) %>% 
+  summarise(count = n(), intensity =  sum(pmax(0, (T_base_cold  - T_avg)^2))) %>%
+  rename(CDD_excess_instrument = count, CDD_intensity_instrument  = intensity)
 
-temperature_instrument <- merge(mean_temp_instrument,
-                                CDD_excess_instrument)
+# CDD_excess_instrument <- left_join(temp_deviation, excess_CDD)#%>% 
+#   #mutate_all(~ replace_na(., 0))
+# 
+# HDD_excess_instrument <- left_join(temp_deviation, excess_HDD)#%>% 
+#   #mutate_all(~ replace_na(., 0))
 
-temperature_instrument <- merge(temperature_instrument,
-                                HDD_excess_instrument)
+temperature_instrument <- left_join(mean_temp_instrument,
+                                excess_CDD)
+
+temperature_instrument <- left_join(temperature_instrument,
+                                excess_HDD)
 
 save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 
 setwd(save_path)
+
 write.csv(temperature_instrument, 
           'temperature_instrument.csv')
+
 
 

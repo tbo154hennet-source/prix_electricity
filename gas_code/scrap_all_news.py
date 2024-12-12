@@ -71,11 +71,11 @@ def get_gas_news(date_str):
     return(df_gas_news)
 
 # sortie de Google News 25 janvier 2006 pour la partie américaine
-store_news_data = pd.DataFrame(columns = ['title', 'date', 'datetime', 'media', 'event_type'])
+store_news_data_all = pd.DataFrame(columns = ['title', 'date', 'datetime', 'media', 'event_type'])
 # Search from 1st Jan 2000
 # Search until 12th December 2023
 #attention format de date américaine mm/dd/yyyy
-jour_initial = "05/21/2020"
+jour_initial = "07/07/2022"
 my_datetime = datetime.strptime(jour_initial, '%m/%d/%Y')
 
 #test = get_gas_news(date)
@@ -88,18 +88,18 @@ while (my_datetime < datetime(2023, 12, 31)):
         print(f"{date_str}")
     date_news = get_gas_news(date_str)
     # Use pd.concat to append the new row
-    store_news_data = pd.concat([store_news_data, date_news], ignore_index=True)
+    store_news_data_all = pd.concat([store_news_data_all, date_news], ignore_index=True)
     # Add two days
     my_datetime += timedelta(days=2)
     
 
 os.chdir("C:/Users/DBT3KD/Desktop/uncertainty_shocks/DATA/all_news")
 os.getcwd()
-store_news_data.to_csv('store_news_data_2020_2021.csv', index=False)
+store_news_data_all.to_csv('store_news_data_all_2022_2023.csv', index=False)
 
-#Jul 24, 2021
-store_news_data.keys()
-store_news_data['date']
+#Jul 7, 2022
+store_news_data_all.keys()
+store_news_data_all['date']
 
 
 

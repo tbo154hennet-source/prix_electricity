@@ -1,3 +1,7 @@
+library(arrow)
+library(dplyr)
+library(tidyr)
+
 save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
 setwd(save_compare)
 
@@ -5,44 +9,54 @@ setwd(save_compare)
 
 info_supply <- read_parquet("info_supply.parquet")
 info_full <- read_parquet("info_full.parquet")
-info_cluster <- read_parquet("info_cluster.parquet")
 info_small_cluster <- read_parquet("info_small_cluster.parquet")
 info_high_cluster <- read_parquet("info_high_cluster.parquet")
 info_selected <- read_parquet("info_selected.parquet")
 
 
+
+
+demand_news_days <- read.csv("demand_news_days.csv")
+demand_news_days <- demand_news_days[,2]
+
+
 # Define a function for filtering instrument days
-filter_instrument_days <- function(data, threshold_column, threshold = 3) {
+# Définir une fonction pour ajouter une colonne dummy pour les instrumented days
+add_instrument_dummy <- function(data, threshold_column, threshold = 3) {
   data %>%
-    filter(binary_shock == TRUE) %>%
-    filter({{ threshold_column }} > threshold)
-}
+    mutate(instrumented_day = ifelse(binary_shock == TRUE & {{ threshold_column }} > threshold, "supply_shock", 0),
+           instrumented_day = ifelse(Date %in% demand_news_days, "demand_shock", instrumented_day))
+  }
 
-# Apply the function to each dataset
-instrument_days_full <- filter_instrument_days(info_full, news_per_day)
-instrument_days_supply <- filter_instrument_days(info_supply, supply_news)
-instrument_days_cluster <- filter_instrument_days(info_cluster, news_per_day)
-instrument_days_small_cluster <- filter_instrument_days(small_info_cluster, news_per_day)
-instrument_days_high_cluster <- filter_instrument_days(info_high_cluster, news_per_day)
-instrument_days_selected <- filter_instrument_days(info_selected, news_per_day)
 
-nrow(instrument_days_full)
-nrow(instrument_days_supply)
-nrow(instrument_days_cluster)
-nrow(instrument_days_small_cluster)
-nrow(instrument_days_high_cluster)
-nrow(instrument_days_selected)
+# Appliquer la fonction à chaque dataset
+info_full <- add_instrument_dummy(info_full, news_per_day)
+info_supply <- add_instrument_dummy(info_supply, supply_news)
+info_small_cluster <- add_instrument_dummy(info_small_cluster, news_per_day)
+info_high_cluster <- add_instrument_dummy(info_high_cluster, news_per_day)
+info_selected <- add_instrument_dummy(info_selected, news_per_day)
 
+
+supply_shock_counts <- c(
+  "full" = nrow(info_full %>% filter(instrumented_day == "supply_shock")),
+  "supply" = nrow(info_supply %>% filter(instrumented_day == "supply_shock")),
+  "small_cluster" = nrow(info_small_cluster %>% filter(instrumented_day == "supply_shock")),
+  "high_cluster" = nrow(info_high_cluster %>% filter(instrumented_day == "supply_shock")),
+  "selected" = nrow(info_selected %>% filter(instrumented_day == "supply_shock"))
+)
+
+# Print the named vector
+print(supply_shock_counts)
 #compare the 30 days with highest variation
 
 
 shock_info_supply <- info_supply %>% 
-  mutate(daily_variation = abs(shock_serie),
+  mutate(daily_variation = abs(PC1),
          ptstat = (supply_news -moving_avg_news)/moving_std_news ) %>% 
   arrange(desc(daily_variation)) %>% 
   slice(1:30) %>% 
   select(Date, daily_variation, supply_news, 
-         ptstat, binary_shock) %>% 
+         ptstat, binary_shock, demand_binary_shock) %>% 
   rename(ptstat_supply = ptstat, 
          supply_shock = binary_shock)
 
@@ -50,7 +64,7 @@ shock_info_supply <- info_supply %>%
 process_shock_info <- function(data, rename_columns, extra_select = NULL) {
   data %>%
     mutate(
-      daily_variation = abs(shock_serie),
+      daily_variation = abs(PC1),
       ptstat = (news_per_day - moving_avg_news) / moving_std_news
     ) %>%
     arrange(desc(daily_variation)) %>%
@@ -68,20 +82,13 @@ shock_info_full <- process_shock_info(
   )
 )
 
-shock_info_cluster <- process_shock_info(
-  info_cluster, 
-  rename_columns = c(
-    ptstat_cluster = "ptstat", 
-    cluster_shock = "binary_shock", 
-    clustered_news = "news_per_day"
-  )
-)
+
 
 shock_info_cluster_small <- process_shock_info(
-  info_cluster, 
+  info_small_cluster,
   rename_columns = c(
-    ptstat_smcluster = "ptstat", 
-    smcluster_shock = "binary_shock", 
+    ptstat_smcluster = "ptstat",
+    smcluster_shock = "binary_shock",
     small_clustered_news = "news_per_day"
   )
 )
@@ -106,29 +113,18 @@ shock_info_selected <- process_shock_info(
 
 
 info_compare <- merge(shock_info_supply, shock_info_full)
-info_compare <- merge(info_compare, shock_info_cluster)
 info_compare <- merge(info_compare, shock_info_cluster_small)
 info_compare <- merge(info_compare, shock_info_high_cluster)
 info_compare <- merge(info_compare, shock_info_selected)
 
-info_compare %>% 
-  summarize(count_supply = sum(supply_shock),
-            count_full = sum(news_shock),
-            count_cluster = sum(cluster_shock),
+count_news_shocks <- info_compare %>% 
+  summarize(count_full = sum(news_shock),
+            count_supply = sum(supply_shock),
             count_smcluster = sum(smcluster_shock),
             count_hicluster = sum(hicluster_shock),
             count_selected = sum(selected_shock))
+count_news_shocks 
 
-
-
-high_vol_dates <- shock_info_supply %>% pull(Date)
-colnames(info_supply)
-
-View(info_supply %>% 
-       filter(Date %in% high_vol_dates) %>% 
-       select(Date, supply_news,
-              shock_serie, supply_news, day_type,            
-              moving_avg_news, moving_std_news, binary_shock))
 
 
 # compare the respective variations for instrumnet and none instrumnet days
@@ -140,34 +136,120 @@ options(warn = -1)
 gas_data_shock <- read_parquet("gas_data_shock.parquet")
 
 
-
-
 fluct_abs_gas_avg <- gas_data_shock %>% 
-  pull(log_shock_serie) %>% 
+  filter(Date %in% demand_news_days) %>%
+  pull(PC1) %>% 
   sd(na.rm = TRUE)
+
 
 
 # Define a function for summarizing fluctuations
 summarize_fluctuations <- function(data) {
   data %>%
-    group_by(binary_shock) %>%
+    filter(is.na(instrumented_day) == FALSE) %>% 
+    group_by(instrumented_day) %>%
     summarise(
-      sd = sd(log_shock_serie, na.rm = TRUE),
-      avg = mean(log_shock_serie, na.rm = TRUE)
+      sd = sd(PC1, na.rm = TRUE),
+      avg = mean(PC1, na.rm = TRUE)
     )
 }
+
+
+#nota bene
+#on voit en regardant les demand shocks que les variations de PC1
+#sont assez différentes des variations de mon precedent shock_serie
+
 
 # Apply the function to each dataset
 fluct_full <- summarize_fluctuations(info_full)
 fluct_supply <- summarize_fluctuations(info_supply)
-fluct_cluster <- summarize_fluctuations(info_cluster)
-fluct_small_cluster <- summarize_fluctuations(small_info_cluster)
+fluct_small_cluster <- summarize_fluctuations(info_small_cluster)
+fluct_high_cluster <- summarize_fluctuations(info_high_cluster)
+fluct_selected <- summarize_fluctuations(info_selected)
+
+#récupérer le nombre de jours parmi les 30 avec les plus fortes variations
+#qui sont inclus dans insrtumented_days
+
+colnames(gas_data_shock)
+
+
+high_vol_dates <- gas_data_shock %>% 
+  arrange(desc(abs(PC1))) %>% 
+  slice(1:30) %>%
+  pull(Date)
+
+
+#on fait un beau tableau
+
+fluct_full <- summarize_fluctuations(info_full)
+fluct_supply <- summarize_fluctuations(info_supply)
+fluct_small_cluster <- summarize_fluctuations(info_small_cluster)
 fluct_high_cluster <- summarize_fluctuations(info_high_cluster)
 fluct_selected <- summarize_fluctuations(info_selected)
 
 
 
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
+events_data <- read.csv("alex_gassani_shocks.csv")
+events_data <- events_data %>% 
+  mutate(Date = as.Date(Date)) %>% 
+  arrange(Date)
+alex_gassani_benchmark <- left_join( events_data,gas_data_shock,
+                                by = c("Date"))
+fluct_alex_gassani <- alex_gassani_benchmark %>%
+  summarise(
+    sd = sd(PC1, na.rm = TRUE),
+    avg = mean(PC1, na.rm = TRUE)
+  )
 
 
 
+
+
+# Sample DataFrame
+data <- data.frame(
+  Category = c("All News", "Supply News", "Small Clustering", "High Clustering", "Subset Cluster"),
+  Normal = rep(0, 5),
+  `Demand Shock` = rep(0, 5),
+  `Supply shock` = rep(0, 5),
+  `nSupply Days` = round(supply_shock_counts,1) ,
+  `ntop variation days` = round(as.numeric(count_news_shocks),1)
+)
+
+
+data[, 2:4] <-round(t(data.frame(
+  fluct_full$sd, fluct_supply$sd, fluct_small_cluster$sd, fluct_high_cluster$sd, fluct_selected$sd)), 2)
+
+rownames(data) <- data$Category
+data <- data %>% 
+  select(-Category)
+
+# Transposer les données tout en conservant les noms de lignes comme une colonne
+transposed_data <- as.data.frame(t(data))
+transposed_data <- cbind(Label = rownames(transposed_data), transposed_data)
+rownames(transposed_data) <- NULL
+
+getwd()
+gt_table <- transposed_data %>%
+  gt() %>%
+  tab_row_group(
+    group = "Fluctuations",
+    rows = 1:3 # Rows 1 to 3 for the first section
+  ) %>%
+  tab_row_group(
+    group = "Description",
+    rows = 4:5 # Rows 4 to 6 for the second section
+  ) %>%
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "gray", weight = px(2)),
+    locations = cells_row_groups(groups = everything())
+  ) %>%
+  tab_options(
+    table.width = pct(100)
+  )%>%
+  gtsave("compare_clustering_days.html")
+
+# à comparer avec alexandre et gassani qui font mieux que nous sur la détection
+#mais à la main sans framework automatiser
+# manque de reproductibiolité
 

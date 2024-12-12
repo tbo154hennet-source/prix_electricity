@@ -1,8 +1,8 @@
 library(vars)
 source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
-source("auxiliary_functions_controls.R")
-source("bootstrap_auxiliary_log.R")
+source("auxiliary_control.R")
+source("bootstrap_auxiliary_control.R")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
@@ -38,6 +38,8 @@ irhor = 20
 x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
 y =vars[-1:-p, ]
 T = nrow(y)
+#variables dans VAR
+n <- ncol(y)
 #nbre de variables instrumentees
 k <-2
 #nbre d'instruments
@@ -91,7 +93,7 @@ for (name in list_of_samples) {
 
 save_mat_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/sample_matrices'
 setwd(save_mat_path)
-saveRDS(sample_matrices_log_GK, "sample_matrices_log_GK.rds")
+saveRDS(sample_matrices_log_GK, "sample_matrices_log_GK_gas.rds")
 
 
 # Save bootstrapped samples
@@ -128,12 +130,12 @@ strong_std_lambda1 <- apply(sample_matrices_log_GK$ncvg_lambda_01, c(1, 2), sd)
 strong_std_lambda2 <- apply(sample_matrices_log_GK$ncvg_lambda_02, c(1, 2), sd)
 
 c0 <- theta_0[1,2][[1]]
-phi_c0 <- matrix(c(1,0, -c0, 1), nrow = 2, ncol = 2) %*% t(matrix_12)  %*% gamma
+phi_c0 <- matrix(c(1,0, -c0, 1), nrow = 2, ncol = 2) %*% t(matrix_12)  %*% gamma_log
 alpha <- 0.10
 
 #rajouter un paramètre de précision de la grille avec une valeur par défaut
 
-weak_bootstrap_result <- bootstrap_weak_instrument(c_0, phi_c0,
+weak_bootstrap_result <- bootstrap_weak_instrument(gamma = gamma_log ,c_0, phi_c0,
                                                    alpha, ngrid =100,
                                                    sample_matrices_log_GK)
 

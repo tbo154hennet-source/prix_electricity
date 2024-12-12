@@ -1,6 +1,7 @@
 
 library(arrow)
 library(purrr)
+library(lubridate)
 Sys.setenv(lang = "en_US")
 
 read_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/ENTSOE_unavailabilities'
@@ -13,7 +14,9 @@ my_files <- list.files()
 
 # Supprimez les fichiers .parquet de la liste des fichiers
 # my_files <- setdiff(my_files, parquet_files)
-for (file in my_files){
+
+#garder que les primary files
+for (file in my_files[-length(my_files)]){
   excel_file <- read_parquet(file)
   print(file)
   if (is.null(indispo_ENTSOE_data)){
@@ -104,16 +107,15 @@ bout_indispo_ENTSOE_data <- indispo_ENTSOE_data %>%
             datetime_fin = max(datetime_fin))
 
 
-#test4 <- bout_indispo_ENTSOE_data %>% filter(mrid =="uOKJuRKj0o1N8nLBuxbBvw")
-getwd()
-
-write_parquet(bout_indispo_ENTSOE_data, "indispo_ENTSOE_data.parquet")
+bout_indispo_ENTSOE_data$duration <- bout_indispo_ENTSOE_data$datetime_fin- bout_indispo_ENTSOE_data$datetime_debut
 
 
-bout_indispo_ENTSOE_data_202122 <- bout_indispo_ENTSOE_data %>% 
-  mutate(year = year(datetime_pub)) %>% 
-  filter(year >=2021)
-#build monthly indispos
-bout_unplanned_indispo_ENTSOE_data_202122 <- bout_indispo_ENTSOE_data_202122 %>% 
+unexpected_indispo_ENTSOE_data <- bout_indispo_ENTSOE_data %>% 
   filter(businesstype == "Unplanned outage")
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp")
+write_parquet(bout_indispo_ENTSOE_data, "indispo_ENTSOE_data.parquet")
+write_parquet(unexpected_indispo_ENTSOE_data, "unexpected_indispo_ENTSOE_data.parquet")
+
+
 

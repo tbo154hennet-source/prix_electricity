@@ -11,42 +11,111 @@ I can find spot price as well.
 To be compared with electricity price
 
 ```{r}
-ggplot(data= IV_data)+
-  geom_line(aes(x=Date, y=spot_price, color="electricity"))+
-  geom_line(aes(x=Date, y=gas_price, color="gas"))+
+my_plot <- ggplot(data= IV_data)+
+  geom_line(aes(x=datetime, y=spot_price, color="electricity"))+
+  geom_line(aes(x=datetime, y=gas_price, color="gas"))+
   theme_minimal()
-```
-
-```{r}
-ggplot(data= IV_data)+
-  geom_line(aes(x=Date, y=log(spot_price) - log(lag(spot_price)), color="electricity"))+
-  geom_line(aes(x=Date, y=log(gas_price) - log(lag(gas_price)), color="gas"))+
-  theme_minimal()
+my_plot
 ```
 
 ```{r}
 
 gas_elec_data <- IV_data %>% 
-  mutate(log_diff_gas = log(gas_price) - log(lag(gas_price)))
+  arrange(datetime)%>% 
+  mutate(log_diff_gas = log(gas_price) - log(lag(gas_price)),
+         log_diff_spot = log(spot_price) - log(lag(spot_price)))
+
+
+gas_elec_data <- left_join(gas_elec_data, shock_series_all %>% 
+                            select(Date, Value_PC1_AG) %>% 
+                             mutate(datetime = as.POSIXct(Date)),
+                           by = "datetime")
+
+# shock_series_all$Value_PC1_AG
+# shock_series_all %>% 
+# select(Date, Value_PC1_AG) %>% 
+#  mutate(datetime = as.POSIXct(Date)) %>% 
+#           pull(datetime)
+# gas_elec_data$datetime
 
 gas_elec_data[is.na(gas_elec_data)] <- 0
 
 
-cor(gas_elec_data$log_diff_gas, gas_elec_data$elec_growth_rate)
-cor(gas_elec_data$spot_price, gas_elec_data$gas_price)
+ggplot(data= gas_elec_data)+
+  geom_line(aes(x=datetime, y=log_diff_spot/sd(log_diff_spot), color="electricity"))+
+  geom_line(aes(x=datetime, y=log_diff_gas/sd(log_diff_gas), color="gas_M1"))+
+  geom_line(aes(x=datetime, y=gas_PC1/sd(gas_PC1), color="gas_PC1"))+
+  theme_minimal()
+```
 
-```
-```{r}
-gas_elec_data[, c("elec_growth_rate", "log_diff_gas", "Date")]
-```
+
+Il semble que les variations soient parfaitement contemporaines.
+Le spot price regarde le mois courant alors que le contrat TTF regarde le mois suivant.
+Regarder avec la PC de toutes les maturités
+
 
 Une remarque gas supply shocks should be a good instrument for gas growth not necessarily for gas price.
 But renewables should be good instrument for price levels.
 
+
+Déjà est ce que ma série est un bon instrument pour gas price, avant de parler de electricity
+
+
 ```{r}
-model <- lm(data = gas_elec_data, elec_growth_rate ~ log_diff_gas)
-summary(model)
+
+# Aligner les données avec lead
+gas_elec_data_lead <- gas_elec_data %>%
+  mutate(
+    Value_PC1_AG_lead = lead(Value_PC1_AG, 1),
+    gas_supply_shock_lead = lead(gas_supply_shock, 1)
+  ) %>%
+  filter(!is.na(gas_supply_shock_lead)) # Supprimer les lignes NA dues à lead
+
+
+log_diff_model <- lm(data = gas_elec_data_lead, gas_PC1 ~ gas_supply_shock)
+summary(log_diff_model)
+
+#summary(log_model)
+
+
 ```
+
+```{r}
+# Régression linéaire
+log_diff_model <- lm(data = gas_elec_data, log_diff_spot ~ gas_supply_shock)
+
+summary(log_diff_model)
+
+```
+
+
+```{r}
+ggplot(data= gas_elec_data_lead)+
+  geom_line(aes(x=datetime, y=log_diff_spot/sd(log_diff_spot), color="Spot growth rate"), linetype="dashed")+
+  #geom_line(aes(x=datetime, y=Value_PC1_AG, color="AG shock"))+
+  geom_line(aes(x=datetime, y=gas_supply_shock, color="Corpus news shock"))+
+  geom_line(aes(x=datetime, y=gas_PC1/sd(gas_PC1), color="gas_PC1"))+
+  theme_minimal()
+```
+
+Je soupçonne que dans les premières années, le prix du gas n'est pas clé à la fixation du prix de l'électricité
+On peut restreindre à la période de la crise
+
+Je voudrais faire ma VAR en log-levels.
+Est ce que l'on peut trouver un instrument pour log-levels
+
+```{r}
+# Régression linéaire
+log_diff_model <- lm(data = gas_elec_data, log(spot_price) ~ gas_supply_shock)
+
+summary(log_diff_model)
+```
+
+
+
+
+
+
 
 
 

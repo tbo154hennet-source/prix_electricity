@@ -12,10 +12,8 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data/clustered_new
 Sys.setenv(lang = "en_US")
 
 news_data_clustered <- read.csv("full_news_double_clustering_gas_restrict.csv")
-
-news_data_clustered$datetime <- as.Date(format(as.Date(news_data_clustered$date, "%b %d, %Y"), "%Y-%m-%d"))
-
-news_data_clustered$datetime <- ifelse( is.na(news_data_clustered$datetime), as.Date(format(as.Date(news_data_clustered$date, "%d %b %Y"), "%Y-%m-%d")), news_data_clustered$datetime)
+#news_data_clustered$datetime <- as.Date(format(as.Date(news_data_clustered$date, "%b %d, %Y"), "%Y-%m-%d"))
+#news_data_clustered$datetime <- ifelse( is.na(news_data_clustered$datetime), as.Date(format(as.Date(news_data_clustered$date, "%d %b %Y"), "%Y-%m-%d")), news_data_clustered$datetime)
 
 news_data_clustered <- news_data_clustered %>% 
   mutate(datetime = as.Date(datetime)) %>% 
@@ -54,11 +52,15 @@ shock_data_small_cluster <- small_cluster_complete_data %>%
   arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
   mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA, align = "right"),
          moving_std_news = rollapply(news_per_day, width = 30, FUN = sd, fill = NA, align = "right"),
-         binary_shock= (news_per_day >  moving_avg_news + 1.96*moving_std_news),
+         binary_shock= (news_per_day >  moving_avg_news + 3*moving_std_news),
                         ptstat = (news_per_day -moving_avg_news)/moving_std_news
          
   ) %>% 
   ungroup()
+
+save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+setwd(save_compare)
+gas_data_shock <- read_parquet("gas_data_shock.parquet")
 
 
 
@@ -70,10 +72,8 @@ small_info_cluster <- small_info_cluster %>%
   slice_max(news_per_day, with_ties = FALSE) %>%
   ungroup()
 
-save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
-setwd(save_compare)
 
-write_parquet(info_cluster, "info_cluster.parquet")
+write_parquet(small_info_cluster, "small_info_cluster.parquet")
 
 
 
@@ -121,7 +121,7 @@ shock_data_high_cluster <- high_cluster_complete_data %>%
   arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
   mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA, align = "right"),
          moving_std_news = rollapply(news_per_day, width = 30, FUN = sd, fill = NA, align = "right"),
-         binary_shock= (news_per_day >  moving_avg_news + 1.96*moving_std_news),
+         binary_shock= (news_per_day >  moving_avg_news + 3*moving_std_news),
          ptstat = (news_per_day -moving_avg_news)/moving_std_news
          
   ) %>% 

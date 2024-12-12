@@ -76,10 +76,11 @@ iterate_var <- function(initial_obs, errors, var_model, controls = NULL) {
   
   # vbis = vars::VAR(x, p, type = "none")
   # initial_obs <- vars[1:p,]
-  # errors <- res2*rr + mean(res)
+  # errors <- res
   # var_model <- vl
   #vars[1:p,], res2*rr + mean(res), vl
   
+
   m <- nrow(errors)
   # Matrice pour stocker les valeurs simulées
   forecasted_data <- matrix(NA, nrow = m, ncol = n)
@@ -96,7 +97,8 @@ iterate_var <- function(initial_obs, errors, var_model, controls = NULL) {
       
     } else {
       exogen = data.frame(controls[p+t])
-      colnames(exogen) <- c('gas_price_log_diff')
+      colnames(exogen) <- colnames(controls)
+      
       forecasts <- predict(var_model, n.ahead = 1, dumvar = exogen)
     }
     
@@ -272,14 +274,71 @@ MARep <- function(AL, p, hori) {
   return(inverse)
 }
 
-iterate_var_bis <- function(initial_obs, errors, var_coef, controls =NULL) {
+iterate_var_ter <- function(initial_obs, errors, var_model, controls =NULL) {
   
   # vbis = vars::VAR(x, p, type = "none")
-  # initial_obs <- vars[1:p,]
-  # errors <- centered_U_boot
+  # initial_obs <- x[1:4, ]
+  # errors <- res
   # var_coef <- vl
+
+  # Extraire les coefficients
+  coefficients <- coef(model)
+  Phi <- data.frame(
+    coefficients[[1]][,1],  # Coefficients pour y_{t-1}
+    coefficients[[2]][,1],  # Coefficients pour y_{t-2}
+    coefficients[[3]][,1],  # Coefficients pour y_{t-3}
+    coefficients[[4]][,1]   # Coefficients pour y_{t-4}
+  )
+  colnames(Phi) <- colnames(x)
+
+  
+  # Initialiser la série reconstruite
+  T <- nrow(x)
+  n <- ncol(x)
+  reconstructed_series <- matrix(NA, nrow =T, ncol = n)
+  colnames(reconstructed_series) <- colnames(x)
+  
+  # Copiez les 4 premières observations (valeurs initiales)
+  reconstructed_series[1:4, ] <- initial_obs
+  
+  # Reconstruction de y_t pour t = 5 à T
+  for (t in 5:T) {
+    #t=5
+    # Contribution de la constante
+    y_t <- rep(0,4)
+    
+    # Contribution des lags
+    for (lag in 1:4) {
+      # Convertir la ligne en vecteur colonne (si nécessaire)
+      lagged_values <- as.vector(reconstructed_series[t - lag, ])
+      contrib_lag <- as.vector( t(Phi[(1+ 4*(lag-1)):((4*(lag-1))+p),]) %*% reconstructed_series[t - lag, ] )
+      #print(contrib_lag)
+      # Calculer la contribution pour ce lag
+      y_t <- y_t + contrib_lag
+    }
+    
+    # Ajouter les résidus
+    reconstructed_series[t, ] <- y_t + errors[(t-4), ]
+  }
+  
+  # Convertir en data.frame si besoin
+  reconstructed_series <- as.data.frame(reconstructed_series)
+  
+  return(reconstructed_series)
+}
+
+iterate_var_bis <- function(initial_obs, errors, var_coef, controls =NULL){
+  
+  
   #iterate_var(vars[1:p,], centered_U_boot, vl)
   #iterate_var_bis(vars[1:p,], centered_U_boot, vl, controls)
+  #iterate_var_bis(vars[1:p,], res2, vl, controls)
+  # initial_obs <- vars[1:p,]
+  # errors <- res2
+  # var_coef <- vl
+  # 
+  # 
+  
   m <- nrow(errors)
   # Matrice pour stocker les valeurs simulées
   forecasted_data <- matrix(NA, nrow = m, ncol = n)
@@ -296,7 +355,8 @@ iterate_var_bis <- function(initial_obs, errors, var_coef, controls =NULL) {
       
     } else {
       exogen = data.frame(controls[p+t])
-      colnames(exogen) <- c('exo1')
+      #colnames(exogen) <- c('exo1')
+      colnames(exogen) <- colnames(controls)
       forecasts <- predict(var_coef, n.ahead = 1, dumvar = exogen)
     }
     
@@ -317,5 +377,4 @@ iterate_var_bis <- function(initial_obs, errors, var_coef, controls =NULL) {
   
   return(forecasted_data)
 }
-
 

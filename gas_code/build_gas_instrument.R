@@ -81,7 +81,7 @@ labeled_news_distinct <- labeled_news %>%
   select(-event_type) %>% 
   distinct()
 
-#write_parquet(labeled_news_distinct , "labeled_news_distinct.parquet")
+write_parquet(labeled_news_distinct , "labeled_news_distinct.parquet")
 
 write_parquet(labeled_news , "labeled_news_data.parquet")
 
@@ -127,25 +127,38 @@ supply_news_count <- event_news_count %>%
   pivot_wider(names_from = event_type, values_from = news_per_day) %>% 
   mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
   mutate(day_type = ifelse(supply < 3*demand, "ambiguous", "supply")) %>% 
-  select(supply, day_type)
+  select(supply, demand, day_type)
 
 # Fusionner le DataFrame original avec la séquence complète de dates
 complete_data <- full_dates %>%
   left_join(supply_news_count , by = "datetime") %>%
-  rename(supply_news = supply) %>%
-  replace_na(list(supply_news = 0))
-
-
+  rename(supply_news = supply, demand_news = demand) %>%
+  replace_na(list(supply_news = 0, demand_news=0))
 
 
 shock_data_supply <- complete_data %>%
   arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
   mutate(moving_avg_news = rollapply(supply_news, width = 30, FUN = mean, fill = NA),
          moving_std_news = rollapply(supply_news, width = 30, FUN = sd, fill = NA),
-         binary_shock= (supply_news >  moving_avg_news + 1.96*moving_std_news),
-         intensity_shock = ifelse(binary_shock, supply_news/moving_avg_news, 0)
+         binary_shock= (supply_news >  moving_avg_news + 3*moving_std_news),
+         intensity_shock = ifelse(binary_shock, supply_news/moving_avg_news, 0),
+         
+         demand_moving_avg_news = rollapply(demand_news, width = 30, FUN = mean, fill = NA),
+         demand_moving_std_news = rollapply(demand_news, width = 30, FUN = sd, fill = NA),
+         demand_binary_shock= (demand_news >  demand_moving_avg_news + 3*demand_moving_std_news),
+         demand_intensity_shock = ifelse(demand_binary_shock, demand_news/demand_moving_avg_news, 0)
+         
   )
 
+
+#on veut exclure les jours où il y a eu des annonces de demande
+demand_news_days <- shock_data_supply %>% 
+  filter(demand_binary_shock==1 & demand_news > 2) %>% 
+  pull(datetime) %>% 
+  as.Date()
+
+getwd()
+write.csv(demand_news_days, "demand_news_days.csv")
 
 
 all_news_count <- news_data %>% 
@@ -153,10 +166,12 @@ all_news_count <- news_data %>%
   distinct() %>% 
   group_by(datetime) %>% 
   summarise(news_per_day = n())
+
 # Fusionner le DataFrame original avec la séquence complète de dates
 complete_data_bis <- full_dates %>%
   left_join(all_news_count , by = "datetime") %>%
   replace_na(list(news_per_day = 0))
+
 shock_data_full <- complete_data_bis %>%
   arrange(datetime) %>%  # Replace 'date_column' with your actual date column name
   mutate(moving_avg_news = rollapply(news_per_day, width = 30, FUN = mean, fill = NA),
@@ -175,22 +190,40 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 # Import the functions from 'my_functions.R'
 Sys.setenv(lang = "en_US")
 options(warn = -1)
-gas_data_tot <- read_excel("gas.xlsx")
+gas_data_tot <- read_excel("TTF_futures.xlsx") %>% 
+  na.omit() %>% 
+  arrange(desc(time))
 #gas_data <- read.csv2("gas_data.csv")
+class(gas_data_tot$time)
 
-gas_data_tot <- gas_data_tot[,1:2]
-colnames(gas_data_tot) <- c('time', 'Gas_TTF')
+log_daily_market_surprises <- as.data.frame(gas_data_tot[, c(-1)]) %>%
+  mutate(across(everything(), ~ log(.) - log(lead(.)), .names = "dms_{col}"))%>%
+  select(starts_with("dms"))
 
-gas_data_shock <- gas_data_tot[order(gas_data_tot$time), ]
-colnames(gas_data_shock)
-gas_data_shock$Date <- as.Date(gas_data_shock$time)
-gas_data_shock$Gas_TTF_previous_day <- lag(gas_data_shock$Gas_TTF)
-gas_data_shock$Gas_TTF_next_day<- lead(gas_data_shock$Gas_TTF)
-gas_data_shock$shock_serie <-  gas_data_shock$Gas_TTF - gas_data_shock$Gas_TTF_previous_day
-gas_data_shock$log_shock_serie <-  log(gas_data_shock$Gas_TTF) - log(gas_data_shock$Gas_TTF_previous_day)
+# Step 2: Perform PCA
+pca_result <- prcomp(na.omit(log_daily_market_surprises), center = TRUE)
 
 
-#write_parquet(gas_data_shock, "gas_data_shock.parquet")
+# a titre informatif
+#combien y a t-il de PCs
+
+# Get the explained variance
+explained_variance <- summary(pca_result)$importance[2, 1:4]  # Proportion of variance
+
+# plein de petites PCs qui décroisent faiblement vers 0
+#il faut aller jusqu'à PC6 pour expliquer 90 % de la variance
+
+
+gas_data_shock <- pca_result$x %>% 
+  as.data.frame() %>% 
+  select(PC1) %>% 
+  mutate(time = gas_data_tot$time[-1],
+         Date = as.Date(time, format = "%Y-%m-%d"),
+                        TTF = gas_data_tot$DTFE1C.D7[-1])
+
+write_parquet(gas_data_shock, "gas_data_shock.parquet")
+
+
 
 info_supply <- merge(gas_data_shock, shock_data_supply, 
               by.x = "Date", by.y = "datetime" ) 
@@ -206,7 +239,7 @@ instrument_days_full <- info_full %>%
 #          moving_avg_news, moving_std_news, day_type, Gas_TTF)
 
 instrument_days_supply <- info_supply %>% 
-  filter(binary_shock ==TRUE) %>% 
+  filter(supply_binary_shock ==TRUE) %>% 
   filter(supply_news > 3)
 
 nrow(instrument_days_full)

@@ -7,6 +7,8 @@ output: html_notebook
 
 ```{r}
 library(ggplot2)
+
+theta_0 <- matrix(rnorm(10, 0, 1), ncol=2, nrow= 5)
 irf_response_test <- as.data.frame(theta_0)
 irf_response_test$shock <- rep(names, length.out = length(theta_0[,1]))
 irf_response_test$shock <- factor(irf_response_test$shock, levels = rev(names))
@@ -30,10 +32,21 @@ custom_legend <- cowplot::get_legend(plot_legend)
 plot_legend
 ```
 
-
+La différence qui existe entre ma série et la série reconstruite
+correspond à l'approximation de la limite des horizons.
+Lorsque pour une Cholesky, on calcule de plus en plus d'horizons,
+la différence entre les deux courbes se réduit
+En plus, il y avait la dérive intuitée par Giovanni.
 
 
 ```{r}
+
+zero_errors <- matrix(0, nrow = dim(res)[1], ncol = dim(res)[2])
+
+reconstruct_derive_without_errors <- iterate_var_ter(initial_obs = x[1:4, ],
+                                                     errors = zero_errors,
+                                                     var_model = vl)
+
 # Prepare data for plotting
 
 plot_hd <- function(series){
@@ -68,13 +81,13 @@ plot_hd <- function(series){
   
   data <- data.frame(
     x = dates_formatted,
-    y = vars_demeaned[5:nrow(vars_demeaned),series] - vars_demeaned[4,series],
+    y = vars_demeaned[5:nrow(vars_demeaned),series] - reconstruct_derive_without_errors$NE_Index_log[c(-1:-p)],
     ytest = apply(historical_decomp_matrix[,series ,], 1, sum)
   )
   
   my_plot <- my_plot + 
     geom_line(data, mapping = aes(x = x, y = y), linetype = "dashed") +  # Add dashed line+
-    #geom_line(data, mapping = aes(x = x, y = ytest), linetype = "dashed", color='red') +
+    geom_line(data, mapping = aes(x = x, y = ytest), linetype = "dashed", color='grey') +
     labs(title=TeX(paste("Historical Decomposition of",names[[series]])) ,
          x="Time", y="Contribution")
   return(my_plot)
@@ -82,6 +95,49 @@ plot_hd <- function(series){
 
 historical_decomp_matrix <- hd_cholesky
 plot_hd(series = 4)
+```
+Describing the summation Error
+
+```{r}
+data <- data.frame(
+  x = dates_formatted,
+  y = vars_demeaned[5:nrow(vars_demeaned),series],
+  ytest = apply(historical_decomp_matrix[,series ,], 1, sum)
+)
+
+
+ggplot(data, aes(x = x)) +
+  geom_line(aes(y = y, color = "Actual")) +
+  geom_line(aes(y = ytest, color = "Decomposition")) +
+  geom_line(aes(y = y- ytest, color = "Error")) +
+  scale_color_manual(values = c("Actual" = "blue", 
+                                "Decomposition" = "red",
+                                "Error"="black")) +
+  theme_minimal() +
+  labs(title = paste("Decomposition of", series, "using historical data"),
+       x = "Date",
+       y = "Value") +
+  theme(legend.position = "top")
+```
+
+Montrer le terme de dérive lorsqu'on fait tourner la VAR sans erreurs
+
+
+```{r}
+
+
+ggplot() +
+  geom_line(mapping= aes(x= dates_formatted, 
+                         y = reconstruct_derive_without_errors$NE_Index_log[c(-1:-p)], color = "Derive"))+
+  geom_line(data=data, mapping=aes(x = x, y = y - ytest, color = "Error")) +
+  scale_color_manual(values = c("Derive" = "blue", 
+                                "Decomposition" = "red",
+                                "Error"="black")) +
+  theme_minimal() +
+  labs(title = paste("Decomposition of", series, "using historical data"),
+       x = "Date",
+       y = "Value") +
+  theme(legend.position = "top")
 ```
 
 

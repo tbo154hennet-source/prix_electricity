@@ -1,17 +1,17 @@
+library(MASS)
+
 
 source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
-source("auxiliary_functions.R")
-source("bootstrap_auxiliary.R")
 source("reliability_auxiliary.R")
+source("auxiliary_control.R")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
 IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')
 headers_proxies = c("cold_excess_instrument", 
-                    # "abs_gas_shock",                 
-                    # "rel_gas_shock" ,
+                    "gas_supply_shock",
                     "heat_excess_instrument",        
                     "renewable_generation_log_diff", 
                     "tot_indispo_log_diff",          

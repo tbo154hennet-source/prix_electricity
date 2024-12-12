@@ -9,11 +9,11 @@ library(estimatr)
 
 
 Sys.setenv(lang = "en_US")
-save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
-setwd(save_path_fr)
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp'
+setwd(save_path_esp)
 
-monthly_indispo <- read_parquet('monthly_indispo.parquet')
-nuclear_monthly_indispo <- read_parquet('nuclear_monthly_indispo.parquet')
+monthly_indispo <- read_parquet('spain_monthly_indispo.parquet')
+nuclear_monthly_indispo <- read_parquet('spain_nuclear_monthly_indispo.parquet')
 unexpected_monthly_indispo <- read_parquet('unexpected_monthly_indispo.parquet')
 unexpected_nuclear_monthly_indispo <- read_parquet('unexpected_nuclear_monthly_indispo.parquet')
 price_renew_final <- read_parquet( 'price_renew.parquet')
@@ -55,23 +55,21 @@ unexpected_nuclear_monthly_indispo <- unexpected_nuclear_monthly_indispo %>%
 
 
 
-plant_indispos <- merge(monthly_indispo, nuclear_monthly_indispo, 
+plant_indispos <- left_join(monthly_indispo, nuclear_monthly_indispo, 
                         by= c('month', 'year'))
 plant_indispos <- left_join(plant_indispos, unexpected_monthly_indispo, 
                             by= c('month', 'year'))
 plant_indispos <- left_join(plant_indispos, unexpected_nuclear_monthly_indispo, 
                         by= c('month', 'year'))
 
-
+colnames(macro_data)
 
 IV_data <- merge(macro_data, price_renew_final, by= c('month', 'year')) %>% 
-  select("datetime.x", "ECBMRRFR_interest_rate.xls",                              
-"energy_index_ENRGY0FRM086NEST.xls","Industrial_prod_FRAPROINDMISMEI.xls",                     
-"Inflation_expectation_CSINFT02FRM460S.xls", "non-energy_index_00XE00FRM086NEST.xls",                   
-"unemployment_LRHUTTTTFRM156S.xls", "log_price",
+  select("datetime", "ECBMRRFR_interest_rate.xls",                              
+         "ENRGY0ESM086NEST_energy_index.xls" ,"ESPPROINDMISMEI_production_sales_monthly.xls",                     
+         "00XE00ESM086NEST_non_energy_index.xls" , "LRHUTTTTESM156S_monthly_unemployment.xls", "log_price",
 "log_diff", "spot_price", "renewable_generation", "gen_tot",
-"demand_growth_period", "renewable_growth", 'month', 'year') %>% 
-  rename("datetime" = "datetime.x")
+"demand_growth_period", "renewable_growth", 'month', 'year')
 
 IV_data <- merge(IV_data, plant_indispos,
                  by= c('month', 'year'))
@@ -81,27 +79,28 @@ IV_data <- merge(IV_data, temperature_data,
 
 IV_data <- merge(IV_data, surprise_serie,
                  by= c('month', 'year'))
+                 
 IV_data <- IV_data %>% 
   rename(gas_price = avg_price,
          log_elec_price = log_price,
          elec_growth_rate = log_diff,
          ECB_rate= ECBMRRFR_interest_rate.xls,
-         IPI = Industrial_prod_FRAPROINDMISMEI.xls,
-         NE_Index= `non-energy_index_00XE00FRM086NEST.xls`,
-         E_Index = energy_index_ENRGY0FRM086NEST.xls,
-         UnE = unemployment_LRHUTTTTFRM156S.xls,
-         Exp_pi = Inflation_expectation_CSINFT02FRM460S.xls, 
+         IPI = ESPPROINDMISMEI_production_sales_monthly.xls,
+         NE_Index= `00XE00ESM086NEST_non_energy_index.xls`,
+         E_Index = ENRGY0ESM086NEST_energy_index.xls,
+         UnE = LRHUTTTTESM156S_monthly_unemployment.xls,
+         #Exp_pi = Inflation_expectation_CSINFT02FRM460S.xls, 
          demand_growth_rate = demand_growth_period,
          abs_gas_shock = abs_shock,
          rel_gas_shock = relative_shock) %>%
   select(-c("log_elec_price", "elec_growth_rate", 
             "demand_growth_rate", "renewable_growth")) %>% 
-  arrange(Date)
+  arrange(datetime)
 
 colnames(IV_data)
 write_parquet(IV_data, 'low_freq_data.parquet')
 
-
+getwd()
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 IV_data <- read_parquet('low_freq_data.parquet')

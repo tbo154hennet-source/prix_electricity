@@ -1,0 +1,155 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
+price_data <- read_parquet('generation_data_fr.parquet') %>% 
+  rename(gen_tot = gen_tot.x)
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Temperature_instrument')
+country_temp_instrument <- read.csv('daily_temperature_deviation.csv')
+
+save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_path_fr)
+
+final_indispo <- read_parquet('final_french_indispo.parquet') %>% 
+  rename(tot_indispo = Unavailable.Capacity)
+final_nuclear_indispo <- read_parquet('final_french_nuclear_indispo.parquet') %>% 
+  rename(nuclear_indispo = Unavailable.Capacity)
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data")
+info_selected <- read_parquet("info_selected.parquet")
+
+colnames(final_indispo)
+colnames(final_nuclear_indispo)
+colnames(price_data)
+colnames(country_temp_instrument)
+colnames(info_selected)
+
+```
+
+
+```{r}
+all_data <- full_join(final_indispo,final_nuclear_indispo,
+                      by = "indispo_day") %>% 
+  mutate(datetime = as.POSIXct.Date(indispo_day))
+
+
+all_data <- left_join(price_data,all_data,  by='datetime')
+
+country_temp_instrument$datetime <- as.POSIXct(country_temp_instrument$Date)
+info_selected$datetime <- as.POSIXct(info_selected$Date)
+  
+all_data <- left_join(all_data, country_temp_instrument,  by='datetime')
+  
+all_data <- left_join(all_data, info_selected,  by='datetime') %>% 
+  mutate(month= month(datetime), year= year(datetime))
+  
+
+colnames(all_data)
+```
+
+Some regressions
+
+```{r}
+all_data_intradaily <- all_data %>%
+  mutate(T_avg = na.locf(T_avg))
+
+# perform first stage regression
+m_basic <- lm(
+  spot_price ~ TTF + wind + solar + nuclear_indispo + tot_indispo + gen_tot + T_avg,
+  data= all_data_intradaily)
+
+# dummy for creneau
+
+m_timeFE <- lm(
+  spot_price ~ TTF + wind + solar + nuclear_indispo + tot_indispo + gen_tot + T_avg + factor(year) + factor(month) ,
+  data= all_data_intradaily)
+
+m_log <- lm(
+  log(spot_price) ~ log(TTF+1) + log(wind+1) + log(solar+1) + log(nuclear_indispo+1) + log(tot_indispo+1) +log(gen_tot+1) +  log(T_avg - min(all_data_intradaily$T_avg) +1) ,
+  data= all_data_intradaily)
+
+# dummy for creneau
+
+m_log_timeFE <- lm(
+  log(spot_price) ~ log(TTF+1) + log(wind+1) + log(solar+1) + log(nuclear_indispo+1) + log(tot_indispo+1)+ log(gen_tot+1) +  log(T_avg - min(all_data_intradaily$T_avg) +1)  + factor(year) + factor(month) ,
+  data= all_data_intradaily)
+
+```
+
+
+
+```{r, results = 'asis'}
+library(stargazer)
+
+all_data_intradaily$year <- factor(all_data_intradaily$year)
+all_data_intradaily$month <- factor(all_data_intradaily$month)
+# Extract non-factor variables from the data
+non_factor_vars <- names(all_data_intradaily)[sapply(all_data_intradaily, function(col) !is.factor(col))]
+
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic,  m_timeFE, m_log,  m_log_timeFE,
+    type = "html",
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "Log", 'Log Time FE'),
+    keep = non_factor_vars
+ )
+
+```
+
+```{r}
+
+all_data_daily <- all_data %>% 
+  group_by(as.Date(datetime), month, year) %>% 
+  dplyr::select(spot_price, TTF, wind, solar, nuclear_indispo, tot_indispo, gen_tot , T_avg) %>% 
+  summarise_all(mean, na.rm = TRUE) %>%
+  ungroup()
+  
+  
+# perform first stage regression
+m_basic <- lm(
+  gen_tot ~ TTF + wind + solar + nuclear_indispo + tot_indispo + T_avg + spot_price ,
+  data= all_data_daily)
+
+# dummy for creneau
+
+m_timeFE <- lm(
+  gen_tot ~ TTF + wind + solar + nuclear_indispo + tot_indispo + T_avg + spot_price + factor(year) + factor(month) ,
+  data= all_data_daily)
+
+m_log <- lm(
+  log(gen_tot) ~  log(TTF+1) + log(wind+1) + log(solar+1) + log(nuclear_indispo+1) + log(tot_indispo+1) + log(T_avg - min(all_data_daily$T_avg, na.rm = TRUE) +1)  + log(spot_price+1) ,
+  data= all_data_daily)
+
+
+
+m_log_timeFE <- lm(
+  log(gen_tot) ~ log(TTF+1) + log(wind+1) + log(solar+1) + log(nuclear_indispo+1) + log(tot_indispo+1) + log(T_avg - min(all_data_daily$T_avg, na.rm = TRUE) +1)  + log(spot_price+1)+ factor(year) + factor(month) ,
+  data= all_data_daily)
+
+
+
+```
+
+
+
+```{r, results = 'asis'}
+library(stargazer)
+
+all_data_daily$year <- factor(all_data_daily$year)
+all_data_daily$month <- factor(all_data_daily$month)
+# Extract non-factor variables from the data
+non_factor_vars <- names(all_data_daily)[sapply(all_data_daily, function(col) !is.factor(col))]
+
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic,  m_timeFE, m_log,  m_log_timeFE,
+    type = "html",
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "Log", 'Log Time FE'),
+    keep = non_factor_vars
+ )
+
+```

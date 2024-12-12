@@ -2,3 +2,13 @@
 .Rhistory
 .RData
 .Ruserdata
+#All my standard datatypes
+*.html
+
+*.csv
+
+*.parquet
+
+*.xlsx
+
+*.rds
