@@ -282,7 +282,7 @@ iterate_var_ter <- function(initial_obs, errors, var_model, controls =NULL) {
   # var_coef <- vl
 
   # Extraire les coefficients
-  coefficients <- coef(model)
+  coefficients <- coef(var_model)
   Phi <- data.frame(
     coefficients[[1]][,1],  # Coefficients pour y_{t-1}
     coefficients[[2]][,1],  # Coefficients pour y_{t-2}
@@ -333,9 +333,9 @@ iterate_var_bis <- function(initial_obs, errors, var_coef, controls =NULL){
   #iterate_var(vars[1:p,], centered_U_boot, vl)
   #iterate_var_bis(vars[1:p,], centered_U_boot, vl, controls)
   #iterate_var_bis(vars[1:p,], res2, vl, controls)
-  # initial_obs <- vars[1:p,]
-  # errors <- res2
-  # var_coef <- vl
+  initial_obs <- vars[1:p,]
+  errors <- res2
+  var_coef <- vl
   # 
   # 
   
@@ -369,9 +369,9 @@ iterate_var_bis <- function(initial_obs, errors, var_coef, controls =NULL){
     
     # Mettre à jour les observations courantes
     
-    nbre <- nrow(var_coef$datamat)
+    nbre <- nrow(var_coef$datamat)# - 1
     
-    var_coef$datamat[nbre + 1, (from-1):to] <- var_coef$datamat[nbre, 1:(to_bis+1)]
+    var_coef$datamat[nbre + 1, (n+1):((p+1)*n)] <- var_coef$datamat[nbre, 1:(p*n)]
     var_coef$datamat[nbre +1, 1:n] <- values_forecasted
   }
   

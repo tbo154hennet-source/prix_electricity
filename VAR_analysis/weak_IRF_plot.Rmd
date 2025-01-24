@@ -976,4 +976,3 @@ final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(
 # Display the final plot
 print(final_plot_with_title)
 ```
-

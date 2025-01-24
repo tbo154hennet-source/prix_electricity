@@ -26,11 +26,14 @@ generation_by_fuel <- generation_by_fuel %>%
 # Fit a random forest model
 
 generation_by_fuel$`__index_level_0__` <- 
-  with_tz(generation_by_fuel$`__index_level_0__`, tzone = "UTC")
+  with_tz(generation_by_fuel$`__index_level_0__`, tzone ='Europe/Brussels')
 
 save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
 setwd(save_path_esp)
 write_parquet(generation_by_fuel, 'generation_by_fuel_format.parquet')
+
+generation_by_fuel <- read_parquet('generation_by_fuel_format.parquet')
+
 
 library(lubridate)
 prediction_data <- merge(generation_by_fuel, generation_per_unit, 

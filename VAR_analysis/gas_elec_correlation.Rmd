@@ -11,6 +11,9 @@ I can find spot price as well.
 To be compared with electricity price
 
 ```{r}
+save_path_var <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output"
+setwd(save_path_var)
+IV_data <- read_parquet('low_freq_data.parquet')
 my_plot <- ggplot(data= IV_data)+
   geom_line(aes(x=datetime, y=spot_price, color="electricity"))+
   geom_line(aes(x=datetime, y=gas_price, color="gas"))+
@@ -27,9 +30,10 @@ gas_elec_data <- IV_data %>%
 
 
 gas_elec_data <- left_join(gas_elec_data, shock_series_all %>% 
-                            select(Date, Value_PC1_AG) %>% 
-                             mutate(datetime = as.POSIXct(Date)),
-                           by = "datetime")
+                             mutate(datetime = as.POSIXct(Date)) %>% 
+                                      select(datetime, Value_PC1_AG),
+                           by = "datetime") %>% 
+  select(-Date)
 
 # shock_series_all$Value_PC1_AG
 # shock_series_all %>% 
@@ -40,6 +44,7 @@ gas_elec_data <- left_join(gas_elec_data, shock_series_all %>%
 
 gas_elec_data[is.na(gas_elec_data)] <- 0
 
+#lapply(colnames(gas_elec_data), function(x) print(class(x)))
 
 ggplot(data= gas_elec_data)+
   geom_line(aes(x=datetime, y=log_diff_spot/sd(log_diff_spot), color="electricity"))+
@@ -112,6 +117,15 @@ summary(log_diff_model)
 ```
 
 
+# Même choses pour le renewable
+car je trouve étonnant que ce ne soit pas significatif dans la spécif VAR,
+je veux voir si c'est le cas à l'étape précédente
+
+```{r}
+log_renew_model <- lm(data = gas_elec_data, log(spot_price) ~ gas_supply_shock + log(renewable_generation)+
+                        log(nuclear_indispo))
+summary(log_renew_model)
+```
 
 
 

@@ -99,6 +99,7 @@ plot_hd(series = 4)
 Describing the summation Error
 
 ```{r}
+series = 4
 data <- data.frame(
   x = dates_formatted,
   y = vars_demeaned[5:nrow(vars_demeaned),series],

@@ -16,7 +16,7 @@ my_files <- list.files()
 # my_files <- setdiff(my_files, parquet_files)
 
 #garder que les primary files
-for (file in my_files[-length(my_files)]){
+for (file in my_files){
   excel_file <- read_parquet(file)
   print(file)
   if (is.null(indispo_ENTSOE_data)){
@@ -116,6 +116,17 @@ unexpected_indispo_ENTSOE_data <- bout_indispo_ENTSOE_data %>%
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp")
 write_parquet(bout_indispo_ENTSOE_data, "indispo_ENTSOE_data.parquet")
 write_parquet(unexpected_indispo_ENTSOE_data, "unexpected_indispo_ENTSOE_data.parquet")
+
+unexpected_nuclear_indispo_ENTSOE_data <-  unexpected_indispo_ENTSOE_data %>% 
+  filter(plant_type == "Nuclear")
+write_parquet(unexpected_nuclear_indispo_ENTSOE_data, "unexpected_nuclear_indispo_ENTSOE_data.parquet")
+
+colnames(unexpected_indispo_ENTSOE_data)
+unique(unexpected_indispo_ENTSOE_data$plant_type)
+
+
+
+
 
 
 

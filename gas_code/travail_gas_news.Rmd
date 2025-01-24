@@ -24,14 +24,14 @@ news_data_full <- news_data_full %>%
 
 ```{r}
 news_data_all %>% 
-  filter(datetime == "2019-01-11")
+  filter(datetime == "2021-05-12")
 	
 ```
 
 ```{r}
 
-labeled_news %>% 
-  filter(datetime == "2019-01-11")
+news_data_all %>% 
+  filter(datetime == "2022-04-27")
 
 ```
 

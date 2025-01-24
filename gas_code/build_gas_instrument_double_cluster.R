@@ -73,6 +73,9 @@ small_info_cluster <- small_info_cluster %>%
   ungroup()
 
 
+save_compare_info <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data/info_files"
+setwd(save_compare_info)
+
 write_parquet(small_info_cluster, "small_info_cluster.parquet")
 
 
@@ -135,8 +138,8 @@ info_high_cluster  <- info_high_cluster %>%
   slice_max(news_per_day, with_ties = FALSE) %>%
   ungroup()
 
-save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
-setwd(save_compare)
+save_compare_info <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data/info_files"
+setwd(save_compare_info)
 
 write_parquet(info_high_cluster, "info_high_cluster.parquet")
 
@@ -175,8 +178,8 @@ shock_data_selected_cluster <- selected_cluster_complete_data %>%
 info_selected <- merge(gas_data_shock, shock_data_selected_cluster, 
                   by.x = "Date", by.y = "datetime" ) 
 
-save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
-setwd(save_compare)
+save_compare_info <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data/info_files"
+setwd(save_compare_info)
 
 write_parquet(info_selected, "info_selected.parquet")
 

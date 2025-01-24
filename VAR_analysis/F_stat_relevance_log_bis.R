@@ -9,13 +9,18 @@ source("auxiliary_control.R")
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
+detrended_data <- read_parquet('low_freq_data.parquet')
 IV_data_log <- read_parquet('low_freq_data_log.parquet')
-headers_proxies = c("cold_excess_instrument", 
-                    "gas_supply_shock"#,        
-                    #"renewable_generation_log"
+IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')
+headers_proxies = c(#"cold_excess_instrument", 
+                    "T_avg_log",
+                    "gas_supply_shock",
+                    "unexpected_nuclear_indispo_log"
 )
 
 colnames(IV_data_log)
+
+
 
 proxies <- ts(IV_data_log[, c(headers_proxies)], frequency=12)
 
@@ -132,7 +137,7 @@ RMeigs <- sort(eigen(RM)$values, decreasing = TRUE)
 
 reliability_measure <- Re(RMeigs)
 
-
+print(reliability_measure)
 
 print(nrow(proxies))
 print(nrow(res))
@@ -144,7 +149,7 @@ colnames(data) <- c('res_gen_tot_log', 'res_spot_price_log',headers_proxies)
 
 # Régression linéaire
 # price_model <- lm(data = data, res_spot_price_log ~ gas_supply_shock + renewable_generation_log
-#                   +  cold_excess_instrument)
+#                   +  T_avg_log)
 # 
 # summary(price_model)
 # 
@@ -155,69 +160,11 @@ colnames(data) <- c('res_gen_tot_log', 'res_spot_price_log',headers_proxies)
 # summary(demand_model)
 
 
-headers_proxies <- c("T_avg", 
-                     "gas_supply_shock")
-headers_proxies <- c("T_avg", 
-                     "gas_supply_shock",
-                     "nuclear_indispo")
-headers_proxies <- c("T_avg", 
-                     "gas_supply_shock",
-                     "renewable_generation")
-
-
-headers_proxies <- c("T_avg_log", 
-                     "gas_supply_shock")
-
-headers_proxies <- c("T_avg_log", 
-                     "gas_supply_shock",
-                     "nuclear_indispo_log")
-
-headers_proxies <- c("T_avg_log", 
-                     "gas_supply_shock",
-                     "renewable_generation_log")
-
-headers_proxies <- c("T_avg_log", 
-                     "gas_supply_shock",
-                     "renew_source")
-
-headers_proxies <- c("T_avg_log", 
-                     "gas_supply_shock",
-                     "renewable_generation_log",
-                     "nuclear_indispo_log")
-
-
-View(data %>% 
-       dplyr::select(renew_source, renewable_generation_log))
-# headers_proxies <- c("CDD_excess_instrument",
-#                      "gas_supply_shock")
-# headers_proxies <- c("CDD_intensity_instrument", 
-#                      "gas_supply_shock")
-
-colnames(detrended_data)
-detrended_data$Date <- IV_data$datetime
-data$CDD_excess_instrument <- detrended_data$CDD_excess_instrument[c(-1:-p)]
-data$CDD_excess_instrument <- log(data$CDD_excess_instrument - min(data$CDD_excess_instrument) + 1)
-data$HDD_excess_instrument <- detrended_data$HDD_excess_instrument[c(-1:-p)]
-
-data$nuclear_indispo <- detrended_data$nuclear_indispo[c(-1:-p)]
-data$T_avg <- detrended_data$T_avg[c(-1:-p)]
-data$renewable_generation <- detrended_data$renewable_generation[c(-1:-p)]
-
-data$T_avg_log <- IV_data_log$T_avg_log[c(-1:-p)]
-data$nuclear_indispo_log <- IV_data_log$nuclear_indispo_log[c(-1:-p)]
-data$renewable_generation_log <- IV_data_log$renewable_generation_log[c(-1:-p)]
-data$CDD_intensity_instrument <- log(test_serie[c(-1:-p)])
-
-data$renew_source <- log(test_serie[c(-1:-p)] - min(test_serie[c(-1:-p)]) + 1)
-
-
-
-ggplot(data = detrended_data) +
-  geom_line(aes(x = Date, y = CDD_excess_instrument, color = "CDD")) +
-  geom_line(aes(x = Date, y = HDD_excess_instrument,  color = "HDD")) +
-  geom_line(aes(x = Date, y = T_avg, color = "Temperature")) +
-  theme_minimal()
-
+# 
+#data$renewable_generation_log <- IV_data_log$renewable_generation_log[c(-1:-p)]
+# data$nuclear_indispo_log <- IV_data_log$nuclear_indispo_log[c(-1:-p)]
+# data$unexpected_nuclear_indispo_log <- IV_data_log$unexpected_nuclear_indispo.x_log[c(-1:-p)]
+# data$tot_indispo_log <- IV_data_log$tot_indispo_log[c(-1:-p)]
 
 # Construct the formula
 formula_price <- as.formula(paste('res_spot_price_log', "~",
@@ -285,11 +232,12 @@ ZtZ <- t(Z) %*% Z
 ZtX <- t(Z) %*% X
 X1tX1 <- t(X) %*% X
 
+
 # Step 2: Compute the key matrix
 matrix_C <- solve(ZtZ) %*% ZtX %*% solve(X1tX1) %*% t(ZtX)
 
 # Step 3: Find the smallest eigenvalue
-lambda_min <- min(eigen(matrix_C)$values)
+lambda_min <- min(Re(eigen(matrix_C)$values[1:k]))
 
 # Step 4: Compute the Cragg-Donald statistic
 cragg_donald_stat <- n * lambda_min
@@ -297,6 +245,11 @@ cragg_donald_stat <- n * lambda_min
 print(cragg_donald_stat)
 
 # Save the results
+
+
+
+
+
 
 
 

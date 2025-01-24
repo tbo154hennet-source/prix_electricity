@@ -7,6 +7,7 @@ output: html_notebook
 
 ```{r}
 library(readxl)
+library(lubridate)
 
 save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
 setwd(save_compare)
@@ -15,6 +16,8 @@ colnames(info_selected)
 
 gas_data_tot <- read_excel("TTF_futures.xlsx")
 gas_data_shock <- read_parquet("gas_data_shock.parquet")
+demand_news_days <- read.csv("demand_news_days.csv")
+
 
 gas_data_tot$dms_M1 <- log(gas_data_tot$DTFE1C.D7) - log(lead(gas_data_tot$DTFE1C.D7, 1))
 
@@ -79,6 +82,8 @@ shock_series_all <- left_join(tibble(Date = middle_dates), shock_series_all,  by
 # Remplir les NA avec 0
 shock_series_all[is.na(shock_series_all)] <- 0
 
+
+#write.csv(shock_series_all, "shock_series_all.csv")
 shock_series_all
   
 ```

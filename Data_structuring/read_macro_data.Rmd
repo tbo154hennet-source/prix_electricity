@@ -17,6 +17,11 @@ library(gridExtra)
 Sys.setenv(lang = "en_US")
 ```
 
+```{r}
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/fr")
+file = "manufacturing_index_FRAPROMANMISMEI.xls"
+excel_file <- read_excel(file, skip=10)
+```
 
 ```{r}
 
@@ -49,9 +54,10 @@ for (file in my_files){
   name <- paste(split_parts, collapse = " ")
     # Concatenate the split parts with automatic line breaks
   title_text <- paste(strwrap(name, width = 30), collapse = "\n")
-  
+
   excel_file <- read_excel(file, skip=10)
   
+  excel_file$observation_date <- as.Date(excel_file$observation_date)
   # print(class(excel_file %>% head(1)))
   # print(colnames(excel_file %>% head(1)))
   

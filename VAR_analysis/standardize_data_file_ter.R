@@ -21,15 +21,18 @@ price_renew_final <- read_parquet( 'price_renew.parquet')
 macro_data <- read_parquet( 'macro_data_monthly_index.parquet')
 temperature_data <- read.csv("temperature_instrument.csv")
 
-save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+save_compare <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data/info_files"
 setwd(save_compare)
 info_selected <- read_parquet("info_selected.parquet")
 colnames(info_selected)
+save_demand <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+setwd(save_demand)
 demand_news_days <- read.csv("demand_news_days.csv")
 
 info_selected <- info_selected %>%
-  mutate(instrumented_day = ifelse(binary_shock == TRUE & news_per_day > 3, "supply_shock", 0),
-         instrumented_day = ifelse(Date %in% demand_news_days, "demand_shock", instrumented_day)) %>% 
+  mutate(instrumented_day = ifelse(binary_shock == TRUE & news_per_day > 3, "supply_shock", 0)
+         ,instrumented_day = ifelse(Date %in% demand_news_days, "demand_shock", instrumented_day)
+         ) %>% 
   mutate(month = month(Date), year= year(Date)) 
 
 gas_price <- info_selected %>% 
@@ -88,11 +91,11 @@ plant_indispos <- left_join(plant_indispos, unexpected_nuclear_monthly_indispo,
 
 
 IV_data <- merge(macro_data, price_renew_final, by= c('month', 'year')) %>% 
-  select("datetime.x", "ECBMRRFR_interest_rate.xls",                              
+  select("datetime.x", "ECBMRRFR_interest_rate.xls", "manufacturing_index_FRAPROMANMISMEI.xls",                             
 "energy_index_ENRGY0FRM086NEST.xls","Industrial_prod_FRAPROINDMISMEI.xls",                     
 "Inflation_expectation_CSINFT02FRM460S.xls", "non-energy_index_00XE00FRM086NEST.xls",                   
 "unemployment_LRHUTTTTFRM156S.xls", "log_price",
-"log_diff", "spot_price", "renewable_generation", "gen_tot",
+"log_diff", "spot_price", "renewable_generation", "wind", "solar", "gen_tot",
 "demand_growth_period", "renewable_growth", 'month', 'year') %>% 
   rename("datetime" = "datetime.x")
 
@@ -111,6 +114,7 @@ IV_data <- IV_data %>%
          elec_growth_rate = log_diff,
          ECB_rate= ECBMRRFR_interest_rate.xls,
          IPI = Industrial_prod_FRAPROINDMISMEI.xls,
+         Manufacturing = manufacturing_index_FRAPROMANMISMEI.xls,
          NE_Index= `non-energy_index_00XE00FRM086NEST.xls`,
          E_Index = energy_index_ENRGY0FRM086NEST.xls,
          UnE = unemployment_LRHUTTTTFRM156S.xls,

@@ -70,13 +70,7 @@ gamma_bootstrap_mbb <- function(nboot, vars, BlockSize, theta_0, controls=NULL, 
     centered_U_boot <- U_boot - center_block_repeated_res
     centered_proxies_boot <- proxies_boot - center_block_repeated_prox
     
-    varbsnew <- if (!log_level) {
-      rbind(vars[1:p,],
-            iterate_var(vars[1:p,], centered_U_boot, vl, controls))
-    } else {
-      rbind(vars[1:p,],
-            iterate_var_bis(vars[1:p,], centered_U_boot, vl, controls))
-    }
+    varbsnew <- iterate_var_ter(vars[1:p,], centered_U_boot, vl, controls)
     
     
     xnew =ts(varbsnew , start=c(2015,1), end=c(2023,12), frequency=12)
@@ -141,6 +135,7 @@ eval_composantes_V0 <- function(i, hori, sample_matrices){
   list_of_samples <- c("gamma", "psi", "ncvg_theta_0", "inv",
                        "ncvg_lambda_01", "ncvg_lambda_02", "A")
   for (b in c(1:nboot)){
+    b=1
     gamma_hat <- matrix(sample_matrices[["gamma"]][,,b], nrow=n, ncol=l)
     
     Marep_hat <- matrix(sample_matrices[["inv"]][,,b],nrow = n*(irhor),ncol = n) 
@@ -157,7 +152,7 @@ eval_composantes_V0 <- function(i, hori, sample_matrices){
   
   gauche <- cov(boot_terme_gauche)
   droite <- cov(boot_terme_droite)
-  my_cov <- cov(boot_terme_droite, boot_terme_gauche)
+  my_cov <- cov(boot_terme_gauche ,boot_terme_droite )
   
   # mean_matrices <- apply(boot_covariance, c( 2, 3), mean)
   # # my_cov <- matrix( apply(boot_covariance, 2, mean), nrow= k, ncol=k**2)
@@ -166,16 +161,23 @@ eval_composantes_V0 <- function(i, hori, sample_matrices){
   
 }
 
+#V0 <- eval_V0(a_0, b_0, gauche, my_cov, droite)
+## 
+# Q_T <- sqrt(T)*(t(e_i) %*% C[,,hori] %*% gamma -
+#                   t(c(a_0, b_0)) %*% phi_c0)
+# Wald_stat <-  Q_T %*% ginv(V0) %*% t(Q_T)
+
+
 eval_V0 <- function(a_0, b_0,gauche, my_cov, droite){
   
-  mat_vec <-  cbind(diag(rep(a_0, times = 5)), diag(rep(b_0, times = 5)))
+  mat_vec <-  cbind(diag(rep(a_0, times = l)), diag(rep(b_0, times = l)))
   #mat_vec %*% as.vector(t(phi_c0_hat))
   #t(phi_c0_hat) %*% matrix(c(a_0, b_0), ncol = 1)
   # a_0* phi_c0_hat[1,] + b_0* phi_c0_hat[2,]
   # return(T*(gauche -  2*my_cov%*% t(mat_vec) +
   # mat_vec %*% droite  %*% t(mat_vec)))
   
-  return(T*(gauche -  2*t(my_cov) %*% t(mat_vec) +
+  return(T*(gauche -  2*my_cov%*% t(mat_vec) +
               mat_vec %*% droite  %*% t(mat_vec)))
   
 }
@@ -184,7 +186,7 @@ eval_V0 <- function(a_0, b_0,gauche, my_cov, droite){
 
 #fonction bootstrap simple en réchantillonant avec va eta
 #selon Gonzales and Kilian(2004)
-gamma_bootstrap_GK <- function(nboot, vars, theta_0, controls= NULL, log_level= FALSE){
+gamma_bootstrap_GK <- function(nboot, vars, theta_0, controls= NULL){
   # conf<- my_conf
   # nboot <-100
   # Create an empty list to hold the elements
@@ -199,7 +201,7 @@ gamma_bootstrap_GK <- function(nboot, vars, theta_0, controls= NULL, log_level= 
   
   
   for (i in c(1:nboot)){
-    # i=1
+    #i=1
     vl <- if (is.null(controls)) {
       vars::VAR(x, p, type = "none")
     } else {
@@ -207,15 +209,14 @@ gamma_bootstrap_GK <- function(nboot, vars, theta_0, controls= NULL, log_level= 
     }
     res = residuals(vl)
     rr <- sample(c(-1,1), size=T, replace=TRUE)
-    res2 <- resid(lm(res ~ 1))
-    # varbsnew <- rbind(vars[1:p,],(fitted(vl) + res2*rr + mean(res)))
-    varbsnew <- if (!log_level) {
-      rbind(vars[1:p,],
-            iterate_var(vars[1:p,], res2, vl, controls))
-    } else {
-      rbind(vars[1:p,],
-            iterate_var_bis(vars[1:p,], res2, vl, controls))
-    }
+    #mean(res)
+    #res2 <- resid(lm(res ~ 1))
+    res2 <- res*rr
+    #varbsnew2 <- rbind(vars[1:p,], iterate_var_bis(vars[1:p,], res2, vl, controls))
+    
+    
+    varbsnew <-  iterate_var_ter(vars[1:p,], res2, vl, controls)
+    
     xnew =ts(varbsnew , start=c(2015,1), end=c(2023,12), frequency=12)
     ynew <- varbsnew[-1:-p, ]
     proxiesnew <-rbind(proxies[c(1:p),],proxies[c(-1:-p),]*rr)
@@ -235,6 +236,8 @@ gamma_bootstrap_GK <- function(nboot, vars, theta_0, controls= NULL, log_level= 
     boot_psi[,,i] <- sqrt(T) * (estimatenew$gamma - theta_0 %*% estimatenew$phi)
     phi_hat <- estimatenew$phi
     boot_ncvg_theta_0[,,i] <- estimatenew$theta_0
+    
+    #print(estimatenew$theta_0[1,2])
     # on notera que pour des instruments très faibles l'intervalle va exploser
     # en effet phi tend vers 0 comme son determinant
     
@@ -266,15 +269,17 @@ gamma_bootstrap_GK <- function(nboot, vars, theta_0, controls= NULL, log_level= 
 
 #V0 <- eval_V0(a_0, b_0, gauche, my_cov, droite)
 
-bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid, sample_matrices){
-  
+bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid = 100, sample_matrices, lambda_0){
+  #lambda_0 = lambda_0_log
+  #sample_matrices <- sample_matrices_log_GK
+  #gamma <- gamma_log
   
   q_alpha_bonferroni <- qchisq(1 - alpha/irhor, df= 2)
   q_alpha_dim2 <- qchisq(1 - alpha, df= 2)
   
   # Initialize a 4D array to store all bounds
   # Dimensions: (irhor, n, k, 2), where the last dimension is for standard and Bonferroni bounds
-
+  
   weak_lambda_bounds_Wald_stat <- array(NA, dim = c(irhor, n, 2, 2)) 
   dimnames(weak_lambda_bounds_Wald_stat) <- list(
     NULL, NULL, c("lower", "upper"), c("lambda_01", "lambda_02")
@@ -285,7 +290,7 @@ bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid, sample_m
   )
   
   
-  
+  #lambda_0 <- lambda_0_log
   
   for (hori in c(1:irhor)){
     print(hori)
@@ -312,12 +317,13 @@ bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid, sample_m
       # Génération de la grille
       grid_ab <- expand.grid(list(grid_a, grid_b))
       
+      #sample_matrices <- sample_matrices_log_GK
       
       compo_V0 <- eval_composantes_V0(i, hori, sample_matrices)
       gauche <- compo_V0$gauche
       my_cov <- compo_V0$my_cov
       droite <- compo_V0$droite
-      
+
       list_a <- c()
       list_b <- c()
       reject_a <- c()
@@ -332,6 +338,7 @@ bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid, sample_m
         a_0 <- ab_test[[1]]
         b_0 <- ab_test[[2]]
         
+        #gamma <- gamma_log
         V0 <- eval_V0(a_0, b_0, gauche, my_cov, droite)
         
         Q_T <- sqrt(T)*(t(e_i) %*% C[,,hori] %*% gamma -
@@ -357,6 +364,10 @@ bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid, sample_m
       #check le pas discret d'exploration
       # de l'despace des a,b est très inferieur à l'erreur trouvee
       
+      step_a
+      min(list_a)
+      max(list_a)
+      
       # Populate the array
       #weak_lambda_bounds_Wald_stat[hori, i,,] <- c(min(list_a), min(list_b),
       #                              max(list_a), max(list_b))
@@ -376,7 +387,6 @@ bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid, sample_m
   return(list(weak_lambda_bounds_Wald_stat= weak_lambda_bounds_Wald_stat,
               weak_lambda_bounds_bonferroni = weak_lambda_bounds_bonferroni))
 }
-
 
 
 

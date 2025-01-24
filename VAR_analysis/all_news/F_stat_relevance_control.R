@@ -1,19 +1,21 @@
+library(MASS)
+
 
 source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
-source("auxiliary_control.R")
-source("bootstrap_auxiliary_control.R")
 source("reliability_auxiliary.R")
+source("auxiliary_control.R")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
-
-IV_data_log <- read_parquet('low_freq_data_log.parquet')
-headers_proxies = c("cold_excess_instrument", 
-                    #"gas_supply_shock",
-                    #"heat_excess_instrument",
-                    "renewable_generation_log"
+detrended_data <- read_parquet('low_freq_data_all_news.parquet')
+IV_data_log <- read_parquet('low_freq_data_log_all_news.parquet')
+IV_data_log_diff <- read_parquet('low_freq_data_log_diff_all_news.parquet')
+headers_proxies = c(#"cold_excess_instrument", 
+  "T_avg_log",
+  "gas_supply_shock"#,        
+  #"renewable_generation_log"
 )
 
 colnames(IV_data_log)
@@ -31,9 +33,19 @@ headers_var = c("gen_tot_log",
                 "NE_Index_log"
 )
 vars<- ts(IV_data_log[, c(headers_var)], frequency=12)
-headers_controls = c("gas_price_log"
-)
-controls <- ts(IV_data_log[, c(headers_controls)], frequency=12)
+
+
+IV_data_tot <- cbind(IV_data_log, IV_data_log_diff, detrended_data)
+# Régression linéaire
+price_model <- lm(data = IV_data_tot, spot_price_log ~ gas_supply_shock + nuclear_indispo_log
+                  + T_avg_log)
+
+summary(price_model)
+
+
+demand_model <- lm(data = IV_data_tot, gen_tot_log ~ gas_supply_shock + nuclear_indispo_log + T_avg_log)
+
+summary(demand_model)
 
 
 p = 4     
@@ -51,7 +63,7 @@ zero_matrix <- matrix(0, nrow = (n-k), ncol = 2)
 #my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
 matrix_12 <- rbind( diag(k) , zero_matrix)
 
-vl = vars::VAR(x, p, exogen=controls, type = "none")
+vl = vars::VAR(x, p, type = "none")
 coef =coef(vl)
 bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
 res = residuals(vl)
@@ -123,18 +135,45 @@ RMeigs <- sort(eigen(RM)$values, decreasing = TRUE)
 
 reliability_measure <- Re(RMeigs)
 
+print(reliability_measure)
 
-C <- window(controls, start = start(controls) + c(0, p))
-data <- data.frame(cbind(res[,1:k], Z, C ))
-colnames(data) <- c('res_gen_tot_log_diff', 'res_spot_price_log_diff',headers_proxies, headers_controls)
+print(nrow(proxies))
+print(nrow(res))
+
+
+
+data <- data.frame(cbind(res[,1:k], Z))
+colnames(data) <- c('res_gen_tot_log', 'res_spot_price_log',headers_proxies)
+
+# Régression linéaire
+# price_model <- lm(data = data, res_spot_price_log ~ gas_supply_shock + renewable_generation_log
+#                   +  T_avg_log)
+# 
+# summary(price_model)
+# 
+# 
+# demand_model <- lm(data = data, res_gen_tot_log ~ gas_supply_shock + renewable_generation_log
+#                    + cold_excess_instrument)
+# 
+# summary(demand_model)
+
+
+headers_proxies <- c("T_avg_log",
+                     "gas_supply_shock"
+                     ,"renewable_generation_log"
+)
+# 
+data$renewable_generation_log <- IV_data_log$renewable_generation_log[c(-1:-p)]
+# data$nuclear_indispo_log <- IV_data_log$nuclear_indispo_log[c(-1:-p)]
+# data$unexpected_nuclear_indispo_log <- IV_data_log$unexpected_nuclear_indispo.x_log[c(-1:-p)]
+# data$tot_indispo_log <- IV_data_log$tot_indispo_log[c(-1:-p)]
 
 # Construct the formula
-formula_price <- as.formula(paste('res_spot_price_log_diff', "~",
+formula_price <- as.formula(paste('res_spot_price_log', "~",
                                   paste(headers_proxies, collapse = "+")))
 # Construct the formula
-formula_demand <- as.formula(paste('res_gen_tot_log_diff', "~",
+formula_demand <- as.formula(paste('res_gen_tot_log', "~",
                                    paste(headers_proxies, collapse = "+")))
-
 
 m_price <- lm( formula_price, data = data)
 
@@ -169,22 +208,44 @@ gen_names <- paste(rownames(coef_gen_df), significance_stars)
 # the R^2 in the regression 
 fstat_gen <-as.numeric(summary(m_demand)$fstat[1])
 
-
+print(fstat_price)
+print(fstat_gen)
 # stock and yogo formulation
 
-
-sigma_vv <- t(X)%*% MZ %*% X /(T-k)^2
-eigen_M <- eigen(sigma_vv)
-# Calcul de la racine carrée de la matrice
-sqrt_matrix <- eigen_M$vectors %*% diag(sqrt(eigen_M$values)) %*% t(eigen_M$vectors)
-
-G_t <- ginv(sqrt_matrix) %*% t(X) %*%  PZ  %*% X %*% ginv(sqrt_matrix)
-GCraggDonald_stat <- min(eigen(G_t)$values) 
-print(GCraggDonald_stat)
-
-
+# nrow(X)
+# sigma_vv <- t(X)%*% MZ %*% X /(T-k)^2
+# eigen_M <- eigen(sigma_vv)
+# # Calcul de la racine carrée de la matrice
+# sqrt_matrix <- eigen_M$vectors %*% diag(sqrt(eigen_M$values)) %*% t(eigen_M$vectors)
+# 
+# G_t <- ginv(sqrt_matrix) %*% t(X) %*%  PZ  %*% X %*% ginv(sqrt_matrix)
+# GCraggDonald_stat <- min(eigen(G_t)$values) 
+# print(GCraggDonald_stat)
 
 
+
+# Assume y (dependent variable), X1 (endogenous variables), Z (instruments)
+
+# Number of observations
+n <- nrow(Z)
+
+# Step 1: Compute Z'Z, Z'X1, and X1'X1
+ZtZ <- t(Z) %*% Z
+ZtX <- t(Z) %*% X
+X1tX1 <- t(X) %*% X
+
+# Step 2: Compute the key matrix
+matrix_C <- solve(ZtZ) %*% ZtX %*% solve(X1tX1) %*% t(ZtX)
+
+# Step 3: Find the smallest eigenvalue
+lambda_min <- min(eigen(matrix_C)$values)
+
+# Step 4: Compute the Cragg-Donald statistic
+cragg_donald_stat <- n * lambda_min
+
+print(cragg_donald_stat)
+
+# Save the results
 
 
 

@@ -36,7 +36,10 @@ var = "T_avg"
 for (var in vars_list) {
   ts_data <- ts(IV_data[[var]], start = start_date, frequency = frequency)
   # Perform STL decomposition
-  if (var!="spot_price" & var!="gas_supply_shock"){
+  #spot price get negative answer
+  #all the instruments should not be seasonally adjusted
+  
+  if (var!="spot_price" & var!="gas_supply_shock" & var!="IPI" & var!="UnE" & var!="Manufacturing"){
     print(var)
     stl_fit <- stl(ts_data, s.window = "periodic")
     adjusted_data[[var]] <- seasadj(stl_fit)
@@ -129,9 +132,9 @@ write_parquet(IV_data_log_diff, 'low_freq_data_log_diff.parquet')
 #petit plot pour voir l'effet associé
 
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y = spot_price , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$spot_price, color = "Seasonally Adjusted")) +
-  labs(title = "Spot price",
+  geom_line(aes(y = IPI , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$IPI, color = "Seasonally Adjusted")) +
+  labs(title = "IPI",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Seasonally Adjusted" = "red")) +
   theme_minimal()
@@ -139,22 +142,30 @@ ggplot(IV_data, aes(x = datetime)) +
 par(mar = c(2, 2, 2, 2))
 plot.new()
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y =IV_data$T_avg , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$T_avg, color = "Detrended")) +
+  geom_line(aes(y =IV_data$NE_Index , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$NE_Index, color = "Detrended")) +
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y =IV_data$cold_excess_instrument , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$cold_excess_instrument, color = "Detrended")) +
+  geom_line(aes(y =IV_data$wind , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$wind, color = "S ADj")) +
+  geom_line(aes(x = datetime, y = detrended_data$wind, color = "Detrended")) 
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
-
+  ggplot(IV_data, aes(x = datetime)) +
+    geom_line(aes(x = datetime, y = detrended_data$solar, color = "Solar")) +
+    geom_line(aes(x = datetime, y = detrended_data$renewable_generation, color = "Tot renewable")) +
+    geom_line(aes(x = datetime, y = detrended_data$wind, color = "Wind")) +
+  labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
+       x = "Date", y = "Index") +
+    scale_color_manual(values = c("Solar"= "blue", "Wind" = "red", "Tot renewable"="green")) +
+    theme_minimal()
 
 
 ggplot(IV_data, aes(x = datetime)) +

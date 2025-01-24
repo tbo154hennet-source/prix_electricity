@@ -102,7 +102,10 @@ temperature_instrument <- left_join(mean_temp_instrument,
                                 excess_CDD)
 
 temperature_instrument <- left_join(temperature_instrument,
-                                excess_HDD)
+                                excess_HDD) %>% 
+  replace_na(list(CDD_excess_instrument = 0, HDD_excess_instrument = 0,
+                  CDD_intensity_instrument = 0, HDD_intensity_instrument = 0,
+                  cold_excess_instrument = 0, heat_excess_instrument = 0))
 
 save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 

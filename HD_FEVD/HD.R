@@ -59,6 +59,9 @@ for (j in c(1:n)){
 }
 
 
+#hd_pelec <- plot_hd(hd_cholesky, series = 1)
+#print(hd_pelec)
+
 # The 'historical_decomp' array contains the contributions of each shock to each variable at each time step
 
 k <- ncol(proxies)

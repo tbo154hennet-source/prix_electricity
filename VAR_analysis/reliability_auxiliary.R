@@ -50,6 +50,7 @@ reliability_comparing <- function(vars,p, proxies, irhor, instruments){
   b11b11p <- Sig11 - b12b12p
   res_TSLS <- Y - X %*% b21ib11_TSLS
   
+
   #reliability Mertens and Ravn
   
   proxies_postlag <- tryCatch(
@@ -137,56 +138,70 @@ reliability_comparing <- function(vars,p, proxies, irhor, instruments){
   fstat_gen <-as.numeric(summary(m_demand)$fstat[1])
   
   
-  # stock and yogo formulation
+  # Number of observations
+  n <- nrow(Z)
   
-  sigma_vv <- t(X)%*% MZ %*% X /(T-k)^2
-  eigen_M <- eigen(sigma_vv)
-  # Calcul de la racine carrée de la matrice
-  sqrt_matrix <- eigen_M$vectors %*% diag(sqrt(eigen_M$values)) %*% t(eigen_M$vectors)
+  # Step 1: Compute Z'Z, Z'X1, and X1'X1
+  ZtZ <- t(Z) %*% Z
+  ZtX <- t(Z) %*% X
+  X1tX1 <- t(X) %*% X
   
-  G_t <- ginv(sqrt_matrix) %*% t(X) %*%  PZ  %*% X %*% ginv(sqrt_matrix)
-  GCraggDonald_stat <- min(eigen(G_t)$values) 
+  # Step 2: Compute the key matrix
+  matrix_C <- solve(ZtZ) %*% ZtX %*% solve(X1tX1) %*% t(ZtX)
+  
+  # Step 3: Find the smallest eigenvalue
+  lambda_min <-  min(Re(eigen(matrix_C)$values[1:k]))
+  
+  # Step 4: Compute the Cragg-Donald statistic
+  cragg_donald_stat <- n * lambda_min
   
   
-  return(list(reliability_measure = reliability_measure, GCraggDonald_stat = GCraggDonald_stat,
+  
+  return(list(reliability_measure = reliability_measure, GCraggDonald_stat = cragg_donald_stat,
               price_names= price_names, fstat_price = fstat_price,
               gen_names =gen_names, fstat_gen = fstat_gen))
   
 }
-  
+
+
 format_data <- function(reliability_data, name){
-  #reliability_data <- reliability_tot
-    # Convert each list element to a single string with newline separators
-    nbre_comp <- length(reliability_data$reliability_measure)
-    if(nbre_comp==1){
-      RMeigs_str <- round(reliability_data$reliability_measure, 2)
-    }else{
-      RMeigs_str <- paste(round(reliability_data$reliability_measure[c(1, 2)], 2),
-                          collapse = "\n")
-    }
-    # coef_gen_str <- ifelse(length(reliability_data$gen_names) == 0, 
-    #                        "", paste(reliability_data$gen_names, collapse = "\n"))
-    # 
-    # Handle empty components by using a default value if necessary
-    # coef_price_str <- ifelse(length(reliability_data$price_names) == 0, 
-    #                          "", reliability_data$price_names)
-    
-    fstat_price <- round(reliability_data$fstat_price, 2)
-    fstat_gen <- round(reliability_data$fstat_gen, 2)
-    GCraggDonald_stat <- round(reliability_data$GCraggDonald_stat, 2)
-    # Create a data frame with one row
-    one_line_df <- data.frame(
-      name,
-      RMeigs_str,
-      GCraggDonald_stat,
-      # coef_price_str,
-      # coef_gen_str,
-      fstat_price,
-      fstat_gen,
-      stringsAsFactors = FALSE
-    )
-    return(one_line_df)
+  # Convert each list element to a single string with newline separators
+  nbre_comp <- length(reliability_data$reliability_measure)
+  
+  # Handle empty reliability_measure
+  RMeigs_str <- ifelse(nbre_comp == 0, "N/A", 
+                       ifelse(nbre_comp == 1, 
+                              round(reliability_data$reliability_measure, 2),
+                              paste(round(reliability_data$reliability_measure[c(1, 2)], 2), collapse = "\n")))
+  
+  # Handle empty price_names (if needed, add additional checks here)
+  price_names_str <- ifelse(length(reliability_data$price_names) == 0, "N/A", paste(reliability_data$price_names, collapse = "\n"))
+  
+  # Handle empty gen_names (if needed, add additional checks here)
+  gen_names_str <- ifelse(length(reliability_data$gen_names) == 0, "N/A", paste(reliability_data$gen_names, collapse = "\n"))
+  
+  # Handle empty GCraggDonald_stat
+  GCraggDonald_stat <- ifelse(length(reliability_data$GCraggDonald_stat) == 0, "N/A", round(reliability_data$GCraggDonald_stat, 2))
+  
+  # Handle empty fstat_price and fstat_gen
+  fstat_price <- ifelse(length(reliability_data$fstat_price) == 0, "N/A", round(reliability_data$fstat_price, 2))
+  fstat_gen <- ifelse(length(reliability_data$fstat_gen) == 0, "N/A", round(reliability_data$fstat_gen, 2))
+  
+  # Create a data frame with one row
+  one_line_df <- data.frame(
+    name,
+    RMeigs_str,
+    GCraggDonald_stat,
+    price_names_str,
+    gen_names_str,
+    fstat_price,
+    fstat_gen,
+    stringsAsFactors = FALSE
+  )
+  
+  return(one_line_df)
 }
+
   
   # x <- x_bis
   # y <- y_bis
@@ -194,15 +209,17 @@ format_data <- function(reliability_data, name){
   # my_controls <- controls_bis
   
   
-get_table <- function(vars,p,  my_proxies, title, headers_proxies){
+get_table <- function(vars,p,  proxies, title, headers_proxies){
     # Define the instruments
-    #my_proxies <- proxies
+    my_proxies <- proxies
     instruments <- headers_proxies
+    colnames(proxies)
     par(mar = c(2, 2, 2, 2)) 
     plot.new()
     
+    
     reliability_tot <- reliability_comparing(
-      vars,p, my_proxies, irhor, instruments)
+      vars,p, proxies, irhor, instruments)
     
     reliability_data <- format_data(reliability_tot,'All ins')
     
@@ -229,6 +246,7 @@ get_table <- function(vars,p,  my_proxies, title, headers_proxies){
     
     # Define column headers with LaTeX expressions
     column_headers <- c("Model", "Reliab MR(2013)", "GCraggDonald stat",
+                        "price", "gen",
                         "Fstat[price]", "Fstat[gen]")
     tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
     
@@ -241,7 +259,8 @@ get_table <- function(vars,p,  my_proxies, title, headers_proxies){
     )
     
     # Save as PNG
-    png(filename = title, width = 1000, height =1000, res = 100)
+    png(filename = title, width = 1500, height =1000, res = 100)
     grid.draw(table_grob)
     dev.off()
 }
+

@@ -45,10 +45,11 @@ news_data['datetime'] =pd.to_datetime(news_data['date'], format='mixed', dayfirs
 news_data.dropna(subset=['datetime'], inplace=True)
 news_data = news_data.drop_duplicates()
 
+
+
 def sort_news_data(day_news):#, month_context, previous_day_context, news_data):
     
     global sorted_news_data
-
     print(day_news['datetime'].iloc[0])
 
     #build news day sumamry and instrument dummies
@@ -127,7 +128,7 @@ filtered_grouped.apply(sort_news_data)
 sorted_news_data = pd.DataFrame(columns=['title', 'datetime'])
 grouped_data.apply(sort_news_data)
 # Filter groups based on the condition
-filtered_data = grouped_data.filter(lambda x: (x['datetime'] >= '2016-12-19').any())
+filtered_data = grouped_data.filter(lambda x: (x['datetime'] >= '2019-01-28').any())
 filtered_data = filtered_data.groupby(filtered_data['datetime'].dt.date)
 type(filtered_data)
 filtered_data.apply(sort_news_data)

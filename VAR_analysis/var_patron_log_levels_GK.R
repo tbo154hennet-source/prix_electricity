@@ -1,8 +1,9 @@
 library(vars)
+library(arrow)
 source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("auxiliary_control.R")
-source("bootstrap_auxiliary_control.R")
+source("bootstrap_auxiliary_control_bis.R")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
@@ -11,19 +12,15 @@ IV_data_log <- read_parquet('low_freq_data_log.parquet')
 
 colnames(IV_data_log)
 
-headers_proxies = c("cold_excess_instrument", 
-                    # "abs_gas_shock",                 
-                    # "rel_gas_shock" ,
-                    "heat_excess_instrument",        
-                    "renewable_generation_log", 
-                    "tot_indispo_log",          
-                    "nuclear_indispo_log" 
+headers_proxies = c("T_avg_log",
+                    "gas_supply_shock"
 )
 
 proxies <- ts(IV_data_log[, c(headers_proxies)], frequency=12)
 
-headers_var = c("gen_tot_log",
+headers_var = c(
                 "spot_price_log",
+                "gen_tot_log",
                 "IPI_log",
                 # "ECB_rate_log_diff",
                 # "E_Index_log_diff",
@@ -75,9 +72,15 @@ to <- l*p
 to_bis <- l*(p-1)
 
 lambda_0_log <- get_lambda_0(C, theta_0_log)
+getwd()
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/plot_irfs'
+setwd(save_rds_path)
+saveRDS(lambda_0_log, "lambda_0_log.rds")
+
+
 
 nboot<-100
-gamma_estimate_log_GK <- gamma_bootstrap_GK(nboot, vars, theta_0_log, log_level= TRUE)
+gamma_estimate_log_GK <- gamma_bootstrap_GK(nboot, vars, theta_0_log)
 
 
 list_of_samples <- c("gamma", "psi", "ncvg_theta_0", "inv",
@@ -93,7 +96,7 @@ for (name in list_of_samples) {
 
 save_mat_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/sample_matrices'
 setwd(save_mat_path)
-saveRDS(sample_matrices_log_GK, "sample_matrices_log_GK_gas.rds")
+saveRDS(sample_matrices_log_GK, "sample_matrices_log_GK_test.rds")
 
 
 # Save bootstrapped samples
@@ -106,7 +109,7 @@ dimnames(strong_instruments_lambda_log_GK ) <- list(
 
 # Calculate quantiles and store them in the array
 quantile_probs <- c(0.05, 0.95)
-print(class(sample_matrices_log_GK[[lambda_name]]))
+#print(class(sample_matrices_log_GK[[lambda_name]]))
 
 for (lambda_idx in 1:2) {
   lambda_name <- paste0("ncvg_lambda_0", lambda_idx)
@@ -116,8 +119,10 @@ for (lambda_idx in 1:2) {
   strong_instruments_lambda_log_GK[,,,lambda_idx] <- array(quantiles, dim = c(irhor, n, 2))
 }
 
-#strong_instruments_lambda_log_GK["lower",,,"lambda_01"]
 
+#strong_instruments_lambda_log_GK["lower",,,"lambda_01"]
+strong_instruments_lambda_log_GK["lower",,,"lambda_02"]
+strong_instruments_lambda_log_GK["upper",,,"lambda_02"]
 # Permuter les dimensions 1 et 3
 strong_instruments_lambda_log_GK <- aperm(strong_instruments_lambda_log_GK, perm = c(2, 3, 1, 4))
 dim(strong_instruments_lambda_log_GK)
@@ -129,15 +134,18 @@ strong_std_lambda1 <- apply(sample_matrices_log_GK$ncvg_lambda_01, c(1, 2), sd)
 
 strong_std_lambda2 <- apply(sample_matrices_log_GK$ncvg_lambda_02, c(1, 2), sd)
 
-c0 <- theta_0[1,2][[1]]
+c0 <- theta_0_log[1,2][[1]]
 phi_c0 <- matrix(c(1,0, -c0, 1), nrow = 2, ncol = 2) %*% t(matrix_12)  %*% gamma_log
 alpha <- 0.10
 
+
 #rajouter un paramètre de précision de la grille avec une valeur par défaut
+
+
 
 weak_bootstrap_result <- bootstrap_weak_instrument(gamma = gamma_log ,c_0, phi_c0,
                                                    alpha, ngrid =100,
-                                                   sample_matrices_log_GK)
+                                                   sample_matrices_log_GK, lambda_0 = lambda_0_log)
 
 
 weak_instruments_pointwise_log_GK <- weak_bootstrap_result$weak_lambda_bounds_Wald_stat
