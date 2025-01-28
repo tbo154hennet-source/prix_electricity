@@ -66,6 +66,14 @@ parquet_files <- my_files[grep("\\.parquet$", my_files)]
 # Supprimez les fichiers .parquet de la liste des fichiers
 my_files <- setdiff(my_files, parquet_files)
 
+file <- my_files[length(my_files)]
+auction <- auction_files[3000]
+
+library(tibble)
+auction_test <- as_tibble(auction_files)
+print(auction_test, n = 3800)
+
+
 for (file in my_files){
   setwd(auction_path)
   setwd(file)
@@ -94,3 +102,5 @@ colnames(price_data)
 test <- price_data %>% 
                slice_sample(n = 1000) %>% 
   arrange(datetime)
+
+unique(price_data$year)

@@ -24,9 +24,11 @@ final_not_publi_nuclear_ENTSOE_indispo <- read_parquet('final_not_publi_ENTSOE_n
   mutate(creneau = as.character(creneau)) %>%
   arrange(electricity_delivery_date, auction_before, creneau)
 
-
-
+final_real_indispo_rf <- read_parquet('final_real_indispo_rf.parquet') %>%
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau)
 # real compared with random forest indispo
+
 
 
 
@@ -47,7 +49,12 @@ tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>%
               rename(Unpublished.Unavailable.Nuclear.Capacity = Unavailable.Capacity) %>% 
               select(-c('Installed.Capacity')))
 
+tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>% 
+  left_join(final_real_indispo_rf %>% 
+              rename(Predicted.Unavailable.Capacity = predicted_real_unavailability))
 
+unique(tot_publi_ENTSOE_indispo %>% 
+         select(auction_before,auction_after))
 # use the auction 7 concept for the final indispo data
 
 tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>% 
@@ -96,7 +103,24 @@ price_diff_data <- price_data %>%
          price_diff = as.numeric(price) - lag(as.numeric(price)),
          auction_before = lag(auction),
          auction_after = auction,
-         creneau = as.factor(creneau))
+         creneau = as.factor(creneau)) %>% 
+  ungroup() %>% 
+  filter(datetime < as.POSIXct('2024-06-01', tz='UTC'))
+
+
+class(price_diff_data$datetime)
+colnames(price_diff_data)
+
+
+# price_diff_data_post_2020 <- price_diff_data %>% 
+#   filter(delivery_date >= as.Date('2020-01-01'))
+#   
+# unique(price_diff_data_post_2020 %>% 
+#          select(auction_before,auction_after))
+# 
+# price_diff_data_post_2020 %>% 
+#   group_by(auction_before,auction_after) %>% 
+#   summarise(n = n())
 
 
 first_stage_data <- left_join(price_diff_data, complete_data,
@@ -133,6 +157,9 @@ first_stage_data  <-
           Unpublished.Unavailable.Share = Unpublished.Unavailable.Capacity/ gen_tot)
 
 getwd()
+
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+setwd(save_path_entsoe_output)
 write_parquet(first_stage_data, 'first_stage_data.parquet')
 
 

@@ -7,7 +7,7 @@ library(lubridate)
 
 save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE'
 setwd(save_path_entsoe)
-source("auxiliary_file_bis.R")
+source("auxiliary_file_ter.R")
 
 save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp'
 setwd(save_path_esp)
@@ -15,8 +15,14 @@ setwd(save_path_esp)
 bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet") %>% 
   arrange(datetime_debut)
 
+
+test <- bout_indispo_ENTSOE_data %>% 
+  filter(plant_type == "Nuclear" & datetime_debut > as.POSIXct("2018-01-01")) %>% 
+  arrange(datetime_pub)
+
 unexpected_indispo_ENTSOE_data  <- bout_indispo_ENTSOE_data %>% 
-  filter(businesstype=='Unplanned outage')
+  filter(businesstype=='Unplanned outage') %>% 
+  ungroup()
 
 colnames(unexpected_indispo_ENTSOE_data)
 
@@ -24,6 +30,8 @@ colnames(unexpected_indispo_ENTSOE_data)
 #à peu près en meêm temps que le début d'indispo
 #sinon cela signifie que ce n'est potentiellement pas le premier message
 
+# sample <- unexpected_indispo_ENTSOE_data %>% 
+#   sample_n(10)
 
 
 
@@ -71,9 +79,9 @@ ggplot(publi_stat %>% filter(year>2015), aes(x = year, y = lapse)) +
 
 
 
-register_auction_2_6 <- NULL
+result_df <- NULL
 
-result_df <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window)
+apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window)
 
 # Convert the result to a data frame
 result_df_bis <- data.frame(t(result_df))

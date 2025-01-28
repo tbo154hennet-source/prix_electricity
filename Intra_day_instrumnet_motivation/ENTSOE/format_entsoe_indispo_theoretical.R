@@ -24,7 +24,7 @@ unexpected_indispo_ENTSOE_data  <- bout_indispo_ENTSOE_data %>%
 # but published on some national website 
 
 
-register_auction_2_6 <- NULL
+result_df <<- NULL
 
 result_df <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window_theoretical)
 
