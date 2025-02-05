@@ -30,11 +30,13 @@ execute_code <- function(auction){
   colnames(csv_file) <- headers
   csv_file$auction <- auction_number
   csv_file$auction_date_plus_one  <- auction_date_plus_one 
+  #datetime <- csv_file$datetime[1]
+  #delivery_date = as.Date(as.character(datetime), format="%Y-%m-%d")
   csv_file <- csv_file %>% 
     mutate(
       datetime = as.POSIXct(
-      paste(year, month, day, creneau-1), format="%Y %m %d %H", tz='UTC'),
-      delivery_date = as.Date(datetime, format="%Y%m%d"),
+      paste(year, month, day, creneau-1), format="%Y %m %d %H", tz='Europe/Brussels'),
+      delivery_date = as.Date(as.character(datetime), format="%Y-%m-%d"),
       # Convert to Date object and reformat to %Y-%m-%d
       
       auction_date_plus_one = as.Date(auction_date_plus_one, format="%Y%m%d"),
@@ -66,13 +68,13 @@ parquet_files <- my_files[grep("\\.parquet$", my_files)]
 # Supprimez les fichiers .parquet de la liste des fichiers
 my_files <- setdiff(my_files, parquet_files)
 
-file <- my_files[length(my_files)]
-auction <- auction_files[3000]
+file <- my_files[1]
+auction <- auction_files[1]
 
-library(tibble)
 auction_test <- as_tibble(auction_files)
 print(auction_test, n = 3800)
 
+library(tibble)
 
 for (file in my_files){
   setwd(auction_path)

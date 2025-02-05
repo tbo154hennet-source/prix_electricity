@@ -22,7 +22,7 @@ top_unavailabilities <- final_publi_nuclear_ENTSOE_indispo %>%
 my_unavailability <- top_unavailabilities[1,]
 
 my_date <- my_unavailability$electricity_delivery_date
-my_date <- "2022-11-27" #"2022-05-31"   #"2021-12-08" #"2021-05-19"  #"2021-10-16"
+my_date <- "2021-05-18" #"2022-05-31"   #"2021-12-08" #"2021-05-19"  #"2021-10-16"
 
 
 colnames(final_publi_nuclear_ENTSOE_indispo)
@@ -31,7 +31,7 @@ unavail_data <- final_publi_nuclear_ENTSOE_indispo %>%
   filter(electricity_delivery_date == my_date)
 creneaux_concernes <- unique(unavail_data$creneau)
 
-test <- price_data  %>% 
+my_test <- price_data  %>% 
   filter(delivery_date == my_date)
 
 plot_data_group <- price_data  %>% 
@@ -99,7 +99,7 @@ combined_plot
 # actual_ENTSOE_indispo <- read_parquet('actual_ENTSOE_indispo.parquet')
 # 
 # colnames(actual_ENTSOE_indispo)
-# test <- actual_ENTSOE_indispo %>% 
+# my_test <- actual_ENTSOE_indispo %>% 
 #   filter(electricity_delivery_date == my_date)
 
 

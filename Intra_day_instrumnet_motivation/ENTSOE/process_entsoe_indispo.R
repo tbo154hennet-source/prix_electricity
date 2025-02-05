@@ -241,12 +241,17 @@ long_format <- function(row){
 
 
 
-# test <- non_duplicated_indispo[1:5,]
-# 
+# test <- non_duplicated_indispo %>% 
+#   filter(mrid == "8Rw2gEMG3cv5wnQSvzL3Jg")
 # result_hours <- apply(test, 1, long_format)
 
+
+
 result_hours <- apply(non_duplicated_indispo, 1, long_format)
-getwd()
+
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
+setwd(save_path_entsoe_output)
+
 write_parquet(long_format_indispo, 'long_format_indispo.parquet')
 
 #test <- long_format_indispo %>% filter(electricity_delivery_date=='2021-09-25')
@@ -258,26 +263,27 @@ long_format_indispo %>%
 #vraiment trop éloignées
 # a savoir plus de 1 jour
 
-long_format_indispo <- long_format_indispo %>% 
-  mutate(previous_day = as.character(as.Date(electricity_delivery_date)-1),
-         pre_bid_time = as.POSIXct(paste(previous_day, "14:00:00"), tz = "UTC")) %>% 
-  filter(auction_before != 1 | datetime_debut < pre_bid_time)
+# long_format_indispo <- long_format_indispo %>% 
+#   mutate(previous_day = as.character(as.Date(electricity_delivery_date)-1),
+#          pre_bid_time = as.POSIXct(paste(previous_day, "14:00:00"), tz = "UTC")) %>% 
+#   filter(auction_before != 1 | datetime_debut < pre_bid_time)
+# 
+# 
+# long_format_indispo_credible <- long_format_indispo %>% 
+#   mutate(lapse_pub = difftime(datetime_debut, datetime_pub, units = "hours")) %>% 
+#   filter(lapse_pub > -24 & lapse_pub < 24)
+# write_parquet(long_format_indispo_credible, 'long_format_indispo_credible.parquet')
 
 
-long_format_indispo_credible <- long_format_indispo %>% 
-  mutate(lapse_pub = difftime(datetime_debut, datetime_pub, units = "hours")) %>% 
-  filter(lapse_pub > -24 & lapse_pub < 24)
-write_parquet(long_format_indispo_credible, 'long_format_indispo_credible.parquet')
-
-
-final_publi_ENTSOE_indispo <- long_format_indispo_credible %>% 
+final_publi_ENTSOE_indispo <- long_format_indispo %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(Installed.Capacity = sum(as.numeric(Installed.Capacity)),
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+setwd(save_path_entsoe_output)
 write_parquet(final_publi_ENTSOE_indispo, 'final_publi_ENTSOE_indispo.parquet')
 
 
@@ -288,7 +294,7 @@ write_parquet(final_publi_ENTSOE_indispo, 'final_publi_ENTSOE_indispo.parquet')
 # me permet de faire des tests de robustesse
 
 
-non_duplicated_indispo_credible_nuclear <- non_duplicated_indispo %>% 
+non_duplicated_indispo_nuclear <- non_duplicated_indispo %>% 
   filter(plant_type == "Nuclear")
 
 long_format_indispo_nuclear <- NULL
@@ -318,31 +324,25 @@ long_format_nuclear <- function(row){
   }
 }
 
-result_hours <- apply(non_duplicated_indispo_credible_nuclear, 1, long_format_nuclear)
+result_hours <- apply(non_duplicated_indispo_nuclear, 1, long_format_nuclear)
 
-long_format_indispo_nuclear  <- long_format_indispo_nuclear %>%
-  mutate(previous_day = as.character(as.Date(electricity_delivery_date)-1),
-         pre_bid_time = as.POSIXct(paste(previous_day, "14:00:00"), tz = "UTC")) %>% 
-  filter(auction_before != 1 | datetime_pub < pre_bid_time)
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
+setwd(save_path_entsoe_output)
 
-long_format_indispo_nuclear_credible  <- long_format_indispo_nuclear %>%
-  mutate(lapse_pub = difftime(datetime_debut, datetime_pub, units = "hours")) %>% 
-  filter(lapse_pub > -24 & lapse_pub < 24)
-
-write_parquet(long_format_indispo_nuclear_credible, 'long_format_nuclear_indispo_credible.parquet')
+write_parquet(long_format_indispo_nuclear, 'long_format_nuclear_indispo.parquet')
 
 
 
-final_publi_nuclear_ENTSOE_indispo <- long_format_indispo_nuclear_credible %>% 
+final_publi_nuclear_ENTSOE_indispo <- long_format_indispo_nuclear %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(Installed.Capacity = sum(as.numeric(Installed.Capacity)),
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+setwd(save_path_entsoe_output)
 write_parquet(final_publi_nuclear_ENTSOE_indispo, 'final_publi_nuclear_ENTSOE_indispo.parquet')
-
 
 
 

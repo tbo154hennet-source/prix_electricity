@@ -11,12 +11,13 @@ country_code = 'ES'
 
 #2016-03
 # Define start and end dates
-start_date = pd.Timestamp('20180101', tz='Europe/Brussels')
-end_date = pd.Timestamp('20201231', tz='Europe/Brussels')
+start_date = pd.Timestamp('20240101', tz='Europe/Brussels')
+end_date = pd.Timestamp('20241231', tz='Europe/Brussels')
 # Generate monthly date ranges
 monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
 import os
-path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant\esp'  # Remplacez par votre chemin
+#path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant\esp'  # Remplacez par votre chemin
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\day_ahead_prices\esp'
 os.chdir(path)
 
 
@@ -29,8 +30,8 @@ for date in monthly_dates:
     print(end_month)
 
     string = start_month.strftime('%Y-%m') + '.parquet'
-    generation_per_plant = client.query_generation_per_plant(country_code, 
-           start=start_month, end=end_month, psr_type=None, include_eic=False)
+    #generation_per_plant = client.query_generation_per_plant(country_code, 
+    #      start=start_month, end=end_month, psr_type=None, include_eic=False)
 
     #gen_unavailabilities= client.query_unavailability_of_generation_units(
      #   country_code, start=start_month, end=end_month, docstatus=None, periodstartupdate=None, periodendupdate=None)
@@ -39,8 +40,12 @@ for date in monthly_dates:
     
     #generation_tot = client.query_generation(country_code, start=start_year, end=end_year, psr_type=None, include_eic=False)
     
-    #day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_year, end=end_year)
-    table = pa.Table.from_pandas(generation_per_plant)
+    day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_month, end=end_month)
+    #table = pa.Table.from_pandas(generation_per_plant)
+    # Example: Convert a Series to a DataFrame
+
+    # Convert to a PyArrow Table
+    table = pa.Table.from_pandas(day_ahead_prices.to_frame(name="day_ahead_prices"))
     #my_table = pa.Table.from_pandas(day_ahead_prices)
     # Write the table to a Parquet file
     pq.write_table(table, string)
@@ -48,4 +53,3 @@ for date in monthly_dates:
     print(f"Data queried successfully for the month: {start_month.strftime('%Y-%m')}")
 
 #query_withdrawn_unavailability_of_generation_units
-  

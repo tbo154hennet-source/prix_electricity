@@ -4,18 +4,12 @@ library(purrr)
 library(lubridate)
 Sys.setenv(lang = "en_US")
 
-read_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/ENTSOE_unavailabilities'
+read_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/ENTSOE_unavailabilities/ES'
 setwd(read_path )
+my_files <-  list.files(pattern = "\\.parquet$")
 
 indispo_ENTSOE_data <- NULL
-my_files <-  list.files(pattern = "\\.parquet$")
-# Obtenez la liste des fichiers .parquet
-#my_files <- my_files[grep("\\.csv$", my_files)]
 
-# Supprimez les fichiers .parquet de la liste des fichiers
-# my_files <- setdiff(my_files, parquet_files)
-
-#garder que les primary files
 for (file in my_files){
   excel_file <- read_parquet(file)
   print(file)
@@ -27,6 +21,16 @@ for (file in my_files){
   }
 }  
 
+
+# Obtenez la liste des fichiers .parquet
+#my_files <- my_files[grep("\\.csv$", my_files)]
+
+# Supprimez les fichiers .parquet de la liste des fichiers
+# my_files <- setdiff(my_files, parquet_files)
+
+#garder que les primary files
+
+
 indispo_ENTSOE_data <-unique(indispo_ENTSOE_data)
 
 indispo_ENTSOE_data$`__index_level_0__` <- 
@@ -37,7 +41,7 @@ indispo_ENTSOE_data$end <-
   with_tz(indispo_ENTSOE_data$end, tzone = 'Europe/Brussels')
 
 
-my_columns <- c("avail_qty","businesstype","end" ,  "nominal_power",                       
+my_columns <- c("avail_qty","biddingzone_domain",  "businesstype","end" ,  "nominal_power",                       
                 "mrid","nominal_power" ,"plant_type","production_resource_id",      
                 "production_resource_name", "production_resource_psr_name",
                 "revision", "start","__index_level_0__")
@@ -97,12 +101,18 @@ chevauchement %>% filter(check ==FALSE)
 #tableau vide 
 #assurance de non-chevauchement pour les différentes périodes
 
-
+# test <- indispo_ENTSOE_data %>% 
+#   arrange(mrid) %>% 
+#   group_by(businesstype, mrid, Installed.Capacity, datetime_pub,
+#            Unavailable.Capacity, plant_type, production_resource_id,      
+#            production_resource_name, production_resource_psr_name)
+# 
+# View(test[, c("datetime_pub", "datetime_debut", "datetime_fin", "mrid", "revision", "businesstype")])
 
 bout_indispo_ENTSOE_data <- indispo_ENTSOE_data %>% 
   group_by(businesstype, mrid, Installed.Capacity, datetime_pub,
            Unavailable.Capacity, plant_type, production_resource_id,      
-          production_resource_name, production_resource_psr_name) %>% 
+          production_resource_name, production_resource_psr_name,biddingzone_domain, revision) %>% 
   summarise(datetime_debut = min(datetime_debut),
             datetime_fin = max(datetime_fin))
 
@@ -126,6 +136,7 @@ unique(unexpected_indispo_ENTSOE_data$plant_type)
 
 
 
+View(unexpected_indispo_ENTSOE_data[, c("datetime_pub", "datetime_debut", "datetime_fin", "mrid", "revision", "businesstype")])
 
 
 

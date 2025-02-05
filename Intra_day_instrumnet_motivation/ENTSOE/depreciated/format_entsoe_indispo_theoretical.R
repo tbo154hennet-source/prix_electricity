@@ -7,7 +7,7 @@ library(lubridate)
 
 save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE'
 setwd(save_path_entsoe)
-source("auxiliary_file.R")
+source("auxiliary_file_ter.R")
 
 save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp'
 setwd(save_path_esp)
@@ -26,7 +26,12 @@ unexpected_indispo_ENTSOE_data  <- bout_indispo_ENTSOE_data %>%
 
 result_df <<- NULL
 
-result_df <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window_theoretical)
+# sample <- unexpected_indispo_ENTSOE_data %>% 
+#   filter(datetime_debut >= '2020-01-01' & datetime_debut <= '2020-01-02')
+# 
+# test <- apply(sample, 1, pub_auction_window_theoretical)
+
+test <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window_theoretical)
 
 # Convert the result to a data frame
 result_df <- data.frame(t(result_df))

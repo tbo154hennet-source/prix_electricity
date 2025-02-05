@@ -5,6 +5,8 @@
 
 
 new_names_pub <- c(
+  #unique identifier
+  'mrid',
   # last auction before news shock
   'auction_before', 
   # first auction after news shock
@@ -36,6 +38,7 @@ get_auction_numbers <-function(ref_day, start_datetime,
   # print(start_datetime)
   # print(end_datetime)
   # 
+  #ref_day <- ref_day_2
   # on remarquera que l'on a mis 0 marges
   # trader process l'information immediatement
   previous_day <- as.character(as.Date(ref_day)-1)
@@ -54,14 +57,14 @@ get_auction_numbers <-function(ref_day, start_datetime,
   end_time_5 <- as.POSIXct(paste(ref_day, "04:50:00"), tz='Europe/Brussels')
   start_time_6 <- as.POSIXct(paste(ref_day, "09:00:00"), tz='Europe/Brussels')
   end_time_6 <- as.POSIXct(paste(ref_day, "09:50:00"), tz='Europe/Brussels')
-  
   start_time_7 <- as.POSIXct(paste(ref_day, "17:00:00"), tz='Europe/Brussels')
   end_time_7 <- as.POSIXct(paste(ref_day, "17:50:00"), tz='Europe/Brussels')
   # il faut encore que pour la premiere enchere post news
   # on trade le creneau horaire impacte par l'evenement
   
   first_bid_time_1 <- as.POSIXct(paste(ref_day, "00:00:00"), tz='Europe/Brussels')
-  first_bid_time_2 <- as.POSIXct(paste(previous_day, "21:00:00"), tz='Europe/Brussels')
+  #first_bid_time_1 = first_bid_time_2
+  first_bid_time_2 <- as.POSIXct(paste(ref_day, "00:00:00"), tz='Europe/Brussels')
   #first_bid_time_1 = first_bid_time_3
   first_bid_time_3  <- as.POSIXct(paste(ref_day, "00:00:00"), tz='Europe/Brussels')
   first_bid_time_4 <- as.POSIXct(paste(ref_day, "05:00:00"), tz='Europe/Brussels')
@@ -77,7 +80,7 @@ get_auction_numbers <-function(ref_day, start_datetime,
   # just because I can't send back a NULL value
   first_bid_time <- NA
   
-  if (pub_datetime< end_time_1 & pub_datetime > pre_bid_time){
+  if (pub_datetime< end_time_1 & start_datetime < end_time_1 & pub_datetime > pre_bid_time ){
     
     if (start_time_1 < pub_datetime){
       in_auction_time <- 1
@@ -93,11 +96,11 @@ get_auction_numbers <-function(ref_day, start_datetime,
       first_bid_time <- first_bid_time_1
     }
     
-  }else if (pub_datetime < end_time_2 & pub_datetime > pre_bid_time){
+  }else if (pub_datetime < end_time_2 & start_datetime < end_time_2 & pub_datetime > pre_bid_time){
     if (start_time_2 < pub_datetime){
       in_auction_time <- 1
     }
-    auction_before <- 2
+    auction_before <- 1
     if ( first_bid_time_2 > end_datetime || end_datetime <  end_time_2){
       auction_after <- auction_before
     }else{
@@ -105,7 +108,7 @@ get_auction_numbers <-function(ref_day, start_datetime,
       auction_after <- auction_before+1
     }
     
-  }else if (pub_datetime < end_time_3 & pub_datetime > pre_bid_time){
+  }else if (pub_datetime < end_time_3 & start_datetime < end_time_3 & pub_datetime > pre_bid_time){
     if (start_time_3 < pub_datetime){
       in_auction_time <- 1
     }
@@ -117,7 +120,7 @@ get_auction_numbers <-function(ref_day, start_datetime,
       auction_after <- auction_before+1
     }
     
-  }else if (pub_datetime < end_time_4 & pub_datetime > pre_bid_time){
+  }else if (pub_datetime < end_time_4 & start_datetime < end_time_4 & pub_datetime > pre_bid_time){
     if (start_time_4 < pub_datetime){
       in_auction_time <- 1
     }
@@ -129,7 +132,7 @@ get_auction_numbers <-function(ref_day, start_datetime,
       first_bid_time <- first_bid_time_4
     }
     
-  }else if (pub_datetime < end_time_5 & pub_datetime > pre_bid_time){
+  }else if (pub_datetime < end_time_5 & start_datetime < end_time_5 & pub_datetime > pre_bid_time){
     if (start_time_5 < pub_datetime){
       in_auction_time <- 1
     }
@@ -141,7 +144,7 @@ get_auction_numbers <-function(ref_day, start_datetime,
       first_bid_time <- first_bid_time_5
     }
     
-  }else if(pub_datetime < end_time_6 & pub_datetime > pre_bid_time){
+  }else if(pub_datetime < end_time_6 & start_datetime < end_time_6 & pub_datetime > pre_bid_time){
     if (start_time_6 < pub_datetime){
       in_auction_time <- 1
     }
@@ -152,7 +155,7 @@ get_auction_numbers <-function(ref_day, start_datetime,
       auction_after <- auction_before+1
       first_bid_time <- first_bid_time_6
     }
-  }else if(pub_datetime < end_time_7 & pub_datetime > pre_bid_time){
+  }else if(pub_datetime < end_time_7 & start_datetime < end_time_7 & pub_datetime > pre_bid_time){
       auction_before <- 6
       if (first_bid_time_7 > end_datetime || end_datetime <  end_time_7){
         auction_after <- auction_before
@@ -161,9 +164,9 @@ get_auction_numbers <-function(ref_day, start_datetime,
         first_bid_time <- first_bid_time_7
       }
   }
-  
+  first_affect_time_period <- ifelse(!is.na(first_bid_time), hour(max(first_bid_time, start_datetime))+1, NA)
   return(c(auction_before, auction_after,
-           in_auction_time, hour(max(first_bid_time, start_datetime))+1))
+           in_auction_time, first_affect_time_period))
   
 }
 
@@ -256,19 +259,21 @@ pub_auction_window <- function(row){
   # extrait les informations
   # publication post D 15h 
   pub_datetime <- row['datetime_pub']
-  
-  pub_datetime <- as.POSIXct(pub_datetime,  tz = 'Europe/Brussels')
-  # 
   # Given POSIXct date-time
   start_datetime <- row['datetime_debut']
-  start_datetime <- as.POSIXct(start_datetime,  tz = 'Europe/Brussels')
-  
   end_datetime<- row['datetime_fin']
+  mrid <- row['mrid']
+  
+  # pub_datetime <- pub_datetime[[1]]
+  # start_datetime <- start_datetime[[1]]
+  # end_datetime <- end_datetime[[1]]
+
+  pub_datetime <- as.POSIXct(pub_datetime,  tz = 'Europe/Brussels')
+  start_datetime <- as.POSIXct(start_datetime,  tz = 'Europe/Brussels')
   end_datetime <- as.POSIXct(end_datetime,  tz = 'Europe/Brussels')
   # 
   # look at the different cases depending on the time of pub
   # which market day could it have an impact on
-  
   date_pub <- format(pub_datetime, "%Y-%m-%d")
   # Convert the date part to a Date object
   date_obj <- as.Date(date_pub)
@@ -298,7 +303,7 @@ pub_auction_window <- function(row){
     
     
     
-    result <- data.frame(t(c(auctions, hours_affected, ref_day)))
+    result <- data.frame(t(c(mrid, auctions, hours_affected, ref_day)))
     colnames(result) <- new_names_pub
     if (!exists("result_df") || is.null(result_df)) {
       result_df <<- result
@@ -307,7 +312,8 @@ pub_auction_window <- function(row){
     }
     
     
-  } else if (pub_datetime > end_time_next_day ){
+  }
+  if (pub_datetime > end_time_next_day ){
     # ref_day is defined as the day of elec delivery
 
     # on dedouble ce news shock parce qu'il
@@ -327,7 +333,7 @@ pub_auction_window <- function(row){
     auctions_2 <- get_auction_numbers(ref_day_2, start_datetime,
                                     end_datetime, pub_datetime)
     
-    result_2 <- data.frame(t(c(auctions_2, hours_affected_2, ref_day_2)))
+    result_2 <- data.frame(t(c(mrid, auctions_2, hours_affected_2, ref_day_2)))
     colnames(result_2) <- new_names_pub
     if (!exists("result_df") || is.null(result_df)) {
       result_df <<- result_2
@@ -339,14 +345,13 @@ pub_auction_window <- function(row){
   
   
   
-  
-  return(result)
-  
 }  
 
 
 
 new_names_theoretical <- c(
+  #unique identifier
+  'mrid',
   # last auction before unavailability
   'auction_before', 
   # first auction after unavailability
@@ -398,7 +403,8 @@ get_auction_numbers_theoretical <-function(ref_day, start_datetime,
   # on trade le creneau horaire impacte par l'evenement
   
   first_bid_time_1 <- as.POSIXct(paste(ref_day, "00:00:00"), tz='Europe/Brussels')
-  first_bid_time_2 <- as.POSIXct(paste(previous_day, "21:00:00"), tz='Europe/Brussels')
+  #firdt_bid_time_1 = first_bid_time_2
+  first_bid_time_2 <- as.POSIXct(paste(ref_day, "00:00:00"), tz='Europe/Brussels')
   #first_bid_time_1 = first_bid_time_3
   first_bid_time_3  <- as.POSIXct(paste(ref_day, "00:00:00"), tz='Europe/Brussels')
   first_bid_time_4 <- as.POSIXct(paste(ref_day, "05:00:00"), tz='Europe/Brussels')
@@ -432,7 +438,7 @@ get_auction_numbers_theoretical <-function(ref_day, start_datetime,
     if (start_time_2 < start_datetime){
       in_auction_time <- 1
     }
-    auction_before <- 2
+    auction_before <- 1
     if ( first_bid_time_2 > end_datetime || end_datetime <  end_time_2){
       auction_after <- auction_before
     }else{
@@ -496,9 +502,9 @@ get_auction_numbers_theoretical <-function(ref_day, start_datetime,
       first_bid_time <- first_bid_time_7
     }
   }
-  
+  first_affect_time_period <- ifelse(!is.na(first_bid_time), hour(max(first_bid_time, start_datetime))+1, NA)
   return(c(auction_before, auction_after,
-           in_auction_time, hour(max(first_bid_time, start_datetime))+1))
+           in_auction_time, first_affect_time_period))
   
 }
 
@@ -525,7 +531,7 @@ verify_window_theoretical <-function(start_datetime,
   
   # verify that the window of publication and the start time are correct
   # return a single corresponding dummy
-  previous_day <- as.character(as.Date(ref_day)-1)
+  previous_day <- as.character((ref_day)-1)
   # publi post D-1 9h
   # Combine the date part with the desired time
   end_time_1 <- as.POSIXct(paste(previous_day, "15:00:00"), tz='Europe/Brussels')
@@ -581,16 +587,16 @@ pub_auction_window_theoretical <- function(row){
   #extrait les informations
   # publication post D 15h 
   pub_datetime <- row['datetime_pub']
+  start_datetime <- row['datetime_debut']
+  end_datetime<- row['datetime_fin']
+  mrid <- row['mrid']
   
   pub_datetime <- as.POSIXct(pub_datetime,  tz = 'Europe/Brussels')
-  # 
-  # Given POSIXct date-time
-  start_datetime <- row['datetime_debut']
   start_datetime <- as.POSIXct(start_datetime,  tz = 'Europe/Brussels')
-  
-  end_datetime<- row['datetime_fin']
   end_datetime <- as.POSIXct(end_datetime,  tz = 'Europe/Brussels')
-  # 
+  
+  
+  
   # look at the different cases depending on the time of pub
   # which market day could it have an impact on
   
@@ -614,17 +620,17 @@ pub_auction_window_theoretical <- function(row){
     
     
     auctions <- get_auction_numbers_theoretical(ref_day, start_datetime,
-                                    end_datetime, pub_datetime)
+                                    end_datetime)
     
     # what are the times subject to auctions
     # that could be affected bounded by start and end
-    hours_affected <- plages_horaires_theoretical(pub_datetime,start_datetime, 
+    hours_affected <- plages_horaires_theoretical(start_datetime, 
                                       end_datetime, ref_day)
     
     
     
-    result <- data.frame(t(c(auctions, hours_affected, ref_day)))
-    colnames(result) <- new_names_pub
+    result <- data.frame(t(c(mrid, auctions, hours_affected, ref_day)))
+    colnames(result) <- new_names_theoretical
     if (!exists("result_df") || is.null(result_df)) {
       result_df <<- result
     } else {
@@ -632,7 +638,8 @@ pub_auction_window_theoretical <- function(row){
     }
     
     
-  } else if (pub_datetime > end_time_next_day ){
+  }
+  if (pub_datetime > end_time_next_day ){
     # ref_day is defined as the day of elec delivery
     
     # on dedouble ce news shock parce qu'il
@@ -647,13 +654,13 @@ pub_auction_window_theoretical <- function(row){
     # more details on the two functions in description or below in main script
     
     
-    hours_affected_2 <- plages_horaires_theoretical(pub_datetime,start_datetime, 
+    hours_affected_2 <- plages_horaires_theoretical(start_datetime, 
                                         end_datetime, ref_day_2)
     auctions_2 <- get_auction_numbers_theoretical(ref_day_2, start_datetime,
-                                      end_datetime, pub_datetime)
+                                      end_datetime)
     
-    result_2 <- data.frame(t(c(auctions_2, hours_affected_2, ref_day_2)))
-    colnames(result_2) <- new_names_pub
+    result_2 <- data.frame(t(c(mrid, auctions_2, hours_affected_2, ref_day_2)))
+    colnames(result_2) <- new_names_theoretical
     if (!exists("result_df") || is.null(result_df)) {
       result_df <<- result_2
     } else {

@@ -16,9 +16,9 @@ bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet") %>%
   arrange(datetime_debut)
 
 
-test <- bout_indispo_ENTSOE_data %>% 
-  filter(plant_type == "Nuclear" & datetime_debut > as.POSIXct("2018-01-01")) %>% 
-  arrange(datetime_pub)
+# test <- bout_indispo_ENTSOE_data %>% 
+#   filter(plant_type == "Nuclear" & datetime_debut > as.POSIXct("2018-01-01")) %>% 
+#   arrange(datetime_pub)
 
 unexpected_indispo_ENTSOE_data  <- bout_indispo_ENTSOE_data %>% 
   filter(businesstype=='Unplanned outage') %>% 
@@ -77,9 +77,16 @@ ggplot(publi_stat %>% filter(year>2015), aes(x = year, y = lapse)) +
 
 #pour avoir un effet le retard de publication ne peut pas être supérieur à 24h
 
-
+sample <- unexpected_indispo_ENTSOE_data %>% 
+  filter(production_resource_name == "COFRENTES") %>% 
+  mutate(year = year(datetime_pub), month = month(datetime_pub)) %>% 
+  filter(year == 2018 & month == 08 )
 
 result_df <- NULL
+
+# sample <- unexpected_indispo_ENTSOE_data %>% 
+#   sample_n(10)
+apply(sample, 1, pub_auction_window)
 
 apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window)
 

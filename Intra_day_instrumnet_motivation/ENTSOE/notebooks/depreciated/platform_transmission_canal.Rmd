@@ -1,0 +1,353 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Final notebook to have the figure from the report
+
+
+```{r include=FALSE}
+
+library(readr)
+library(dplyr)
+library(readxl)
+library(arrow)
+library(lubridate)
+library(estimatr)
+library(stargazer)
+
+Sys.setenv(lang = "en_US")
+```
+
+
+
+```{r}
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+setwd(save_path_entsoe_output)
+
+first_stage_data <- read_parquet('first_stage_data.parquet')
+
+capacity_fields <- c("Published.Unavailable.Capacity"          
+,"Published.Unavailable.Nuclear.Capacity","Unpublished.Unavailable.Capacity"        
+,"Unpublished.Unavailable.Nuclear.Capacity" ,"wind_solar_tot"                          
+, "gen_tot", "Predicted.Unavailable.Capacity")
+
+#adjuster l'ordre de grandeur des indispos pour ne pas avoir des coefficients nuls
+first_stage_data_clean <- first_stage_data%>%
+  filter(is.finite(log_price_diff) & 
+           is.finite(Published.Unavailable.Capacity))%>% 
+   mutate(across(all_of(capacity_fields), 
+                ~ . / 1000))
+
+first_stage_data_clean_pre_2021 <- first_stage_data_clean %>% 
+  filter(as.Date(electricity_delivery_date) < '2021-01-01')
+ 
+first_stage_data_clean_post_2021 <- first_stage_data_clean %>% 
+  filter(as.Date(electricity_delivery_date) >= '2021-01-01')
+
+```
+
+
+```{r}
+library(sandwich)
+library(lmtest)
+
+non_finite_rows <- first_stage_data %>%
+  filter(!is.finite(log_price_diff) | !is.finite(Published.Unavailable.Capacity))
+
+# Modèle de régression classique
+model <- lm(
+  log_price_diff ~ Published.Unavailable.Share + Published.Unavailable.Nuclear.Share,
+  data= first_stage_data_clean_post_2021 %>% 
+    filter(Published.Unavailable.Share > 0 | Published.Unavailable.Nuclear.Share > 0))
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(model, type = "HC0", cluster = ~ electricity_delivery_date)
+
+# Erreurs standard clusterisées
+cl_se <- sqrt(diag(vcov_cluster))
+
+# Résumé avec erreurs standard clusterisées
+coeftest(model, vcov = vcov_cluster)
+
+summary(model)
+```
+Estimation after 2021 the REMIT publication policy
+
+```{r}
+
+library(sandwich)
+library(lmtest)
+
+
+# perform first stage regression
+m_basic_post <- lm(
+  log_price_diff ~ Published.Unavailable.Share  + gen_tot,
+  data= first_stage_data_clean_post_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_basic_post, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_basic_post <- sqrt(diag(vcov_cluster))
+
+m_nuclear_post <- lm(
+  log_price_diff ~ Published.Unavailable.Nuclear.Share  + gen_tot,
+  data= first_stage_data_clean_post_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_basic_post, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_basic_post <- sqrt(diag(vcov_cluster))
+# use controls
+# put a dummy for the number of the auction
+# put a dummy for the creneau
+
+# warning cannot put a dummy for date + creneau + auction
+# full determination, no variation
+m_control_post <- lm(
+  log_price_diff ~ Published.Unavailable.Share + gen_tot +
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean_post_2021)
+vcov_cluster <- vcovHC(m_control_post, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_control_post <- sqrt(diag(vcov_cluster))
+
+m_control_nuclear_post <- lm(
+  log_price_diff ~  Published.Unavailable.Nuclear.Share + gen_tot +
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean_post_2021)
+vcov_cluster <- vcovHC(m_control_post, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_control_post <- sqrt(diag(vcov_cluster))
+
+```
+
+Interpretation
+for the basic model,
+for a given unavailability of 1 percentage point,
+the electricity price increases by 0.9 %
+
+
+
+```{r, results = 'asis'}
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic_post, m_nuclear_post, m_control_post,  m_control_nuclear_post,
+    type = "text",
+    se = list(cl_se_basic_post, cl_se_creneau_post, cl_se_control_post),
+    title = "Regression Results",
+    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
+    keep = c('Constant', 'Published.Unavailable.Share', "Published.Unavailable.Nuclear.Share", 'gen_tot')
+ )
+```
+
+Estimation before 2021 the REMIT publication policy
+
+
+
+
+```{r}
+
+# perform first stage regression
+m_basic_pre <- lm(
+  log_price_diff ~ Published.Unavailable.Share + Published.Unavailable.Nuclear.Share  + gen_tot,
+  data= first_stage_data_clean_pre_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_basic_pre, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_basic_pre <- sqrt(diag(vcov_cluster))
+
+# dummy for creneau
+m_creneau_pre <- lm(
+  log_price_diff ~ Published.Unavailable.Share + Published.Unavailable.Nuclear.Share  + gen_tot + as.factor(creneau) ,
+  data= first_stage_data_clean_pre_2021)
+vcov_cluster <- vcovHC(m_creneau_pre, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_creneau_pre <- sqrt(diag(vcov_cluster))
+# use controls
+# put a dummy for the number of the auction
+# put a dummy for the creneau
+
+# warning cannot put a dummy for date + creneau + auction
+# full determination, no variation
+m_control_pre <- lm(
+  log_price_diff ~ Published.Unavailable.Share + Published.Unavailable.Nuclear.Share + gen_tot +
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean_pre_2021)
+vcov_cluster <- vcovHC(m_control_pre, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_control_pre <- sqrt(diag(vcov_cluster))
+
+
+```
+
+
+```{r, results = 'asis'}
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic_pre, m_creneau_pre, m_control_pre, 
+    type = "text",
+    se = list(cl_se_basic_pre, cl_se_creneau_pre, cl_se_control_pre),
+    title = "Regression Results",
+    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
+    keep = c('Constant', 'Published.Unavailable.Share', "Published.Unavailable.Nuclear.Share", 'gen_tot')
+ )
+```
+
+Estimation using the unpublished info that the market didn't have access to
+
+```{r}
+# perform first stage regression
+m_basic_unpublished <- lm(
+  log_price_diff ~ Unpublished.Unavailable.Share + Unpublished.Unavailable.Nuclear.Share  + gen_tot,
+  data= first_stage_data_clean)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_basic_unpublished, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_basic_unpublished <- sqrt(diag(vcov_cluster))
+
+# dummy for creneau
+m_creneau_unpublished <- lm(
+  log_price_diff ~ Unpublished.Unavailable.Share + Unpublished.Unavailable.Nuclear.Share  + gen_tot + as.factor(creneau) ,
+  data= first_stage_data_clean)
+vcov_cluster <- vcovHC(m_creneau_unpublished, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_creneau_unpublished <- sqrt(diag(vcov_cluster))
+# use controls
+# put a dummy for the number of the auction
+# put a dummy for the creneau
+
+# warning cannot put a dummy for date + creneau + auction
+# full determination, no variation
+m_control_unpublished <- lm(
+  log_price_diff ~ Unpublished.Unavailable.Share + Unpublished.Unavailable.Nuclear.Share + gen_tot +
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean)
+vcov_cluster <- vcovHC(m_control_unpublished, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_control_unpublished <- sqrt(diag(vcov_cluster))
+
+```
+
+
+```{r, results = 'asis'}
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic_unpublished, m_creneau_unpublished, m_control_unpublished, 
+    type = "text",
+    se = list(cl_se_basic_unpublished, cl_se_creneau_unpublished, cl_se_control_unpublished),
+    title = "Regression Results",
+    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
+    keep = c('Constant', 'Unpublished.Unavailable.Share', "Unpublished.Unavailable.Nuclear.Share", 'gen_tot')
+ )
+```
+
+Dernier test, on utilise les unavailabilities calculées par le mmodèle de random forest.
+Et l'on compare avec l'indispo déclarée
+
+```{r}
+
+# perform first stage regression
+m_real <- lm(
+  log_price_diff ~ Predicted.Unavailable.Share + gen_tot,
+  data= first_stage_data_clean_post_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_real, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_real <- sqrt(diag(vcov_cluster))
+
+
+m_real_published <- lm(
+  log_price_diff ~ Predicted.Unavailable.Share + Published.Unavailable.Share + gen_tot,
+  data= first_stage_data_clean_post_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_real_published, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_real_published <- sqrt(diag(vcov_cluster))
+
+# perform first stage regression
+m_limited <- lm(
+  log_price_diff ~ Limiting.Unavailable.Share + gen_tot,
+  data= first_stage_data_clean_post_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_limited, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_limited <- sqrt(diag(vcov_cluster))
+
+
+m_limited_published <- lm(
+  log_price_diff ~ Limiting.Unavailable.Share + Published.Unavailable.Share + gen_tot,
+  data= first_stage_data_clean_post_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_limited_published, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_basic_limited_published <- sqrt(diag(vcov_cluster))
+
+
+```
+
+
+```{r}
+
+reg_table <- stargazer(m_real, m_real_published, m_limited, m_limited_published, 
+    type = "html",
+    se = list(cl_se_real, cl_se_real_published, cl_se_limited, cl_se_basic_limited_published),
+    title = "Regression Results",
+    column.labels = c("Predicted RF", "Predicted RF", "Limiting", "Limiting"),
+    keep = c('Constant', 'Published.Unavailable.Share', "Limiting.Unavailable.Share",
+             'Unpublished.Unavailable.Share', "Predicted.Unavailable.Share",'gen_tot')
+    , digits = 3
+)
+ 
+```
+
+
+With both for the post period to see any changes
+
+```{r}
+
+# perform first stage regression
+m_basic_all <- lm(
+  log_price_diff ~ Published.Unavailable.Share + Published.Unavailable.Nuclear.Share+
+    Unpublished.Unavailable.Share + Unpublished.Unavailable.Nuclear.Share  + gen_tot,
+  data= first_stage_data_clean_post_2021)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_basic_all, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_basic_all <- sqrt(diag(vcov_cluster))
+
+# dummy for creneau
+m_creneau_all <- lm(
+  log_price_diff ~ Published.Unavailable.Share + Published.Unavailable.Nuclear.Share+
+    Unpublished.Unavailable.Share + Unpublished.Unavailable.Nuclear.Share  + gen_tot + as.factor(creneau) ,
+  data= first_stage_data_clean_post_2021)
+vcov_cluster <- vcovHC(m_creneau_all, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_creneau_all <- sqrt(diag(vcov_cluster))
+# use controls
+# put a dummy for the number of the auction
+# put a dummy for the creneau
+
+# warning cannot put a dummy for date + creneau + auction
+# full determination, no variation
+m_control_all <- lm(
+  log_price_diff ~ Published.Unavailable.Share + Published.Unavailable.Nuclear.Share+
+    Unpublished.Unavailable.Share + Unpublished.Unavailable.Nuclear.Share + gen_tot +
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean_post_2021)
+vcov_cluster <- vcovHC(m_control_all, type = "HC0", cluster = ~ electricity_delivery_date)
+# Erreurs standard clusterisées
+cl_se_control_all <- sqrt(diag(vcov_cluster))
+
+```
+
+
+```{r, results = 'asis'}
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic_all, m_creneau_all, m_control_all, 
+    type = "text",
+    se = list(cl_se_basic_all, cl_se_creneau_all, cl_se_control_all),
+    title = "Regression Results",
+    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
+    keep = c('Constant', 'Published.Unavailable.Share', "Published.Unavailable.Nuclear.Share",
+             'Unpublished.Unavailable.Share', "Unpublished.Unavailable.Nuclear.Share",'gen_tot')
+ )
+```
+
+
+
