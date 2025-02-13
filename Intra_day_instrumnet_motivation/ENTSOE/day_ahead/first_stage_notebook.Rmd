@@ -1,0 +1,168 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/day_ahead/outputs"
+setwd(save_path_data)
+price_indispo_merge <- read_parquet("price_indispo_merge.parquet")
+price_indispo_merge <- price_indispo_merge %>%
+  fill(spot_gas, .direction = "up")
+price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]
+
+price_indispo_merge <- price_indispo_merge[!rowSums(sapply(price_indispo_merge, is.infinite)), ]
+
+#get monthly avg of unavailabilities
+capacity_fields <- c("Tot_Unplanned_Unavailability_diff", "Tot_Planned_Unavailability_diff",
+                     "Tot_Unplanned_Unavailability_diff2","Tot_Planned_Unavailability_diff2", "gen_tot",
+                     "Tot_Unplanned_Unavailability", "Tot_Planned_Unavailability",
+             "renewable_forecast", "spot_gas", "unpredicted_renewables", "intraday_update_renewables",
+             "Tot_Unplanned_Unavailability_sadj", "Tot_Planned_Unavailability_sadj")
+
+price_indispo_merge <- price_indispo_merge %>% 
+  mutate(across(all_of(capacity_fields), 
+                ~ . / 1000)) %>% 
+  group_by(year, month) %>% 
+  mutate(Tot_Unplanned_Unavailability_avg = mean(Tot_Unplanned_Unavailability ,na.rm = TRUE),
+          Tot_Planned_Unavailability_avg = mean(Tot_Planned_Unavailability ,na.rm = TRUE),
+         unpredicted_renewables_sq = unpredicted_renewables^2,)
+
+```
+
+On suggère deux hypothèses, soit différence en niveau sur longue période, soit différence immédiate sur des conditions quasi similaires lors de l'activation d'une indispo à deux créneaux proches.
+
+Attention le fait d'avoir pris des heures arrondies à l'heure plien la plus proche peut fausser
+les résultats.
+
+On essaye d'abord en différence 
+
+
+
+
+```{r}
+
+# perform first stage regression
+m_diff <- lm(
+  log_price_diff ~ Tot_Unplanned_Unavailability_diff + Tot_Planned_Unavailability_diff+ gen_tot+
+    renewable_forecast,
+  data= price_indispo_merge)
+
+
+m_diff_plus <- lm(
+  log_price_diff ~ Tot_Unplanned_Unavailability_diff + Tot_Planned_Unavailability_diff+ gen_tot+
+    renewable_forecast + spot_gas + unpredicted_renewables + intraday_update_renewables + 
+    as.factor(year) + as.factor(month),
+  data= price_indispo_merge)
+
+m_diff_final <- lm(
+  log_price_diff ~ Tot_Unplanned_Unavailability_diff + Tot_Planned_Unavailability_diff+ gen_tot+
+    Tot_Unplanned_Unavailability+Tot_Planned_Unavailability+
+    renewable_forecast + spot_gas + unpredicted_renewables + unpredicted_renewables_sq + intraday_update_renewables + 
+    as.factor(year) + as.factor(month),
+  data= price_indispo_merge)
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+reg_table <- stargazer( m_diff, m_diff_plus, m_diff_final, 
+    type = "html",
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "+ Controls"),
+    keep = c("Tot_Unplanned_Unavailability_diff", "Tot_Planned_Unavailability_diff", "gen_tot",
+             "renewable_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables",
+             "Tot_Unplanned_Unavailability", "Tot_Planned_Unavailability")
+)
+ 
+```
+
+```{r}
+
+# perform first stage regression
+m_diff2 <- lm(
+  log_price_diff ~ Tot_Unplanned_Unavailability_diff2 + Tot_Planned_Unavailability_diff2+ gen_tot+
+    renewable_forecast,
+  data= price_indispo_merge)
+
+
+m_diff2_plus <- lm(
+  log_price_diff ~ Tot_Unplanned_Unavailability_diff2 + Tot_Planned_Unavailability_diff2+ gen_tot+
+    renewable_forecast + spot_gas + unpredicted_renewables + intraday_update_renewables + 
+    as.factor(year) + as.factor(month),
+  data= price_indispo_merge)
+
+m_diff2_final <- lm(
+  log_price_diff ~ Tot_Unplanned_Unavailability_diff2 + Tot_Planned_Unavailability_diff2+ gen_tot+
+    Tot_Unplanned_Unavailability+Tot_Planned_Unavailability+
+    renewable_forecast + spot_gas + unpredicted_renewables + unpredicted_renewables_sq + intraday_update_renewables + 
+    as.factor(year) + as.factor(month),
+  data= price_indispo_merge)
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+reg_table <- stargazer( m_diff2, m_diff2_plus, m_diff2_final, 
+    type = "html",
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "+ Controls"),
+    keep = c("Tot_Unplanned_Unavailability_diff2", "Tot_Planned_Unavailability_diff2", "gen_tot",
+             "renewable_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables",
+             "Tot_Unplanned_Unavailability", "Tot_Planned_Unavailability")
+)
+ 
+```
+On le fait maintenant en niveau
+
+
+```{r}
+
+# perform first stage regression
+m_log <- lm(
+  log(price) ~ Tot_Unplanned_Unavailability + Tot_Planned_Unavailability + gen_tot+
+    renewable_forecast,
+  data= price_indispo_merge)
+
+
+m_log_plus <- lm(
+  log(price) ~ Tot_Unplanned_Unavailability + Tot_Planned_Unavailability + gen_tot+
+    renewable_forecast + spot_gas + unpredicted_renewables + intraday_update_renewables + 
+    as.factor(year) + as.factor(month),
+  data= price_indispo_merge)
+
+m_log_final <- lm(
+  log(price) ~ Tot_Unplanned_Unavailability + Tot_Planned_Unavailability + gen_tot+
+    #Tot_Unplanned_Unavailability_avg +Tot_Planned_Unavailability_avg +
+    renewable_forecast + spot_gas + unpredicted_renewables + unpredicted_renewables_sq + intraday_update_renewables + 
+    as.factor(year) + as.factor(month),
+  data= price_indispo_merge)
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+reg_table <- stargazer( m_log, m_log_plus, m_log_final, 
+    type = "html",
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "+ Controls"),
+    keep = c("Tot_Unplanned_Unavailability_diff", "Tot_Planned_Unavailability_diff", "gen_tot",
+             "renewable_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables", "Tot_Unplanned_Unavailability", "Tot_Planned_Unavailability",
+             "Tot_Unplanned_Unavailability_avg", "Tot_Planned_Unavailability_avg")
+)
+ 
+```
+
+
+

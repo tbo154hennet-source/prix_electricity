@@ -10,10 +10,12 @@ save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electr
 setwd(save_path_entsoe_output)
 
 
-final_publi_ENTSOE_indispo <- read_parquet('final_publi_ENTSOE_indispo.parquet') %>% 
-  arrange(electricity_delivery_date, auction_before, creneau)
+final_publi_ENTSOE_indispo <- read_parquet('final_publi_ENTSOE_indispo.parquet') %>%
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau) 
 
 final_publi_nuclear_ENTSOE_indispo <- read_parquet('final_publi_nuclear_ENTSOE_indispo.parquet') %>% 
+  mutate(creneau = as.character(creneau)) %>%
   arrange(electricity_delivery_date, auction_before, creneau)
 
 #unpublished indispo 
@@ -25,35 +27,73 @@ final_not_publi_nuclear_ENTSOE_indispo <- read_parquet('final_not_publi_ENTSOE_n
   mutate(creneau = as.character(creneau)) %>%
   arrange(electricity_delivery_date, auction_before, creneau)
 
+#dismissed indispo
+
+final_dismissed_ENTSOE_indispo<- read_parquet('final_dismissed_ENTSOE_indispo.parquet') %>% 
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau)
+
+final_not_publi_dismissed_ENTSOE_indispo<- read_parquet('final_not_publi_dismissed_ENTSOE_indispo.parquet') %>% 
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau)
+
+#dismissed nuclear indispo
+
+final_dismissed_nuclear_ENTSOE_indispo<- read_parquet('final_dismissed_nuclear_ENTSOE_indispo.parquet') %>% 
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau)
+
+final_not_publi_dismissed_nuclear_ENTSOE_indispo<- read_parquet('final_not_publi_dismissed_nuclear_ENTSOE_indispo.parquet') %>% 
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau)
+
+
+# real compared with random forest indispo
+
 final_real_indispo_rf <- read_parquet('final_real_indispo_rf.parquet') %>%
   mutate(creneau = as.character(creneau)) %>%
   arrange(electricity_delivery_date, auction_before, creneau) %>% 
-  select(-c("wind_solar_tot","gen_tot" ))
+  select(-c("wind_solar_tot","gen_tot", "datetime" ))
 
 final_real_theoretical_indispo_rf <- read_parquet('final_real_theoretical_indispo_rf.parquet') %>%
   mutate(creneau = as.character(creneau)) %>%
   arrange(electricity_delivery_date, auction_before, creneau) %>% 
-  select(-c("wind_solar_tot","gen_tot" ))
+  select(-c("wind_solar_tot","gen_tot", "datetime"  ))
 
 # real compared with random forest indispo
+# with dismissed indispo
+
+final_real_indispo_rf_dismissed <- read_parquet('final_real_indispo_rf_dismissed.parquet') %>%
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau) %>% 
+  select(-c("wind_solar_tot","gen_tot" , "datetime"))
+
+final_not_publi_real_indispo_rf_dismissed <- read_parquet('final_not_publi_real_indispo_rf_dismissed.parquet') %>%
+  mutate(creneau = as.character(creneau)) %>%
+  arrange(electricity_delivery_date, auction_before, creneau) %>% 
+  select(-c("wind_solar_tot","gen_tot", "datetime" ))
+
+
+#marginal limit
 
 final_real_indispo_limitantes <- read_parquet('final_real_indispo_limitantes.parquet') %>%
   mutate(creneau = as.character(creneau)) %>%
-  arrange(electricity_delivery_date, auction_before, creneau)
+  arrange(electricity_delivery_date, auction_before, creneau) 
 
 final_real_theoretical_indispo_limitantes <- read_parquet('final_real_theoretical_indispo_limitantes.parquet') %>%
   mutate(creneau = as.character(creneau)) %>%
   arrange(electricity_delivery_date, auction_before, creneau)
 
 
+
+
 tot_publi_ENTSOE_indispo <- final_publi_ENTSOE_indispo %>% 
   rename(Published.Unavailable.Capacity = Unavailable.Capacity)  %>%
   left_join(final_publi_nuclear_ENTSOE_indispo %>% 
               rename(Published.Unavailable.Nuclear.Capacity = Unavailable.Capacity) %>% 
-              select(-c('Installed.Capacity'))) %>% 
-  mutate(datetime = as.POSIXct(paste(electricity_delivery_date, creneau-1)
-                               , format="%Y-%m-%d %H", tz = 'Europe/Brussels'),
-         creneau= as.factor(creneau))
+              select(-c('Installed.Capacity')))  %>% 
+ mutate(datetime = as.POSIXct(paste(electricity_delivery_date, as.numeric(creneau)-1)
+         , format="%Y-%m-%d %H", tz = 'Europe/Brussels'))
 
 tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>% 
   full_join(final_not_publi_ENTSOE_indispo %>% 
@@ -78,6 +118,34 @@ tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>%
               select(-predicted_real_unavailability)) %>% 
   left_join(final_real_theoretical_indispo_limitantes %>% 
               rename(Unpublished.Limiting.Unavailable.Capacity = Unavailable.Capacity))
+
+tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>% 
+  full_join(final_dismissed_ENTSOE_indispo %>% 
+              rename(Published.Dismissed.Unavailable.Capacity = Unavailable.Capacity) %>% 
+              select(-c('Installed.Capacity'))) %>% 
+  full_join(final_not_publi_dismissed_ENTSOE_indispo %>% 
+              rename(Unpublished.Dismissed.Unavailable.Capacity = Unavailable.Capacity) %>% 
+              select(-c('Installed.Capacity')))
+
+tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>% 
+  full_join(final_dismissed_nuclear_ENTSOE_indispo %>% 
+              rename(Published.Dismissed.Unavailable.Nuclear.Capacity = Unavailable.Capacity) %>% 
+              select(-c('Installed.Capacity'))) %>% 
+  full_join(final_not_publi_dismissed_nuclear_ENTSOE_indispo %>% 
+              rename(Unpublished.Dismissed.Unavailable.Nuclear.Capacity = Unavailable.Capacity) %>% 
+              select(-c('Installed.Capacity')))
+
+tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>% 
+  left_join(final_real_indispo_rf_dismissed  %>% 
+              mutate(Published.Dismissed.Predicted.Unavailable.Capacity = -predicted_real_unavailability) %>% 
+              select(-predicted_real_unavailability)) %>% 
+  left_join(final_not_publi_real_indispo_rf_dismissed  %>% 
+              mutate(Unpublished.Dismissed.Predicted.Unavailable.Capacity = -predicted_real_unavailability) %>% 
+              select(-predicted_real_unavailability))%>% 
+  mutate(datetime = as.POSIXct(paste(electricity_delivery_date, as.numeric(creneau)-1)
+                               , format="%Y-%m-%d %H", tz = 'Europe/Brussels'),
+         creneau= as.factor(creneau))
+
 
 
 
@@ -141,7 +209,7 @@ day_ahead_prices<- day_ahead_prices %>%
          creneau = hour(datetime) +1,
          auction = "0",
          delivery_date = as.Date(datetime),
-         auction_date_plus_one = delivery_date + 1, 
+         auction_date_plus_one = delivery_date, 
          price = as.character(price)) %>% 
   filter(delivery_date >= as.Date('2018-01-01'))
 
@@ -219,7 +287,13 @@ first_stage_data  <-
                   Predicted.Unavailable.Capacity = 0,
                   Limiting.Unavailable.Capacity = 0,
                   Unpublished.Predicted.Unavailable.Capacity = 0,
-                  Unpublished.Limiting.Unavailable.Capacity = 0
+                  Unpublished.Limiting.Unavailable.Capacity = 0,
+                  Published.Dismissed.Unavailable.Capacity = 0,
+                  Unpublished.Dismissed.Unavailable.Capacity = 0,
+                  Published.Dismissed.Unavailable.Nuclear.Capacity = 0,
+                  Unpublished.Dismissed.Unavailable.Nuclear.Capacity = 0,
+                  Published.Dismissed.Predicted.Unavailable.Capacity = 0,
+                  Unpublished.Dismissed.Predicted.Unavailable.Capacity = 0
                   )) %>% 
   mutate( Published.Unavailable.Nuclear.Share = Published.Unavailable.Nuclear.Capacity/ gen_tot,
           Published.Unavailable.Share = Published.Unavailable.Capacity/ gen_tot,
@@ -228,7 +302,13 @@ first_stage_data  <-
           Predicted.Unavailable.Share = Predicted.Unavailable.Capacity/ gen_tot,
           Limiting.Unavailable.Share = Limiting.Unavailable.Capacity/ gen_tot,
           Unpublished.Predicted.Unavailable.Share = Unpublished.Predicted.Unavailable.Capacity/ gen_tot,
-          Unpublished.Limiting.Unavailable.Share = Unpublished.Limiting.Unavailable.Capacity/ gen_tot
+          Unpublished.Limiting.Unavailable.Share = Unpublished.Limiting.Unavailable.Capacity/ gen_tot,
+          Published.Dismissed.Unavailable.Share = Published.Dismissed.Unavailable.Capacity/ gen_tot,
+          Unpublished.Dismissed.Unavailable.Share = Unpublished.Dismissed.Unavailable.Capacity/ gen_tot,
+          Published.Dismissed.Unavailable.Nuclear.Share = Published.Dismissed.Unavailable.Nuclear.Capacity/ gen_tot,
+          Unpublished.Dismissed.Unavailable.Nuclear.Share = Unpublished.Dismissed.Unavailable.Nuclear.Capacity/ gen_tot,
+          Published.Dismissed.Predicted.Unavailable.Share = Published.Dismissed.Predicted.Unavailable.Capacity/ gen_tot,
+          Unpublished.Dismissed.Predicted.Unavailable.Share = Unpublished.Dismissed.Predicted.Unavailable.Capacity/ gen_tot
           )
 
 getwd()
@@ -236,6 +316,5 @@ getwd()
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(first_stage_data, 'first_stage_data.parquet')
-
 
 

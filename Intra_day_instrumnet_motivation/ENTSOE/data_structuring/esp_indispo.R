@@ -21,6 +21,9 @@ for (file in my_files){
   }
 }  
 
+indispo_ENTSOE_data %>% 
+  group_by(docstatus, businesstype) %>% 
+  summarise(n = n())
 
 # Obtenez la liste des fichiers .parquet
 #my_files <- my_files[grep("\\.csv$", my_files)]

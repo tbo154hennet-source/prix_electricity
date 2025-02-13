@@ -31,7 +31,10 @@ capacity_fields <- c("Published.Unavailable.Capacity"
 ,"Published.Unavailable.Nuclear.Capacity","Unpublished.Unavailable.Capacity"        
 ,"Unpublished.Unavailable.Nuclear.Capacity" ,"wind_solar_tot"                          
 , "gen_tot", "Predicted.Unavailable.Capacity", "Limiting.Unavailable.Capacity",
-"Unpublished.Limiting.Unavailable.Capacity", "Unpublished.Predicted.Unavailable.Capacity")
+"Unpublished.Limiting.Unavailable.Capacity", "Unpublished.Predicted.Unavailable.Capacity",
+"Published.Dismissed.Unavailable.Capacity", "Unpublished.Dismissed.Unavailable.Capacity",
+"Published.Dismissed.Unavailable.Nuclear.Capacity", "Unpublished.Dismissed.Unavailable.Nuclear.Capacity"
+)
 
 #adjuster l'ordre de grandeur des indispos pour ne pas avoir des coefficients nuls
 first_stage_data_clean <- first_stage_data%>%
@@ -129,6 +132,8 @@ reg_table <- stargazer(m_real, m_real_published, m_limited, m_limited_published,
 ```
 
 
+
+
 With both for the post period to see any changes
 I would like to see it on the whole period
 
@@ -185,6 +190,16 @@ reg_table <- stargazer(m_basic_all, m_creneau_all, m_control_all,
              'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot')
  )
 ```
+
+On teste l'égalité des coefficients entre published et unpublished pour voir si l'on peut raconter une histoire
+
+```{r}
+library(car)
+linearHypothesis(m_basic_all, "Published.Unavailable.Capacity = Unpublished.Unavailable.Capacity")
+
+```
+
+
 
 
 On s'occupe maintenant de regarder le intraday update
