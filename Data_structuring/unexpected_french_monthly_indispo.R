@@ -139,6 +139,8 @@ nuclear_monthly_indispo <- final_nuclear_indispo %>%
             Unavailable.Capacity = mean(Unavailable.Capacity)) %>%
   ungroup()
 
+getwd()
+
 write_parquet(monthly_indispo, 'unexpected_monthly_indispo.parquet')
 write_parquet(nuclear_monthly_indispo, 'unexpected_nuclear_monthly_indispo.parquet')
 

@@ -15,7 +15,7 @@ colnames(bout_indispo_ENTSOE_data)
 bout_indispo_ENTSOE_data$duration_in_days <- as.numeric(bout_indispo_ENTSOE_data$duration, units = "days")
 
 long_ENTSOE_indispos <- bout_indispo_ENTSOE_data %>% 
-  filter(duration_in_days >30)
+  filter(duration_in_days >10)
 
 # on vérifie quelle part du temps total d'indispo est conservé
 ratio_indispo <- sum(long_ENTSOE_indispos$duration_in_days)/sum(bout_indispo_ENTSOE_data$duration_in_days)
@@ -78,8 +78,8 @@ result_hours <- apply(long_ENTSOE_indispos, 1, long_format)
 
 # savepath <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/safeplace"
 # setwd(savepath)
-
-write_parquet(long_format_ENTSOE_indispo, 'all_format_ENTSOE_indispo_tot.parquet')
+getwd()
+write_parquet(long_format_ENTSOE_indispo, 'all_format_ENTSOE_indispo_tot2.parquet')
 #on se propose comme niveau d'analyse la journee
 # a savoir on calcule la somme des indispos pour un jour donne
 #result_hours <- apply(long_ENTSOE_indispos, 1, long_format)

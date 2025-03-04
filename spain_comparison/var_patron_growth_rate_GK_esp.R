@@ -2,18 +2,21 @@
 source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("auxiliary_control.R")
-source("bootstrap_auxiliary_control.R")
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/spain_comparison'
+setwd(source_path)
+source("bootstrap_auxiliary_control_spain.R")
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/macro_exercise'
+setwd(save_path_esp)
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp')
-
-
-IV_data_log <- read_parquet('low_freq_data_log.parquet')
+IV_data_log <- read_parquet('low_freq_data_log_ter.parquet')
 
 colnames(IV_data_log)
 
-headers_proxies = c("cold_excess_instrument", 
-            # "abs_gas_shock",                 
-            # "rel_gas_shock" ,
+headers_proxies = c(
+            "cold_excess_instrument", 
+            "heat_excess_instrument" ,
+            "abs_gas_shock",
+            "rel_gas_shock" ,
             "heat_excess_instrument",        
             "renewable_generation_log", 
             "tot_indispo_log",          
@@ -22,8 +25,8 @@ headers_proxies = c("cold_excess_instrument",
 
 proxies <- ts(IV_data_log[, c(headers_proxies)], frequency=12)
 
-headers_var = c("gen_tot_log",
-                "spot_price_log",
+headers_var = c("spot_price_log",
+                "gen_tot_log",
                 "IPI_log",
                 # "ECB_rate_log",
                 # "E_Index_log",
@@ -79,6 +82,8 @@ lambda_0_log_esp <- get_lambda_0(C, theta_0_log_esp)
 
 nboot<-100
 gamma_estimate_GK <- gamma_bootstrap_GK(nboot, vars, theta_0_log_esp)
+
+#theta_0 <- theta_0_log_esp
 # Initialize variables
 
 #attention ces bootstrap ne convergent que sous des hypothèses
@@ -96,7 +101,7 @@ for (name in list_of_samples) {
 }
 
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/irf_output')
 
 saveRDS(sample_matrices_GK, "sample_matrices_GK_esp_log.rds")
 

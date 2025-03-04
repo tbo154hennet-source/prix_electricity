@@ -11,19 +11,56 @@ save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitl
 setwd(save_var_path)
 IV_data <- read_parquet('low_freq_data.parquet')
 
-
 IV_data <- IV_data %>% 
   replace_na(list(gas_supply_shock = 0)) %>% 
-  select(-Date) %>% 
+  dplyr::select(-Date) %>% 
   arrange(datetime)
-# Example variables in the data frame
-df_vars <- colnames(IV_data)
 
-non_variables <- c("month", "year", "datetime",
-                   "X", "T_year_month", "Date")
 
-# Find variables in the data frame that are not in var_list
-vars_list <- setdiff(df_vars, non_variables)
+periodicity_test_col <- setdiff(colnames(IV_data),
+                                c("month" , "year" ,                     
+                                  "datetime", "plot_date",
+                                  "X" ,"Date"))
+
+
+remove_trend <- function(series) {
+  time_index <- 1:length(series)  # Créer un vecteur de temps
+  model <- lm(series ~ time_index, na.action = na.omit)  # Ajuster une régression linéaire
+  detrended_series <- resid(model)  # Récupérer les résidus (série sans tendance)
+  return(detrended_series)
+}
+
+IV_data_detrended <- IV_data %>%
+  dplyr::select(periodicity_test_col) %>%
+  mutate(across(everything(), remove_trend))
+
+
+#determine which variables need to be desasonnalized
+
+
+detect_general_periodicity <- function(series) {
+  spec <- spectrum(series, plot = FALSE)  # Compute the periodogram
+  dominant_freq <- spec$freq[which.max(spec$spec)]  # Get the most dominant frequency
+  estimated_period <- 1 / dominant_freq  # Convert frequency to period
+  return(estimated_period)
+}
+
+# if the dominant periodicity is infra-annual
+#dplyr::select as needed to be deseasonnalized
+# series <- IV_data_detrended$ECB_rate
+# detect_general_periodicity(series)
+# Apply to your data
+
+dominant_periodicity <- IV_data_detrended %>%
+  dplyr::select(periodicity_test_col) %>%
+  dplyr::select(-c("gas_supply_shock")) %>%
+  summarise(across(everything(), detect_general_periodicity)) %>% 
+  pivot_longer(everything(), names_to = "series", values_to = "dominant_period") %>%
+  filter(as.numeric(dominant_period) <= 13)
+
+#after plotting I choose to add NE Index that exhibits obvious periodicity
+
+var_season <- c(dominant_periodicity$series, "NE_Index")
 
 
 # Initialize a list to store the seasonally adjusted series
@@ -31,38 +68,31 @@ adjusted_data <- list()
 start_date = c('2015', '01')
 frequency = 12
 
-var = "T_avg"
 # Loop over each variable and perform STL decomposition
-for (var in vars_list) {
+for (var in colnames(IV_data)) {
   ts_data <- ts(IV_data[[var]], start = start_date, frequency = frequency)
-  # Perform STL decomposition
-  #spot price get negative answer
-  #all the instruments should not be seasonally adjusted
-  
-  if (var!="spot_price" & var!="gas_supply_shock" & var!="IPI" & var!="UnE" & var!="Manufacturing"){
-    print(var)
+  print(var)
+  if (var %in% var_season){
+    # Perform STL decomposition
     stl_fit <- stl(ts_data, s.window = "periodic")
-    adjusted_data[[var]] <- seasadj(stl_fit)
-  } else {
+    # Extract the seasonally adjusted component
+    ts_data <- seasadj(stl_fit)
     
-    adjusted_data[[var]] <- ts_data
   }
-  #the option above gave bad results with seasonal adjustment of spot price
-  #I had negative values that got annoying taking the log
-  
-  
+  adjusted_data[[var]] <- ts_data
 }
 
 
-# Combine the seasonally adjusted data into a dataframe
-seasonally_adjusted_df <- as.data.frame(adjusted_data)
 
+seasonally_adjusted_df <- as.data.frame(adjusted_data)
 write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 
 
+
 non_log_diff_var <- c("month", "year","datetime",
-                      "X", "T_year_month", "gas_supply_shock",
-                      "cold_excess_instrument" ,"heat_excess_instrument","Date")
+                      "X", "T_year_month", 
+                      "cold_excess_instrument" ,"heat_excess_instrument",
+                      "gas_supply_shock","Date", "ECB_rate", "plot_date" )
 
 non_log_col_var <- c(non_log_diff_var)
 
@@ -119,9 +149,9 @@ IV_data_log_diff[is.na(IV_data_log_diff)] <- 0
 
 
 # Detrend the data
-detrended_data <- as.data.frame(detrend(as.matrix(seasonally_adjusted_df)))
-IV_data_log <- as.data.frame(detrend(as.matrix(IV_data_log)))
-IV_data_log_diff <- as.data.frame(detrend(as.matrix(IV_data_log_diff)))
+detrended_data <- as.data.frame(detrend(data.matrix(seasonally_adjusted_df)))
+IV_data_log <- as.data.frame(detrend(data.matrix(IV_data_log)))
+IV_data_log_diff <- as.data.frame(detrend(data.matrix(IV_data_log_diff)))
 
 
 write.csv(detrended_data, "DATASET_sa_detrended.csv")
@@ -131,13 +161,6 @@ write_parquet(IV_data_log_diff, 'low_freq_data_log_diff.parquet')
 
 #petit plot pour voir l'effet associé
 
-ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y = IPI , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$IPI, color = "Seasonally Adjusted")) +
-  labs(title = "IPI",
-       x = "Date", y = "Index") +
-  scale_color_manual(values = c("Original" = "blue", "Seasonally Adjusted" = "red")) +
-  theme_minimal()
 
 par(mar = c(2, 2, 2, 2))
 plot.new()
@@ -152,7 +175,7 @@ ggplot(IV_data, aes(x = datetime)) +
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y =IV_data$wind , color = "Original")) +
   geom_line(aes(y = seasonally_adjusted_df$wind, color = "S ADj")) +
-  geom_line(aes(x = datetime, y = detrended_data$wind, color = "Detrended")) 
+  geom_line(aes(x = datetime, y = detrended_data$wind, color = "Detrended"))+
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
@@ -189,6 +212,9 @@ ggplot(IV_data, aes(x = datetime)) +
 cor(detrended_data$T_avg, detrended_data$gen_tot)
 cor(detrended_data$renewable_generation, detrended_data$spot_price)
 
+cor(IV_data_log_diff$T_avg_log, IV_data_log$gen_tot_log)
+cor(IV_data_log$renewable_generation_log, 
+    IV_data_log$spot_price_log)
 
 cor(IV_data_log_diff$T_avg_log_diff, IV_data_log_diff$gen_tot_log_diff)
 cor(IV_data_log_diff$renewable_generation_log_diff, 

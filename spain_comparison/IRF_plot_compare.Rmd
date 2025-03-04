@@ -1,0 +1,164 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+simul_data <- as.data.frame(rnorm(100))
+colors <- c('GK', 'MBB')
+simul_data$legend <- rep(colors, length.out = 20)
+# fake plot just to construct the correct legend
+plot_legend <- ggplot(data =simul_data, aes(x=rnorm(100), fill = legend))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+    values = c("blue", "lightblue"),
+    labels = c( 'GK', 'MBB'),
+    drop=FALSE
+  ) 
+# Légende personnalisée (à ajuster selon vos besoins)
+compare_legend <- cowplot::get_legend(plot_legend)
+plot_legend
+```
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(latex2exp)
+
+names <- c('$P_{elec}$', '$Q_{elec}$', "IPI", '$NE Index$')
+
+n <- length(names)
+plot_irf_mini_panel_chol <- function(i){
+  #i=1
+  main_prediction <- lambda_0_log[, i, 1]
+
+  time_horizon <- 1:20
+  
+  strong_band_inf_GK <-
+    strong_instruments_lambda_log_GK[,i,"lower","lambda_01"]
+  strong_band_sup_GK <- 
+    strong_instruments_lambda_log_GK[,i,"upper","lambda_01"]
+  
+  strong_band_inf_MBB <-
+    strong_instruments_lambda_log_MBB[,i,"lower","lambda_01"]
+  strong_band_sup_MBB  <- 
+    strong_instruments_lambda_log_MBB[,i,"upper","lambda_01"]
+  
+  # Plot the responses for each variable
+  
+  my_plot <- ggplot()+
+    
+    geom_ribbon(aes(x=time_horizon, ymin = strong_band_inf_GK,
+                    ymax = strong_band_sup_GK), fill = "blue", alpha = 0.5) +
+    
+    geom_ribbon(aes(x=time_horizon, ymin = strong_band_inf_MBB,
+                    ymax = strong_band_sup_MBB), fill = "lightblue", alpha = 0.5) +
+    
+    # ggtitle(expression(paste(names[i]))) +
+    labs(title = TeX(names[i]),
+         x = "Time",
+         y = "Unit Points") +
+    geom_line(aes(x=time_horizon, y= main_prediction), color = "blue", linetype='dashed')+
+    geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
+    scale_x_continuous()+
+    scale_y_continuous()+
+    # Add confidence bands
+    theme_minimal()
+  return(my_plot)
+}
+
+
+# Apply the function to the sequence 3:10
+results <- lapply(c(1:n) , plot_irf_mini_panel_chol)
+
+# Arrange the plots in a grid
+plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
+
+final_plot <- plot_grid(plots_grid, compare_legend , ncol = 1, rel_heights = c(1, 0.1))
+
+title <- ggdraw() + 
+  draw_label(TeX('$P_{elec}$ shock IRF'), fontface = 'bold', x = 0.5, hjust = 0.5)
+
+# Combine the title and the final plot with legend
+final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+# Display the final plot
+print(final_plot_with_title)
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+```{r}
+library(latex2exp)
+
+names <- c('$P_{elec}$', '$Q_{elec}$', "IPI", '$NE Index$')
+
+n <- length(names)
+plot_irf_mini_panel_chol <- function(i){
+  #i=1
+  main_prediction <- lambda_0_log[, i, 2]
+
+  time_horizon <- 1:20
+  
+  strong_band_inf_GK <-
+    strong_instruments_lambda_log_GK[,i,"lower","lambda_02"]
+  strong_band_sup_GK <- 
+    strong_instruments_lambda_log_GK[,i,"upper","lambda_02"]
+  
+  strong_band_inf_MBB <-
+    strong_instruments_lambda_log_MBB[,i,"lower","lambda_02"]
+  strong_band_sup_MBB  <- 
+    strong_instruments_lambda_log_MBB[,i,"upper","lambda_02"]
+  
+  # Plot the responses for each variable
+  
+  my_plot <- ggplot()+
+    
+    geom_ribbon(aes(x=time_horizon, ymin = strong_band_inf_GK,
+                    ymax = strong_band_sup_GK), fill = "blue", alpha = 0.5) +
+    
+    geom_ribbon(aes(x=time_horizon, ymin = strong_band_inf_MBB,
+                    ymax = strong_band_sup_MBB), fill = "lightblue", alpha = 0.5) +
+    
+    # ggtitle(expression(paste(names[i]))) +
+    labs(title = TeX(names[i]),
+         x = "Time",
+         y = "Unit Points") +
+    geom_line(aes(x=time_horizon, y= main_prediction), color = "blue", linetype='dashed')+
+    geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
+    scale_x_continuous()+
+    scale_y_continuous()+
+    # Add confidence bands
+    theme_minimal()
+  return(my_plot)
+}
+
+
+# Apply the function to the sequence 3:10
+results <- lapply(c(1:n) , plot_irf_mini_panel_chol)
+
+# Arrange the plots in a grid
+plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
+
+final_plot <- plot_grid(plots_grid, compare_legend , ncol = 1, rel_heights = c(1, 0.1))
+
+title <- ggdraw() + 
+  draw_label(TeX('$P_{elec}$ shock IRF'), fontface = 'bold', x = 0.5, hjust = 0.5)
+
+# Combine the title and the final plot with legend
+final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+# Display the final plot
+print(final_plot_with_title)
+
+```
+
