@@ -1,0 +1,271 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(arrow)
+library(stargazer)
+library(lmtest)
+library(data.table)
+library(sandwich)
+```
+
+```{r}
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")
+colnames(price_merge_CBF)
+```
+
+On veut répondre à une première question
+Est ce que les imports sont une marge d'ajustement fce aux chocs d'offre
+
+
+```{r}
+
+
+price_merge_CBF <-price_merge_CBF %>% 
+  mutate(SCH_EX_DA_FR_ES = as.numeric(SCH_EX_DA_FR_ES),
+         SCH_EX_DA_ES_FR = as.numeric(SCH_EX_DA_ES_FR),
+         SCH_EX_TOT_FR_ES = as.numeric(SCH_EX_TOT_FR_ES),
+         SCH_EX_TOT_ES_FR = as.numeric(SCH_EX_TOT_ES_FR),
+        SCH_EX_Spread_FR_ES = SCH_EX_TOT_FR_ES - SCH_EX_DA_FR_ES ,
+         SCH_EX_Spread_ES_FR = SCH_EX_TOT_ES_FR - SCH_EX_DA_ES_FR)
+
+colnames_with_capacity <- colnames(price_merge_CBF)[grepl("Capacity", colnames(price_merge_CBF))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast_esp",  "unpredicted_renewables_esp", "intraday_update_renewables_esp",
+  "day_ahead_forecast_fr",  "unpredicted_renewables_fr", "intraday_update_renewables_fr")
+
+price_merge_CBF[colnames_with_capacity] <- lapply(price_merge_CBF[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+
+price_merge_CBF$weekday <- weekdays(price_merge_CBF$delivery_date)
+
+```
+On cherche à savoir si les renouvelables et les indispos en France et en Espagne sont corrélés ?
+
+
+```{r}
+price_merge_CBF %>% 
+  select(day_ahead_forecast_esp, unpredicted_renewables_esp, intraday_update_renewables_esp,
+         day_ahead_forecast_fr, unpredicted_renewables_fr, intraday_update_renewables_fr) %>% 
+  cor(use = "complete.obs")
+```
+
+
+
+
+```{r}
+
+import_data <- price_merge_CBF %>% 
+  select(SCH_EX_Spread_FR_ES, SCH_EX_Spread_ES_FR, 
+         SCH_EX_DA_FR_ES, SCH_EX_DA_ES_FR,
+         year, month, weekday,
+         Uneffective.Predicted.Unavailable.Capacity_esp,
+         Uneffective.Predicted.Unavailable.Capacity_fr,
+         Planned.Predicted.Unavailable.Capacity_esp,Planned.Predicted.Unavailable.Capacity_fr,
+         day_ahead_forecast_esp, unpredicted_renewables_esp, intraday_update_renewables_esp,
+         day_ahead_forecast_fr, unpredicted_renewables_fr, intraday_update_renewables_fr, datetime) %>% 
+  na.omit()
+
+m_ES_FR <- lm(SCH_EX_Spread_ES_FR ~ SCH_EX_DA_ES_FR+
+                Uneffective.Predicted.Unavailable.Capacity_esp+
+                      Uneffective.Predicted.Unavailable.Capacity_fr+
+                Planned.Predicted.Unavailable.Capacity_esp+
+                      Planned.Predicted.Unavailable.Capacity_fr+
+                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
+                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr,
+                    data = import_data)
+
+
+
+m_FR_ES <- lm(SCH_EX_Spread_FR_ES ~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Unavailable.Capacity_esp+
+                      Uneffective.Predicted.Unavailable.Capacity_fr+
+                Planned.Predicted.Unavailable.Capacity_esp+
+                      Planned.Predicted.Unavailable.Capacity_fr+
+                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
+                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr,
+                    data = import_data)
+
+m_ES_FR_FE <- lm(SCH_EX_Spread_ES_FR ~ SCH_EX_DA_ES_FR +
+                   Uneffective.Predicted.Unavailable.Capacity_esp+
+                      Uneffective.Predicted.Unavailable.Capacity_fr+
+                   Planned.Predicted.Unavailable.Capacity_esp+
+                      Planned.Predicted.Unavailable.Capacity_fr+
+                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
+                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+                    data = import_data)
+
+m_FR_ES_FE <- lm(SCH_EX_Spread_FR_ES~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Unavailable.Capacity_esp+
+                      Uneffective.Predicted.Unavailable.Capacity_fr+
+                   Planned.Predicted.Unavailable.Capacity_esp+
+                      Planned.Predicted.Unavailable.Capacity_fr+
+                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
+                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+ 
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+                    data = import_data)
+
+
+```
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_FR_ES,  m_FR_ES_FE, m_ES_FR, m_ES_FR_FE,
+    type = "html",
+    dep.var.labels.include = FALSE,
+    #se = list(cl_se_log, cl_se_log_FE, cl_se_control),
+    title = "Regression Results",
+    column.labels = c("FR -> ES",  "FR -> ES (with FE)", "ES -> FR", "ES -> FR (with FE)"),
+    keep = c("Uneffective.Predicted.Unavailable.Capacity_esp", "SCH_EX_DA_FR_ES", "SCH_EX_DA_ES_FR",
+              "Uneffective.Predicted.Unavailable.Capacity_fr",
+             "Planned.Predicted.Unavailable.Capacity_esp",
+                      "Planned.Predicted.Unavailable.Capacity_fr",
+              "day_ahead_forecast_esp","unpredicted_renewables_esp", "intraday_update_renewables_esp",
+                      "day_ahead_forecast_fr", "unpredicted_renewables_fr", "intraday_update_renewables_fr")
+)
+ 
+```
+
+On a donc établi que les imports sont une marge d'ajustement face aux chocs d'offre
+sur le marché intradaily
+Cette marge pourrait se décomposer entre un effet prix et un effet géographique
+à savoir une fois que je contrôle par la différence de prix qu'engendre ce choc d'offre national,
+est ce que je trouve le même effet ?
+On a pas les prix intradaily ici, mais on peut se posser la question sur le marché day ahead.
+
+
+```{r}
+
+import_data <- price_merge_CBF %>% 
+  select(SCH_EX_Spread_FR_ES, SCH_EX_Spread_ES_FR, 
+         SCH_EX_DA_FR_ES, SCH_EX_DA_ES_FR,
+         price_fr, price_esp,
+         year, month, weekday,
+         Uneffective.Predicted.Unavailable.Capacity_esp,
+         Uneffective.Predicted.Unavailable.Capacity_fr,
+         Published.Predicted.Unavailable.Capacity_esp,Published.Predicted.Unavailable.Capacity_fr,
+         Planned.Predicted.Unavailable.Capacity_esp,Planned.Predicted.Unavailable.Capacity_fr,
+         day_ahead_forecast_esp, unpredicted_renewables_esp, intraday_update_renewables_esp,
+         day_ahead_forecast_fr, unpredicted_renewables_fr, intraday_update_renewables_fr, datetime) %>% 
+  mutate(price_diff_fr_esp = price_fr - price_esp,
+         #contrary to CBF I allow for negative CBF
+         # with the convention that ESP to FR is >0
+         CBF_DA = SCH_EX_DA_ES_FR - SCH_EX_DA_FR_ES
+         ) %>%
+  na.omit()
+
+m_CBF <- lm(CBF_DA ~ 
+              price_esp + price_diff_fr_esp+
+                Uneffective.Predicted.Unavailable.Capacity_esp+
+                      Uneffective.Predicted.Unavailable.Capacity_fr+
+                Published.Predicted.Unavailable.Capacity_esp+
+                      Published.Predicted.Unavailable.Capacity_fr+
+                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
+                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr,
+                    data = import_data)
+
+
+m_CBF_FE <- lm(CBF_DA ~ price_esp + price_diff_fr_esp+
+                   Uneffective.Predicted.Unavailable.Capacity_esp+
+                      Uneffective.Predicted.Unavailable.Capacity_fr+
+                   Published.Predicted.Unavailable.Capacity_esp+
+                      Published.Predicted.Unavailable.Capacity_fr+
+                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
+                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+                    data = import_data)
+
+
+```
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_CBF, m_CBF_FE,
+    type = "html",
+    #se = list(cl_se_log, cl_se_log_FE, cl_se_control),
+    title = "Regression Results",
+    column.labels = c("ES -> FR", "ES -> FR (with FE)"),
+    keep = c("Uneffective.Predicted.Unavailable.Capacity_esp", "SCH_EX_DA_FR_ES", "SCH_EX_DA_ES_FR",
+              "Uneffective.Predicted.Unavailable.Capacity_fr",
+             "price_diff_fr_esp", "price_fr", "price_esp",
+             "Planned.Predicted.Unavailable.Capacity_esp",
+                      "Planned.Predicted.Unavailable.Capacity_fr",
+             "Published.Predicted.Unavailable.Capacity_esp",
+                      "Published.Predicted.Unavailable.Capacity_fr",
+              "day_ahead_forecast_esp","unpredicted_renewables_esp", "intraday_update_renewables_esp",
+                      "day_ahead_forecast_fr", "unpredicted_renewables_fr", "intraday_update_renewables_fr")
+)
+ 
+```
+
+
+On regarde une transmission chocs de prix à l'étranger
+Même regression que esp_day_ahead mais cette fois sur le prix de l'autre pays
+On vérifie qu'en contrôlant par la différence de prix, ce lien disparaît
+
+On considère d'abord l'effet des indispos + renouvelables (chocs d'offre) sur le prix en Espagne
+
+```{r}
+
+# perform first stage regression
+m_log <- lm(
+  log(price_fr) ~ Planned.Predicted.Unavailable.Capacity_esp+  Published.Predicted.Unavailable.Capacity_esp + Unpublished.Predicted.Unavailable.Capacity_esp+ 
+    Uneffective.Predicted.Unavailable.Capacity_esp + 
+     gen_tot+ day_ahead_forecast,
+  data= price_merge_CBF)
+
+
+vcov_cluster <- vcovCL(m_rf , type = "HC0", cluster = ~ cl_rf_id_esp)
+cl_se_rf_esp <- sqrt(diag(vcov_cluster))
+
+m_rf_FE <- lm(
+  log(price_fr) ~ Published.Predicted.Unavailable.Capacity_esp + Unpublished.Predicted.Unavailable.Capacity_esp+ 
+    Uneffective.Predicted.Unavailable.Capacity_esp + 
+    gen_tot+ day_ahead_forecast   +
+    spot_gas + unpredicted_renewables + intraday_update_renewables + 
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+  data= price_merge_CBF)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_FE , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_FE <- sqrt(diag(vcov_cluster))
+
+
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_log, m_log_FE, m_log_control, 
+    type = "html",
+    se = list(cl_se_log, cl_se_log_FE, cl_se_log_control),
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "+ Controls"),
+    keep = c("Published.Unavailable.Capacity" , 
+     "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
+     "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
+    "Uneffective.Unavailable.Nuclear.Capacity", "gen_tot",
+             "day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables")
+)
+ 
+```
+
+On fait cette super IV regression
+
+
+
+
+
+

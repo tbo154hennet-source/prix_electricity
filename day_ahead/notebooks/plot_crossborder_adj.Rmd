@@ -1,0 +1,109 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(arrow)
+library(lubridate)
+library(data.table)
+library(ggplot2)
+```
+
+
+I want to illustrate the mechanism of cross border saturation.
+On 2018-01-02, French and Spanish prices are equal and comove perfectly,
+until the Cross border capacity is saturated (to about 3000),
+then there are separate prices.
+
+
+
+```{r}
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")
+
+price_merge_CBF <-price_merge_CBF %>% 
+  mutate(SCH_EX_DA_FR_ES = as.numeric(SCH_EX_DA_FR_ES),
+         SCH_EX_DA_ES_FR = as.numeric(SCH_EX_DA_ES_FR),
+         SCH_EX_TOT_FR_ES = as.numeric(SCH_EX_TOT_FR_ES),
+         SCH_EX_TOT_ES_FR = as.numeric(SCH_EX_TOT_ES_FR),
+        SCH_EX_Spread_FR_ES = SCH_EX_TOT_FR_ES - SCH_EX_DA_FR_ES ,
+         SCH_EX_Spread_ES_FR = SCH_EX_TOT_ES_FR - SCH_EX_DA_ES_FR,
+         price_diff_fr_esp = price_fr - price_esp,
+         #contrary to CBF I allow for negative CBF
+         # with the convention that ESP to FR is >0
+         CBF_DA = SCH_EX_DA_ES_FR - SCH_EX_DA_FR_ES
+         )
+
+colnames_with_capacity <- colnames(price_merge_CBF)[grepl("Capacity", colnames(price_merge_CBF))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast_esp",  "unpredicted_renewables_esp", "intraday_update_renewables_esp",
+  "day_ahead_forecast_fr",  "unpredicted_renewables_fr", "intraday_update_renewables_fr")
+
+price_merge_CBF[colnames_with_capacity] <- lapply(price_merge_CBF[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+
+price_merge_CBF$weekday <- weekdays(price_merge_CBF$delivery_date)
+
+
+```
+
+
+
+```{r}
+plot_example <- price_merge_CBF %>% 
+  filter(delivery_date == "2019-01-02" | delivery_date =="2019-01-03")
+
+ggplot(data = plot_example, aes(x = datetime))+
+  geom_line(aes(y = price_fr*20, color = "FR"))+
+  geom_line(aes(y = price_esp*20, color = "ES"))+
+  geom_line(aes(y = NTC_ESP_FR, color = "ES -> FR"), linetype ="dashed")+
+  geom_line(aes(y = NTC_FR_ESP, color = "FR -> ES"), linetype ="dashed")+
+  geom_line(aes(y = SCH_EX_DA_ES_FR, color = "ES -> FR"))+
+  geom_line(aes(y = SCH_EX_DA_FR_ES, color = "FR -> ES"))+
+    # Mise en place de l'échelle secondaire pour les prix
+  scale_y_continuous(
+    name = "NTC & Exchanges",
+    sec.axis = sec_axis(~ . / 20, name = "Price (€/MWh)") # Ajuste l'échelle inverse
+  ) +
+  
+  theme_minimal()
+
+  
+```
+
+Faire apparaître le seuil de saturation
+
+
+
+
+```{r}
+
+price_merge_CBF <- price_merge_CBF %>% 
+       mutate(
+         Taux_Sat_ES_FR = SCH_EX_DA_ES_FR/NTC_ESP_FR,
+         Taux_Sat_FR_ES = SCH_EX_DA_FR_ES/NTC_FR_ESP) %>% 
+  filter(Taux_Sat_FR_ES<1.1 & Taux_Sat_ES_FR<1.1) %>%
+  mutate(
+         saturation_bin_ES_FR = ntile(Taux_Sat_ES_FR, 100),
+         saturation_bin_FR_ES = ntile(Taux_Sat_FR_ES, 100)
+       )
+
+plot_data_ES_FR <- price_merge_CBF %>%
+  group_by(saturation_bin_ES_FR) %>%
+  summarize(
+    taux_saturation_moyen = mean(SCH_EX_DA_ES_FR/NTC_ESP_FR, na.rm = TRUE),
+    price_diff_moyen = mean(price_diff_fr_esp, na.rm = TRUE)
+  ) 
+
+ggplot(data =plot_data_ES_FR ,aes(x = taux_saturation_moyen, y = price_diff_moyen)) +
+geom_point() +
+labs(x = "Taux de saturation", y = TeX('$\\Delta p$')) +
+theme_minimal()
+```
+
+
+

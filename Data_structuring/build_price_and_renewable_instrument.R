@@ -77,7 +77,8 @@ my_generation_data <- generation_data %>%
 # Sample the data
 
 
-
+renewable_data <- my_generation_data %>% 
+  select(headers)
 
 renewable_test <- renewable_data %>% 
   # select(datetime, month, year, solar, wind_actual) %>% 

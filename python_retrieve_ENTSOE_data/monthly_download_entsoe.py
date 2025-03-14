@@ -3,21 +3,20 @@ import pyarrow.parquet as pq
 import pandas as pd
 from entsoe import EntsoePandasClient
 import os
-client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
 
-#path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant\fr'  # Remplacez par votre chemin
-
-country_code = 'ES'  
-
-#2016-03
 # Define start and end dates
-start_date = pd.Timestamp('20180101', tz='Europe/Brussels')
-end_date = pd.Timestamp('20241231', tz='Europe/Brussels')
+client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
+country_code = 'FR'
+#country_code_to = 'FR'   
+# Define start and end dates
+start_date = pd.Timestamp('20150101', tz='Europe/Brussels')
+#end_date = pd.Timestamp('20170101', tz='Europe/Brussels')
+end_date = pd.Timestamp('20161231', tz='Europe/Brussels')
 # Generate monthly date ranges
 monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
 import os
 #path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant\esp'  # Remplacez par votre chemin
-path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\esp\ENTSOE_dismissed_unavailabilities'
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\day_ahead_prices\fr_bis'
 os.chdir(path)
 
 
@@ -39,15 +38,20 @@ for date in monthly_dates:
     #intraday_wind_and_solar_forecast = client.query_intraday_wind_and_solar_forecast(country_code, start=start_year, end=end_year, psr_type=None)
     
     #generation_tot = client.query_generation(country_code, start=start_year, end=end_year, psr_type=None, include_eic=False)
-    withdrawn_unavailability_of_generation_units = client.query_withdrawn_unavailability_of_generation_units(country_code, start_year, end_year)
-    
-    table = pa.Table.from_pandas(withdrawn_unavailability_of_generation_units)
+    #withdrawn_unavailability_of_generation_units = client.query_withdrawn_unavailability_of_generation_units(country_code, start_year, end_year)
+    #query_crossborder_flows = client.query_crossborder_flows(country_code_from, country_code_to, start_month, end_month)
+    #client.query_scheduled_exchanges(country_code_from, country_code_to, start, end, dayahead=False)
+    #client.query_net_transfer_capacity_dayahead(country_code_from, country_code_to, start, end)
+    #client.query_net_transfer_capacity_weekahead(country_code_from, country_code_to, start, end)
+    #client.query_net_transfer_capacity_monthahead(country_code_from, country_code_to, start, end)
+    #client.query_net_transfer_capacity_yearahead(country_code_from, country_code_to, start, end)
+    #table = pa.Table.from_pandas(query_crossborder_flows)
     #table = pa.Table.from_pandas(generation_per_plant)
     # Example: Convert a Series to a DataFrame
 
     # Convert to a PyArrow Table
-    #day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_month, end=end_month)
-    #table = pa.Table.from_pandas(day_ahead_prices.to_frame(name="day_ahead_prices"))
+    day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_month, end=end_month)
+    table = pa.Table.from_pandas(day_ahead_prices.to_frame(name="day_ahead_prices"))
     #my_table = pa.Table.from_pandas(day_ahead_prices)
     # Write the table to a Parquet file
     pq.write_table(table, string)
