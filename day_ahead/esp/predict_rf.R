@@ -4,14 +4,14 @@ library(arrow)
 library(lubridate)
 library(data.table)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
-filtered_indispo <- read_parquet("filtered_indispo.parquet")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+filtered_indispo <- read_parquet("filtered_indispo_esp_pre_2018.parquet")
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel')
-generation_by_fuel <- read_parquet('generation_by_fuel_format.parquet')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
+generation_by_fuel <- read_parquet('generation_by_fuel_format_esp.parquet')
 
 
 prediction_data <- merge(generation_by_fuel, generation_per_plant, 
@@ -95,7 +95,7 @@ centrales <- colnames(generation_per_plant %>%
 setDT(generation_per_plant)# Convertir en data.table
 
 rf_predictions_data <- NULL
-centrale <- centrales[1]
+centrale <- centrales[4]
 for (centrale in centrales){
   print(centrale)
   tryCatch({

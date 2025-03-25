@@ -146,7 +146,11 @@ final_indispo_tot_wide_fr <- final_indispo_tot_wide_fr %>%
          cl_rf_id  = rleid(Planned.Cluster.Capacity,
                            Published.Cluster.Capacity,
                            Unpublished.Cluster.Capacity,
-                           Uneffective.Cluster.Capacity)
+                           Uneffective.Cluster.Capacity),
+         cl_nu_id = rleid(Planned.Unavailable.Nuclear.Capacity,
+                           Published.Unavailable.Nuclear.Capacity,
+                           Unpublished.Unavailable.Nuclear.Capacity,
+                           Uneffective.Unavailable.Nuclear.Capacity)
   )
 
 #j'ai repere un probleme avec rf_cluster
@@ -218,15 +222,41 @@ setwd(save_path_data)
 renewable_forecasts_fr <- read_parquet('renewable_forecasts_fr.parquet')
 
 colnames(renewable_forecasts_fr)
-gen_tot <- renewable_forecasts_fr %>%
-  select(`__index_level_0__`, gen_tot, day_ahead_forecast,
-         unpredicted_renewables, intraday_update_renewables)
+# gen_tot <- renewable_forecasts_fr %>%
+#   select(`__index_level_0__`, gen_tot, day_ahead_forecast,
+#          unpredicted_renewables, intraday_update_renewables)
 
 #nota bene intradailiy forecast commence à partir du 13 février 2018 13-02-2018
 #sample start
 
 price_indispo_merge_fr  <- price_indispo_merge_fr %>%
-  left_join(gen_tot, by=c('datetime' = '__index_level_0__'))
+  left_join(renewable_forecasts_fr, by=c('datetime' = '__index_level_0__'))
+
+
+#on rajoute le spot gas price
+library(readxl)
+gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+setwd(gas_path)
+
+gas_prices <- read_excel("gas.xlsx") %>% 
+  mutate(time = as.Date(time),
+         spot_gas = as.numeric(paste0(
+           `Gaz naturel, contrats à terme aux Pays-Bas (TTF), euros par megawatt-heure`
+           ,".",virgule ))) %>% 
+  select(time, spot_gas)
+
+
+price_indispo_merge_fr_ahead <- price_indispo_merge_fr %>%
+  left_join(gas_prices, by=c('delivery_date' = 'time'))
+price_indispo_merge_fr_ahead <- price_indispo_merge_fr_ahead %>%
+  fill(spot_gas, .direction = "up")
+price_indispo_merge_fr_ahead <- price_indispo_merge_fr_ahead %>% distinct()
+
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
+setwd(save_path_data)
+write_parquet(price_indispo_merge_fr_ahead, "price_indispo_merge_fr.parquet")
+
+
 
 # pour l'estimation en niveau,
 #on rajoute le spot gas price

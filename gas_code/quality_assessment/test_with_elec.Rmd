@@ -1,0 +1,122 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_var_path)
+IV_data <- read_parquet('IV_data_fr.parquet')
+```
+
+
+```{r}
+colnames(IV_data)
+```
+
+```{r}
+IV_data <- IV_data %>% 
+  mutate(spot_price_diff = spot_price - lag(spot_price))
+
+ggplot(IV_data) +
+  geom_line(aes(x = datetime, y = spot_price_diff, color = "elec")) +
+  geom_line(aes(x = datetime, y = avg_spot_diff, color = "gas")) +
+  geom_line(aes(x = datetime, y = last_spot_diff, color = "gas"), linetype = "dashed") +
+  geom_line(aes(x = datetime, y = PC1_supply*30, color = "instrument"), linetype = "dashed") +
+  labs(title = "Spot price difference",
+       x = "Date",
+       y = "Spot price difference (€/MWh)")
+```
+
+
+```{r}
+IV_data %>% 
+  mutate(spot_price_diff_lag = lag(spot_price_diff),
+         spot_price_diff_lead = lead(spot_price_diff)
+         ) %>%
+  dplyr::select(avg_spot_diff, spot_price_diff, 
+         spot_price_diff_lag, spot_price_diff_lead) %>%
+  cor(use = "complete.obs")
+```
+
+
+```{r}
+supply_model <- lm(avg_spot_diff  ~ PC1_supply, 
+                  #last_spot_diff  ~ Fund,
+                   data = IV_data)
+
+summary(supply_model)
+
+
+```
+
+```{r}
+supply_model <- lm(spot_price_diff  ~ PC1_supply, 
+                  #last_spot_diff  ~ Fund,
+                   data = IV_data)
+
+summary(supply_model)
+
+```
+
+
+```{r}
+
+ggplot(data = IV_data)+
+  geom_line(aes(x = datetime, y = wind_forecast, color = "Wind"))+
+  geom_line(aes(x = datetime, y = solar_forecast, color = "Solar"))+
+  geom_line(aes(x = datetime, y = spot_price*10, color = "elec"))+
+  geom_line(aes(x = datetime, y = T_avg*1000, color = "T(°C)"))+
+  theme_minimal()
+
+```
+
+```{r}
+
+model <- lm(data = IV_data %>% 
+              mutate(renewable_forecast_diff = 
+                       renewable_forecast - lag(renewable_forecast),
+                     predicted_unavailabilities_diff =
+                       predicted_unavailabilities - lag(predicted_unavailabilities),
+                     spot_price_diff = spot_price - lag(spot_price)),
+   formula = spot_price_diff ~ PC1_supply + renewable_forecast_diff +predicted_unavailabilities_diff
+   )
+summary(model)
+```
+```{r}
+
+model <- lm(data = IV_data %>% 
+              mutate(renewable_forecast_diff = 
+                       renewable_forecast - lag(renewable_forecast),
+                     spot_price_diff = spot_price - lag(spot_price),
+            predicted_unavailabilities_diff =
+                       predicted_unavailabilities - lag(predicted_unavailabilities)),
+   formula = spot_price_diff ~ PC1_supply + renewable_forecast_diff+ predicted_unavailabilities_diff+
+     cold_excess_instrument + heat_excess_instrument
+   )
+
+summary(model)
+```
+
+# Instrumenting the demand side of the market 
+
+
+```{r}
+
+
+model <- lm(data = IV_data %>% 
+              mutate(renewable_forecast_diff = 
+                       renewable_forecast - lag(renewable_forecast),
+                     gen_tot_diff = gen_tot - lag(gen_tot),
+            predicted_unavailabilities_diff =
+                       predicted_unavailabilities - lag(predicted_unavailabilities)),
+   formula = gen_tot_diff ~ PC1_supply + renewable_forecast_diff+ predicted_unavailabilities_diff+
+     cold_excess_instrument + heat_excess_instrument
+   )   
+
+summary(model)
+```
+
+
+
+

@@ -82,7 +82,8 @@ renewable_forecasts <- left_join(renewable_forecasts, wind_solar_actual)
 colnames(renewable_forecasts)
 renewable_forecasts <- renewable_forecasts %>%
   mutate(across(c('Wind Offshore' ), ~ replace(., is.na(.), 0))) %>% 
-  mutate(day_ahead_forecast = Fore_Wind + Fore_Solar ,
+  mutate(
+          day_ahead_forecast = Fore_Wind + Fore_Solar ,
          intraday_forecast = intraday_Wind + intraday_Solar  ,
          unpredicted_renewables = wind_solar_tot - intraday_forecast ,
          intraday_update_renewables = intraday_forecast - day_ahead_forecast)

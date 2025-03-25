@@ -11,16 +11,17 @@ rf_predictions_data_esp <- read_parquet('rf_predictions_data.parquet') %>%
 
 colnames(rf_predictions_data_esp)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 filtered_indispo_esp <- read_parquet("filtered_indispo.parquet") %>% 
   arrange(datetime_slot)
 colnames(filtered_indispo_esp)
 
+#enlever cas limite de l'heure pile
 filtered_indispo_esp <- filtered_indispo_esp%>% 
   filter(datetime_slot != end_datetime)
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 publi_bout_indispo_ENTSOE_data_esp <- read_parquet("save_indispo_with_ub_status.parquet")
 
@@ -50,8 +51,7 @@ long_final_indispo_esp  <- long_final_indispo_esp  %>%
 long_indispo_limitantes <- long_final_indispo_esp %>%
   filter(Installed.Capacity!= Unavailable.Capacity) %>%
   filter(as.numeric(Installed.Capacity) - as.numeric(Unavailable.Capacity) < centrale_prod*1.1) %>% 
-  filter(previous_day_prod > (as.numeric(Installed.Capacity) - as.numeric(Unavailable.Capacity))*0.9)
-
+  filter(previous_day_prod > as.numeric(Installed.Capacity)*0.9)
 
 long_indispo_nuclear <- long_final_indispo_esp %>%
   filter(plant_type == "Nuclear")
@@ -193,20 +193,17 @@ price_indispo_merge_esp <- left_join(day_ahead_prices,
       by = c("datetime" = "datetime_slot"))
 
 #getting outages share
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/renewable_forecast"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
 colnames(renewable_forecasts)
-gen_tot <- renewable_forecasts %>%
-  select(`__index_level_0__`, gen_tot, day_ahead_forecast,
-         unpredicted_renewables, intraday_update_renewables)
-colnames(renewable_forecasts)
+
 #nota bene intradailiy forecast commence à partir du 13 février 2018 13-02-2018
 #sample start
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
-  left_join(gen_tot, by=c('datetime' = '__index_level_0__'))
+  left_join(renewable_forecasts, by=c('datetime' = '__index_level_0__'))
 
 # pour l'estimation en niveau,
 #on rajoute le spot gas price

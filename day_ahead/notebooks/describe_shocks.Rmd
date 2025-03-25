@@ -1,0 +1,81 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(arrow)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
+setwd(save_path_data)
+price_indispo_merge <- read_parquet("price_indispo_merge_fr.parquet")
+
+```
+
+One focusing on the different modalities I have for Unavailabilities
+
+```{r}
+
+price_indispo_data <- price_indispo_merge %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Planned = mean(Planned.Unavailable.Capacity, na.rm = TRUE),
+    Published = mean(Published.Unavailable.Capacity, na.rm = TRUE),
+    Uneffective = mean(Uneffective.Unavailable.Capacity, na.rm = TRUE),
+    Unpublished = mean(Unpublished.Unavailable.Capacity, na.rm = TRUE)
+  )
+
+unavail_plot <- ggplot(data = price_indispo_data, aes(x= delivery_date))+
+  geom_line(aes(y = Planned, color = "Planned"))+
+  geom_line(aes(y = Uneffective, color = "Uneffective"))+
+  geom_line(aes(y = Unpublished, color = "Unpublished"))+
+  geom_line(aes(y = Published, color = "Published"))+
+  labs(x= "Time", y = "Plants Unavailabilities")+
+  theme_minimal()
+unavail_plot 
+```
+
+```{r}
+
+price_indispo_data <- price_indispo_merge %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Planned = mean(Planned.Predicted.Unavailable.Capacity, na.rm = TRUE),
+    Published = mean(Published.Predicted.Unavailable.Capacity, na.rm = TRUE),
+    Uneffective = mean(Uneffective.Predicted.Unavailable.Capacity, na.rm = TRUE),
+    Unpublished = mean(Unpublished.Predicted.Unavailable.Capacity, na.rm = TRUE)
+  )
+
+unavail_plot <- ggplot(data = price_indispo_data, aes(x= delivery_date))+
+  geom_line(aes(y = Planned, color = "Planned"))+
+  geom_line(aes(y = Uneffective, color = "Uneffective"))+
+  geom_line(aes(y = Unpublished, color = "Unpublished"))+
+  geom_line(aes(y = Published, color = "Published"))+
+  labs(x= "Time", y = "Plants Unavailabilities")+
+  theme_minimal()
+unavail_plot 
+```
+
+```{r}
+colnames(price_indispo_merge)
+price_indispo_data <- price_indispo_merge %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Solar = mean(Solar, na.rm = TRUE),
+    Wind_Offshore = mean(`Wind Offshore`, na.rm = TRUE),
+    Wind_Onshore = mean(`Wind Onshore`, na.rm = TRUE),
+  )
+price_indispo_merge$`Wind Offshore`
+renew_plot <- ggplot(data = price_indispo_data, aes(x= delivery_date))+
+  geom_line(aes(y = Wind_Onshore, color = "Wind Onshore"))+
+  geom_line(aes(y = Solar, color = "Solar"))+
+  geom_line(aes(y = Wind_Offshore, color = "Wind Offshore"))+
+  labs(x= "Time", y = "Renewable Generation")+
+  theme_minimal()
+renew_plot
+```
+
+

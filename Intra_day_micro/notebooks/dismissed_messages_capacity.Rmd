@@ -22,20 +22,22 @@ Sys.setenv(lang = "en_US")
 
 
 ```{r}
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 
-first_stage_data <- read_parquet('first_stage_data.parquet')
+first_stage_data <- read_parquet('first_stage_data.parquet') %>% 
+  rename(Published.Predicted.Unavailable.Capacity = Predicted.Unavailable.Capacity,
+         Published.Limiting.Unavailable.Capacity = Limiting.Unavailable.Capacity
+         )
 
-capacity_fields <- c("Published.Unavailable.Capacity"          
-,"Published.Unavailable.Nuclear.Capacity","Unpublished.Unavailable.Capacity"        
-,"Unpublished.Unavailable.Nuclear.Capacity" ,"wind_solar_tot"                          
-, "gen_tot", "Predicted.Unavailable.Capacity", "Limiting.Unavailable.Capacity",
-"Unpublished.Limiting.Unavailable.Capacity", "Unpublished.Predicted.Unavailable.Capacity",
-"Published.Dismissed.Unavailable.Capacity", "Unpublished.Dismissed.Unavailable.Capacity",
-"Published.Dismissed.Unavailable.Nuclear.Capacity", "Unpublished.Dismissed.Unavailable.Nuclear.Capacity",
-"Published.Dismissed.Predicted.Unavailable.Capacity", "Unpublished.Dismissed.Predicted.Unavailable.Capacity"
-)
+colnames_with_capacity <- colnames(first_stage_data)[grepl("Capacity", colnames(first_stage_data))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables")
+
+first_stage_data[colnames_with_capacity] <- lapply(first_stage_data[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+
 
 #adjuster l'ordre de grandeur des indispos pour ne pas avoir des coefficients nuls
 first_stage_data_clean <- first_stage_data%>%
@@ -49,6 +51,9 @@ first_stage_data_clean <- first_stage_data%>%
          Unpublished.Dismissed.Unavailable.Capacity = Unpublished.Dismissed.Unavailable.Capacity - Unpublished.Dismissed.Unavailable.Nuclear.Capacity
          )
 
+# Créer une variable factorielle pour clusteriser
+first_stage_data_clean <- first_stage_data_clean %>% 
+  mutate(cluster_var = interaction(auction_date_plus_one, auction))
 
 ```
 
@@ -63,9 +68,6 @@ first_stage_data_clean$weekday <- weekdays(first_stage_data_clean$delivery_date)
 
 colnames(first_stage_data_clean)
 ```
-Estimation after 2021 the REMIT publication policy
-
-
 
 
 Dernier test, on utilise les unavailabilities calculées par le modèle de random forest.
@@ -76,24 +78,61 @@ Et l'on compare avec l'indispo déclarée
 # perform first stage regression
 m_real <- lm(
   log_price_diff ~ Published.Dismissed.Predicted.Unavailable.Capacity + Unpublished.Dismissed.Predicted.Unavailable.Capacity+ gen_tot+
-    as.factor(year) + as.factor(month)+as.factor(weekday)
+    as.factor(year) + as.factor(month)+as.factor(weekday)+
     as.factor(creneau) + factor(auction_before),
   data= first_stage_data_clean)
 # Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_real, type = "HC0", cluster = ~ auction_date_plus_one)
+vcov_cluster <- vcovCL(m_real, type = "HC0", cluster = ~ cluster_var)
 # Erreurs standard clusterisées
 cl_se_real <- sqrt(diag(vcov_cluster))
 
 
-m_real_published <- lm(
-  log_price_diff ~ Published.Dismissed.Predicted.Unavailable.Capacity + Unpublished.Dismissed.Predicted.Unavailable.Capacity + Published.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Capacity  + gen_tot+
-    as.factor(year) + as.factor(month)+as.factor(weekday)
+m_real_all <- lm(
+  log_price_diff ~ Published.Dismissed.Predicted.Unavailable.Capacity + Unpublished.Dismissed.Predicted.Unavailable.Capacity +
+    Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+
+    + gen_tot+
+    as.factor(year) + as.factor(month)+as.factor(weekday)+
     as.factor(creneau) + factor(auction_before),
   data= first_stage_data_clean)
 # Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_real_published, type = "HC0", cluster = ~ auction_date_plus_one)
+vcov_cluster <- vcovCL(m_real_all, type = "HC0", cluster = ~ cluster_var)
 # Erreurs standard clusterisées
 cl_se_real_published <- sqrt(diag(vcov_cluster))
+
+
+# warning cannot put a dummy for date + creneau + auction
+# full determination, no variation
+m_dismissed <- lm(
+  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
+    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity + gen_tot+
+    as.factor(year) + as.factor(month) + as.factor(weekday) +
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean)
+
+
+vcov_cluster <- vcovCL(m_dismissed, type = "HC0", cluster = ~ cluster_var)
+# Erreurs standard clusterisées
+cl_se_dismissed <- sqrt(diag(vcov_cluster))
+# Matrice de variance-covariance clusterisée
+
+
+
+# warning cannot put a dummy for date + creneau + auction
+# full determination, no variation
+m_all <- lm(
+  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
+    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity+
+    Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
+    Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity + gen_tot+
+    as.factor(year) + as.factor(month) + as.factor(weekday) +
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean)
+
+vcov_cluster <- vcovCL(m_all, type = "HC0", cluster = ~ cluster_var)
+# Erreurs standard clusterisées
+cl_se_all <- sqrt(diag(vcov_cluster))
+# Matrice de variance-covariance clusterisée
+
 
 
 
@@ -104,209 +143,87 @@ cl_se_real_published <- sqrt(diag(vcov_cluster))
 
 ```{r, results = 'asis'}
 
-reg_table <- stargazer(m_real, m_real_published,
+reg_table <- stargazer(m_real, m_real_all, m_dismissed, m_all,
     type = "html",
-    se = list(cl_se_real, cl_se_real_published),
+    se = list(cl_se_real, cl_se_real_published, cl_se_dismissed, cl_se_all ),
     title = "Regression Results",
-    column.labels = c("Predicted RF", "Predicted RF", "Limiting", "Limiting"),
+    column.labels = c("", "", "", ""),
     keep = c('Constant', 'Published.Unavailable.Capacity', "Limiting.Unavailable.Capacity",
              "Unpublished.Limiting.Unavailable.Capacity","Unpublished.Predicted.Unavailable.Capacity",
-             'Unpublished.Unavailable.Capacity', "Predicted.Unavailable.Capacity",'gen_tot',
+             'Unpublished.Unavailable.Capacity', "Published.Predicted.Unavailable.Capacity",'gen_tot',
              "Published.Dismissed.Predicted.Unavailable.Capacity",'Published.Dismissed.Unavailable.Capacity',
-             'Unpublished.Dismissed.Unavailable.Capacity', "Unpublished.Dismissed.Predicted.Unavailable.Capacity")
+             'Unpublished.Dismissed.Unavailable.Capacity',
+             "Unpublished.Dismissed.Predicted.Unavailable.Capacity",
+             "Published.Dismissed.Limiting.Unavailable.Capacity" , "Unpublished.Dismissed.Limiting.Unavailable.Capacity" ,
+    "Published.Limiting.Unavailable.Capacity" ,"Unpublished.Limiting.Unavailable.Capacity",
+    "Published.Dismissed.Unavailable.Capacity" , "Published.Dismissed.Unavailable.Nuclear.Capacity",
+    "Unpublished.Dismissed.Unavailable.Capacity" , "Unpublished.Dismissed.Unavailable.Nuclear.Capacity",
+    "Published.Unavailable.Capacity" , "Published.Unavailable.Nuclear.Capacity",
+    "Unpublished.Unavailable.Capacity" , "Unpublished.Unavailable.Nuclear.Capacity"
+    )
 )
  
 ```
 
 
-With both for the post period to see any changes
-I would like to see it on the whole period
-
-
-On fait la même chose avec les dismissed
-
-```{r}
-
-# perform first stage regression
-m_basic_dismissed <- lm(
-  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
-    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity  + gen_tot+
-    as.factor(year) + as.factor(month),
-  data= first_stage_data_clean)
-# Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_basic_dismissed, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_basic_dismissed <- sqrt(diag(vcov_cluster))
-
-# dummy for creneau
-m_creneau_dismissed <- lm(
-  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
-    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity  + gen_tot +
-    as.factor(year) + as.factor(month)+as.factor(weekday) as.factor(creneau) ,
-  data= first_stage_data_clean)
-vcov_cluster <- vcovCL(m_creneau_dismissed, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_creneau_dismissed <- sqrt(diag(vcov_cluster))
-# use controls
-# put a dummy for the number of the auction
-# put a dummy for the creneau
-
-# warning cannot put a dummy for date + creneau + auction
-# full determination, no variation
-m_control_dismissed <- lm(
-  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
-    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity + gen_tot+
-    as.factor(year) + as.factor(month) +
-    as.factor(creneau) + factor(auction_before),
-  data= first_stage_data_clean)
-vcov_cluster <- vcovCL(m_control_dismissed, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_control_dismissed <- sqrt(diag(vcov_cluster))
-
-```
-
-
-```{r, results = 'asis'}
-# Create LaTeX code with regression results
-reg_table <- stargazer(m_basic_dismissed, m_creneau_dismissed, m_control_dismissed, 
-    type = "html",
-    se = list(cl_se_basic_dismissed, cl_se_creneau_dismissed, cl_se_control_dismissed),
-    title = "Regression Results",
-    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
-    keep = c('Constant', 'Published.Dismissed.Unavailable.Capacity', "Published.Dismissed.Unavailable.Nuclear.Capacity",
-             'Unpublished.Dismissed.Unavailable.Capacity', "Unpublished.Dismissed.Unavailable.Nuclear.Capacity",'gen_tot')
- )
-```
-
-
-Still keeping separate variables but within the same regression
-
-
-```{r}
-
-# perform first stage regression
-m_basic_all <- lm(
-  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
-    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity  + Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
-    Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity  + gen_tot+
-    as.factor(year) + as.factor(month),
-  data= first_stage_data_clean)
-# Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_basic_all, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_basic_all <- sqrt(diag(vcov_cluster))
-
-# dummy for creneau
-m_creneau_all <- lm(
-  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
-    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity  + Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
-    Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity  + gen_tot +
-    as.factor(year) + as.factor(month)+as.factor(weekday) as.factor(creneau) ,
-  data= first_stage_data_clean)
-vcov_cluster <- vcovCL(m_creneau_all, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_creneau_all <- sqrt(diag(vcov_cluster))
-# use controls
-# put a dummy for the number of the auction
-# put a dummy for the creneau
-
-# warning cannot put a dummy for date + creneau + auction
-# full determination, no variation
-m_control_all <- lm(
-  log_price_diff ~ Published.Dismissed.Unavailable.Capacity + Published.Dismissed.Unavailable.Nuclear.Capacity+
-    Unpublished.Dismissed.Unavailable.Capacity + Unpublished.Dismissed.Unavailable.Nuclear.Capacity  + Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
-    Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity + gen_tot+
-    as.factor(year) + as.factor(month) +
-    as.factor(creneau) + factor(auction_before),
-  data= first_stage_data_clean)
-vcov_cluster <- vcovCL(m_control_all, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_control_all <- sqrt(diag(vcov_cluster))
-
-```
-
-
-```{r, results = 'asis'}
-# Create LaTeX code with regression results
-reg_table <- stargazer(m_basic_all, m_creneau_all, m_control_all, 
-    type = "html",
-    se = list(cl_se_basic_all, cl_se_creneau_all, cl_se_control_all),
-    title = "Regression Results",
-    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
-    keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
-             'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",
-             "Published.Dismissed.Unavailable.Nuclear.Capacity",
-             'Unpublished.Dismissed.Unavailable.Capacity', "Unpublished.Dismissed.Unavailable.Nuclear.Capacity",'gen_tot')
- )
-```
-
-Using it as additional variation
-Dismissed are simply negative shocks to the capacity
 
 
 
+
+I use this additional variation to get a more precise estimate
 
 ```{r}
 first_stage_data_clean_negative_variation <- first_stage_data_clean %>%
   mutate(Published.Tot.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Dismissed.Unavailable.Capacity,
          Published.Tot.Unavailable.Nuclear.Capacity = Published.Unavailable.Nuclear.Capacity - Published.Dismissed.Unavailable.Nuclear.Capacity,
          Unpublished.Tot.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Dismissed.Unavailable.Capacity,
-         Unpublished.Tot.Unavailable.Nuclear.Capacity = Unpublished.Unavailable.Nuclear.Capacity - Unpublished.Dismissed.Unavailable.Nuclear.Capacity)
-         
+         Unpublished.Tot.Unavailable.Nuclear.Capacity = Unpublished.Unavailable.Nuclear.Capacity - Unpublished.Dismissed.Unavailable.Nuclear.Capacity,
+         Published.Tot.Predicted.Unavailable.Capacity = Published.Predicted.Unavailable.Capacity - Published.Dismissed.Predicted.Unavailable.Capacity,
+         Unpublished.Tot.Predicted.Unavailable.Capacity = Unpublished.Predicted.Unavailable.Capacity - Unpublished.Dismissed.Predicted.Unavailable.Capacity
+         )
 
-```
-
-
-```{r}
-
-# perform first stage regression
-m_basic_tot <- lm(
-  log_price_diff ~ Published.Tot.Unavailable.Capacity + Published.Tot.Unavailable.Nuclear.Capacity+
-    Unpublished.Tot.Unavailable.Capacity + Unpublished.Tot.Unavailable.Nuclear.Capacity  + gen_tot+
-    as.factor(year) + as.factor(month),
-  data= first_stage_data_clean_negative_variation)
-# Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_basic_tot, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_basic_tot <- sqrt(diag(vcov_cluster))
-
-# dummy for creneau
-m_creneau_tot <- lm(
-  log_price_diff ~ Published.Tot.Unavailable.Capacity + Published.Tot.Unavailable.Nuclear.Capacity+
-    Unpublished.Tot.Unavailable.Capacity + Unpublished.Tot.Unavailable.Nuclear.Capacity  + gen_tot +
-    as.factor(year) + as.factor(month)+as.factor(weekday) as.factor(creneau) ,
-  data= first_stage_data_clean_negative_variation)
-vcov_cluster <- vcovCL(m_creneau_tot, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_creneau_tot <- sqrt(diag(vcov_cluster))
-# use controls
-# put a dummy for the number of the auction
-# put a dummy for the creneau
 
 # warning cannot put a dummy for date + creneau + auction
 # full determination, no variation
-m_control_tot <- lm(
+m_control_all <- lm(
   log_price_diff ~ Published.Tot.Unavailable.Capacity + Published.Tot.Unavailable.Nuclear.Capacity+
     Unpublished.Tot.Unavailable.Capacity + Unpublished.Tot.Unavailable.Nuclear.Capacity + gen_tot+
-    as.factor(year) + as.factor(month) +
+    as.factor(year) + as.factor(month) + as.factor(weekday) +
     as.factor(creneau) + factor(auction_before),
   data= first_stage_data_clean_negative_variation)
-vcov_cluster <- vcovCL(m_control_tot, type = "HC0", cluster = ~ auction_date_plus_one)
+
+vcov_cluster <- vcovCL(m_control_all, type = "HC0", cluster = ~ cluster_var)
 # Erreurs standard clusterisées
-cl_se_control_tot <- sqrt(diag(vcov_cluster))
+cl_se_control_all <- sqrt(diag(vcov_cluster))
+
+
+# perform first stage regression
+m_real <- lm(
+  log_price_diff ~ Published.Tot.Predicted.Unavailable.Capacity + Unpublished.Tot.Predicted.Unavailable.Capacity+ gen_tot+
+    as.factor(year) + as.factor(month)+ as.factor(weekday)+
+    as.factor(creneau) + factor(auction_before),
+  data= first_stage_data_clean_negative_variation)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_real, type = "HC0", cluster = ~ cluster_var)
+# Erreurs standard clusterisées
+cl_se_real <- sqrt(diag(vcov_cluster))
+
+
 
 ```
 
 
 ```{r, results = 'asis'}
 # Create LaTeX code with regression results
-reg_table <- stargazer(m_basic_tot, m_creneau_tot, m_control_tot, 
+reg_table <- stargazer(m_real, m_control_all, 
     type = "html",
-    se = list(cl_se_basic_tot, cl_se_creneau_tot, cl_se_control_tot),
+    se = list(cl_se_real, cl_se_control_all),
     title = "Regression Results",
     column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
-    keep = c('Constant', 'Published.Tot.Unavailable.Capacity', "Published.Tot.Unavailable.Nuclear.Capacity",
-             'Unpublished.Tot.Unavailable.Capacity', "Unpublished.Tot.Unavailable.Nuclear.Capacity",'gen_tot')
+    keep = c('Constant', 'Published.Dismissed.Unavailable.Capacity', "Published.Dismissed.Unavailable.Nuclear.Capacity",
+             'Published.Tot.Predicted.Unavailable.Capacity' ,
+             "Published.Tot.Unavailable.Capacity", "Published.Tot.Unavailable.Nuclear.Capacity", 
+    "Unpublished.Tot.Unavailable.Capacity" , "Unpublished.Tot.Unavailable.Nuclear.Capacity","Unpublished.Tot.Predicted.Unavailable.Capacity",'gen_tot')
  )
 ```
 

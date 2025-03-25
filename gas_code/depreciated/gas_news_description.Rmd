@@ -265,8 +265,10 @@ nrow(instrument_days_supply)
 ```
 
 ```{r}
+colnames(info_supply)
+
 shock_info_supply <- info_supply %>% 
-  mutate(order = abs(shock_serie),
+  mutate(order = supply_news + demand_news,
          ptstat = (supply_news -moving_avg_news_supply)/moving_std_news_supply ) %>% 
   arrange(desc(order)) %>% 
   slice(1:20) %>% 
@@ -276,19 +278,7 @@ shock_info_supply <- info_supply %>%
 shock_info_supply
 ```
 
-```{r}
-#il faut enlever les demand news shock
-#pour avoir un vrai comparatif de jours contrôle
 
-
-sd(instrument_days_supply %>% 
-     pull(log_shock_serie))
-
-sd(info_supply %>%
- filter(demand_shock ==FALSE & supply_shock ==FALSE) %>% 
-     pull(log_shock_serie))
-
-```
 
 
 

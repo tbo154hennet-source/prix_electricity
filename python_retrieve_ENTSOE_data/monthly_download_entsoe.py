@@ -11,12 +11,12 @@ country_code = 'FR'
 # Define start and end dates
 start_date = pd.Timestamp('20150101', tz='Europe/Brussels')
 #end_date = pd.Timestamp('20170101', tz='Europe/Brussels')
-end_date = pd.Timestamp('20161231', tz='Europe/Brussels')
+end_date = pd.Timestamp('20171231', tz='Europe/Brussels')
 # Generate monthly date ranges
 monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
 import os
 #path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant\esp'  # Remplacez par votre chemin
-path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\day_ahead_prices\fr_bis'
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\day_ahead_prices\fr'
 os.chdir(path)
 
 

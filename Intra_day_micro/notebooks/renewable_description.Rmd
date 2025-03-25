@@ -1,0 +1,117 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r include=FALSE}
+library(readr)
+library(dplyr)
+library(readxl)
+library(arrow)
+library(lubridate)
+# Load the psych package
+library(psych)
+library(ggplot2)
+Sys.setenv(lang = "en_US")
+
+```
+
+Load associated data
+```{r}
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES'
+setwd(save_path_esp)
+renewable_shock_series <- read_parquet('renewable_forecasts_esp.parquet')
+```
+
+Get some summary statistics
+
+```{r}
+# some summary stat
+describe(renewable_shock_series %>% 
+           select(wind_solar_tot, day_ahead_forecast, intraday_forecast, 
+                  intraday_update_renewables, unpredicted_renewables ))
+```
+
+
+
+Plot the difference between the two graphs
+
+```{r}
+colnames(renewable_shock_series)
+date_time_string <- "2021/01/01 00:00:00"
+
+# Convert to POSIXct
+posixct_date_time <- as.POSIXct(date_time_string, format = "%Y/%m/%d %H:%M:%S")
+
+date_time_string <- "2021/01/07 00:00:00"
+
+# Convert to POSIXct
+posixct_date_time2 <- as.POSIXct(date_time_string, format = "%Y/%m/%d %H:%M:%S")
+
+
+renewable_shock_first_week <- renewable_shock_series%>% 
+  rename(datetime =`__index_level_0__`) %>% 
+  filter(datetime < posixct_date_time2 & datetime > posixct_date_time )
+
+my_plot <- ggplot(data =renewable_shock_first_week)+
+  geom_line(aes(x =datetime , y = intraday_Solar, color="Intraday Solar")) +
+geom_line(aes(x =datetime , y = Fore_Solar, color="Day Before Solar")) +
+  geom_line(aes(x =datetime , y = intraday_Wind, color="Intraday Wind")) +
+  geom_line(aes(x =datetime , y = Fore_Wind, color="Day Before Wind")) +
+  labs(x= 'Electricity delivery date', y = "Difference between the two predictions", 
+       title = "Intermittence uncertainty news shock") +
+  scale_color_manual(values = c("Intraday Solar" = "darkblue", "Day Before Solar" = "blue", "Intraday Wind" = "darkgreen", "Day Before Wind" = "lightgreen")) +
+  theme_minimal()
+
+my_plot
+```
+
+```{r}
+library(tidyverse)
+colnames(renewable_shock_series)
+# 
+# plot_data <- renewable_shock_series %>% 
+#   mutate(intraday_update_wind = intraday_Wind - Fore_Wind,
+#          intraday_update_solar =  intraday_Solar - Fore_Solar,
+#          year = year(`__index_level_0__`)) %>% 
+#   pivot_longer(cols = starts_with ("intraday_update_"),
+#                                    names_to = "plant_type", 
+#                                    values_to = "Unexpected.Capacity") %>% 
+#   group_by(plant_type, year) %>% 
+#   summarise(min_Unexpected.Capacity = min(Unexpected.Capacity, na.rm = TRUE),
+#             max_Unexpected.Capacity = max(Unexpected.Capacity, na.rm = TRUE),
+#          Unexpected.Capacity = mean(Unexpected.Capacity, na.rm = TRUE)) %>% 
+#   filter(plant_type!= "intraday_update_renewables" & year > 2017)
+# 
+# 
+# # Premier graphique: Unavailable Capacity par Fuel Type
+# plot1 <- ggplot(data = plot_data, aes(x = as.factor(year), y = Unexpected.Capacity, color = plant_type)) +
+#   # geom_bar(data = plot_data, aes(x = as.factor(year), y = min_Unexpected.Capacity, fill = plant_type), alpha=0.4, stat = "identity", position = "dodge") +
+#   # geom_bar(data = plot_data, aes(x = as.factor(year), y = max_Unexpected.Capacity, fill = plant_type), alpha=0.4, stat = "identity", position = "dodge") +
+#   geom_point()+
+#   labs(x = 'Date de publication', y = "Unavailable Capacity") +
+#   geom_errorbar(aes(x = as.factor(year), ymin = min_Unexpected.Capacity, ymax = max_Unexpected.Capacity))+
+#   theme_minimal()
+# 
+# plot1
+
+
+boxplot_data <- renewable_shock_series %>% 
+  mutate(intraday_update_wind = intraday_Wind - Fore_Wind,
+         intraday_update_solar =  intraday_Solar - Fore_Solar,
+         year = year(`__index_level_0__`)) %>% 
+  pivot_longer(cols = starts_with("intraday_update_"),
+                                   names_to = "plant_type", 
+                                   values_to = "Unexpected.Capacity") %>% 
+  mutate(plant_type = ifelse(plant_type == "intraday_update_wind", "Wind", "Solar")) %>% 
+  filter(year >2017)
+
+plot1 <- ggplot(data = boxplot_data, aes(x = as.factor(year), y = Unexpected.Capacity, color = plant_type)) +
+  # geom_bar(data = plot_data, aes(x = as.factor(year), y = min_Unexpected.Capacity, fill = plant_type), alpha=0.4, stat = "identity", position = "dodge") +
+  # geom_bar(data = plot_data, aes(x = as.factor(year), y = max_Unexpected.Capacity, fill = plant_type), alpha=0.4, stat = "identity", position = "dodge") +
+  geom_boxplot()+
+  labs(x = 'Date de publication', y = "Unavailable Capacity") +
+  theme_minimal()
+plot1
+```
+

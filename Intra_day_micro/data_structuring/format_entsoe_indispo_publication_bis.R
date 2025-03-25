@@ -23,40 +23,8 @@ unexpected_indispo_ENTSOE_data  <- bout_indispo_ENTSOE_data %>%
   filter(lapse < 24 & lapse > -24 )
 
 
-# test <- bout_indispo_ENTSOE_data %>% 
-#   filter(datetime_debut >= as.POSIXct("2021-01-01") & datetime_debut <= as.POSIXct("2021-12-31")) %>%
-#   filter(plant_type=="Nuclear" & businesstype == "Unplanned outage")
-
-
 
 colnames(unexpected_indispo_ENTSOE_data)
-
-#on se concentre sur les publications qui ont été faites 
-#à peu près en meêm temps que le début d'indispo
-#sinon cela signifie que ce n'est potentiellement pas le premier message
-
-# sample <- unexpected_indispo_ENTSOE_data %>% 
-#   sample_n(10)
-
-
-
-#je vais diviser mon échantillon entre
-
-#pour mon event study
-#pendant l'indispo (à l'heure près)
-
-
-# ont été publiées en même temps que le début de l'indispo
-
-
-# ont été publiées après la fin de l'indispo
-# entre les deux
-
-#on voudrait les auctions que cela aurait pu affecter
-#si jamais l'information était fluide
-# dans les fonctions suivantes, il ne faut donc aucune
-# référence à la date de publication de l'indispo
-
 
 
 
@@ -117,7 +85,6 @@ result_df <- NULL
 # row <- unexpected_indispo_ENTSOE_data %>% 
 #   filter(mrid =="DRDpGztCsBzVFjPnxosE8Q")
 
-
 test <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window)
 
 getwd()
@@ -160,9 +127,11 @@ actual_ENTSOE_indispo <- actual_ENTSOE_indispo %>%
 actual_ENTSOE_indispo <- actual_ENTSOE_indispo %>% 
   filter(duration >= 1)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(actual_ENTSOE_indispo, 'actual_ENTSOE_indispo.parquet')
+
+actual_ENTSOE_indispo <- read_parquet('actual_ENTSOE_indispo.parquet')
 
 actual_ENTSOE_indispo %>% 
   group_by(auction_before, auction_after) %>% 

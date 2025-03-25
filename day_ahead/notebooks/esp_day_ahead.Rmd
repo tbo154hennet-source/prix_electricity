@@ -20,34 +20,35 @@ setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")
 price_indispo_merge <- price_indispo_merge %>%
   fill(spot_gas, .direction = "up")
-price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]
 
-price_indispo_merge <- price_indispo_merge[!rowSums(sapply(price_indispo_merge, is.infinite)), ]
 
-price_indispo_merge$weekday <- weekdays(price_indispo_merge$delivery_date)
-
-colnames(price_indispo_merge)
 ```
 
 ```{r}
+
+colnames_with_capacity <- colnames(price_indispo_merge)[grepl("Capacity", colnames(price_indispo_merge))]
 #get monthly avg of unavailabilities
 capacity_fields <- 
-  c("Uneffective.Unavailable.Nuclear.Capacity", "Published.Unavailable.Nuclear.Capacity"  , "Unpublished.Unavailable.Nuclear.Capacity" ,"Planned.Unavailable.Nuclear.Capacity",
-    "Planned.Limiting.Capacity","Uneffective.Limiting.Capacity" , "Published.Limiting.Capacity" ,  "Unpublished.Limiting.Capacity",       
-"Uneffective.Unavailable.Capacity"  ,       "Published.Unavailable.Capacity" ,  "Unpublished.Unavailable.Capacity","Planned.Unavailable.Capacity",
-"Uneffective.Predicted.Unavailable.Capacity"  , "Published.Predicted.Unavailable.Capacity", "Unpublished.Predicted.Unavailable.Capacity", "Planned.Predicted.Unavailable.Capacity",
+  c(colnames_with_capacity,
+    "day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables")
 
-
-  "day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables")
-
+price_indispo_merge[colnames_with_capacity] <- lapply(price_indispo_merge[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+#
 price_indispo_merge <- price_indispo_merge %>% 
   mutate(across(all_of(capacity_fields), 
                 ~ . / 1000)) %>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
          Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
          Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity,
-         )
-  
+         ) 
+
+price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]
+
+price_indispo_merge <- price_indispo_merge[!rowSums(sapply(price_indispo_merge, is.infinite)), ]
+
+price_indispo_merge$weekday <- weekdays(price_indispo_merge$delivery_date)
+
+colnames(price_indispo_merge)  
   #group_by(year, month) %>% 
   # mutate(Tot_Unplanned_Unavailability_avg = mean(Tot_Unplanned_Unavailability ,na.rm = TRUE),
   #         Tot_Planned_Unavailability_avg = mean(Tot_Planned_Unavailability ,na.rm = TRUE),
@@ -232,7 +233,7 @@ reg_table <- stargazer( m_rf, m_rf_FE, m_lm, m_lm_FE,
     title = "Regression Results",
     column.labels = c("RF", "RF FE", "Limiting", "Limiting FE"),
     keep = c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
-    "Uneffective.Predicted.Unavailable.Capacity", "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Unavailable.Capacity",
+    "Uneffective.Predicted.Unavailable.Capacity", "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",
     "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "Uneffective.Limiting.Capacity",
       "gen_tot",
              "day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables")

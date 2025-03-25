@@ -4,10 +4,10 @@
 #qui typiquement est plus longue
 #mais dure médiane reste de 10h
 
-save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp'
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/ENTSOE_unavailabilities/ES/formatted'
 setwd(save_path_esp)
 
-bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data_pre_2018.parquet") %>% 
+bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet") %>% 
   arrange(datetime_debut) %>% 
   mutate(duration = as.numeric(datetime_fin - datetime_debut, units = "hours"),
          publication_duration = as.numeric(datetime_pub - datetime_debut, units = "hours"))

@@ -56,9 +56,11 @@ price_merge_CBF %>%
          day_ahead_forecast_fr, unpredicted_renewables_fr, intraday_update_renewables_fr) %>% 
   cor(use = "complete.obs")
 ```
+On constate quelque chose de connu chez les électriciens.
+Les renouvelables à l'échelle du continent sont corrolés de l'ordre de 60 %
 
-
-
+On cherche à savoir si sur le marché intra daily,
+on répond aux indispos et renouvelables par des imports
 
 ```{r}
 
@@ -66,9 +68,11 @@ import_data <- price_merge_CBF %>%
   select(SCH_EX_Spread_FR_ES, SCH_EX_Spread_ES_FR, 
          SCH_EX_DA_FR_ES, SCH_EX_DA_ES_FR,
          year, month, weekday,
+         cl_rf_id_esp , cl_rf_id_fr, 
          Uneffective.Predicted.Unavailable.Capacity_esp,
          Uneffective.Predicted.Unavailable.Capacity_fr,
-         Planned.Predicted.Unavailable.Capacity_esp,Planned.Predicted.Unavailable.Capacity_fr,
+         Planned.Predicted.Unavailable.Capacity_esp,
+         Planned.Predicted.Unavailable.Capacity_fr,
          day_ahead_forecast_esp, unpredicted_renewables_esp, intraday_update_renewables_esp,
          day_ahead_forecast_fr, unpredicted_renewables_fr, intraday_update_renewables_fr, datetime) %>% 
   na.omit()
@@ -82,7 +86,10 @@ m_ES_FR <- lm(SCH_EX_Spread_ES_FR ~ SCH_EX_DA_ES_FR+
                       day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr,
                     data = import_data)
 
+# Matrice de variance-covariance robuste à l'hétéroscédasticité avec clusters multiples
+vcov_cluster <- vcovCL(m_ES_FR, type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
 
+cl_se_es_fr <- sqrt(diag(vcov_cluster))
 
 m_FR_ES <- lm(SCH_EX_Spread_FR_ES ~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Unavailable.Capacity_esp+
                       Uneffective.Predicted.Unavailable.Capacity_fr+
@@ -91,6 +98,12 @@ m_FR_ES <- lm(SCH_EX_Spread_FR_ES ~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Unava
                       day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
                       day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr,
                     data = import_data)
+
+vcov_cluster <- vcovCL(m_FR_ES , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
+# Erreurs standard clusterisées
+cl_se_fr_es <- sqrt(diag(vcov_cluster))
+
+
 
 m_ES_FR_FE <- lm(SCH_EX_Spread_ES_FR ~ SCH_EX_DA_ES_FR +
                    Uneffective.Predicted.Unavailable.Capacity_esp+
@@ -102,6 +115,9 @@ m_ES_FR_FE <- lm(SCH_EX_Spread_ES_FR ~ SCH_EX_DA_ES_FR +
     as.factor(year) + as.factor(month) + as.factor(weekday),
                     data = import_data)
 
+vcov_cluster <- vcovCL(m_ES_FR_FE , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
+cl_se_es_fr_fe <- sqrt(diag(vcov_cluster))
+
 m_FR_ES_FE <- lm(SCH_EX_Spread_FR_ES~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Unavailable.Capacity_esp+
                       Uneffective.Predicted.Unavailable.Capacity_fr+
                    Planned.Predicted.Unavailable.Capacity_esp+
@@ -110,6 +126,9 @@ m_FR_ES_FE <- lm(SCH_EX_Spread_FR_ES~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Una
                       day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+ 
     as.factor(year) + as.factor(month) + as.factor(weekday),
                     data = import_data)
+vcov_cluster <- vcovCL(m_FR_ES_FE , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
+# Erreurs standard clusterisées
+cl_se_fr_es_fe <- sqrt(diag(vcov_cluster))
 
 
 ```
@@ -120,6 +139,7 @@ m_FR_ES_FE <- lm(SCH_EX_Spread_FR_ES~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Una
 reg_table <- stargazer( m_FR_ES,  m_FR_ES_FE, m_ES_FR, m_ES_FR_FE,
     type = "html",
     dep.var.labels.include = FALSE,
+    se = list(cl_se_fr_es, cl_se_fr_es_fe, cl_se_es_fr, cl_se_es_fr_fe),
     #se = list(cl_se_log, cl_se_log_FE, cl_se_control),
     title = "Regression Results",
     column.labels = c("FR -> ES",  "FR -> ES (with FE)", "ES -> FR", "ES -> FR (with FE)"),
@@ -147,11 +167,18 @@ import_data <- price_merge_CBF %>%
   select(SCH_EX_Spread_FR_ES, SCH_EX_Spread_ES_FR, 
          SCH_EX_DA_FR_ES, SCH_EX_DA_ES_FR,
          price_fr, price_esp,
+         cl_rf_id_esp, cl_rf_id_fr,
+         gen_tot_esp, gen_tot_fr,
          year, month, weekday,
+         spot_gas_esp ,
          Uneffective.Predicted.Unavailable.Capacity_esp,
          Uneffective.Predicted.Unavailable.Capacity_fr,
-         Published.Predicted.Unavailable.Capacity_esp,Published.Predicted.Unavailable.Capacity_fr,
-         Planned.Predicted.Unavailable.Capacity_esp,Planned.Predicted.Unavailable.Capacity_fr,
+         Unpublished.Predicted.Unavailable.Capacity_esp,
+         Unpublished.Predicted.Unavailable.Capacity_fr,
+         Published.Predicted.Unavailable.Capacity_esp,
+         Published.Predicted.Unavailable.Capacity_fr,
+         Planned.Predicted.Unavailable.Capacity_esp,
+         Planned.Predicted.Unavailable.Capacity_fr,
          day_ahead_forecast_esp, unpredicted_renewables_esp, intraday_update_renewables_esp,
          day_ahead_forecast_fr, unpredicted_renewables_fr, intraday_update_renewables_fr, datetime) %>% 
   mutate(price_diff_fr_esp = price_fr - price_esp,
@@ -165,23 +192,38 @@ m_CBF <- lm(CBF_DA ~
               price_esp + price_diff_fr_esp+
                 Uneffective.Predicted.Unavailable.Capacity_esp+
                       Uneffective.Predicted.Unavailable.Capacity_fr+
+              Unpublished.Predicted.Unavailable.Capacity_esp+
+                      Unpublished.Predicted.Unavailable.Capacity_fr+
                 Published.Predicted.Unavailable.Capacity_esp+
                       Published.Predicted.Unavailable.Capacity_fr+
-                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
-                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr,
+              Planned.Predicted.Unavailable.Capacity_esp+
+         Planned.Predicted.Unavailable.Capacity_fr+
+            gen_tot_esp+ gen_tot_fr+
+             day_ahead_forecast_esp +  day_ahead_forecast_fr  ,
                     data = import_data)
 
+vcov_cluster <- vcovCL(m_CBF , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
+# Erreurs standard clusterisées
+cl_se_cbf <- sqrt(diag(vcov_cluster))
 
 m_CBF_FE <- lm(CBF_DA ~ price_esp + price_diff_fr_esp+
                    Uneffective.Predicted.Unavailable.Capacity_esp+
                       Uneffective.Predicted.Unavailable.Capacity_fr+
                    Published.Predicted.Unavailable.Capacity_esp+
                       Published.Predicted.Unavailable.Capacity_fr+
+                 Unpublished.Predicted.Unavailable.Capacity_esp+
+                      Unpublished.Predicted.Unavailable.Capacity_fr+
+                 Planned.Predicted.Unavailable.Capacity_esp+
+         Planned.Predicted.Unavailable.Capacity_fr+
+           gen_tot_esp+ gen_tot_fr+
                       day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
                       day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+
     as.factor(year) + as.factor(month) + as.factor(weekday),
                     data = import_data)
 
+vcov_cluster <- vcovCL(m_CBF , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
+# Erreurs standard clusterisées
+cl_se_cbf_fe <- sqrt(diag(vcov_cluster))
 
 ```
 
@@ -190,6 +232,7 @@ m_CBF_FE <- lm(CBF_DA ~ price_esp + price_diff_fr_esp+
 
 reg_table <- stargazer( m_CBF, m_CBF_FE,
     type = "html",
+    se = list(cl_se_cbf, cl_se_cbf_fe),
     #se = list(cl_se_log, cl_se_log_FE, cl_se_control),
     title = "Regression Results",
     column.labels = c("ES -> FR", "ES -> FR (with FE)"),
@@ -200,6 +243,8 @@ reg_table <- stargazer( m_CBF, m_CBF_FE,
                       "Planned.Predicted.Unavailable.Capacity_fr",
              "Published.Predicted.Unavailable.Capacity_esp",
                       "Published.Predicted.Unavailable.Capacity_fr",
+             "Unpublished.Predicted.Unavailable.Capacity_esp",
+                      "Unpublished.Predicted.Unavailable.Capacity_fr",
               "day_ahead_forecast_esp","unpredicted_renewables_esp", "intraday_update_renewables_esp",
                       "day_ahead_forecast_fr", "unpredicted_renewables_fr", "intraday_update_renewables_fr")
 )
@@ -211,34 +256,75 @@ On regarde une transmission chocs de prix à l'étranger
 Même regression que esp_day_ahead mais cette fois sur le prix de l'autre pays
 On vérifie qu'en contrôlant par la différence de prix, ce lien disparaît
 
-On considère d'abord l'effet des indispos + renouvelables (chocs d'offre) sur le prix en Espagne
+On considère d'abord l'effet des indispos + renouvelables (chocs d'offre) sur le prix en France
 
 ```{r}
 
+import_data_reg <- import_data %>% 
+  filter(is.finite(log(price_esp)))
+
+
+colnames_with_capacity <- colnames(import_data_reg)[grepl("Capacity", colnames(import_data_reg))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast_esp",  "unpredicted_renewables_esp", "intraday_update_renewables_esp",
+    "day_ahead_forecast_fr",  "unpredicted_renewables_fr", "intraday_update_renewables_fr")
+
+import_data_reg[colnames_with_capacity] <- lapply(import_data_reg[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+#
+import_data_reg <- import_data_reg %>% 
+  mutate(across(all_of(capacity_fields), 
+                ~ . / 1000))
+
+import_data_reg <- import_data_reg[complete.cases(import_data_reg),]
+import_data_reg <- import_data_reg[!rowSums(sapply(import_data_reg, is.infinite)), ]
+
+
 # perform first stage regression
-m_log <- lm(
-  log(price_fr) ~ Planned.Predicted.Unavailable.Capacity_esp+  Published.Predicted.Unavailable.Capacity_esp + Unpublished.Predicted.Unavailable.Capacity_esp+ 
+m_rf <- lm(
+  log(price_esp) ~ Planned.Predicted.Unavailable.Capacity_esp+  
+    Published.Predicted.Unavailable.Capacity_esp + 
+    Unpublished.Predicted.Unavailable.Capacity_esp+ 
     Uneffective.Predicted.Unavailable.Capacity_esp + 
-     gen_tot+ day_ahead_forecast,
-  data= price_merge_CBF)
+     gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp ,
+  data= import_data_reg)
 
 
-vcov_cluster <- vcovCL(m_rf , type = "HC0", cluster = ~ cl_rf_id_esp)
+vcov_cluster <- vcovCL(m_rf , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
 cl_se_rf_esp <- sqrt(diag(vcov_cluster))
 
 m_rf_FE <- lm(
-  log(price_fr) ~ Published.Predicted.Unavailable.Capacity_esp + Unpublished.Predicted.Unavailable.Capacity_esp+ 
+  log(price_esp) ~ Planned.Predicted.Unavailable.Capacity_esp+ 
+    Published.Predicted.Unavailable.Capacity_esp + Unpublished.Predicted.Unavailable.Capacity_esp+ 
     Uneffective.Predicted.Unavailable.Capacity_esp + 
-    gen_tot+ day_ahead_forecast   +
-    spot_gas + unpredicted_renewables + intraday_update_renewables + 
+    gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp +
+    spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp + 
     as.factor(year) + as.factor(month) + as.factor(weekday),
-  data= price_merge_CBF)
+  data=import_data_reg)
 # Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_rf_FE , type = "HC0", cluster = ~ cl_rf_id)
+vcov_cluster <- vcovCL(m_rf_FE , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
 # Erreurs standard clusterisées
 cl_se_rf_FE <- sqrt(diag(vcov_cluster))
 
-
+m_rf_control <- lm(
+  log(price_esp) ~ Planned.Predicted.Unavailable.Capacity_esp+ 
+    Published.Predicted.Unavailable.Capacity_esp + 
+    Unpublished.Predicted.Unavailable.Capacity_esp+ 
+    Uneffective.Predicted.Unavailable.Capacity_esp + 
+    Planned.Predicted.Unavailable.Capacity_fr+ 
+    Published.Predicted.Unavailable.Capacity_fr +
+    Unpublished.Predicted.Unavailable.Capacity_fr+ 
+    Uneffective.Predicted.Unavailable.Capacity_fr + 
+    gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp + day_ahead_forecast_fr+
+    spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp +
+    unpredicted_renewables_fr + intraday_update_renewables_fr +
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+  data= import_data_reg)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_control  , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
+# Erreurs standard clusterisées
+cl_se_rf_control <- sqrt(diag(vcov_cluster))
 
 
 ```
@@ -248,15 +334,12 @@ cl_se_rf_FE <- sqrt(diag(vcov_cluster))
 ```{r, results = 'asis'}
 
 
-reg_table <- stargazer( m_log, m_log_FE, m_log_control, 
+reg_table <- stargazer( m_rf, m_rf_FE, m_rf_control, 
     type = "html",
-    se = list(cl_se_log, cl_se_log_FE, cl_se_log_control),
+    se = list(cl_se_rf_esp, cl_se_rf_FE, cl_se_rf_control),
     title = "Regression Results",
     column.labels = c("Basic", "Time FE", "+ Controls"),
-    keep = c("Published.Unavailable.Capacity" , 
-     "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
-     "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
-    "Uneffective.Unavailable.Nuclear.Capacity", "gen_tot",
+    keep = c(".Capacity", "gen_tot",
              "day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables")
 )
  

@@ -6,7 +6,7 @@ library(arrow)
 library(lubridate)
 library(tidyr)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 
 
@@ -262,18 +262,17 @@ colnames(first_stage_data)
 
 
 #getting outages share
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/renewable_forecast"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
 setwd(save_path_data)
 
-renewable_forecasts <- read_parquet('renewable_forecasts.parquet')
-gen_tot <- renewable_forecasts %>%
-  select(`__index_level_0__`, gen_tot, wind_solar_tot)
+renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
+colnames(renewable_forecasts)
 
 #nota bene intradailiy forecast commence à partir du 13 février 2018 13-02-2018
 #sample start
 
 first_stage_data <- first_stage_data %>%
-  left_join(gen_tot, by=c('datetime' = '__index_level_0__'))
+  left_join(renewable_forecasts, by=c('datetime' = '__index_level_0__'))
 
 
 
@@ -313,7 +312,7 @@ first_stage_data  <-
 
 getwd()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(first_stage_data, 'first_stage_data.parquet')
 

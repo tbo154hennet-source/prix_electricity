@@ -1754,296 +1754,508 @@ display: none;
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0d2QoJ0M6L1VzZXJzL0RCVDNLRC9EZXNrdG9wL0V0dWRlX21hY3JvX2VsZWMvREFUQS9nYXNfbmV3c19kYXRhJylcbmBgYCJ9 -->
-<pre class="r"><code>setwd(&#39;C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data&#39;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZzogVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdhcyBjaGFuZ2VkIHRvIEM6L1VzZXJzL0RCVDNLRC9EZXNrdG9wL0V0dWRlX21hY3JvX2VsZWMvREFUQS9nYXNfbmV3c19kYXRhIGluc2lkZSBhIG5vdGVib29rIGNodW5rLiBUaGUgd29ya2luZyBkaXJlY3Rvcnkgd2lsbCBiZSByZXNldCB3aGVuIHRoZSBjaHVuayBpcyBmaW5pc2hlZCBydW5uaW5nLiBVc2UgdGhlIGtuaXRyIHJvb3QuZGlyIG9wdGlvbiBpbiB0aGUgc2V0dXAgY2h1bmsgdG8gY2hhbmdlIHRoZSB3b3JraW5nIGRpcmVjdG9yeSBmb3Igbm90ZWJvb2sgY2h1bmtzLlxuIn0= -->
-<pre><code>Warning: The working directory was changed to C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBJbXBvcnQgdGhlIGZ1bmN0aW9ucyBmcm9tICdteV9mdW5jdGlvbnMuUidcblN5cy5zZXRlbnYobGFuZyA9IFwiZW5fVVNcIilcblxubmV3c19kYXRhX2Z1bGwgPC0gcmVhZF9wYXJxdWV0KFwic3RvcmVfZnVsbF9uZXdzX2RhdGEucGFycXVldFwiKVxuXG5uZXdzX2RhdGFfZnVsbCRkYXRldGltZSA8LSBhcy5EYXRlKGZvcm1hdChhcy5EYXRlKG5ld3NfZGF0YV9mdWxsJGRhdGUsIFwiJWIgJWQsICVZXCIpLCBcIiVZLSVtLSVkXCIpKVxuXG5uZXdzX2RhdGFfZnVsbCRkYXRldGltZSA8LSBpZmVsc2UoIGlzLm5hKG5ld3NfZGF0YV9mdWxsJGRhdGV0aW1lKSwgYXMuRGF0ZShmb3JtYXQoYXMuRGF0ZShuZXdzX2RhdGFfZnVsbCRkYXRlLCBcIiVkICViICVZXCIpLCBcIiVZLSVtLSVkXCIpKSwgbmV3c19kYXRhX2Z1bGwkZGF0ZXRpbWUpXG5cbm5ld3NfZGF0YV9mdWxsIDwtIG5ld3NfZGF0YV9mdWxsICU+JSBcbiAgbXV0YXRlKGRhdGV0aW1lID0gYXMuRGF0ZShkYXRldGltZSkpICU+JSBcbiAgYXJyYW5nZShkYXRldGltZSlcblxuIFxuYGBgIn0= -->
-<pre class="r"><code># Import the functions from &#39;my_functions.R&#39;
-Sys.setenv(lang = &quot;en_US&quot;)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc2V0d2QoJ0M6L1VzZXJzL0RCVDNLRC9EZXNrdG9wL0V0dWRlX21hY3JvX2VsZWMvREFUQS9nYXNfbmV3c19kYXRhJylcbiMgSW1wb3J0IHRoZSBmdW5jdGlvbnMgZnJvbSAnbXlfZnVuY3Rpb25zLlInXG5TeXMuc2V0ZW52KGxhbmcgPSBcXGVuX1VTXFwpXG5cbm5ld3NfZGF0YV9mdWxsIDwtIHJlYWRfcGFycXVldChcXHN0b3JlX2Z1bGxfbmV3c19kYXRhLnBhcnF1ZXRcXClcblxubmV3c19kYXRhX2Z1bGwkZGF0ZXRpbWUgPC0gYXMuRGF0ZShmb3JtYXQoYXMuRGF0ZShuZXdzX2RhdGFfZnVsbCRkYXRlLCBcXCViICVkXG5gYGAifQ== -->
+<pre class="r"><code>```r
+setwd(&#39;C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data&#39;)
+# Import the functions from &#39;my_functions.R&#39;
+Sys.setenv(lang = \en_US\)
 
-news_data_full &lt;- read_parquet(&quot;store_full_news_data.parquet&quot;)
+news_data_full &lt;- read_parquet(\store_full_news_data.parquet\)
 
-news_data_full$datetime &lt;- as.Date(format(as.Date(news_data_full$date, &quot;%b %d, %Y&quot;), &quot;%Y-%m-%d&quot;))
-
-news_data_full$datetime &lt;- ifelse( is.na(news_data_full$datetime), as.Date(format(as.Date(news_data_full$date, &quot;%d %b %Y&quot;), &quot;%Y-%m-%d&quot;)), news_data_full$datetime)
-
-news_data_full &lt;- news_data_full %&gt;% 
-  mutate(datetime = as.Date(datetime)) %&gt;% 
-  arrange(datetime)
-
- </code></pre>
+news_data_full$datetime &lt;- as.Date(format(as.Date(news_data_full$date, \%b %d</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubmV3c19kYXRhX2FsbCAlPiUgXG4gIGZpbHRlcihkYXRldGltZSA9PSBcIjIwMjEtMDUtMTJcIilcbmBgYCJ9 -->
-<pre class="r"><code>news_data_all %&gt;% 
-  filter(datetime == &quot;2021-05-12&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInRibF9kZiIsInRibCIsImRhdGEuZnJhbWUiXSwibnJvdyI6MTMsIm5jb2wiOjMsInN1bW1hcnkiOnsiQSB0aWJibGUiOlsiMTMgw5cgMyJdfX0sInJkZiI6Ikg0c0lBQUFBQUFBQUJzVlZ3VzdiUmhCbExOdHRCRGdJMEIrWW15KzJnS0pBVWJTSDFGVmdPNDN0dXBWVEJlZ2hXSEhINGtMa0xyTzdsTUtjL0J2OW0zNURQNkcvMEh2Y055UVhUdFZMTDBVRlNDU1hPMi9lZXpNNyt1bjU2eS9HcjhkWmxvMnkzZDJkYkxTSDIyenYxYzNwOFZkWmhvVXNlNVR0Wm8vbCtnNmJQdXQyWnRsVGZBK0dGMjllV0NwTWlNNmJuTll1Y2ppaVVDalBoU3MxKzBDYUsyVTFoZWlkWFZKZW1rcEZKcFZINHl6ZGVsZFJMSmhlVFdZVGNxWWsyYnRVZ1l6VkRXTGFJYzNOdkZDUm9pTitWM01lKzhDWHlnWnNuWnJZZGpFMU9IQWczRmtsOEFwd2EvWnF5YUFZQTM2V0JZY0liR3BaK1RCZ241NGhvbkRLYXdPR1lDV0V2QWtzU0luK3F2VXVYekZRVkdVMDNVbzh1VnRTVU90OFJJNEJiWGF0TEt4WU5LMmdIWk4xVWRRMklGT2Jta3RqbVVKVDEyV0xsd3VQVGJKUGxvUG91MUFycHFscmJOTFVWSFVpK3N1RjI5Q3NqejJKSkxTdjVUWDIyMmhzQXdSVTR3cDBDcG9xN3dDcTZOU1ZwZHRJanFrcm5UWGdjWjE0VE5zRjdJbFI1YXNoeFhKdXlwS3VlRVBuQ3NpRjhXRExUQ1lFZ2Q4WVFBdXRRWUZZMDdrT1QzUFBLbUNQYmxpRS9ETmIvcER0MlpEdTVOS2hIaUYyNVVJUmxJWmZYUUxuNFVsbEl1cytsd0V5U2pObkRhTzBhb25YYktFcXkrNjYvamg3SUdVQ1FiRlVXUXA1NDQyeXk1SWZ1S0tFVU5YVUV6cG56My9jL1FwZDBsMnRhOGd5RW9MOXlyck5KRlgwMG1nTmdETjJmbWxVcno5UkZpamZXTnNWRVZtbHFSc3VKelF2Mk1JdnVEblFxazIrb2dYRUkzWFNmL0VpQ0VsZ0RMQkRMd241cSsrZm9aYWd4UkhkRkVrN2V4aXBUdDExUkdkdVBhSEx4dGRGUzBHMXFVdCsvc0Y4M0dwRkU3WGIySytGRVBKb3gzSmliRzZzSEpMRDBPWE5YY1g5bVJLWEN1am85cGxJUzJTWHdNUjQzblZkUjJLS29FQW5CYU5xT0FubmpZZTdDamxuYUFSbnY2RVpwa0xWTjZ5VWIvYTJZWDRQZjc5clVVY2x1bzhFQ2tmTTVLa2hEbnRzYVh0TWowT3ExRXFzcmIxYmxGelJ4dm5BbUREQ2R6WjlLSU9EUWVBQUxSaFJUMlErZmZ2N2o3L0pPUHV2cjF1RGNpOHZWUWpEa0V5THU4OHg4M0Q5c0RVODkvdnA4bStlK2liNm41KzJwRnFGQmhna2pkSmlOTEZNcy9CVERkM1JWT2w1TEljMnZvbHR6VnRZanozT1c4STd3SGZuRGovMzkvZC85aHQzN3Jjc0hRTmFUVzQ5UW5wai93YjNpYXU3dmtDZy9HbnRid1UvOGxzTFQzR0NnYVNQODZLeHErUFB2OXg2UDZwbDBtVGpicW4vSEF6M0J4L2RqM29hbzBSMlAvbkhNdVdUQzN1bFduQ1prRFd2aDlzbjhLQ3pZSUl4WldNU2l0VXdpUzZxRkRMT1habFcrcDc2OEJkd0VnWGx5Z2NBQUE9PSJ9 -->
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["title"],"name":[1],"type":["chr"],"align":["left"]},{"label":["datetime"],"name":[2],"type":["date"],"align":["right"]},{"label":["event_type"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"In historic votes, shareholders demand strong climate action from the U.S. oil and gas industry","2":"2021-05-12","3":"demand"},{"1":"What to expect from Kansas City gas prices as national average hits highest in years","2":"2021-05-12","3":"demand"},{"1":"Gas hoarding on the rise as demand skyrockets amid fears of a shortage","2":"2021-05-12","3":"demand"},{"1":"Panic buying - not actual pipeline supply - bringing lines to Lake County gas pumps","2":"2021-05-12","3":"supply"},{"1":"Low Supply At Gas Pumps Continues In North Carolina Following Colonial Pipeline Cyberattack","2":"2021-05-12","3":"supply"},{"1":"Will New Hampshire see issues with gas supply and price increases due to Colonial Pipeline cyberattack?","2":"2021-05-12","3":"supply"},{"1":"Most stations had no gas or limited supplies on Wednesday evening","2":"2021-05-12","3":"supply"},{"1":"Gas supply is low in the Triangle and prices are up. Here’s what you need to know.","2":"2021-05-12","3":"supply"},{"1":"Middle Georgia gas stations are running low on fuel. When will supply pick back up?","2":"2021-05-12","3":"supply"},{"1":"Is there a gas shortage in NJ? Not yet but don't panic buy, Gov. Murphy says","2":"2021-05-12","3":"supply"},{"1":"Oil pipeline shutdown: Where does Cincinnati's gas come from and how does it get here?","2":"2021-05-12","3":"supply"},{"1":"Gas Panic Comes Ahead of Hurricane Season; Storm Supplies Squeezed By Weather, Pandemic","2":"2021-05-12","3":"supply"},{"1":"'Panic pumpers' making problem worse, some SC stations out of gas","2":"2021-05-12","3":"supply"}],"options":{"columns":{"min":{},"max":[10],"total":[3]},"rows":{"min":[10],"max":[10],"total":[13]},"pages":{}}}
-  </script>
-</div>
-<!-- rnb-frame-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuTkFcbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubmV3c19kYXRhICU+JSBcbiAgZmlsdGVyKGRhdGV0aW1lID09IFxcMjAyMi0wMi0yNFxcKVxuYGBgXG5gYGByXG5OQVxuYGBgXG5gYGAifQ== -->
+<pre class="r"><code>```r
+news_data %&gt;% 
+  filter(datetime == \2022-02-24\)</code></pre>
 <pre class="r"><code>NA</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInRibF9kZiIsInRibCIsImRhdGEuZnJhbWUiXSwibnJvdyI6MTIsIm5jb2wiOjMsInN1bW1hcnkiOnsiQSB0aWJibGUiOlsiMTIgw5cgMyJdfX0sInJkZiI6Ikg0c0lBQUFBQUFBQUJzVlV3VTRiTVJBMWJLQWxBb1RVSDVnYlJVcFdLRlVsQkpXQUFxMTZvRVdVQ05STDYyeWNqWW5YWHRsZVFucmlOL29KL1oxK1FyK2haOUx4cnQyU2JkUmIxVWlidGNjemI5NDh6K3o1OGRXejVsV1RFQktSUm1PUlJFdTRKRXZkaTFmdEhVTFFRTWdDYVpBVjk3NUZweWVsSnlFYitLejZnLzNMSWJYQURkZ2hnNVB1cGdGanFVd1lLQW5uaFRHY29rbXJvaWVZZ1pRYXlPa2tZOUpDbjJWVTl2Yzl6RjdsQzFiQlVXSGhOVHJpOGt3SjlHbkJ5MEtrVk9OeFYxb3U0SXhPNExnTU4zREtMQ0YzRHVKRkJTSExMSW5taHB0ZGVJNjh1RXhMdEpGVVk2QTloZmduaFZZNSszNzNCZWtXZVM0bW5zWk9kNlFwbHd3dXFkNzEvRXU4eWd1U3doclk3QW1hakRMS3hXWUxESjBZck52SGIvdVFJUlhXL0E3azdFRTU0SjVRa1kvN1ZCSHk1SFBORTR5NExySWM2TUF5alhwOHpyWEtxdnlTMmtKVFVick9SNDNoNlJrcXpzMlE5YUd6M2VscytUeUhWUjRVSHdWaU02VUFvbm4yWlpaMC9oVjRvTjI2dllVM01rRDFMUnlXakQzVWtZTlNnMEY1bys4ZlN2M0JleGgydy9Sc1ViODBHeWdOZHF6ZzdlSEZPK2ZCbFRRdFlDYWhBamN5TFh1dDcrREgzQTdMRnJ4a3hvWmlxd3p0Y0tkamQ2Y3pTczYvb0QrS2ZYT3FUSUs5TXhzemNSRkdaZGoyY1RkMlZDd3plOEJ1YzZHTVl3cWE1VXBidkFJZVpzRURiczJ3K0NzREVxMjdhVHY0OXZYQURlZS9ldGZHZlNrUjFCZy82c0hZT01ZSzhYMWYrd1FzVjZNOGZ6Y3pYdjlyVnl0TzBveUY0cUpndE53SzVqZVArMWlwNVZuWU43RkhwZjFvSnptcllhMW9OWTREM2hvK2kzZjRONTFPZjFTT2k5T2FpRTJFcHZGQVkwZ2w1UXpjSTVXWFRZNkI3bU83WEF0ZTBEWERSaUZkOG40N0dSWnkxTzUwYXVkUkxsT1h0RFJWdnpXL1huMndqaW9hVVNDN0hQUmpNc1hKQ1JJSjJtTWlJUGZaalYrdW93YWxCREYrdUdTWXZpWmFUV3lWcFNHa21TZ1JMRlVYM2Y4RUd3NlE0b0lHQUFBPSJ9 -->
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["title"],"name":[1],"type":["chr"],"align":["left"]},{"label":["datetime"],"name":[2],"type":["date"],"align":["right"]},{"label":["event_type"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"What is the EU's stance on Russia's roubles gas payment demand?","2":"2022-04-27","3":"demand"},{"1":"Russia to Cut Gas to Poland, Bulgaria Until Pay Demands Met","2":"2022-04-27","3":"demand"},{"1":"Russian gas crisis: 5 things to know about Europe’s supply","2":"2022-04-27","3":"supply"},{"1":"Ukraine War: Russia gas supply cuts 'blackmail', says EU","2":"2022-04-27","3":"supply"},{"1":"Russia halts gas supplies to Poland and Bulgaria","2":"2022-04-27","3":"supply"},{"1":"European gas prices jump after Gazprom cuts natural gas to Poland and Bulgaria. (Published 2022)","2":"2022-04-27","3":"supply"},{"1":"Europe decries 'blackmail' as Russia cuts gas to Poland, Bulgaria","2":"2022-04-27","3":"supply"},{"1":"Poland, Bulgaria, Defiant After Russia Cuts off Gas Supply","2":"2022-04-27","3":"supply"},{"1":"Russia severs natural gas supplies for two NATO nations, escalating standoff with the West","2":"2022-04-27","3":"supply"},{"1":"Russia-Ukraine war: Gazprom cuts gas supplies to Poland, Bulgaria","2":"2022-04-27","3":"supply"},{"1":"Moscow cuts gas supply to some E.U. states; explosions reported in Russia","2":"2022-04-27","3":"supply"},{"1":"Gazprom cuts supplies to Poland, Bulgaria","2":"2022-04-27","3":"supply"}],"options":{"columns":{"min":{},"max":[10],"total":[3]},"rows":{"min":[10],"max":[10],"total":[12]},"pages":{}}}
-  </script>
-</div>
-<!-- rnb-frame-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbImRhdGEuZnJhbWUiXSwibnJvdyI6MTIsIm5jb2wiOjgsInN1bW1hcnkiOnsiRGVzY3JpcHRpb24iOlsiZGYgWzEyIMOXIDhdIl19fSwicmRmIjoiSDRzSUFBQUFBQUFBQnQxV1cyOFRSeFRleEE0a1VhQ290SDFyZFVScHBVb2hnaUFxcEY2ZDJKaElrRmpFWE43UVpQZllPM2gyWmp1WE9NNFRyLzBKL1Z2OUNmMGh0T2Q0WjQzdDhoSm9WYWtQdXp0N1pzN3RtM043MG41eGQvUEZacElramFUWlhFMGFhN1JNMXA3Mkg5eTZueVJFU0pLVnBKbHM4UGVNRGwybnhUbzkxK2pab29jMzdqODBZM0JvcFFrT3BJTk9zS2JFUDE3LzVrQUxINnhRTUJRT25EZFdEQkZjYnF3ZkNLVisrbUQreXJCN3pQOGtPQ2NGN0tIR2dmUU9CdFlVNEhPRW5oaEo1NFdHWTI5UkZOQ1RKU3FwTVRLM2pxU0Mwc29VU1lPU0dRS3BzcUtVR1J3Vk1yVkdneXVKTVlOTUZpUTJvSUlNQzZFek1NRXJZMFpSME8zblVpbXcwa2s5aFAzRGJpMDBzL0lVYXhadnhzSm01T0l6VjF2L2JhdlhiZStUL3poeVVCaUw0R1ZCTHdPcEtVcUZIaGRRS0JmTi83RUNpOXliYmtZL2NtTThTOUE0aGx3T2MvYUpnTEhEQ2FRMjZEU0hzYkVPdFl0U2ZqakVvZkZTZUdtMEEzSzVIK3lvUUExZFlqd09aYWttTE83QWtwNURGSGJxb3RHcENvNDQ0alYrLzF6NkhFNFlCVWM0c3BIWk5veHo0YXVyeERNUEEyUEJFT0NNQlJ0c1R0SG1Jc3l1OHJ2OW5DNFc5WkM4bUVKY2xuVFpRVXN2aWNMY3FiQW5aS0RHNEFrUzZTY2dOZXpuVW9zb1F0eG9FZHA1S0dRbUJ4SXRSNVRSQ0dZd0RZZGZna3hINlB4VWZKcWpLUGxuTENhT1BiU1loUlJoYUJGMVR1R0lNOWdJbUZDVUROQ05xT2c1Ujg0eG9VRndkcXhnTzNxaURJSVFHa00za1B1Q1FDcHdLcmlsb1VNS1d3U24wTjdRWjB5T21qRUZ2SWVuSlRPMzRER3BRanZMcmtyTlZodFQyTDJ6RGJ1M2QrLzhyMmxKNHlyVGZ2NzkxOWRjaFA2dDcxSlpXMHVWY0M2Q1hoT2JiZUdSdm0rV0x1UHluZzA0UlBYdTM0L2JzbFNtb0RSSzZlYURwZWlMTzljRzhwWGt2SFk3bE5VN2cxZVIva2tyZUVNaERUMXJCdWc0bTBRdGJXTlBucC9EWGpnL2o0U1BIbENVNjFSU0plaXpxRWorZEkreVVCTnpuYlhUY2xjcjZIemQ0WUIwY0RLQjN0R2pnLzdCL2xIYzJ6emt1b0pzVWFSYzVkSXFNeUhWWkk3NjJkL0N1bTh5TWFHZEs3RUxyTXc5YS9IYmpPdEw4YjhSbjlVNXZvMjVaejErbTNIZGlQKzEzTGRkcDdMcTgwNlZtZnRVY21PMTZLSXBEZFVFbWJwLy9ORE5CeXFrUHREZFV1MkxETDJxM0RKRGUxcmZMeUlRdXNxYzBGVWV4WExJcGZheHNDUDAwTGVvcy9kUmZIT3VYaTlxNVppaGVzLzEvU0pHZnZsd2tsa3pwRTVBZ3FtY0tlNDBrZkhZcU1EMThPSkh2M2hFTWEva09XYXpBNVhOQjg0RmRFc1hmWGNlSWNvVHF0QXNheHM2WjVSdFZsUS9mSUEyVTA0aVBmeFBXYitKVG5XNXUzSEc0alk4d1dGUTgweUVjenI1Y0YxZkhjYlpnRmtQOU1BSzV5M0hDODBSekZBQis5Nkd2VE9BcHVjV0w2NHRuUTNUN3VnKzNLZnRtQmxSUlorbURpZjVmQXo0YWdTUTUySXVwTjZINXdKd0xMVU1MWXBabUs3WFJDKzlxc2V5WnNiOW8xcXY4NXByZjMyd3dFelcwOG9WVjlBYzhKSW5LVC9yRmxzOHN5M1JyaThjZktuRXlkdTJNMzg4N2l3YXZHSE5lS2MybW92dmF1eUVXOVhCMVQrWCt0OG0yU3gyS0pxSzJBVVh4RjAyOGFxVDFldXh3czh6cjlnbHdyV2dXWGwySzgyREh0MjZ0N3UwM3lqcDdrbHByUFJKTkhJbGRvbDZ2VjZaMGFpTnZSVFpMOUc4K0hZaVhwdUhwcEhoYWQzYkNJTXBCRHMwSld0Zk8wcFV0K09ObjdYZHpkU29tbElOQUcvK0FvalhZcXdsRFFBQSJ9 -->
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["title"],"name":[1],"type":["chr"],"align":["left"]},{"label":["date"],"name":[2],"type":["chr"],"align":["left"]},{"label":["datetime"],"name":[3],"type":["date"],"align":["right"]},{"label":["media"],"name":[4],"type":["chr"],"align":["left"]},{"label":["small_cluster"],"name":[5],"type":["int"],"align":["right"]},{"label":["high_cluster"],"name":[6],"type":["int"],"align":["right"]},{"label":["small_cluster_label"],"name":[7],"type":["chr"],"align":["left"]},{"label":["high_cluster_label"],"name":[8],"type":["chr"],"align":["left"]}],"data":[{"1":"How serious is Europe’s natural gas storage shortfall?","2":"Dec 21, 2021","3":"2021-12-21","4":"Bruegel","5":"1","6":"9","7":"Energy Crises and Geopolitics","8":"Oil and Gas Production, Exploration, and Processing"},{"1":"How serious is Europe’s natural gas storage shortfall?","2":"Dec 21, 2021","3":"2021-12-21","4":"Bruegel","5":"1","6":"9","7":"Energy Crises and Geopolitics","8":"Oil and Gas Production, Exploration, and Processing"},{"1":"How Russia Benefits from the Pakistan Stream Pipeline","2":"Dec 21, 2021","3":"2021-12-21","4":"Diplomatic Courier","5":"1","6":"9","7":"Energy Crises and Geopolitics","8":"Oil and Gas Production, Exploration, and Processing"},{"1":"Oil prices slide as rapid Omicron spread dims fuel demand outlook","2":"Dec 21, 2021","3":"2021-12-21","4":"fijitimes.com.fj","5":"5","6":"8","7":"Fluctuating Energy Prices and Demand","8":"Energy Governance, Regulation, and Policy"},{"1":"Will rising CNG prices drive demand towards EVs?","2":"Dec 21, 2021","3":"2021-12-21","4":"Autocar Professional","5":"1","6":"9","7":"Energy Crises and Geopolitics","8":"Oil and Gas Production, Exploration, and Processing"},{"1":"APGDC seeks more time to complete natural gas pipeline","2":"Dec 21, 2021","3":"2021-12-21","4":"Bizz Buzz","5":"4","6":"4","7":"Global Oil and Gas Market Trends","8":"Natural Gas Infrastructure and Supply"},{"1":"European gas prices shoot to new high as energy crunch worsens","2":"Dec 21, 2021","3":"2021-12-21","4":"Financial Times","5":"5","6":"8","7":"Fluctuating Energy Prices and Demand","8":"Energy Governance, Regulation, and Policy"},{"1":"Negotiations on Turkmen Gas Supply to Iran Nearing Conclusion","2":"Dec 21, 2021","3":"2021-12-21","4":"Business Turkmenistan","5":"6","6":"3","7":"Gas Supply and Geopolitical Tensions","8":"Geopolitical Tensions and Energy Supply Disruptions"},{"1":"With bill sidelined, what’s next for oil and gas overhaul?","2":"Dec 21, 2021","3":"2021-12-21","4":"E&E News by POLITICO","5":"1","6":"9","7":"Energy Crises and Geopolitics","8":"Oil and Gas Production, Exploration, and Processing"},{"1":"Challenges and opportunities for carbon neutrality in China","2":"Dec 21, 2021","3":"2021-12-21","4":"Nature.com","5":"3","6":"1","7":"Hydrogen as a Clean Energy Solution","8":"Global Energy Transition and Decarbonization"},{"1":"\"A dehumidifier is one of the quickest and cheapest ways to reduce greenhouse energy consumption\"","2":"Dec 21, 2021","3":"2021-12-21","4":"hortidaily.com","5":"3","6":"1","7":"Hydrogen as a Clean Energy Solution","8":"Global Energy Transition and Decarbonization"},{"1":"Oil Search Era in Papua New Guinea Comes to An End As Santos Swallows it Up in A Merger","2":"Dec 21, 2021","3":"2021-12-21","4":"Papua New Guinea Today","5":"2","6":"8","7":"Localized Energy Supply Issues","8":"Energy Governance, Regulation, and Policy"}],"options":{"columns":{"min":{},"max":[10],"total":[8]},"rows":{"min":[10],"max":[10],"total":[12]},"pages":{}}}
-  </script>
-</div>
-<!-- rnb-frame-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGFiZWxlZF9uZXdzICU+JSBcbiAgZmlsdGVyKGV2ZW50X3R5cGU9PVwic3VwcGx5XCIpICU+JSBcbiAgZmlsdGVyKGRhdGV0aW1lID09IFwiMjAyMi0wMy0wMlwiKVxuYGBgIn0= -->
-<pre class="r"><code>labeled_news %&gt;% 
-  filter(event_type==&quot;supply&quot;) %&gt;% 
-  filter(datetime == &quot;2022-03-02&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYmFzZSA8LSBjb21wbGV0ZV9kYXRhICU+JSBcbiAgZmlsdGVyKG5ld3NfcGVyX2RheSA+IDAgJiBcbmRhdGV0aW1lIDwgYXMuRGF0ZShcIjIwMTktMTItMzFcIikpJT4lIFxuICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lXG4gIHNsaWNlKDE6MTApXG5iYXNlXG5gYGAifQ== -->
-<pre class="r"><code>base &lt;- complete_data %&gt;% 
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInRibF9kZiIsInRibCIsImRhdGEuZnJhbWUiXSwibnJvdyI6MzksIm5jb2wiOjUsInN1bW1hcnkiOnsiQSB0aWJibGUiOiIzOSDDlyA1In19LCJyZGYiOiJINHNJQUFBQUFBQUFCdTFZM1c0Ynh4Vm1MTXVKMVRoSkd4VG81VnkwY0M5RTFaS0R0RkNRT2lKRktVd2tXUlVwL3dBRml1SHVMRG5oN014aVpsWTBjK1YzYUMrYXQra3o5SzYzZVpDNDM1bWRXVk8waTZBL2FTOXFBUlIzWjJmUDczZStjNFlYaDAvdWJ6M1o2blE2RzUyYk4yOTBOalp4MmRtOEhCOTFmOVBwWUtIVGVhdHpzM09idnA5aDA0ZjBGSjhQOExuYjZUeW5CMCtPdVdPbjNNNkZaMXpuN0tKMlRuTE5SblZWcVNYNzl2a2YyeVZIUzFJNDVnMmJLalBoaWdrdDdIVEp5dkMrQzdzUE5GZExKMTFVL09sRHFlNDY5cFdwclJaTFZsaFRzb1d4ZnFhRWMweHE1bWVDVmRBc1NwbVI1Si92M3J2SE9KdHdhNFdLUWs2SE9yT0NPNUV6N0NNelM4RzFZMmR5S2l6TFRLMXlKcDZSRkdha0NuNU00UmFXbExIY1M2TzNXV1ZOWG1kMEhUMC91SnhiTHJYWVp6T3pZSVBhbWtwOCsvd2JsNXhxTkRrMjQxY0NIdVlpbUpwWkNlZklCU2Vpb0pNam52bHNKckw1UHVzalRsb3MyT1dYMXl4Uk1oTTZRK2pFRlF5ZUNFVHF6NW1TSmZlUWFNb0tOazRVYVg4UVBiNGM2Q3ZwK0JRZWowd21UWGVRR1cwb1JEMllWMGdFMnhSc2ZIQStaT2V5RWdwK3NITnJ2aEtacHlDZWMrdGxKa211bnJLK3FiVzN5TngvS2VmZFkyRVJ1eVdyRkdYSmVlUkFUR0U3aFlJVVpnWnlySERDWG9uMGt1elBoSmJDaXJCajhQQ1lwYVN6UjBiVlpWeC81Z1creGxCQUFUZ3hldG9OTjBNTkZhUW5wempFVEVjbktRWmpDMVA0YXY1L1QxRkFLdWVBWmNSaDQzVTNBZ05tNmdLWjgvRHhUMEc3YXdMVUFBNVp6S1d6ZFVVNnVVV004eUFFMEZCNTFMRTdkT3k4aGdFQldFbXUxRmZja1hsOFltclBDZ090aWhXMVVDN2wvMWVQWnpLYlJWUWlEMjBLMmFHb0tBSjRPK1VJZmp4SW1GNkJNUVc3c3BKUTV3eTM3T085WHpBc1JRQlhOWEpIS3BOVDNETThtVWRCSHc4dWd3REs3cUVFYUozMFM0cDQzRzBzbkY5Wmh2dGV0TmIvbTBYZm1QQzBCVVRmbEtXd21lUktmZzF2K3NaV3RXTWpqL0pnOXo5aEk0SEZrN05qS3FveGwyb2hVYllJQVR1UlJjaDlyM1lJZTZONTc5N2VYckx5Q0I0d3JBdnRJWnNLc1RTNTlBSHVNOFJqSVpXaU5NK2taNU1sV3lDSWtCQ3ptQUwxTDFaSzgvWnZQd2YxQkRXTm1KQTQ3aHl2bGFjVUo4VHdvcURLQnF0UVVwS3FGTzdQK2pOWmxYeU9kREFuQk5pbWxBUktDV0xKQ0YrV2FiUFlwdXczYWdJQ2M5RWlNc3I1NlBGc0dTRkhoZUVNT0pEQWh2aTh4RnNqanZ2YXdrTllrOTd0eCtndFgwWWlRdXA3OWZiUFhvckRGZzgvUERGamxaZ3Q0M0NFUlBPYzhtTkFLcm1JNU5Ea2REY0c5Tk9vYUhoZFVjTWRqV2U5ZWduMk04QVZDbWVIZlE2RWhiREQrV2pQSTFRdCtLdTJEZVVYdGFkTG9KenE1UUU0WGtrRVFVT040NUMxRkc2YlRWRElBcHh0alM0UkwyeHhTRG1lTTRESEFZYnpGS2tuQ1RFdERVQnlzaFBnS1dvVUNyb0UwU2JCYldlMHd6SWtPSlVleFovWDNtd3pMMEFSQUh2dEduWnY1UC95MGt0RndTcVVBTUZYcXA2R3FCb21GRUJrWlNHejBCUGovdjJXWkFZTlhzOGIwaGdSYWF6UXpQQlZjNk9FQnkxaEJtN1p2MVpKaVlKcWkyb2w4SHFUemR1YWNHRDJLdWJ1OUFJRnMrQm9oSTcwVXVnblJDQ1dYZ3RzbHZDUW94TUNndGczTE1IcjdNc1pieGcyWmg5T1ZnbVhYL0FGNys2eTg1UHg4U1dzeUdDTUsycUZRSjRMaTFpV2poMUpBSTcrQzNhcGthN2QrTzd2ZWhMWUIxSFZEcXFvclYvcjZRUS9nTHlVT2E2bmdPK0VlNjhBbEtzd2xFQWtJdFYyZVpnNFRRRTdPcVk5QVNqdEJwNmo0WWNLQm1heXRiWkF1RkJtQWJtUlV5YmdqRVFpVDBkenV0dU9BTmtPRmpiVHl6NWJnTWhDYUdhOHFvZ01JUWxVSExpQ3V4QmtjaXFpaUthZWpOdUowYkNsNVpjOVlpbmFtZkxjYjNySU1QQUxFYkwzMU0xQ1kzNEc5TFZZSEl3NEFoclFGclV5c2xYa1pLUUpNSjhCN2xURUY0Q0ZJaEdoMVMwRDZkS3RyUk5RUDBGWGFlREVVSkNhTWpLRjZLdkFBWmdtS3ZCQ3FLQmtabzJSeTNwYytsVFp4Ukcxb2hoRHFqVmo4b1JRVW9ieGpPcXlVSEZvaElFQ2pZd0d4T3ZzSDJlQXlMQ1krbmpPc1ZHRUtTMXBxMDVCNVdUZi9iMHVCYWhRVURlbFpJTkFBa0ZUVldKSWdrZDRmQklTUE9BQXpnakFJL1NjY28zOGVVQ2NObHJqcVF0d0VGL1RVekZIZ1NsVkl4akpiV2Y3UnYrN1IyTEM5ajdhWG0xNmI5YmVyUDEvclhVMjNxT2ErT3l2My95RmpzZHZ2dis1NzdVZkVqWXpCVkxyTkVTVEZtOGVndFR3L1Yzbk9nRnREQWNIOGZMdEMxSFRZQmR2MzNsTXB5UVFlcnovWUR5ak9WL1RrV0oxT0htM0g3b1I2MkhBS2VMYVQ5dDVmbHpiT1pvb1JpMnVYMVg1NDc1YW1Xb2VvNzBuQWUzSm9ubTJUVWZObmVSTC82elhUOXJKcXVPYTIxeTJDdDRaVVQrRHhuai9rd1BGdnVCZkMyRTV4RTB4OTgxU3FJYUR3ZEUvOFA5bmFlU2xReWlkWFpXU1UvcUo0SHZpc2VMZTY0eGIwN0xxeTlxajkwTUMyaDhQMHZMdEhscEpPVUZVMGtIMGtYUVlaamtieTFLNDdxRlFuamVkdmxab1JPd2d2K0l3dTN1QkE3NkQvTmRvM2pxaVFmVGhRcmRQWDlIeU9sL2VPOFNoekV4clpJbGpJazZ2bmxOTHAvSHZOWm8yZXUzbGh3K0x3czFveWg5alN0WUdrbEpidmhQbmxXTkxEVGN0SHZUNnYyWm5tUEdlWWs1Smk0TnhnNUFRckFTQWZxOVBHOTNyMzd4ZUFiZWFPZXcvZTlmTWVXL3VmcEM3SDcwNk5mNlBsOVlJV1BOU0pBTGVUSXRlNHVTUktpSW5ObzVncFd1UDBrMGJTNEVTUzRWSjQ2Ny9nMTlXWWszSmJaVEdUbEowQjU4YnovSHZ4WXNYZjJzMjNuaXgxZ0cyb0lmdkZCYXZOSDNnbXJpM1RSVk83WGlSZm9PK3RmYnlXM1p0NGYxYWsvSzhtODFxUGUvZVgzdThVWVZSZHlzc05YOTM0dlhkbGV2TnhvcU5aT3V0bEcraHB5OFByNXVLVDlvZm1qZHljWlhvQnlFSUVkakIrVUQ3NUNkVzNZNDNtTHJUU21aVVdtazY0SGQvQjZ0bkNrR1lGd0FBIn0= --&gt;
+
+&lt;div data-pagedtable=&quot;false&quot;&gt;
+  &lt;script data-pagedtable-source type=&quot;application/json&quot;&gt;
+{&quot;columns&quot;:[{&quot;label&quot;:[&quot;title&quot;],&quot;name&quot;:[1],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;date&quot;],&quot;name&quot;:[2],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;datetime&quot;],&quot;name&quot;:[3],&quot;type&quot;:[&quot;date&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;media&quot;],&quot;name&quot;:[4],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;event_type&quot;],&quot;name&quot;:[5],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]}],&quot;data&quot;:[{&quot;1&quot;:&quot;Gas Market and Russian Supply – Russian supplies to global energy markets – Analysis&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;IEA&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Oil&#39;s journey from worthless in the pandemic to $100 a barrel&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Reuters&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Increased demand means Niger could expand oil and gas exploration, production&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;WorldOil&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Ukraine: how Europe’s energy demands have made the crisis worse&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;The Conversation&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Factcheck: Can new UK oil and gas licences ever be ‘climate compatible’?&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Carbon Brief&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Envisaged Socio-Economic Benefits of TAPI Pipeline Project to Participating Countries&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Business Turkmenistan&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Gas Market and Russian Supply – Russian supplies to global energy markets – Analysis&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;IEA&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Germany plans strategic gas and coal reserves&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Clean Energy Wire&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Cheniere and EOG Increase Volume and Extend Term of Long-Term Integrated Production Marketing Transaction&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Cheniere Energy, Inc.&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Gas is key in the Russia-Ukraine conflict — and supply could be disrupted around the world&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;CNBC&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Is Putin’s Ukraine invasion about fossil fuels?&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;The Guardian&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Which European Countries Depend on Russian Gas?&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Statista&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Europe’s gas prices soar 62% as crisis puts fuel supply at risk&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Al Jazeera English&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;EU gas – Diversity of supply or diversity of routes?&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;IEEFA&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Oil&#39;s journey from worthless in the pandemic to $100 a barrel&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Reuters&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Cheniere Commercializes Corpus Stage 3; Sees LNG ‘Tailwinds’ Lifting Business in 2022&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Natural Gas Intelligence&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Five essential commodities that will be hit by war in Ukraine&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;The Conversation&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Russian supplies to global energy markets – Analysis&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;IEA&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;How will Russia’s assault on Ukraine affect UK gas supplies?&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;The Guardian&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Chipmakers see limited impact for now, as Russia invades Ukraine&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Reuters&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Why Europe is so dependent on Russia for natural gas&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;CNBC&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Commodity supplies at risk as Russia invades Ukraine&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Reuters&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Natural gas interstate pipeline capacity additions decrease in 2021&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;World Pipelines&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Russia Invades Ukraine and Europe Buys More Gas. Here’s Why&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Bloomberg&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Is manure the future of fuel? California says yes, but environmentalists say it stinks&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Visalia Times-Delta and Tulare Advance-Register&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Russian invasion of Ukraine to further strain U.S. chip supply for auto, tech industries&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;CNBC&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Utility fleet plugs into electrification&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;FleetOwner&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;European Energy Prices Soar on Russian Invasion of Ukraine&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Bloomberg&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Ukraine crisis: commodities prices surge as stock markets slump&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;The Guardian&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Renewables on the burner as gas pipeline dominates Imran Khan’s Russia trip&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Dialogue Earth&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Jawa-1 PLTGU successfully Performs First Fire Unit 1&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Pertamina&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Biden pauses new oil and gas leases amid legal battle over cost of climate change&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;CNBC&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Government climate advisers say cut fossil fuels to lower energy bills&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;BBC&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Skills, supply, and demand: what’s happing to workers as the oil industry decarbonises?&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Offshore Technology&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;How the Ukraine Crisis Impacts Cotton and Textiles&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;Cotton Grower&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Sanitation worker killed, another hurt in Rockland County hit and run&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;ABC7 New York&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Oil price turns negative in response to Ukraine uncertainty&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;ETEnergyWorld&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;From energy to food prices and even inflation, here&#39;s how war in Ukraine could impact Canada&#39;s economy&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;CBC News&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Massive 32-ton floodgate lifted into place on Lower East Side of Manhattan to protect area from coastal flooding&quot;,&quot;2&quot;:&quot;Feb 24, 2022&quot;,&quot;3&quot;:&quot;2022-02-24&quot;,&quot;4&quot;:&quot;ABC7 New York&quot;,&quot;5&quot;:&quot;uncertainty&quot;}],&quot;options&quot;:{&quot;columns&quot;:{&quot;min&quot;:{},&quot;max&quot;:[10],&quot;total&quot;:[5]},&quot;rows&quot;:{&quot;min&quot;:[10],&quot;max&quot;:[10],&quot;total&quot;:[39]},&quot;pages&quot;:{}}}
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;!-- rnb-frame-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInRibF9kZiIsInRibCIsImRhdGEuZnJhbWUiXSwibnJvdyI6MTUsIm5jb2wiOjUsInN1bW1hcnkiOnsiQSB0aWJibGUiOlsiMTUgw5cgNSJdfX0sInJkZiI6Ikg0c0lBQUFBQUFBQUJ1MVczVzRiUlJUZXhrbEtVOXJ5YzQwNE55Z2dKYVkvQ0ZDRkJIYmlwQzVwRWlWdTFIS0R4cnZINjhHN002dVpXYnZ1VlYrRDUrSU5lQU5lb09HYjNWblhzVktKSzhRRmx0WTdQblBPTitmbk8yZDh0di9pMGRhTHJTaUtXdEg2K2xyVTJzQXkybmcrT05qOVBvb2dpS0liMFhwMHk3OWZRZWxUdjR2bkl6ejN3c2FMenNpeG9ZTEZoS1NpWExqU01GNW13czd1VUpycG9jZ29GWllTem9WS1NGcXk3R2lrRGRsTXoyQ2JHajF6WTI4ZDYxeXFsT1lzakEzNFB4eldDRXE0SlpEckVaeW1oL2NmZnJ0RC9WNkhySmczR0UvN0twRmkyM3FRMGx4MUJ6WkdXcVp2dnZBT3dQelJZK29yaEFSZHFSV1VlNHBOT3FkT3lpcWVCOFR6QXlOVTdPT1V5dUd4ZEhSOFNNTlNab2t1SFlsY0pxUlZxbjAwWjZXMVVpaXlZMW5rckp3bGYrNUlaSm5mZmVkS0ZMM3gwSjIrTllJeitxMjBEalllclZJYVNjNFNVa2dOSFlyWG9rMVAyUENmYjM2M05CdlB5WTJGODhtSDQwM1VQeDlJbFZYSlFpWm9HMzVabVRDSjJNbXBkUE50eXVTRXN6a2xJaGNwSjlVaGhTd1lidkVPT2M0WTViQVVpMkhHQWZMSHZURlBqVlkwRmhuaThCYjhxdEFHNjZrVTFIdDJ1RUNna2RFNWhWaVE1RjQ2TDF5QU9hbkZ1ejRPMnROcWxNbllZVkVpd0hOVWxJNURuUTV4UUY5TjJUcWZPRitnam1GQlg1Nld3MHphTVp6MkJmdHFOZUR6S3VDVEVIQm5FZkJSSGZCK0NOaWpueTRDSGpRQjd5MEZQT2o0U2o2UjZYaFJSbTkxNEowY0lLalM2SUxwQXJFUFNqTTVkL0F1MzZGOWFVVnFtT3RxZDRhNmhGTjlSYjNuMU0xMEhMQy9QbVhRRWhUb2RwK2RrdElKRGJFNXFkTnF5NktBcTBqY1M4N0VXS2lKQ1B6SWozUmNVWlAwaUxMUWRsM1VROGF4Vm9wamg3NVlyaVVoQ2NwSjhDZnhxaUZKRlhNUXNFTEx4ZlJhUTIvWDd5bmtsUTcxRkEzZzNRKysvaElxOWdTcEErSEF3VmlVbHVGbmdaeDZXQzB6S295TTJkYk0zUGE4QkNjbGFNa0NEVElLYnNYYStzRWdVZlVxakhEQ0FmSWphS1lOT0lEQVVQOGNrRHQwSklZd1JGNnR4V0N4TmRHWGlTY3dib1EvV2hzVU9hQjk5eFI5d1BOS0VjUkh1UjhEQ1dXQVorZ1Iwak0wTlkzOG5La2NHNVlXbWJKMlpiaDllQUplUHJpL1U5SHNmOWw3WkZIcnJzL1pUMyswL2ZVUi9kdnZsWnRxSTg3RW9wQ05jSDFmT01iNzdVcUJXN2dwd3ZMMkdaZCtlcll4QklMbzQyNmdCWjA3dEl3d1NYTkd2OWM3YUF4YmU4Zkg3OGU0UnZUSllNeDB6RE42cWMyRUJqTG5abVIvZHFIUlFaNy9uWnpSVEJpcEt2V1R6cXMzU25jeGRUclZLRm8yclVBcmdUZXZMcnhHLzhJUEJ6UjRPVVhyNlNEOW9OUGRXMGI5M050M2NPZGc3bnBzakFMY2NCSkQrSXlua21kQjdXYTN1MWVGY2pXUG0rRUsrd2UvNnNuMm4vaDF1OFFkYnZ6OTdhNFZyUkJMQ1ovdU92Q05SdWlrVzl3VzY0bG5XY2l2WHp2VW8xSE0rVjFKdG5pSzJmcXJteGU4Y3NndC9KTnBOd2Zkd2JQMkJsK1hsNWQvMVlwcmx5dk0zc0k1b2oweU1LbjVmUVh1cGk1ODZRRzI1dis4YmE0WTN6QXJnbnVsOG9jbnUvRzRWSlBkQnl2YnJVS2wvc3hLVkgvdWhQVzlwZlZHN1VXcjhYV3p5VDZyRlAzVVpDUVRRODRhNUlTbkRWK1JnaW9EYlF6MXhRMjBCYWx0TysxRVk3SVY2NnlSMUozOTltKzQvaHJrMFFvQUFBPT0ifQ== --&gt;
+
+&lt;div data-pagedtable=&quot;false&quot;&gt;
+  &lt;script data-pagedtable-source type=&quot;application/json&quot;&gt;
+{&quot;columns&quot;:[{&quot;label&quot;:[&quot;title&quot;],&quot;name&quot;:[1],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;date&quot;],&quot;name&quot;:[2],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;datetime&quot;],&quot;name&quot;:[3],&quot;type&quot;:[&quot;date&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;media&quot;],&quot;name&quot;:[4],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;event_type&quot;],&quot;name&quot;:[5],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]}],&quot;data&quot;:[{&quot;1&quot;:&quot;After peak in mature markets, global gas demand is set for slower growth in coming years&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;IEA&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Global natgas demand set for slower growth to 2026, IEA says&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;Reuters.com&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;India&#39;s natural gas demand to rise 4% in 2023: International Energy Agency&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;Business Standard&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;France maintains LNG buildout amid ongoing Russian shipments and falling gas demand&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;IEEFA&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Israel just shut a gas field near Gaza. Here’s why that matters&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;CNN&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Finland says &#39;outside activity&#39; likely damaged gas pipeline, telecoms cable&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;Reuters.com&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Chevron halts gas exports via EMG pipeline from Israel to Egypt&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;Reuters.com&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Israel-Gaza Conflict Could Slow Natural Gas Investment in Area (Published 2023)&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;The New York Times&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Finland Says &#39;Outside Activity&#39; Likely Damaged Gas Pipeline, Telecoms Cable&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;Voice of America English News&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Amid High Russian Gas Flow To Europe Via TurkStream, Disagreements Abound In EU Bloc&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;EurAsian Times&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Pending BBMP nod blocks gas supply to Yelahanka&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;The Times of India&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Location of leak in Balticconnector gas pipeline identified in Finland’s economic zone - Finnish Government&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;Valtioneuvosto&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Israel-Hamas war causes spike in oil prices. Here&#39;s what it means for gas costs, inflation&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;ABC News&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;In a world of turmoil, Labor reassures that gas exports are a priority&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;The Australian Financial Review&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Jersey gas outage: Launderette owner fears for business&quot;,&quot;2&quot;:&quot;Oct 10, 2023&quot;,&quot;3&quot;:&quot;2023-10-10&quot;,&quot;4&quot;:&quot;BBC.com&quot;,&quot;5&quot;:&quot;uncertainty&quot;}],&quot;options&quot;:{&quot;columns&quot;:{&quot;min&quot;:{},&quot;max&quot;:[10],&quot;total&quot;:[5]},&quot;rows&quot;:{&quot;min&quot;:[10],&quot;max&quot;:[10],&quot;total&quot;:[15]},&quot;pages&quot;:{}}}
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;!-- rnb-frame-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuXG5uZXdzX2RhdGEgJT4lIFxuICBmaWx0ZXIoZGF0ZXRpbWUgPT0gXFwyMDIyLTAyLTIyXFwpXG5gYGBcbmBgYHJcbk5BXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+
+news_data %&gt;% 
+  filter(datetime == \2022-02-22\)</code></pre>
+<pre class="r"><code>NA</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInRibF9kZiIsInRibCIsImRhdGEuZnJhbWUiXSwibnJvdyI6MjUsIm5jb2wiOjUsInN1bW1hcnkiOnsiQSB0aWJibGUiOiIyNSDDlyA1In19LCJyZGYiOiJINHNJQUFBQUFBQUFCdTFYM1c0YlJSUTJUZEpDb09WWENCQVhSNGdXa0pJb2RWc0VFYUs0aVp1bWF0TTBUa201UXVQZDQ5MXBabWVXbWRra3JuckJHM0ROSS9BY3ZBRXZ3VnUwZkxPNzQ5b0djUU0zVkVSeXZEc3o1Lzg3M3h6dmJ6Mjhzdnh3dWRQcExIUVdGODkwRnBidzJGbDZjSEJ6OVl0T0J3dWR6a3VkeGM0cjRmc1VoOTRPdS9pOGdjLzc3Y2JWbnFON1V0R2VsUWs3dWl0c2t0TXRtZVZzVjhnWjJqSnhTM2p5T2ROZVZaU3Q3STFEWTFWNklsT21PN3ZidEdtMHc2YVhSdE5OWXprUkRpS0dibU9Sdmx5L1NNTXhkZGV2cnEvUUlHZWxhQ0RHcnRXMHVTdDhaWVdpVERoS3VSQTZwVWNRYzBGR0RFM2xxWHZsSWptcEU0YU95NWMzNkpZb1dEMmg3VXFONkVBV0hGWDFkM1FxeFNlT1JoV3JxSXRQUzA0OHA4R2R6Sm9UdXJaMjdTSnBQdlUwa2k0UmFvTzJ6YkVuZGw0V3drK1VmVjByYThWblZjNW9rcnJPelpSQ0dyT3dNYnB0dHBBWjA4Z3lQMFlxZDQxTmFlQXRpNEs2ZGN5bE5ZOWdndkQ0NE1nS3Faa1NLNTBNMmVDU2RYVG9xN25kUjBiQnIzNWxUY25CcGJKeU9ZMk1KY2RKWlpsWXM4M0c1S3F5Vk9OV3g1MTlGa21vRWdLeXBxRG9IY1J6b1R5WjBaeURJNk9VT1pFNm8vM0tPU2swaVN5empFZWpXNTFYV3I5V214UGs0WEt3c0ZHRHkxVTJROWpBUmVNSWpaQ2NHTkpPVkxxamowVVFva0VwN0pHRGZaTWMwUUJRTWFQUlNxMG9KSDRiT2FvaEZVNDI2b0JES3lkRk96eVVTa2xST09JeHJONFNZODN1R0dzTTRBbjhoNEpRT3A5VGF1VnhBSHJDMXN1UkJFQkNNVXhaR3VzckxmMTRBN1ZISmoyT1JmWFhnZ1A5MDNBa3BHVFRWTm9INndIelZSR2djRjk0WVRmb01EZmtoRXpwSkJlK0ZlNzJIKzdkNmUzczl2ZkRQbG9LTlF6SW1VMTRzTEFuUzFiSTZQVUlvaVpOQVBZZTNORlVLazVEVXVHbTlteHRWZnJXL1RySHdhSHdMSFJiYW1WTTBhcjZyRmZuZTFpTjJicFE3bGdCSTlWS3JTTGtPVEZDdFFJZjF4RlJnaU5wU0ppbnl3QTlCS2ZOdFdlM21yTU96VTNhUUV0SXo3aVcvYUdTeVJIS1pibFVBbzBjelU0Y0JnSWJLTGU2SHV6S2pDMGdVUFBJWGFQWnk4Y01rb0xjTWRkcDJtZkg5ampJNXRaVVdVNEhWbWkzT2hDNXdBTkZYcG5PYUdTK0dKUlNybTRaZExveVdWWDNVZHMrbVRMRGxwVm1XbWp3clJLcExLUnRpNUVZQkdsVVU4c1c0MG1PaGdoSk9nR3JzQVZEY0pKckF4UGptbGxQQUE5VWY2aXEwUWhBdXQ3cC9CaFUvd1JDQnY3ck5oUmdsTXg0S1VKcFFSRUpwL0JxcGJiU3E3eXgwdi82Q3dnSCtLYisxazI2c3I1T1JRQS9Xb09SU0xkU1Y5SXhhb1l3b0ZINkVNblFTUVFiUUx0U1J5NkdsZVBHWUdvS3FZWDJWQm9uL2ZNRy85ZTc5R0lzQnpySXd0V2dFcmZQRVdwdEdqYmRseTdXNnNQUFNkaXNLbGo3cGxhSnNNTndUSnhPRk40ZlRMQ09uWmFIRUVXZzVaTUFEeFkxakFSWVQyUlNUYXJMcUo0cHhtdjA2VjQxVk5MbFNIWjN2ZHY5Yk82cWZPMG1ENm5iWGFrMy8xOTd3ZGM2Q3hkQzdiLzU3ZWR2d2xUMVgvK2Vtd2VYRWdVU2JRRWVGeGUzUURUNGZqb1AvRjZ2Ujd0ODR1enpPK1M5YVdiZHdRMEUxc2tZNDFtN3YveW53ZXpORzVVTFRCVW9Bd3doYk5wdXZIV0FadS9YVFNpVEdaRnorMXlCT3VQck8rRmd6em1UTkl5NEYyYVFxSDFUTWRpcDM4dzdoOUpHUjg3ZHVMRzVsa3o4ZmczOEJUN0dIUU1Hakw0T0x1M1JkazBHMGFXZW90dmlNWU0yb1RJTHBORHV2UEd0d1RRY3VMSlhNQVpqOGRldXpyMitmVmVtS1JpbkgwWmkzR01TM0IxTlRXL2QwMU1YMUx1OVVUQXdDV296RjhXUW85eDdQUzFTb3lycWhiU1A2Y21jbytkRHNnNVljV1pGR1JjL0VNMnR3U25qQmpZYWw1d05SVnNiMmIvSnowZVlUakFzdFFIcm11TXZ6VnlwTWM0TGQzY09hS0JNdUhtQmwra0M0NTIrTS9hb0xmQXN3czQyUS9VL2ZadTVvMSs4dDFjckhRWlZqQlgrSHl6TkVZRVd6OHV4RkJlOTlDckNjREVOck5BOHZ4eWU4Uk1wdmk4VjAyMkVNVVA3Ny8wWTg5dXNrVmN3YmE5RlErZnhPZk1qL2oxNzl1ejM1dUNaWjNOTXRBdzdBcUNFU01OSE0rck9tZnBISnBTZENUOXB6ODRKdjJUbkZsNnZkRENlcmlaNXBZOVdyODV0TDVRNkN6YnJwZWJ2ZlB2OC90VHpVdVBGUXZUMWJLd1I2K3g1MHk0cE1lUklJd3NwSDhmT1FBcnFES3lWRm1XSWNXTFZyWG5qSjh5em5HQ01iRmNhSm43NkI4aGJ5YVBuRHdBQSJ9 --&gt;
+
+&lt;div data-pagedtable=&quot;false&quot;&gt;
+  &lt;script data-pagedtable-source type=&quot;application/json&quot;&gt;
+{&quot;columns&quot;:[{&quot;label&quot;:[&quot;title&quot;],&quot;name&quot;:[1],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;date&quot;],&quot;name&quot;:[2],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;datetime&quot;],&quot;name&quot;:[3],&quot;type&quot;:[&quot;date&quot;],&quot;align&quot;:[&quot;right&quot;]},{&quot;label&quot;:[&quot;media&quot;],&quot;name&quot;:[4],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]},{&quot;label&quot;:[&quot;event_type&quot;],&quot;name&quot;:[5],&quot;type&quot;:[&quot;chr&quot;],&quot;align&quot;:[&quot;left&quot;]}],&quot;data&quot;:[{&quot;1&quot;:&quot;As Oil Prices March Higher, so Do Prices at the Pump&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;AAA Newsroom&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Worldwide LNG Consumption Forecast to Jump 90% by 2040, Shell Says&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Natural Gas Intelligence&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Natural gas demand jumps by about 23% since 2011: Hamel| Gulf Times&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Gulf Times&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;India&#39;s fuel demand expected to grow 5.5% next fiscal: Govt estimates&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Business Standard&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;India expects fuel demand to grow 5.5% in the next fiscal year&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;The Economic Times&quot;,&quot;5&quot;:&quot;demand&quot;},{&quot;1&quot;:&quot;Germany freezes Nord Stream 2 gas project as Ukraine crisis deepens&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Reuters&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Ukraine crisis jolts Europe to push for secure energy supply&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;The Associated Press&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Reactions from Germany to halt of Nord Stream 2 following Russian aggression&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Clean Energy Wire&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Ukraine-Russia tensions: Oil surges on supply fears&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;BBC.com&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Russian Invasion Sparks Stock Selloff, Oil and Gas Jump on Supply Worries&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Investopedia&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Williams eyes Haynesville Shale as growth driver, certified gas opportunity: executives&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;S&amp;P Global&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Gas Exporting Countries Forum in Qatar: Who said what&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Al Jazeera English&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;EXPLAINER: What is the Nord Stream 2 Gas Pipeline?&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Voice of America&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Russia&#39;s Putin pledges uninterrupted gas supplies as sanctions loom&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Reuters&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Asian buyers of Russian oil, gas and coal&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Reuters&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Qatar can divert 15% of gas supplies&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Middle East Monitor&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Qatar says no country can quickly replace Russian supplies to Europe&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Middle East Online&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Niger Set to Monetize Massive Gas Reserves through Trans-Saharan Natural Gas Pipeline&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;African Energy Chamber&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Qatar calls for dialogue to secure global gas supply&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Anadolu Agency | English&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Vladimir Putin controls the supply chain of western technology, so who is bluffing?&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;The Telegraph&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;As part of a negotiated procedure, the Autorité fines EDF 300 million euros, and several of its subsidiaries, for abuse of a dominant position&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;autoritedelaconcurrence.fr&quot;,&quot;5&quot;:&quot;supply&quot;},{&quot;1&quot;:&quot;Russian Invasion Sparks Stock Selloff, Oil and Gas Jump on Supply Worries&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;Investopedia&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Pipeline Corrosion Market on the Rise&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;North American Oil &amp; Gas Pipelines&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;6 arguments for carbon taxes&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;MIT Sloan News&quot;,&quot;5&quot;:&quot;uncertainty&quot;},{&quot;1&quot;:&quot;Sanctions on Russia pose new threat to a fragile global economy. (Published 2022)&quot;,&quot;2&quot;:&quot;Feb 22, 2022&quot;,&quot;3&quot;:&quot;2022-02-22&quot;,&quot;4&quot;:&quot;The New York Times&quot;,&quot;5&quot;:&quot;uncertainty&quot;}],&quot;options&quot;:{&quot;columns&quot;:{&quot;min&quot;:{},&quot;max&quot;:[10],&quot;total&quot;:[5]},&quot;rows&quot;:{&quot;min&quot;:[10],&quot;max&quot;:[10],&quot;total&quot;:[25]},&quot;pages&quot;:{}}}
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;!-- rnb-frame-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGFiZWxlZF9uZXdzICU+JSBcbiAgZmlsdGVyKGV2ZW50X3R5cGU9PVxcc3VwcGx5XFwpICU+JSBcbiAgZmlsdGVyKGRhdGV0aW1lID09IFxcMjAyMi0wMy0wMlxcKVxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+labeled_news %&gt;% 
+  filter(event_type==\supply\) %&gt;% 
+  filter(datetime == \2022-03-02\)</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYmFzZSA8LSBjb21wbGV0ZV9kYXRhICU+JSBcbiAgZmlsdGVyKG5ld3NfcGVyX2RheSA+IDAgJiBcbmRhdGV0aW1lIDwgYXMuRGF0ZShcXDIwMTktMTItMzFcXCkpJT4lIFxuICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lXG4gIHNsaWNlKDE6MTApXG5iYXNlXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+base &lt;- complete_data %&gt;% 
   filter(news_per_day &gt; 0 &amp; 
-datetime &lt; as.Date(&quot;2019-12-31&quot;))%&gt;% 
+datetime &lt; as.Date(\2019-12-31\))%&gt;% 
   arrange(desc(news_per_day)) %&gt;%
   slice(1:10)
 base</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYmFzZSA8LSBjb21wbGV0ZV9kYXRhICU+JSBcbiAgZmlsdGVyKG5ld3NfcGVyX2RheSA+IDAgJiBcbmRhdGV0aW1lIDwgYXMuRGF0ZShcIjIwMTctMTItMzFcIikpJT4lIFxuICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lXG4gIHNsaWNlKDE6MjApXG5iYXNlXG5gYGAifQ== -->
-<pre class="r"><code>base &lt;- complete_data %&gt;% 
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYmFzZSA8LSBjb21wbGV0ZV9kYXRhICU+JSBcbiAgZmlsdGVyKG5ld3NfcGVyX2RheSA+IDAgJiBcbmRhdGV0aW1lIDwgYXMuRGF0ZShcXDIwMTctMTItMzFcXCkpJT4lIFxuICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lXG4gIHNsaWNlKDE6MjApXG5iYXNlXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+base &lt;- complete_data %&gt;% 
   filter(news_per_day &gt; 0 &amp; 
-datetime &lt; as.Date(&quot;2017-12-31&quot;))%&gt;% 
+datetime &lt; as.Date(\2017-12-31\))%&gt;% 
   arrange(desc(news_per_day)) %&gt;%
   slice(1:20)
 base</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaW5zdHJ1bWVudF9kYXlzIDwtIHNob2NrX2RhdGEgJT4lIFxuICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09VFJVRSlcbm5yb3coaW5zdHJ1bWVudF9kYXlzKVxuaGVhZChpbnN0cnVtZW50X2RheXMsIDEwKVxuYGBgIn0= -->
-<pre class="r"><code>instrument_days &lt;- shock_data %&gt;% 
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuaW5zdHJ1bWVudF9kYXlzIDwtIHNob2NrX2RhdGEgJT4lIFxuICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09VFJVRSlcbm5yb3coaW5zdHJ1bWVudF9kYXlzKVxuaGVhZChpbnN0cnVtZW50X2RheXMsIDEwKVxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+instrument_days &lt;- shock_data %&gt;% 
   filter(binary_shock ==TRUE)
 nrow(instrument_days)
 head(instrument_days, 10)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZXZlbnRfY29tcGxldGVfZGF0YSAlPiUgXG4gIGZpbHRlcihldmVudF90eXBlID09IFwiZGVtYW5kXCIpICU+JVxuICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lXG4gIGhlYWQoMzApXG5gYGAifQ== -->
-<pre class="r"><code>event_complete_data %&gt;% 
-  filter(event_type == &quot;demand&quot;) %&gt;%
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZXZlbnRfY29tcGxldGVfZGF0YSAlPiUgXG4gIGZpbHRlcihldmVudF90eXBlID09IFxcZGVtYW5kXFwpICU+JVxuICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lXG4gIGhlYWQoMzApXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+event_complete_data %&gt;% 
+  filter(event_type == \demand\) %&gt;%
   arrange(desc(news_per_day)) %&gt;%
   head(30)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2dwbG90KGV2ZW50X2NvbXBsZXRlX2RhdGEgJT4lIGZpbHRlcihldmVudF90eXBlPT1cImRlbWFuZFwiKSwgXG4gICAgICAgYWVzKHggPSBkYXRldGltZSwgeSA9IG5ld3NfcGVyX2RheSkpICtcbiAgZ2VvbV9saW5lKGNvbG9yID0ncmVkJykgK1xuICBsYWJzKHRpdGxlID0gXCJOdW1iZXIgb2YgbmV3cyBwZXIgZGF5XCIsXG4gICAgICAgeCA9IFwiRGF0ZVwiLFxuICAgICAgIHkgPSBcIk51bWJlciBvZiBuZXdzXCIpICtcbiAgdGhlbWVfbWluaW1hbCgpXG5gYGAifQ== -->
-<pre class="r"><code>ggplot(event_complete_data %&gt;% filter(event_type==&quot;demand&quot;), 
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZ2dwbG90KGV2ZW50X2NvbXBsZXRlX2RhdGEgJT4lIGZpbHRlcihldmVudF90eXBlPT1cXGRlbWFuZFxcKSwgXG4gICAgICAgYWVzKHggPSBkYXRldGltZSwgeSA9IG5ld3NfcGVyX2RheSkpICtcbiAgZ2VvbV9saW5lKGNvbG9yID0ncmVkJykgK1xuICBsYWJzKHRpdGxlID0gXFxOdW1iZXIgb2YgbmV3cyBwZXIgZGF5XFwsXG4gICAgICAgeCA9IFxcRGF0ZVxcLFxuICAgICAgIHkgPSBcXE51bWJlciBvZiBuZXdzXFwpICtcbiAgdGhlbWVfbWluaW1hbCgpXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+ggplot(event_complete_data %&gt;% filter(event_type==\demand\), 
        aes(x = datetime, y = news_per_day)) +
   geom_line(color =&#39;red&#39;) +
-  labs(title = &quot;Number of news per day&quot;,
-       x = &quot;Date&quot;,
-       y = &quot;Number of news&quot;) +
+  labs(title = \Number of news per day\,
+       x = \Date\,
+       y = \Number of news\) +
   theme_minimal()</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYWxlX2dhc3NfZGF0YSA8LSBtZXJnZShldmVudHNfZGF0YV9zZXJpZSxnYXNfaW5zdHJ1bWVudF9kYXRhICU+JSBzZWxlY3QoLW5ld3NfcGVyX2RheSksXG4gICAgICBieSA9IFwiRGF0ZVwiKVxuYWxlX2dhc3NfZGF0YSA8LSBtZXJnZShhbGVfZ2Fzc19kYXRhLCBmdWxsX25ld3NfY291bnQsXG4gICAgICAgICAgICAgICAgICAgICAgIGJ5LnggPSBcIkRhdGVcIiwgYnkueSA9XCJkYXRldGltZVwiIClcbmFsZV9nYXNzX2RhdGFbLGMoXCJEYXRlXCIsIFwiVmFsdWVcIiwgXCJzaG9ja19zZXJpZVwiLCBcIm5ld3NfcGVyX2RheVwiKV1cbmBgYCJ9 -->
-<pre class="r"><code>ale_gass_data &lt;- merge(events_data_serie,gas_instrument_data %&gt;% select(-news_per_day),
-      by = &quot;Date&quot;)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYWxlX2dhc3NfZGF0YSA8LSBtZXJnZShldmVudHNfZGF0YV9zZXJpZSxnYXNfaW5zdHJ1bWVudF9kYXRhICU+JSBzZWxlY3QoLW5ld3NfcGVyX2RheSksXG4gICAgICBieSA9IFxcRGF0ZVxcKVxuYWxlX2dhc3NfZGF0YSA8LSBtZXJnZShhbGVfZ2Fzc19kYXRhLCBmdWxsX25ld3NfY291bnQsXG4gICAgICAgICAgICAgICAgICAgICAgIGJ5LnggPSBcXERhdGVcXCwgYnkueSA9XFxkYXRldGltZVxcIClcbmFsZV9nYXNzX2RhdGFbLGMoXFxEYXRlXFwsIFxcVmFsdWVcXCwgXFxzaG9ja19zZXJpZVxcLCBcXG5ld3NfcGVyX2RheVxcKV1cbmBgYFxuYGBgIn0= --&gt;
+
+```r
+```r
+ale_gass_data &lt;- merge(events_data_serie,gas_instrument_data %&gt;% select(-news_per_day),
+      by = \Date\)
 ale_gass_data &lt;- merge(ale_gass_data, full_news_count,
-                       by.x = &quot;Date&quot;, by.y =&quot;datetime&quot; )
-ale_gass_data[,c(&quot;Date&quot;, &quot;Value&quot;, &quot;shock_serie&quot;, &quot;news_per_day&quot;)]</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2FzX2luc3RydW1lbnRfZGF0YSAlPiUgXG4gIGZpbHRlcihiaW5hcnlfc2hvY2s9PVRSVUUpICU+JSBcbiAgc2VsZWN0KHNob2NrX3NlcmllLCBuZXdzX3Blcl9kYXksIERhdGUpXG5gYGAifQ== -->
-<pre class="r"><code>gas_instrument_data %&gt;% 
+                       by.x = \Date\, by.y =\datetime\ )
+ale_gass_data[,c(\Date\, \Value\, \shock_serie\, \news_per_day\)]</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZ2FzX2luc3RydW1lbnRfZGF0YSAlPiUgXG4gIGZpbHRlcihiaW5hcnlfc2hvY2s9PVRSVUUpICU+JSBcbiAgc2VsZWN0KHNob2NrX3NlcmllLCBuZXdzX3Blcl9kYXksIERhdGUpXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+gas_instrument_data %&gt;% 
   filter(binary_shock==TRUE) %&gt;% 
   select(shock_serie, news_per_day, Date)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2hvY2tfc2VyaWVzX2FsbCAlPiUgXG4gIGFycmFuZ2UoRGF0ZSkgJT4lIFxuICBmaWx0ZXIoRGVsdGEgIT0wKSAlPiUgXG4gIHNlbGVjdChzaG9jaywgRGVsdGEsIERhdGUpXG5gYGAifQ== -->
-<pre class="r"><code>shock_series_all %&gt;% 
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc2hvY2tfc2VyaWVzX2FsbCAlPiUgXG4gIGFycmFuZ2UoRGF0ZSkgJT4lIFxuICBmaWx0ZXIoRGVsdGEgIT0wKSAlPiUgXG4gIHNlbGVjdChzaG9jaywgRGVsdGEsIERhdGUpXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+shock_series_all %&gt;% 
   arrange(Date) %&gt;% 
   filter(Delta !=0) %&gt;% 
   select(shock, Delta, Date)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>On essaye de tricher, voir si je suis nul ou si la base est nulle, je
-regarde les plus grosses fluctuations de prix du gas et le nombre de
-nouvelles qui leur est associé</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG50ZXN0IDwtIGdhc19pbnN0cnVtZW50X2RhdGEgJT4lIFxuICBtdXRhdGUob3JkZXIgPSBhYnMoc2hvY2tfc2VyaWUpKSAlPiUgXG4gIGFycmFuZ2UoZGVzYyhvcmRlcikpICU+JSBcbiAgc2xpY2UoMToyMClcblxudGVzdFssIGMoXCJvcmRlclwiLCBcIm5ld3NfcGVyX2RheVwiKV1cblxuYGBgIn0= -->
-<pre class="r"><code>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+On essaye de tricher, voir si je suis nul ou si la base est nulle,
+je regarde les plus grosses fluctuations de prix du gas et le nombre de nouvelles qui leur est associé
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuXG50ZXN0IDwtIGdhc19pbnN0cnVtZW50X2RhdGEgJT4lIFxuICBtdXRhdGUob3JkZXIgPSBhYnMoc2hvY2tfc2VyaWUpKSAlPiUgXG4gIGFycmFuZ2UoZGVzYyhvcmRlcikpICU+JSBcbiAgc2xpY2UoMToyMClcblxudGVzdFssIGMoXFxvcmRlclxcLCBcXG5ld3NfcGVyX2RheVxcKV1cblxuYGBgXG5gYGAifQ== --&gt;
+
+```r
+```r
+
 test &lt;- gas_instrument_data %&gt;% 
   mutate(order = abs(shock_serie)) %&gt;% 
   arrange(desc(order)) %&gt;% 
   slice(1:20)
 
-test[, c(&quot;order&quot;, &quot;news_per_day&quot;)]
+test[, c(\order\, \news_per_day\)]
 </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoc2hvY2tfZGF0YSlcbmNvbG5hbWVzKGdhc19kYXRhX3Nob2NrKVxucHJpbnQoY2xhc3MoZ2FzX2RhdGFfc2hvY2skRGF0ZSkpXG5wcmludChjbGFzcyhzaG9ja19kYXRhJGRhdGV0aW1lKSlcblxuaW5mbyA8LSBtZXJnZShnYXNfZGF0YV9zaG9jaywgc2hvY2tfZGF0YSwgXG4gICAgICBieS54ID0gXCJEYXRlXCIsIGJ5LnkgPSBcImRhdGV0aW1lXCIgKSAlPiUgXG4gIHNlbGVjdChEYXRlLCBzaG9ja19zZXJpZSwgc3VwcGx5X25ld3MsIFxuICAgICAgICAgbW92aW5nX2F2Z19uZXdzLCBtb3Zpbmdfc3RkX25ld3MsIGRheV90eXBlLCBHYXNfVFRGKVxuXG5jb2xuYW1lcyhpbmZvKVxudGVzdDIgPC0gbWVyZ2UoZ2FzX2RhdGFfc2hvY2ssIHNob2NrX2RhdGEsIFxuICAgICAgYnkueCA9IFwiRGF0ZVwiLCBieS55ID0gXCJkYXRldGltZVwiICkgJT4lIFxuICBtdXRhdGUob3JkZXIgPSBhYnMoc2hvY2tfc2VyaWUpKSAlPiUgXG4gIGFycmFuZ2UoZGVzYyhvcmRlcikpICU+JSBcbiAgc2xpY2UoMToyMClcbnRlc3QyWywgYyhcIkRhdGVcIiwgXCJvcmRlclwiLCBcIm5ld3NfcGVyX2RheVwiLCBcImV2ZW50X3R5cGVcIildXG5gYGAifQ== -->
-<pre class="r"><code>colnames(shock_data)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuY29sbmFtZXMoc2hvY2tfZGF0YSlcbmNvbG5hbWVzKGdhc19kYXRhX3Nob2NrKVxucHJpbnQoY2xhc3MoZ2FzX2RhdGFfc2hvY2skRGF0ZSkpXG5wcmludChjbGFzcyhzaG9ja19kYXRhJGRhdGV0aW1lKSlcblxuaW5mbyA8LSBtZXJnZShnYXNfZGF0YV9zaG9jaywgc2hvY2tfZGF0YSwgXG4gICAgICBieS54ID0gXFxEYXRlXFwsIGJ5LnkgPSBcXGRhdGV0aW1lXFwgKSAlPiUgXG4gIHNlbGVjdChEYXRlLCBzaG9ja19zZXJpZSwgc3VwcGx5X25ld3MsIFxuICAgICAgICAgbW92aW5nX2F2Z19uZXdzLCBtb3Zpbmdfc3RkX25ld3MsIGRheV90eXBlLCBHYXNfVFRGKVxuXG5jb2xuYW1lcyhpbmZvKVxudGVzdDIgPC0gbWVyZ2UoZ2FzX2RhdGFfc2hvY2ssIHNob2NrX2RhdGEsIFxuICAgICAgYnkueCA9IFxcRGF0ZVxcLCBieS55ID0gXFxkYXRldGltZVxcICkgJT4lIFxuICBtdXRhdGUob3JkZXIgPSBhYnMoc2hvY2tfc2VyaWUpKSAlPiUgXG4gIGFycmFuZ2UoZGVzYyhvcmRlcikpICU+JSBcbiAgc2xpY2UoMToyMClcbnRlc3QyWywgYyhcXERhdGVcXCwgXFxvcmRlclxcLCBcXG5ld3NfcGVyX2RheVxcLCBcXGV2ZW50X3R5cGVcXCldXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+colnames(shock_data)
 colnames(gas_data_shock)
 print(class(gas_data_shock$Date))
 print(class(shock_data$datetime))
 
 info &lt;- merge(gas_data_shock, shock_data, 
-      by.x = &quot;Date&quot;, by.y = &quot;datetime&quot; ) %&gt;% 
+      by.x = \Date\, by.y = \datetime\ ) %&gt;% 
   select(Date, shock_serie, supply_news, 
          moving_avg_news, moving_std_news, day_type, Gas_TTF)
 
 colnames(info)
 test2 &lt;- merge(gas_data_shock, shock_data, 
-      by.x = &quot;Date&quot;, by.y = &quot;datetime&quot; ) %&gt;% 
+      by.x = \Date\, by.y = \datetime\ ) %&gt;% 
   mutate(order = abs(shock_serie)) %&gt;% 
   arrange(desc(order)) %&gt;% 
   slice(1:20)
-test2[, c(&quot;Date&quot;, &quot;order&quot;, &quot;news_per_day&quot;, &quot;event_type&quot;)]</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>On regarde les pics de news</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubmV3c19kYXRhX2JlcnQgJT4lIFxuICBcbmBgYCJ9 -->
-<pre class="r"><code>news_data_bert %&gt;% 
+test2[, c(\Date\, \order\, \news_per_day\, \event_type\)]</code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+On regarde les pics de news
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubmV3c19kYXRhX2JlcnQgJT4lIFxuICBcbmBgYFxuYGBgIn0= --&gt;
+
+```r
+```r
+news_data_bert %&gt;% 
   </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudGVzdCA8LSBpbmZvX3N1cHBseSU+JSBcblxuYGBgIn0= -->
-<pre class="r"><code>test &lt;- info_supply%&gt;% 
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZGF0ZXNfdG9wXzEwIDwtIGZ1bGxfbmV3c19jb3VudCAlPiUgXG4gIGFycmFuZ2UoZGVzYyhuZXdzX3Blcl9kYXkpKSAlPiUgXG4gIHNsaWNlKDE6MjApICU+JSBcbiAgcHVsbChkYXRldGltZSlcblxuIyBBc3N1bWluZyBjbHVzdGVyX25ld3NfY291bnQgaXMgeW91ciBkYXRhZnJhbWUgYW5kIGRhdGVzX3RvcF8xMCBpcyBhIHZlY3RvciBvZiBkYXRlc1xuY2x1c3Rlcl9kZXRhaWxlZF90b3BfMTAgPC0gY2x1c3Rlcl9uZXdzX2NvdW50W2NsdXN0ZXJfbmV3c19jb3VudCRkYXRldGltZSAlaW4lIGRhdGVzX3RvcF8xMCwgXVxuXG5jbHVzdGVyX3RvcF8xMCA8LSBjbHVzdGVyX25ld3NfY291bnQgJT4lIFxuICB1bmdyb3VwKCkgJT4lIFxuICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lIFxuICBzbGljZSgxOjIwKVxuY2x1c3Rlcl90b3BfMTBcblxuXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+dates_top_10 &lt;- full_news_count %&gt;% 
+  arrange(desc(news_per_day)) %&gt;% 
+  slice(1:20) %&gt;% 
+  pull(datetime)
+
+# Assuming cluster_news_count is your dataframe and dates_top_10 is a vector of dates
+cluster_detailed_top_10 &lt;- cluster_news_count[cluster_news_count$datetime %in% dates_top_10, ]
+
+cluster_top_10 &lt;- cluster_news_count %&gt;% 
+  ungroup() %&gt;% 
+  arrange(desc(news_per_day)) %&gt;% 
+  slice(1:20)
+cluster_top_10
 </code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IHVuZXhwZWN0ZWQgc3ltYm9sIGluOlxuXCJcbnRlc3RcIlxuIn0= -->
-<pre><code>Error: unexpected symbol in:
-&quot;
-test&quot;</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoZ2FzX2RhdGFfc2hvY2spXG5gYGAifQ== -->
-<pre class="r"><code>colnames(gas_data_shock)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiIFsxXSBcInRpbWVcIiAgICAgICAgICAgICAgICAgICAgXG4gWzJdIFwiR2FzX1RURlwiICAgICAgICAgICAgICAgICBcbiBbM10gXCJEYXRlXCIgICAgICAgICAgICAgICAgICAgIFxuIFs0XSBcIkdhc19UVEZfcHJldmlvdXNfZGF5XCIgICAgXG4gWzVdIFwiR2FzX1RURl9uZXh0X2RheVwiICAgICAgICBcbiBbNl0gXCJzaG9ja19zZXJpZVwiICAgICAgICAgICAgIFxuIFs3XSBcImxvZ19zaG9ja19zZXJpZVwiICAgICAgICAgXG4gWzhdIFwibW92aW5nX2F2Z19nYXNpXCIgICAgICAgICBcbiBbOV0gXCJtb3Zpbmdfc3RkX2dhc2lcIiAgICAgICAgIFxuWzEwXSBcImxvZ19zaG9ja19zZXJpZV9yZWxhdGl2ZVwiXG4ifQ== -->
-<pre><code> [1] &quot;time&quot;                    
- [2] &quot;Gas_TTF&quot;                 
- [3] &quot;Date&quot;                    
- [4] &quot;Gas_TTF_previous_day&quot;    
- [5] &quot;Gas_TTF_next_day&quot;        
- [6] &quot;shock_serie&quot;             
- [7] &quot;log_shock_serie&quot;         
- [8] &quot;moving_avg_gasi&quot;         
- [9] &quot;moving_std_gasi&quot;         
-[10] &quot;log_shock_serie_relative&quot;</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2QoZ2FzX2RhdGFfc2hvY2skc2hvY2tfc2VyaWUsIG5hLnJtPVRSVUUpXG5gYGAifQ== -->
-<pre class="r"><code>sd(gas_data_shock$shock_serie, na.rm=TRUE)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDMuOTQzMDgyXG4ifQ== -->
-<pre><code>[1] 3.943082</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2QoaW5mb19jbHVzdGVyJT4lIFxuICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09IFRSVUUgJiBuZXdzX3Blcl9kYXk+PTMpICU+JSBcbiAgICBwdWxsKHNob2NrX3NlcmllKSwgbmEucm09VFJVRSlcbmBgYCJ9 -->
-<pre class="r"><code>sd(info_cluster%&gt;% 
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuY29sbmFtZXMoZ2FzX2RhdGFfc2hvY2spXG5zZChnYXNfZGF0YV9zaG9jayRzaG9ja19zZXJpZSwgbmEucm09VFJVRSlcblxuc2QoaW5mb19jbHVzdGVyJT4lIFxuICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09IFRSVUUgJiBuZXdzX3Blcl9kYXk+PTMpICU+JSBcbiAgICBwdWxsKHNob2NrX3NlcmllKSwgbmEucm09VFJVRSlcblxuc2QoaW5mb19zbWFsbF9jbHVzdGVyJT4lIFxuICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09IFRSVUUgJiBuZXdzX3Blcl9kYXk+PTMpICU+JSBcbiAgICBwdWxsKHNob2NrX3NlcmllKSwgbmEucm09VFJVRSlcblxuc2QoaW5mb19oaWdoX2NsdXN0ZXIlPiUgXG4gIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIG5ld3NfcGVyX2RheT49MykgJT4lIFxuICAgIHB1bGwoc2hvY2tfc2VyaWUpLCBuYS5ybT1UUlVFKVxuc2QoaW5mb19zdXBwbHklPiUgXG4gIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIHN1cHBseV9uZXdzPj0zKSAlPiUgXG4gICAgcHVsbChzaG9ja19zZXJpZSksIG5hLnJtPVRSVUUpXG5cbnNkKGluZm9fZ29vZCAlPiUgXG4gIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIG5ld3NfcGVyX2RheT49MykgJT4lIFxuICAgIHB1bGwoc2hvY2tfc2VyaWUpLCBuYS5ybT1UUlVFKVxuXG5cbmBgYFxuYGBgIn0= --&gt;
+
+```r
+```r
+colnames(gas_data_shock)
+sd(gas_data_shock$shock_serie, na.rm=TRUE)
+
+sd(info_cluster%&gt;% 
   filter(binary_shock == TRUE &amp; news_per_day&gt;=3) %&gt;% 
-    pull(shock_serie), na.rm=TRUE)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDkuNjA2Njg2XG4ifQ== -->
-<pre><code>[1] 9.606686</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2QoaW5mb19zbWFsbF9jbHVzdGVyJT4lIFxuICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09IFRSVUUgJiBuZXdzX3Blcl9kYXk+PTMpICU+JSBcbiAgICBwdWxsKHNob2NrX3NlcmllKSwgbmEucm09VFJVRSlcbmBgYCJ9 -->
-<pre class="r"><code>sd(info_small_cluster%&gt;% 
+    pull(shock_serie), na.rm=TRUE)
+
+sd(info_small_cluster%&gt;% 
   filter(binary_shock == TRUE &amp; news_per_day&gt;=3) %&gt;% 
-    pull(shock_serie), na.rm=TRUE)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDcuMDMzNDIyXG4ifQ== -->
-<pre><code>[1] 7.033422</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2QoaW5mb19oaWdoX2NsdXN0ZXIlPiUgXG4gIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIG5ld3NfcGVyX2RheT49MykgJT4lIFxuICAgIHB1bGwoc2hvY2tfc2VyaWUpLCBuYS5ybT1UUlVFKVxuYGBgIn0= -->
-<pre class="r"><code>sd(info_high_cluster%&gt;% 
+    pull(shock_serie), na.rm=TRUE)
+
+sd(info_high_cluster%&gt;% 
   filter(binary_shock == TRUE &amp; news_per_day&gt;=3) %&gt;% 
-    pull(shock_serie), na.rm=TRUE)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDYuNjY1ODQ5XG4ifQ== -->
-<pre><code>[1] 6.665849</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2QoaW5mb19zdXBwbHklPiUgXG4gIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIHN1cHBseV9uZXdzPj0zKSAlPiUgXG4gICAgcHVsbChzaG9ja19zZXJpZSksIG5hLnJtPVRSVUUpXG5gYGAifQ== -->
-<pre class="r"><code>sd(info_supply%&gt;% 
+    pull(shock_serie), na.rm=TRUE)
+sd(info_supply%&gt;% 
   filter(binary_shock == TRUE &amp; supply_news&gt;=3) %&gt;% 
-    pull(shock_serie), na.rm=TRUE)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDE3LjU5MjQ4XG4ifQ== -->
-<pre><code>[1] 17.59248</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2QoaW5mb19nb29kICU+JSBcbiAgZmlsdGVyKGJpbmFyeV9zaG9jayA9PSBUUlVFICYgbmV3c19wZXJfZGF5Pj0zKSAlPiUgXG4gICAgcHVsbChzaG9ja19zZXJpZSksIG5hLnJtPVRSVUUpXG5gYGAifQ== -->
-<pre class="r"><code>sd(info_good %&gt;% 
+    pull(shock_serie), na.rm=TRUE)
+
+sd(info_good %&gt;% 
   filter(binary_shock == TRUE &amp; news_per_day&gt;=3) %&gt;% 
-    pull(shock_serie), na.rm=TRUE)</code></pre>
+    pull(shock_serie), na.rm=TRUE)
+</code></pre>
+<p>```</p>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDQuNzA3MDE1XG4ifQ== -->
-<pre><code>[1] 4.707015</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpgYGB7cn0NCnNldHdkKCdDOi9Vc2Vycy9EQlQzS0QvRGVza3RvcC9FdHVkZV9tYWNyb19lbGVjL0RBVEEvZ2FzX25ld3NfZGF0YScpDQojIEltcG9ydCB0aGUgZnVuY3Rpb25zIGZyb20gJ215X2Z1bmN0aW9ucy5SJw0KU3lzLnNldGVudihsYW5nID0gImVuX1VTIikNCg0KbmV3c19kYXRhX2Z1bGwgPC0gcmVhZF9wYXJxdWV0KCJzdG9yZV9mdWxsX25ld3NfZGF0YS5wYXJxdWV0IikNCg0KbmV3c19kYXRhX2Z1bGwkZGF0ZXRpbWUgPC0gYXMuRGF0ZShmb3JtYXQoYXMuRGF0ZShuZXdzX2RhdGFfZnVsbCRkYXRlLCAiJWIgJWQsICVZIiksICIlWS0lbS0lZCIpKQ0KDQpuZXdzX2RhdGFfZnVsbCRkYXRldGltZSA8LSBpZmVsc2UoIGlzLm5hKG5ld3NfZGF0YV9mdWxsJGRhdGV0aW1lKSwgYXMuRGF0ZShmb3JtYXQoYXMuRGF0ZShuZXdzX2RhdGFfZnVsbCRkYXRlLCAiJWQgJWIgJVkiKSwgIiVZLSVtLSVkIikpLCBuZXdzX2RhdGFfZnVsbCRkYXRldGltZSkNCg0KbmV3c19kYXRhX2Z1bGwgPC0gbmV3c19kYXRhX2Z1bGwgJT4lIA0KICBtdXRhdGUoZGF0ZXRpbWUgPSBhcy5EYXRlKGRhdGV0aW1lKSkgJT4lIA0KICBhcnJhbmdlKGRhdGV0aW1lKQ0KDQogDQpgYGANCg0KDQpgYGB7cn0NCm5ld3NfZGF0YV9hbGwgJT4lIA0KICBmaWx0ZXIoZGF0ZXRpbWUgPT0gIjIwMjEtMDUtMTIiKQ0KCQ0KYGBgDQoNCmBgYHtyfQ0KDQpuZXdzX2RhdGFfYWxsICU+JSANCiAgZmlsdGVyKGRhdGV0aW1lID09ICIyMDIyLTA0LTI3IikNCg0KYGBgDQoNCg0KDQoNCmBgYHtyfQ0KDQpuZXdzX2RhdGFfY2x1c3RlcmVkICU+JSANCiAgZmlsdGVyKGRhdGV0aW1lID09ICIyMDIxLTEyLTIxIikNCg0KZmlsdGVyZWRfbmV3c19jbHVzdGVyZWQgJT4lIA0KICBmaWx0ZXIoZGF0ZXRpbWUgPT0gIjIwMjEtMTItMjEiKQ0KDQpuZXdzX2RhdGFfYmVydCAlPiUgDQogIGZpbHRlcihkYXRldGltZSA9PSAiMjAyMS0xMC0wNSIpDQoNCg0KDQpgYGANCg0KDQoNCmBgYHtyfQ0KbGFiZWxlZF9uZXdzICU+JSANCiAgZmlsdGVyKGV2ZW50X3R5cGU9PSJzdXBwbHkiKSAlPiUgDQogIGZpbHRlcihkYXRldGltZSA9PSAiMjAyMi0wMy0wMiIpDQpgYGANCg0KDQpgYGB7cn0NCmJhc2UgPC0gY29tcGxldGVfZGF0YSAlPiUgDQogIGZpbHRlcihuZXdzX3Blcl9kYXkgPiAwICYgDQpkYXRldGltZSA8IGFzLkRhdGUoIjIwMTktMTItMzEiKSklPiUgDQogIGFycmFuZ2UoZGVzYyhuZXdzX3Blcl9kYXkpKSAlPiUNCiAgc2xpY2UoMToxMCkNCmJhc2UNCmBgYA0KDQpgYGB7cn0NCmJhc2UgPC0gY29tcGxldGVfZGF0YSAlPiUgDQogIGZpbHRlcihuZXdzX3Blcl9kYXkgPiAwICYgDQpkYXRldGltZSA8IGFzLkRhdGUoIjIwMTctMTItMzEiKSklPiUgDQogIGFycmFuZ2UoZGVzYyhuZXdzX3Blcl9kYXkpKSAlPiUNCiAgc2xpY2UoMToyMCkNCmJhc2UNCmBgYA0KDQpgYGB7cn0NCmluc3RydW1lbnRfZGF5cyA8LSBzaG9ja19kYXRhICU+JSANCiAgZmlsdGVyKGJpbmFyeV9zaG9jayA9PVRSVUUpDQpucm93KGluc3RydW1lbnRfZGF5cykNCmhlYWQoaW5zdHJ1bWVudF9kYXlzLCAxMCkNCmBgYA0KDQoNCg0KYGBge3J9DQpldmVudF9jb21wbGV0ZV9kYXRhICU+JSANCiAgZmlsdGVyKGV2ZW50X3R5cGUgPT0gImRlbWFuZCIpICU+JQ0KICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lDQogIGhlYWQoMzApDQpgYGANCg0KYGBge3J9DQpnZ3Bsb3QoZXZlbnRfY29tcGxldGVfZGF0YSAlPiUgZmlsdGVyKGV2ZW50X3R5cGU9PSJkZW1hbmQiKSwgDQogICAgICAgYWVzKHggPSBkYXRldGltZSwgeSA9IG5ld3NfcGVyX2RheSkpICsNCiAgZ2VvbV9saW5lKGNvbG9yID0ncmVkJykgKw0KICBsYWJzKHRpdGxlID0gIk51bWJlciBvZiBuZXdzIHBlciBkYXkiLA0KICAgICAgIHggPSAiRGF0ZSIsDQogICAgICAgeSA9ICJOdW1iZXIgb2YgbmV3cyIpICsNCiAgdGhlbWVfbWluaW1hbCgpDQpgYGANCg0KDQoNCg0KYGBge3J9DQphbGVfZ2Fzc19kYXRhIDwtIG1lcmdlKGV2ZW50c19kYXRhX3NlcmllLGdhc19pbnN0cnVtZW50X2RhdGEgJT4lIHNlbGVjdCgtbmV3c19wZXJfZGF5KSwNCiAgICAgIGJ5ID0gIkRhdGUiKQ0KYWxlX2dhc3NfZGF0YSA8LSBtZXJnZShhbGVfZ2Fzc19kYXRhLCBmdWxsX25ld3NfY291bnQsDQogICAgICAgICAgICAgICAgICAgICAgIGJ5LnggPSAiRGF0ZSIsIGJ5LnkgPSJkYXRldGltZSIgKQ0KYWxlX2dhc3NfZGF0YVssYygiRGF0ZSIsICJWYWx1ZSIsICJzaG9ja19zZXJpZSIsICJuZXdzX3Blcl9kYXkiKV0NCmBgYA0KDQoNCmBgYHtyfQ0KZ2FzX2luc3RydW1lbnRfZGF0YSAlPiUgDQogIGZpbHRlcihiaW5hcnlfc2hvY2s9PVRSVUUpICU+JSANCiAgc2VsZWN0KHNob2NrX3NlcmllLCBuZXdzX3Blcl9kYXksIERhdGUpDQpgYGANCg0KDQpgYGB7cn0NCnNob2NrX3Nlcmllc19hbGwgJT4lIA0KICBhcnJhbmdlKERhdGUpICU+JSANCiAgZmlsdGVyKERlbHRhICE9MCkgJT4lIA0KICBzZWxlY3Qoc2hvY2ssIERlbHRhLCBEYXRlKQ0KYGBgDQoNCk9uIGVzc2F5ZSBkZSB0cmljaGVyLCB2b2lyIHNpIGplIHN1aXMgbnVsIG91IHNpIGxhIGJhc2UgZXN0IG51bGxlLA0KamUgcmVnYXJkZSBsZXMgcGx1cyBncm9zc2VzIGZsdWN0dWF0aW9ucyBkZSBwcml4IGR1IGdhcyBldCBsZSBub21icmUgZGUgbm91dmVsbGVzIHF1aSBsZXVyIGVzdCBhc3NvY2nDqQ0KDQoNCmBgYHtyfQ0KDQp0ZXN0IDwtIGdhc19pbnN0cnVtZW50X2RhdGEgJT4lIA0KICBtdXRhdGUob3JkZXIgPSBhYnMoc2hvY2tfc2VyaWUpKSAlPiUgDQogIGFycmFuZ2UoZGVzYyhvcmRlcikpICU+JSANCiAgc2xpY2UoMToyMCkNCg0KdGVzdFssIGMoIm9yZGVyIiwgIm5ld3NfcGVyX2RheSIpXQ0KDQpgYGANCg0KDQpgYGB7cn0NCmNvbG5hbWVzKHNob2NrX2RhdGEpDQpjb2xuYW1lcyhnYXNfZGF0YV9zaG9jaykNCnByaW50KGNsYXNzKGdhc19kYXRhX3Nob2NrJERhdGUpKQ0KcHJpbnQoY2xhc3Moc2hvY2tfZGF0YSRkYXRldGltZSkpDQoNCmluZm8gPC0gbWVyZ2UoZ2FzX2RhdGFfc2hvY2ssIHNob2NrX2RhdGEsIA0KICAgICAgYnkueCA9ICJEYXRlIiwgYnkueSA9ICJkYXRldGltZSIgKSAlPiUgDQogIHNlbGVjdChEYXRlLCBzaG9ja19zZXJpZSwgc3VwcGx5X25ld3MsIA0KICAgICAgICAgbW92aW5nX2F2Z19uZXdzLCBtb3Zpbmdfc3RkX25ld3MsIGRheV90eXBlLCBHYXNfVFRGKQ0KDQpjb2xuYW1lcyhpbmZvKQ0KdGVzdDIgPC0gbWVyZ2UoZ2FzX2RhdGFfc2hvY2ssIHNob2NrX2RhdGEsIA0KICAgICAgYnkueCA9ICJEYXRlIiwgYnkueSA9ICJkYXRldGltZSIgKSAlPiUgDQogIG11dGF0ZShvcmRlciA9IGFicyhzaG9ja19zZXJpZSkpICU+JSANCiAgYXJyYW5nZShkZXNjKG9yZGVyKSkgJT4lIA0KICBzbGljZSgxOjIwKQ0KdGVzdDJbLCBjKCJEYXRlIiwgIm9yZGVyIiwgIm5ld3NfcGVyX2RheSIsICJldmVudF90eXBlIildDQpgYGANCg0KDQpPbiByZWdhcmRlIGxlcyBwaWNzIGRlIG5ld3MNCg0KYGBge3J9DQpuZXdzX2RhdGFfYmVydCAlPiUgDQogIA0KYGBgDQoNCmBgYHtyfQ0KZGF0ZXNfdG9wXzEwIDwtIGZ1bGxfbmV3c19jb3VudCAlPiUgDQogIGFycmFuZ2UoZGVzYyhuZXdzX3Blcl9kYXkpKSAlPiUgDQogIHNsaWNlKDE6MjApICU+JSANCiAgcHVsbChkYXRldGltZSkNCg0KIyBBc3N1bWluZyBjbHVzdGVyX25ld3NfY291bnQgaXMgeW91ciBkYXRhZnJhbWUgYW5kIGRhdGVzX3RvcF8xMCBpcyBhIHZlY3RvciBvZiBkYXRlcw0KY2x1c3Rlcl9kZXRhaWxlZF90b3BfMTAgPC0gY2x1c3Rlcl9uZXdzX2NvdW50W2NsdXN0ZXJfbmV3c19jb3VudCRkYXRldGltZSAlaW4lIGRhdGVzX3RvcF8xMCwgXQ0KDQpjbHVzdGVyX3RvcF8xMCA8LSBjbHVzdGVyX25ld3NfY291bnQgJT4lIA0KICB1bmdyb3VwKCkgJT4lIA0KICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lIA0KICBzbGljZSgxOjIwKQ0KY2x1c3Rlcl90b3BfMTANCg0KDQpgYGANCg0KDQoNCg0KYGBge3J9DQpjb2xuYW1lcyhnYXNfZGF0YV9zaG9jaykNCnNkKGdhc19kYXRhX3Nob2NrJHNob2NrX3NlcmllLCBuYS5ybT1UUlVFKQ0KDQpzZChpbmZvX2NsdXN0ZXIlPiUgDQogIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIG5ld3NfcGVyX2RheT49MykgJT4lIA0KICAgIHB1bGwoc2hvY2tfc2VyaWUpLCBuYS5ybT1UUlVFKQ0KDQpzZChpbmZvX3NtYWxsX2NsdXN0ZXIlPiUgDQogIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIG5ld3NfcGVyX2RheT49MykgJT4lIA0KICAgIHB1bGwoc2hvY2tfc2VyaWUpLCBuYS5ybT1UUlVFKQ0KDQpzZChpbmZvX2hpZ2hfY2x1c3RlciU+JSANCiAgZmlsdGVyKGJpbmFyeV9zaG9jayA9PSBUUlVFICYgbmV3c19wZXJfZGF5Pj0zKSAlPiUgDQogICAgcHVsbChzaG9ja19zZXJpZSksIG5hLnJtPVRSVUUpDQpzZChpbmZvX3N1cHBseSU+JSANCiAgZmlsdGVyKGJpbmFyeV9zaG9jayA9PSBUUlVFICYgc3VwcGx5X25ld3M+PTMpICU+JSANCiAgICBwdWxsKHNob2NrX3NlcmllKSwgbmEucm09VFJVRSkNCg0Kc2QoaW5mb19nb29kICU+JSANCiAgZmlsdGVyKGJpbmFyeV9zaG9jayA9PSBUUlVFICYgbmV3c19wZXJfZGF5Pj0zKSAlPiUgDQogICAgcHVsbChzaG9ja19zZXJpZSksIG5hLnJtPVRSVUUpDQoNCg0KYGBgDQoNCg0KDQoNCg0KDQoNCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpgYGB7cn0NCnNldHdkKCdDOi9Vc2Vycy9EQlQzS0QvRGVza3RvcC9FdHVkZV9tYWNyb19lbGVjL0RBVEEvZ2FzX25ld3NfZGF0YScpDQojIEltcG9ydCB0aGUgZnVuY3Rpb25zIGZyb20gJ215X2Z1bmN0aW9ucy5SJw0KU3lzLnNldGVudihsYW5nID0gImVuX1VTIikNCg0KbmV3c19kYXRhX2Z1bGwgPC0gcmVhZF9wYXJxdWV0KCJzdG9yZV9mdWxsX25ld3NfZGF0YS5wYXJxdWV0IikNCg0KbmV3c19kYXRhX2Z1bGwkZGF0ZXRpbWUgPC0gYXMuRGF0ZShmb3JtYXQoYXMuRGF0ZShuZXdzX2RhdGFfZnVsbCRkYXRlLCAiJWIgJWQsICVZIiksICIlWS0lbS0lZCIpKQ0KDQpuZXdzX2RhdGFfZnVsbCRkYXRldGltZSA8LSBpZmVsc2UoIGlzLm5hKG5ld3NfZGF0YV9mdWxsJGRhdGV0aW1lKSwgYXMuRGF0ZShmb3JtYXQoYXMuRGF0ZShuZXdzX2RhdGFfZnVsbCRkYXRlLCAiJWQgJWIgJVkiKSwgIiVZLSVtLSVkIikpLCBuZXdzX2RhdGFfZnVsbCRkYXRldGltZSkNCg0KbmV3c19kYXRhX2Z1bGwgPC0gbmV3c19kYXRhX2Z1bGwgJT4lIA0KICBtdXRhdGUoZGF0ZXRpbWUgPSBhcy5EYXRlKGRhdGV0aW1lKSkgJT4lIA0KICBhcnJhbmdlKGRhdGV0aW1lKQ0KDQogDQpgYGANCg0KDQpgYGB7cn0NCm5ld3NfZGF0YSAlPiUgDQogIGZpbHRlcihkYXRldGltZSA9PSAiMjAyMi0wMi0yNCIpDQoJDQpgYGANCg0KYGBge3J9DQoNCmxhYmVsZWRfbmV3cyAlPiUgDQogIGZpbHRlcihkYXRldGltZSA9PSAiMjAyMy0xMC0xMCIpDQoNCmBgYA0KDQoNCg0KDQpgYGB7cn0NCg0KbmV3c19kYXRhICU+JSANCiAgZmlsdGVyKGRhdGV0aW1lID09ICIyMDIyLTAyLTIyIikNCg0KYGBgDQoNCg0KDQpgYGB7cn0NCmxhYmVsZWRfbmV3cyAlPiUgDQogIGZpbHRlcihldmVudF90eXBlPT0ic3VwcGx5IikgJT4lIA0KICBmaWx0ZXIoZGF0ZXRpbWUgPT0gIjIwMjItMDMtMDIiKQ0KYGBgDQoNCg0KYGBge3J9DQpiYXNlIDwtIGNvbXBsZXRlX2RhdGEgJT4lIA0KICBmaWx0ZXIobmV3c19wZXJfZGF5ID4gMCAmIA0KZGF0ZXRpbWUgPCBhcy5EYXRlKCIyMDE5LTEyLTMxIikpJT4lIA0KICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lDQogIHNsaWNlKDE6MTApDQpiYXNlDQpgYGANCg0KYGBge3J9DQpiYXNlIDwtIGNvbXBsZXRlX2RhdGEgJT4lIA0KICBmaWx0ZXIobmV3c19wZXJfZGF5ID4gMCAmIA0KZGF0ZXRpbWUgPCBhcy5EYXRlKCIyMDE3LTEyLTMxIikpJT4lIA0KICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lDQogIHNsaWNlKDE6MjApDQpiYXNlDQpgYGANCg0KYGBge3J9DQppbnN0cnVtZW50X2RheXMgPC0gc2hvY2tfZGF0YSAlPiUgDQogIGZpbHRlcihiaW5hcnlfc2hvY2sgPT1UUlVFKQ0KbnJvdyhpbnN0cnVtZW50X2RheXMpDQpoZWFkKGluc3RydW1lbnRfZGF5cywgMTApDQpgYGANCg0KDQoNCmBgYHtyfQ0KZXZlbnRfY29tcGxldGVfZGF0YSAlPiUgDQogIGZpbHRlcihldmVudF90eXBlID09ICJkZW1hbmQiKSAlPiUNCiAgYXJyYW5nZShkZXNjKG5ld3NfcGVyX2RheSkpICU+JQ0KICBoZWFkKDMwKQ0KYGBgDQoNCmBgYHtyfQ0KZ2dwbG90KGV2ZW50X2NvbXBsZXRlX2RhdGEgJT4lIGZpbHRlcihldmVudF90eXBlPT0iZGVtYW5kIiksIA0KICAgICAgIGFlcyh4ID0gZGF0ZXRpbWUsIHkgPSBuZXdzX3Blcl9kYXkpKSArDQogIGdlb21fbGluZShjb2xvciA9J3JlZCcpICsNCiAgbGFicyh0aXRsZSA9ICJOdW1iZXIgb2YgbmV3cyBwZXIgZGF5IiwNCiAgICAgICB4ID0gIkRhdGUiLA0KICAgICAgIHkgPSAiTnVtYmVyIG9mIG5ld3MiKSArDQogIHRoZW1lX21pbmltYWwoKQ0KYGBgDQoNCg0KDQoNCmBgYHtyfQ0KYWxlX2dhc3NfZGF0YSA8LSBtZXJnZShldmVudHNfZGF0YV9zZXJpZSxnYXNfaW5zdHJ1bWVudF9kYXRhICU+JSBzZWxlY3QoLW5ld3NfcGVyX2RheSksDQogICAgICBieSA9ICJEYXRlIikNCmFsZV9nYXNzX2RhdGEgPC0gbWVyZ2UoYWxlX2dhc3NfZGF0YSwgZnVsbF9uZXdzX2NvdW50LA0KICAgICAgICAgICAgICAgICAgICAgICBieS54ID0gIkRhdGUiLCBieS55ID0iZGF0ZXRpbWUiICkNCmFsZV9nYXNzX2RhdGFbLGMoIkRhdGUiLCAiVmFsdWUiLCAic2hvY2tfc2VyaWUiLCAibmV3c19wZXJfZGF5IildDQpgYGANCg0KDQpgYGB7cn0NCmdhc19pbnN0cnVtZW50X2RhdGEgJT4lIA0KICBmaWx0ZXIoYmluYXJ5X3Nob2NrPT1UUlVFKSAlPiUgDQogIHNlbGVjdChzaG9ja19zZXJpZSwgbmV3c19wZXJfZGF5LCBEYXRlKQ0KYGBgDQoNCg0KYGBge3J9DQpzaG9ja19zZXJpZXNfYWxsICU+JSANCiAgYXJyYW5nZShEYXRlKSAlPiUgDQogIGZpbHRlcihEZWx0YSAhPTApICU+JSANCiAgc2VsZWN0KHNob2NrLCBEZWx0YSwgRGF0ZSkNCmBgYA0KDQpPbiBlc3NheWUgZGUgdHJpY2hlciwgdm9pciBzaSBqZSBzdWlzIG51bCBvdSBzaSBsYSBiYXNlIGVzdCBudWxsZSwNCmplIHJlZ2FyZGUgbGVzIHBsdXMgZ3Jvc3NlcyBmbHVjdHVhdGlvbnMgZGUgcHJpeCBkdSBnYXMgZXQgbGUgbm9tYnJlIGRlIG5vdXZlbGxlcyBxdWkgbGV1ciBlc3QgYXNzb2Npw6kNCg0KDQpgYGB7cn0NCg0KdGVzdCA8LSBnYXNfaW5zdHJ1bWVudF9kYXRhICU+JSANCiAgbXV0YXRlKG9yZGVyID0gYWJzKHNob2NrX3NlcmllKSkgJT4lIA0KICBhcnJhbmdlKGRlc2Mob3JkZXIpKSAlPiUgDQogIHNsaWNlKDE6MjApDQoNCnRlc3RbLCBjKCJvcmRlciIsICJuZXdzX3Blcl9kYXkiKV0NCg0KYGBgDQoNCg0KYGBge3J9DQpjb2xuYW1lcyhzaG9ja19kYXRhKQ0KY29sbmFtZXMoZ2FzX2RhdGFfc2hvY2spDQpwcmludChjbGFzcyhnYXNfZGF0YV9zaG9jayREYXRlKSkNCnByaW50KGNsYXNzKHNob2NrX2RhdGEkZGF0ZXRpbWUpKQ0KDQppbmZvIDwtIG1lcmdlKGdhc19kYXRhX3Nob2NrLCBzaG9ja19kYXRhLCANCiAgICAgIGJ5LnggPSAiRGF0ZSIsIGJ5LnkgPSAiZGF0ZXRpbWUiICkgJT4lIA0KICBzZWxlY3QoRGF0ZSwgc2hvY2tfc2VyaWUsIHN1cHBseV9uZXdzLCANCiAgICAgICAgIG1vdmluZ19hdmdfbmV3cywgbW92aW5nX3N0ZF9uZXdzLCBkYXlfdHlwZSwgR2FzX1RURikNCg0KY29sbmFtZXMoaW5mbykNCnRlc3QyIDwtIG1lcmdlKGdhc19kYXRhX3Nob2NrLCBzaG9ja19kYXRhLCANCiAgICAgIGJ5LnggPSAiRGF0ZSIsIGJ5LnkgPSAiZGF0ZXRpbWUiICkgJT4lIA0KICBtdXRhdGUob3JkZXIgPSBhYnMoc2hvY2tfc2VyaWUpKSAlPiUgDQogIGFycmFuZ2UoZGVzYyhvcmRlcikpICU+JSANCiAgc2xpY2UoMToyMCkNCnRlc3QyWywgYygiRGF0ZSIsICJvcmRlciIsICJuZXdzX3Blcl9kYXkiLCAiZXZlbnRfdHlwZSIpXQ0KYGBgDQoNCg0KT24gcmVnYXJkZSBsZXMgcGljcyBkZSBuZXdzDQoNCmBgYHtyfQ0KbmV3c19kYXRhX2JlcnQgJT4lIA0KICANCmBgYA0KDQpgYGB7cn0NCmRhdGVzX3RvcF8xMCA8LSBmdWxsX25ld3NfY291bnQgJT4lIA0KICBhcnJhbmdlKGRlc2MobmV3c19wZXJfZGF5KSkgJT4lIA0KICBzbGljZSgxOjIwKSAlPiUgDQogIHB1bGwoZGF0ZXRpbWUpDQoNCiMgQXNzdW1pbmcgY2x1c3Rlcl9uZXdzX2NvdW50IGlzIHlvdXIgZGF0YWZyYW1lIGFuZCBkYXRlc190b3BfMTAgaXMgYSB2ZWN0b3Igb2YgZGF0ZXMNCmNsdXN0ZXJfZGV0YWlsZWRfdG9wXzEwIDwtIGNsdXN0ZXJfbmV3c19jb3VudFtjbHVzdGVyX25ld3NfY291bnQkZGF0ZXRpbWUgJWluJSBkYXRlc190b3BfMTAsIF0NCg0KY2x1c3Rlcl90b3BfMTAgPC0gY2x1c3Rlcl9uZXdzX2NvdW50ICU+JSANCiAgdW5ncm91cCgpICU+JSANCiAgYXJyYW5nZShkZXNjKG5ld3NfcGVyX2RheSkpICU+JSANCiAgc2xpY2UoMToyMCkNCmNsdXN0ZXJfdG9wXzEwDQoNCg0KYGBgDQoNCg0KDQoNCmBgYHtyfQ0KY29sbmFtZXMoZ2FzX2RhdGFfc2hvY2spDQpzZChnYXNfZGF0YV9zaG9jayRzaG9ja19zZXJpZSwgbmEucm09VFJVRSkNCg0Kc2QoaW5mb19jbHVzdGVyJT4lIA0KICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09IFRSVUUgJiBuZXdzX3Blcl9kYXk+PTMpICU+JSANCiAgICBwdWxsKHNob2NrX3NlcmllKSwgbmEucm09VFJVRSkNCg0Kc2QoaW5mb19zbWFsbF9jbHVzdGVyJT4lIA0KICBmaWx0ZXIoYmluYXJ5X3Nob2NrID09IFRSVUUgJiBuZXdzX3Blcl9kYXk+PTMpICU+JSANCiAgICBwdWxsKHNob2NrX3NlcmllKSwgbmEucm09VFJVRSkNCg0Kc2QoaW5mb19oaWdoX2NsdXN0ZXIlPiUgDQogIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIG5ld3NfcGVyX2RheT49MykgJT4lIA0KICAgIHB1bGwoc2hvY2tfc2VyaWUpLCBuYS5ybT1UUlVFKQ0Kc2QoaW5mb19zdXBwbHklPiUgDQogIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIHN1cHBseV9uZXdzPj0zKSAlPiUgDQogICAgcHVsbChzaG9ja19zZXJpZSksIG5hLnJtPVRSVUUpDQoNCnNkKGluZm9fZ29vZCAlPiUgDQogIGZpbHRlcihiaW5hcnlfc2hvY2sgPT0gVFJVRSAmIG5ld3NfcGVyX2RheT49MykgJT4lIA0KICAgIHB1bGwoc2hvY2tfc2VyaWUpLCBuYS5ybT1UUlVFKQ0KDQoNCmBgYA0KDQoNCg0KDQoNCg0KDQo=</div>
 
 
 

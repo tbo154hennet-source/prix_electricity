@@ -45,7 +45,7 @@ generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 setDT(generation_per_plant)# Convertir en data.table
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 publi_bout_indispo_ENTSOE_data <- read_parquet( "save_indispo_with_pub_status_esp_pre_2018.parquet") %>% 
   arrange(datetime_pub)
@@ -79,72 +79,72 @@ expanded_indispo <- publi_bout_indispo_ENTSOE_data[, .(
 filtered_indispo <- expanded_indispo[expanded_indispo$production_resource_name %in% colnames(generation_per_plant), ]
 filtered_indispo <- filtered_indispo[, unique(names(filtered_indispo)), with = FALSE]
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
-write_parquet(filtered_indispo , "filtered_indispo.parquet")
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+write_parquet(filtered_indispo , "filtered_indispo_esp_pre_2018.parquet")
 
 
-indispo_row <- filtered_indispo[1:10,]
-# 3. Effectuer le merge avec generation_per_plant
-# CrÃ©er une fonction pour faire le merge dynamique pour chaque ligne de filtered_indispo
-merge_dynamic <- function(indispo_row, index) {
-  centrale <- indispo_row$production_resource_name
-  
-  #index <- which(bout_indispo_ENTSOE_data$mrid == indispo_row$mrid)
-  if (index %% 200== 0){
-    print(index)
-  }
-  
-  
-  # VÃ©rifie si la colonne existe dans generation_per_plant
-  if (centrale %in% colnames(generation_per_plant)) {
-    
-    # RÃ©cupÃ¨re la colonne dynamique Ã  partir de generation_per_plant
-    merged_data <- merge(
-      data.table(indispo_row),
-      generation_per_plant[, .(datetime_slot = `__index_level_0__`, production = get(centrale))],
-      by = "datetime_slot",
-      allow.cartesian = TRUE
-    )
-    
-    # Renommer la colonne dynamique en 'production'
-    setnames(merged_data, "production", "production")
-    
-    return(merged_data)
-  } else {
-    return(NULL)  # Si la colonne n'existe pas, on renvoie NULL
-  }
-}
-
-getwd()
-
-# Appliquer la fonction à chaque ligne de filtered_indispo et combiner les résultats
-long_indispo_with_production <- rbindlist(
-  lapply(1:nrow(filtered_indispo), function(i) {
-    merge_dynamic(filtered_indispo[i, ], i)
-  }),
-  use.names = TRUE, fill = TRUE
-)
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
-write_parquet(long_indispo_with_production , "long_indispo_with_production.parquet")
-
-
-long_indispo_with_production <- read_parquet("long_indispo_with_production.parquet")
-
-
-colnames(long_indispo_with_production)
-colnames(publi_bout_indispo_ENTSOE_data)
-# Résultat : long_indispo_with_production avec les données fusionnées dynamiquement
-
-long_final_indispo <- long_indispo_with_production %>%
-  left_join(publi_bout_indispo_ENTSOE_data %>% 
-              select(publication_status, mrid, start_datetime,
-                     end_datetime, plant_type, production_resource_name, 
-                     Unavailable.Capacity, Installed.Capacity)
-              , by = c("start_datetime", "end_datetime",
-                                                   "production_resource_name", "mrid"))
-getwd()
-write_parquet(long_final_indispo, "long_final_indispo.parquet")
-
+# indispo_row <- filtered_indispo[1:10,]
+# # 3. Effectuer le merge avec generation_per_plant
+# # CrÃ©er une fonction pour faire le merge dynamique pour chaque ligne de filtered_indispo
+# merge_dynamic <- function(indispo_row, index) {
+#   centrale <- indispo_row$production_resource_name
+#   
+#   #index <- which(bout_indispo_ENTSOE_data$mrid == indispo_row$mrid)
+#   if (index %% 200== 0){
+#     print(index)
+#   }
+#   
+#   
+#   # VÃ©rifie si la colonne existe dans generation_per_plant
+#   if (centrale %in% colnames(generation_per_plant)) {
+#     
+#     # RÃ©cupÃ¨re la colonne dynamique Ã  partir de generation_per_plant
+#     merged_data <- merge(
+#       data.table(indispo_row),
+#       generation_per_plant[, .(datetime_slot = `__index_level_0__`, production = get(centrale))],
+#       by = "datetime_slot",
+#       allow.cartesian = TRUE
+#     )
+#     
+#     # Renommer la colonne dynamique en 'production'
+#     setnames(merged_data, "production", "production")
+#     
+#     return(merged_data)
+#   } else {
+#     return(NULL)  # Si la colonne n'existe pas, on renvoie NULL
+#   }
+# }
+# 
+# getwd()
+# 
+# # Appliquer la fonction à chaque ligne de filtered_indispo et combiner les résultats
+# long_indispo_with_production <- rbindlist(
+#   lapply(1:nrow(filtered_indispo), function(i) {
+#     merge_dynamic(filtered_indispo[i, ], i)
+#   }),
+#   use.names = TRUE, fill = TRUE
+# )
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+# write_parquet(long_indispo_with_production , "long_indispo_with_production.parquet")
+# 
+# 
+# long_indispo_with_production <- read_parquet("long_indispo_with_production.parquet")
+# 
+# 
+# colnames(long_indispo_with_production)
+# colnames(publi_bout_indispo_ENTSOE_data)
+# # Résultat : long_indispo_with_production avec les données fusionnées dynamiquement
+# 
+# long_final_indispo <- long_indispo_with_production %>%
+#   left_join(publi_bout_indispo_ENTSOE_data %>% 
+#               select(publication_status, mrid, start_datetime,
+#                      end_datetime, plant_type, production_resource_name, 
+#                      Unavailable.Capacity, Installed.Capacity)
+#               , by = c("start_datetime", "end_datetime",
+#                                                    "production_resource_name", "mrid"))
+# getwd()
+# write_parquet(long_final_indispo, "long_final_indispo.parquet")
+# 
 
 
 

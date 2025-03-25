@@ -23,15 +23,15 @@ news_data_full <- news_data_full %>%
 
 
 ```{r}
-news_data_all %>% 
-  filter(datetime == "2021-05-12")
+news_data %>% 
+  filter(datetime == "2022-02-24")
 	
 ```
 
 ```{r}
 
-news_data_all %>% 
-  filter(datetime == "2022-04-27")
+labeled_news %>% 
+  filter(datetime == "2023-10-10")
 
 ```
 
@@ -40,16 +40,8 @@ news_data_all %>%
 
 ```{r}
 
-news_data_clustered %>% 
-  filter(datetime == "2021-12-21")
-
-filtered_news_clustered %>% 
-  filter(datetime == "2021-12-21")
-
-news_data_bert %>% 
-  filter(datetime == "2021-10-05")
-
-
+news_data %>% 
+  filter(datetime == "2022-02-22")
 
 ```
 

@@ -1,0 +1,153 @@
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/esp")
+
+my_files <- list.files()
+
+my_files <-  my_files[grep("\\.xls$|\\.xlsx$", my_files)]
+
+
+# Create a data frame with specified column names
+dates <- data.frame(serie = character(),
+                    start_date = as.Date(character()),
+                    end_date = as.Date(character()),
+                    stringsAsFactors = FALSE)
+
+VAR_series <- NULL
+
+for (file in my_files){
+  print(file)
+  # Split the file name by underscore
+  split_file <-  strsplit(file, split = "[_.]")
+  # Extract the parts (strsplit returns a list)
+  split_parts <- unlist(split_file)
+  split_parts <- split_parts[3:length(split_parts)-1]
+  name <- paste(split_parts, collapse = " ")
+  # Concatenate the split parts with automatic line breaks
+  title_text <- paste(strwrap(name, width = 30), collapse = "\n")
+  
+  excel_file <- read_excel(file, skip=10)
+  
+  excel_file$observation_date <- as.Date(excel_file$observation_date)
+  # print(class(excel_file %>% head(1)))
+  # print(colnames(excel_file %>% head(1)))
+  
+  start_date <- excel_file %>% head(1) %>% dplyr::select(observation_date)
+  end_date <- excel_file %>% tail(1) %>% dplyr::select(observation_date)
+  dates <<- rbind(dates, c(file, start_date[[1]], end_date[[1]]))
+  
+  if(is.null(VAR_series)){
+    VAR_series <- excel_file
+  }else{
+    VAR_series <- merge( VAR_series ,excel_file, by= 'observation_date')
+  }
+
+}
+
+VAR_series <- VAR_series %>% 
+  mutate(year = year(observation_date),
+         month = month(observation_date))%>% 
+  rename(ffr = ECBMRRFR,
+         IPI = ESPPROINDMISMEI,
+         NE_Index= `00XE00ESM086NEST`,
+         E_Index = ENRGY0ESM086NEST,
+         UnE = LRHUTTTTESM156S,
+         Bond_rate = IR3TIB01ESM156N
+  )
+
+colnames(VAR_series)
+
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+setwd(save_path_data)
+price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")
+
+weighted_mean <- function(x, w) {
+  sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
+}
+
+
+monthly_energy_data <- price_indispo_merge %>%
+  arrange(datetime) %>% 
+  mutate(
+    Nuclear.Unavailabilities =
+      coalesce(Planned.Unavailable.Nuclear.Capacity, 0) +
+      coalesce(Published.Unavailable.Nuclear.Capacity, 0) +
+      coalesce(Uneffective.Unavailable.Nuclear.Capacity, 0) +
+      coalesce(Unpublished.Unavailable.Nuclear.Capacity, 0),
+    
+    Thermal.Unavailabilities =
+      coalesce(Planned.Unavailable.Capacity, 0) +
+      coalesce(Published.Unavailable.Capacity, 0) +
+      coalesce(Uneffective.Unavailable.Capacity, 0) +
+      coalesce(Unpublished.Unavailable.Capacity, 0) -
+      coalesce(Nuclear.Unavailabilities, 0),
+    
+    Predicted.Unavailabilities =
+      coalesce(Planned.Predicted.Unavailable.Capacity, 0) +
+      coalesce(Published.Predicted.Unavailable.Capacity, 0) +
+      coalesce(Uneffective.Predicted.Unavailable.Capacity, 0) +
+      coalesce(Unpublished.Predicted.Unavailable.Capacity, 0)
+  )%>% 
+  group_by(month, year) %>%
+  summarise(
+    spot_price = weighted_mean(price, gen_tot),
+    renewable_forecast = weighted_mean(day_ahead_forecast, gen_tot),
+    wind_forecast = weighted_mean(Fore_Wind, gen_tot),
+    solar_forecast = weighted_mean(Fore_Solar, gen_tot),
+    nuclear_unavailabilities = weighted_mean(Nuclear.Unavailabilities, gen_tot),
+    thermal_unavailabilities = weighted_mean(Thermal.Unavailabilities, gen_tot),
+    predicted_unavailabilities = weighted_mean(Predicted.Unavailabilities, gen_tot),
+    gen_tot = mean(gen_tot, na.rm = TRUE),
+    datetime = first(datetime)
+  ) %>%
+  arrange(datetime) %>% 
+  ungroup()
+
+
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")
+colnames(price_merge_CBF)
+
+weighted_mean <- function(x, w) {
+  sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
+}
+
+monthly_crossborder_data <- price_merge_CBF %>%
+  arrange(datetime) %>% 
+  group_by(month, year) %>%
+  summarise(
+    NTC_ESP_FR = mean(NTC_ESP_FR, na.rm = TRUE),
+    NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
+    gen_tot = mean(gen_tot_esp, na.rm = TRUE),
+    datetime = first(datetime)
+  ) %>%
+  arrange(datetime) %>% 
+  ungroup()
+
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data')
+gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
+temperature_instrument <- read.csv("temperature_instrument_esp.csv")
+
+
+
+colnames(VAR_series)
+colnames(monthly_energy_data)
+colnames(gas_fundamental_data)
+colnames(temperature_instrument)
+
+IV_data <- merge(VAR_series, monthly_energy_data, by= c('month', 'year'))
+IV_data <- merge(IV_data, gas_fundamental_data,
+                 by= c('month', 'year'))
+IV_data <- merge(IV_data, temperature_instrument,
+                 by= c('month', 'year'))%>%
+  arrange(Date)
+
+
+        
+
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_var_path)
+write_parquet(IV_data, 'IV_data_esp.parquet')
+
+colnames(IV_data)
+

@@ -8,8 +8,15 @@ library(dplyr)
 library(arrow)
 library(lubridate)
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel')
-generation_by_fuel <-  read_parquet('generation_by_fuel.parquet')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp')
+# Lister tous les fichiers dans le dossier avec l'extension .parquet
+parquet_files <- list.files(pattern = "\\.parquet$")
+# Lire tous les fichiers parquet et les fusionner dans un seul dataframe
+generation_by_fuel <- parquet_files %>%
+  lapply(read_parquet) %>% # Lire chaque fichier parquet
+  bind_rows() %>%  # Fusionner tous les dataframes
+  arrange(`__index_level_0__`) 
+
 colnames(generation_by_fuel)
 fields <- c("('Solar', 'Actual Aggregated')",
   "('Wind Onshore', 'Actual Aggregated')",
@@ -28,14 +35,15 @@ generation_by_fuel <- generation_by_fuel %>%
 generation_by_fuel$`__index_level_0__` <- 
   with_tz(generation_by_fuel$`__index_level_0__`, tzone ='Europe/Brussels')
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel')
-write_parquet(generation_by_fuel, 'generation_by_fuel_format.parquet')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
 
-generation_by_fuel <- read_parquet('generation_by_fuel_format.parquet')
+write_parquet(generation_by_fuel, 'generation_by_fuel_format_esp.parquet')
+
+generation_by_fuel <- read_parquet('generation_by_fuel_format_esp.parquet')
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 long_format_indispo <- read_parquet('long_format_indispo.parquet')
 long_format_indispo_nuclear <- read_parquet('long_format_nuclear_indispo.parquet')
@@ -165,7 +173,7 @@ for (centrale in centrales){
 
 
 getwd()
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'rf_predictions_data.parquet')
 
@@ -203,7 +211,7 @@ ggplot(data = real_indispo_rf %>%
   theme_minimal()
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(real_indispo_rf, 'real_indispo_rf.parquet')
 
@@ -217,7 +225,7 @@ final_real_indispo_rf <- real_indispo_rf %>%
   ) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_real_indispo_rf, 
               'final_real_indispo_rf.parquet')
@@ -227,11 +235,12 @@ write_parquet(final_real_indispo_rf,
 # autre methode
 #j'idntifie les indisponibilités limitantes
 
+unique(long_format_indispo$production_resource_name)
 #indispo limitante quand le reste non-nul 
 #est égal ou presque au reste disponible
 
 long_indispo_with_production <- NULL
-centrale <- centrales[1]
+centrale <- centrales[2]
 for (centrale in centrales){
   tryCatch({
     #on predit pour toutes les dates où il y a une indisponibilité
@@ -240,11 +249,16 @@ for (centrale in centrales){
       distinct() %>% 
       mutate(datetime_slot = as.POSIXct(electricity_delivery_date) + as.difftime(creneau, units = "hours")
       )
-    generation_dates <- merge(prediction_dates, generation_per_plant,
-                              by.x = "datetime_slot", by.y = "__index_level_0__") %>% 
-      select(c(centrale, colnames(prediction_dates))) %>% 
-      rename("production" = centrale)
     
+    mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
+                                                'day_of_week', 
+                                                'wind_solar_tot', 'gen_tot', centrale)] %>%
+      mutate(previous_day_prod = lag(!!sym(centrale), 24))  # Use !!sym to refer to the variable dynamically
+    
+    generation_dates <- merge(prediction_dates, mini_prediction_data,
+                              by.x = "datetime_slot", by.y = "__index_level_0__") %>% 
+      select(c(centrale, previous_day_prod, colnames(prediction_dates))) %>% 
+      rename("production" = centrale)
     if (is.null(long_indispo_with_production)){
       long_indispo_with_production <- generation_dates 
     }else{
@@ -256,18 +270,16 @@ for (centrale in centrales){
   
 }
 
-colnames(long_indispo_with_production)
 
 long_indispo_limitantes <- long_indispo_with_production %>% 
   filter(Installed.Capacity!= Unavailable.Capacity) %>% 
-  filter(as.numeric(Installed.Capacity) - as.numeric(Unavailable.Capacity) < production*1.2)
-nrow(long_indispo_limitantes)
+  filter(as.numeric(Installed.Capacity) - as.numeric(Unavailable.Capacity) < production*1.2) %>% 
+  filter(previous_day_prod > as.numeric(Installed.Capacity)*0.85)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
+
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 write_parquet(long_indispo_limitantes, 'long_indispo_limitantes.parquet')
-
-
 
 final_real_indispo_limitantes <- long_indispo_limitantes %>% 
   group_by(electricity_delivery_date, auction_before,
@@ -275,7 +287,7 @@ final_real_indispo_limitantes <- long_indispo_limitantes %>%
   summarise(Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_real_indispo_limitantes, 'final_real_indispo_limitantes.parquet')
 

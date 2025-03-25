@@ -15,22 +15,29 @@ library(arrow)
 library(lubridate)
 library(estimatr)
 library(stargazer)
+library(sandwich)
+library(lmtest)
+
 
 Sys.setenv(lang = "en_US")
+
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+setwd(save_path_entsoe_output)
+
+first_stage_data <- read_parquet('first_stage_data.parquet') %>% 
+  rename(Published.Predicted.Unavailable.Capacity = Predicted.Unavailable.Capacity,
+         Published.Limiting.Unavailable.Capacity = Limiting.Unavailable.Capacity)
+
 ```
 
 
 
 ```{r}
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
-setwd(save_path_entsoe_output)
-
-first_stage_data <- read_parquet('first_stage_data.parquet')
 
 capacity_fields <- c("Published.Unavailable.Capacity"          
 ,"Published.Unavailable.Nuclear.Capacity","Unpublished.Unavailable.Capacity"        
 ,"Unpublished.Unavailable.Nuclear.Capacity" ,"wind_solar_tot"                          
-, "gen_tot", "Predicted.Unavailable.Capacity", "Limiting.Unavailable.Capacity",
+, "gen_tot", "Published.Predicted.Unavailable.Capacity", "Published.Limiting.Unavailable.Capacity",
 "Unpublished.Limiting.Unavailable.Capacity", "Unpublished.Predicted.Unavailable.Capacity",
 "Published.Dismissed.Unavailable.Capacity", "Unpublished.Dismissed.Unavailable.Capacity",
 "Published.Dismissed.Unavailable.Nuclear.Capacity", "Unpublished.Dismissed.Unavailable.Nuclear.Capacity"
@@ -45,22 +52,86 @@ first_stage_data_clean <- first_stage_data%>%
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
          Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity)
 
-
-```
-
-
-```{r}
-library(sandwich)
-library(lmtest)
-
 non_finite_rows <- first_stage_data %>%
   filter(!is.finite(log_price_diff) | !is.finite(Published.Unavailable.Capacity))
 
 first_stage_data_clean$weekday <- weekdays(first_stage_data_clean$delivery_date) 
-colnames(first_stage_data_clean)
-```
-Estimation after 2021 the REMIT publication policy
 
+# Créer une variable factorielle pour clusteriser
+first_stage_data_clean <- first_stage_data_clean %>% 
+  mutate(cluster_var = interaction(auction_date_plus_one, auction))
+
+
+first_stage_renewable <- first_stage_data_clean  %>% 
+  filter(auction_before!= auction_after) %>% 
+  filter(auction_before == 4 | auction_before == 5) %>% 
+  mutate(day_ahead_forecast = day_ahead_forecast/1000,
+         wind_solar_tot = wind_solar_tot/1000,
+    intraday_update_renewables = intraday_update_renewables/1000,
+         unpredicted_renewables = unpredicted_renewables/1000) %>% 
+  rename(day_ahead_renewable_forecast= day_ahead_forecast)
+
+colnames(first_stage_data_clean)
+
+```
+
+On s'occupe maintenant de regarder le intraday update
+
+
+```{r}
+m_basic_renew <- lm(
+  log_price_diff ~ intraday_update_renewables + gen_tot+
+    as.factor(year) + as.factor(month)+as.factor(weekday) +
+    as.factor(creneau) + as.factor(auction_before),
+  data= first_stage_renewable)
+
+vcov_cluster <- vcovCL(m_basic_renew, type = "HC0", cluster = ~ creneau)
+# Erreurs standard clusterisées
+cl_se_basic_renew <- sqrt(diag(vcov_cluster))
+
+
+m_control_renew <- lm(
+  log_price_diff ~ intraday_update_renewables + unpredicted_renewables +
+    day_ahead_renewable_forecast+   gen_tot+
+    as.factor(year) + as.factor(month) +as.factor(weekday)+
+    as.factor(creneau) + as.factor(auction_before) ,
+  data= first_stage_renewable)
+
+vcov_cluster <- vcovCL(m_control_renew, type = "HC0", cluster = ~ creneau)
+# Erreurs standard clusterisées
+cl_se_control_renew <- sqrt(diag(vcov_cluster))
+
+# perform first stage regression
+# m_renew_plant <- lm(
+#   log_price_diff ~ intraday_update_renewables + unpredicted_renewables +
+#     day_ahead_renewable_forecast+   gen_tot+
+#     Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+
+#     as.factor(year) + as.factor(month)+as.factor(weekday) ,
+#   data= first_stage_renewable)
+# 
+# vcov_cluster <- vcovCL(m_renew_plant, type = "HC0", cluster = ~ cluster_var)
+# # Erreurs standard clusterisées
+# cl_se_renew_plant <- sqrt(diag(vcov_cluster))
+
+```
+
+```{r, results = 'asis'}
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic_renew, m_control_renew,
+                       #m_renew_plant, 
+    type = "html",
+    #se = list(NULL, NULL, cl_se_renew_plant),
+    se = list(cl_se_basic_renew, cl_se_control_renew),
+    title = "Regression Results",
+    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
+    keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
+             'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot',
+             "intraday_update_renewables" , "unpredicted_renewables", "wind_solar_tot",
+             "Published.Limiting.Unavailable.Capacity", "Unpublished.Limiting.Unavailable.Capacity",
+             "Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
+             "day_ahead_renewable_forecast")
+ )
+```
 
 
 
@@ -69,49 +140,39 @@ Et l'on compare avec l'indispo déclarée
 
 ```{r}
 
+
+
 # perform first stage regression
 m_real <- lm(
-  log_price_diff ~ Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+ gen_tot+
-    as.factor(year) + as.factor(month)+ as.factor(weekday)
+  log_price_diff ~ Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+ gen_tot+
+    as.factor(year) + as.factor(month)+ as.factor(weekday)+
     as.factor(creneau) + factor(auction_before),
   data= first_stage_data_clean)
-# Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_real, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_real <- sqrt(diag(vcov_cluster))
 
-
-m_real_published <- lm(
-  log_price_diff ~ Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+ Published.Unavailable.Capacity + gen_tot+
-    as.factor(year) + as.factor(month)+ as.factor(weekday)
-    as.factor(creneau) + factor(auction_before),
-  data= first_stage_data_clean)
-# Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_real_published, type = "HC0", cluster = ~ auction_date_plus_one)
+vcov_cluster <- vcovCL(m_real, type = "HC0", cluster = ~ cluster_var)
 # Erreurs standard clusterisées
-cl_se_real_published <- sqrt(diag(vcov_cluster))
+cl_se_real_cl <- sqrt(diag(vcov_cluster))
+
+vcov_cluster <- vcovHC(m_real, type = "HC0")
+# Erreurs standard clusterisées
+cl_se_real_hc <- sqrt(diag(vcov_cluster))
 
 # perform first stage regression
 m_limited <- lm(
-  log_price_diff ~ Limiting.Unavailable.Capacity +Unpublished.Limiting.Unavailable.Capacity + gen_tot+
-    as.factor(year) + as.factor(month)+ as.factor(weekday)
+  log_price_diff ~ Published.Limiting.Unavailable.Capacity +Unpublished.Limiting.Unavailable.Capacity + gen_tot+
+    as.factor(year) + as.factor(month)+ as.factor(weekday)+
     as.factor(creneau) + factor(auction_before),
   data= first_stage_data_clean)
-# Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_limited, type = "HC0", cluster = ~ auction_date_plus_one)
+
+vcov_cluster <- vcovHC(m_limited, type = "HC0")
 # Erreurs standard clusterisées
-cl_se_limited <- sqrt(diag(vcov_cluster))
+cl_se_limited_hc <- sqrt(diag(vcov_cluster))
+
+vcov_cluster <- vcovCL(m_limited, type = "HC0", cluster = ~ cluster_var)
+# Erreurs standard clusterisées
+cl_se_limited_cl <- sqrt(diag(vcov_cluster))
 
 
-m_limited_published <- lm(
-  log_price_diff ~ Limiting.Unavailable.Capacity + Published.Unavailable.Capacity + Unpublished.Limiting.Unavailable.Capacity+ gen_tot+
-    as.factor(year) + as.factor(month)+ as.factor(weekday)
-    as.factor(creneau) + factor(auction_before),
-  data= first_stage_data_clean)
-# Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_limited_published, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_basic_limited_published <- sqrt(diag(vcov_cluster))
 
 
 ```
@@ -120,14 +181,14 @@ cl_se_basic_limited_published <- sqrt(diag(vcov_cluster))
 
 ```{r, results = 'asis'}
 
-reg_table <- stargazer(m_real, m_real_published, m_limited, m_limited_published, 
+reg_table <- stargazer(m_real, m_real, m_limited, m_limited, 
     type = "html",
-    se = list(cl_se_real, cl_se_real_published, cl_se_limited, cl_se_basic_limited_published),
+    se = list(cl_se_real_hc, cl_se_real_cl, cl_se_limited_hc, cl_se_limited_cl ),
     title = "Regression Results",
-    column.labels = c("Predicted RF", "Predicted RF", "Limiting", "Limiting"),
-    keep = c('Constant', 'Published.Unavailable.Capacity', "Limiting.Unavailable.Capacity",
+    column.labels = c("Predicted RF", "Predicted ClSD", "Limiting", "Limiting ClSD"),
+    keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Limiting.Unavailable.Capacity",
              "Unpublished.Limiting.Unavailable.Capacity","Unpublished.Predicted.Unavailable.Capacity",
-             'Unpublished.Unavailable.Capacity', "Predicted.Unavailable.Capacity",'gen_tot')
+             'Unpublished.Unavailable.Capacity', "Published.Predicted.Unavailable.Capacity",'gen_tot')
 )
  
 ```
@@ -145,22 +206,18 @@ I would like to see it on the whole period
 m_basic_all <- lm(
   log_price_diff ~ Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
     Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity  + gen_tot+
-    as.factor(year) + as.factor(month),
+    as.factor(year) + as.factor(month)+ as.factor(weekday),
   data= first_stage_data_clean)
 # Matrice de variance-covariance clusterisée
-vcov_cluster <- vcovCL(m_basic_all, type = "HC0", cluster = ~ auction_date_plus_one)
+vcov_cluster <- vcovHC(m_basic_all, type = "HC0")
 # Erreurs standard clusterisées
-cl_se_basic_all <- sqrt(diag(vcov_cluster))
+cl_se_basic_hc <- sqrt(diag(vcov_cluster))
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_basic_all, type = "HC0", cluster = ~ cluster_var)
+# Erreurs standard clusterisées
+cl_se_basic_cl <- sqrt(diag(vcov_cluster))
 
-# dummy for creneau
-m_creneau_all <- lm(
-  log_price_diff ~ Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
-    Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity  + gen_tot +
-    as.factor(year) + as.factor(month)+ as.factor(weekday) as.factor(creneau) ,
-  data= first_stage_data_clean)
-vcov_cluster <- vcovCL(m_creneau_all, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_creneau_all <- sqrt(diag(vcov_cluster))
+
 # use controls
 # put a dummy for the number of the auction
 # put a dummy for the creneau
@@ -170,23 +227,29 @@ cl_se_creneau_all <- sqrt(diag(vcov_cluster))
 m_control_all <- lm(
   log_price_diff ~ Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
     Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity + gen_tot+
-    as.factor(year) + as.factor(month) +
+    as.factor(year) + as.factor(month) + as.factor(weekday) +
     as.factor(creneau) + factor(auction_before),
   data= first_stage_data_clean)
-vcov_cluster <- vcovCL(m_control_all, type = "HC0", cluster = ~ auction_date_plus_one)
+vcov_cluster <- vcovHC(m_control_all, type = "HC0")
+# Erreurs standard clusterisées
+cl_se_control_hc <- sqrt(diag(vcov_cluster))
+
+vcov_cluster <- vcovCL(m_control_all, type = "HC0", cluster = ~ cluster_var)
 # Erreurs standard clusterisées
 cl_se_control_all <- sqrt(diag(vcov_cluster))
+# Matrice de variance-covariance clusterisée
+
 
 ```
 
 
 ```{r, results = 'asis'}
 # Create LaTeX code with regression results
-reg_table <- stargazer(m_basic_all, m_creneau_all, m_control_all, 
+reg_table <- stargazer(m_basic_all, m_basic_all,  m_control_all,   m_control_all, 
     type = "html",
-    se = list(cl_se_basic_all, cl_se_creneau_all, cl_se_control_all),
+    se = list(cl_se_basic_hc, cl_se_basic_cl, cl_se_control_hc,  cl_se_control_all),
     title = "Regression Results",
-    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
+    column.labels = c("Basic", "Basic ClSD", 'FE', "FE ClSD"),
     keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
              'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot')
  )
@@ -202,73 +265,6 @@ linearHypothesis(m_basic_all, "Published.Unavailable.Capacity = Unpublished.Unav
 
 
 
-
-On s'occupe maintenant de regarder le intraday update
-
-```{r}
-first_stage_renewable <- first_stage_data_clean %>% 
-    filter(auction_before == 5)
-
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/renewable_forecast"
-setwd(save_path_data)
-renewable_forecasts <- read_parquet('renewable_forecasts.parquet')
-
-first_stage_renewable <- renewable_forecasts %>%
-  left_join(first_stage_renewable %>% 
-              select(-c("gen_tot", "wind_solar_tot")), by = c('__index_level_0__' = 'datetime')) %>% 
-  mutate(intraday_update_renewables = intraday_update_renewables/1000,
-         unpredicted_renewables = unpredicted_renewables/1000)
-
-
-```
-
-
-```{r}
-m_basic_renew <- lm(
-  log_price_diff ~ intraday_update_renewables + gen_tot+
-    as.factor(year) + as.factor(month),
-  data= first_stage_renewable)
-
-vcov_cluster <- vcovCL(m_basic_renew, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_basic <- sqrt(diag(vcov_cluster))
-
-m_control_renew <- lm(
-  log_price_diff ~ intraday_update_renewables + unpredicted_renewables +
-    wind_solar_tot+   gen_tot+
-    as.factor(year) + as.factor(month),
-  data= first_stage_renewable)
-
-vcov_cluster <- vcovCL(m_control_renew, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_renew <- sqrt(diag(vcov_cluster))
-# perform first stage regression
-m_renew_plant <- lm(
-  log_price_diff ~ intraday_update_renewables + unpredicted_renewables +
-    wind_solar_tot+   gen_tot+
-    Limiting.Unavailable.Capacity + Unpublished.Limiting.Unavailable.Capacity+
-    as.factor(year) + as.factor(month),
-  data= first_stage_renewable)
-
-vcov_cluster <- vcovCL(m_renew_plant, type = "HC0", cluster = ~ auction_date_plus_one)
-# Erreurs standard clusterisées
-cl_se_renew_plant <- sqrt(diag(vcov_cluster))
-
-```
-
-```{r, results = 'asis'}
-# Create LaTeX code with regression results
-reg_table <- stargazer(m_basic_renew, m_control_renew, m_renew_plant, 
-    type = "html",
-    se = list(cl_se_basic, cl_se_renew, cl_se_renew_plant),
-    title = "Regression Results",
-    column.labels = c("Basic", "Timeslot FE", 'Timeslot + Auction FE'),
-    keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
-             'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot',
-             "intraday_update_renewables" , "unpredicted_renewables", "wind_solar_tot",
-             "Limiting.Unavailable.Capacity", "Unpublished.Limiting.Unavailable.Capacity")
- )
-```
 
 
 

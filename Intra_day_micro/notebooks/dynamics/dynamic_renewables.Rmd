@@ -1,0 +1,125 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+Dynamic estimation to examine information release
+
+```{r}
+first_stage_renewable <- first_stage_data_clean  %>% 
+  filter(auction_before!= auction_after) %>% 
+  mutate(day_ahead_forecast = day_ahead_forecast/1000,
+         wind_solar_tot = wind_solar_tot/1000,
+    intraday_update_renewables = intraday_update_renewables/1000,
+         unpredicted_renewables = unpredicted_renewables/1000) %>% 
+  rename(day_ahead_renewable_forecast= day_ahead_forecast)
+
+```
+
+
+```{r}
+m_basic_renew_int <- lm(
+  log_price_diff ~ intraday_update_renewables*as.factor(auction_before) + gen_tot+
+    as.factor(year) + as.factor(month)+as.factor(weekday) + as.factor(creneau) ,
+  data=  first_stage_renewable)
+
+vcov_cluster <- vcovCL(m_basic_renew_int, type = "HC0", cluster = ~ creneau)
+# Erreurs standard clusterisées
+cl_se_basic_renew_int <- sqrt(diag(vcov_cluster))
+
+m_control_renew_int <- lm(
+  log_price_diff ~ intraday_update_renewables*as.factor(auction_before) + unpredicted_renewables +
+    day_ahead_renewable_forecast*as.factor(auction_before)+   gen_tot+
+    as.factor(year) + as.factor(month) +as.factor(weekday) + as.factor(creneau)  ,
+  data= first_stage_renewable)
+
+vcov_cluster <- vcovCL(m_control_renew_int, type = "HC0", cluster = ~ creneau)
+# Erreurs standard clusterisées
+cl_se_control_renew_int <- sqrt(diag(vcov_cluster))
+# perform first stage regression
+# m_renew_plant_int <- lm(
+#   log_price_diff ~ intraday_update_renewables*as.factor(auction_before) + unpredicted_renewables +
+#     day_ahead_renewable_forecast*as.factor(auction_before)+   gen_tot+
+#     Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+
+#     as.factor(year) + as.factor(month)+as.factor(weekday) + as.factor(creneau)  ,
+#   data= first_stage_renewable)
+# 
+# vcov_cluster <- vcovCL(m_renew_plant_int, type = "HC0", cluster = ~ cluster_var)
+# # Erreurs standard clusterisées
+# cl_se_renew_plant_int <- sqrt(diag(vcov_cluster))
+
+```
+
+```{r}
+
+# Create LaTeX code with regression results
+# Create LaTeX code with regression results
+reg_table <- stargazer(m_basic_renew_int, m_control_renew_int,
+                       # m_renew_plant, 
+                       type = "text",
+                       # se = list(NULL, NULL, cl_se_renew_plant),
+                       se = list(cl_se_basic_renew_int, cl_se_control_renew_int),
+                       title = "Regression Results",
+                       column.labels = c("Basic", "Timeslot FE", "Timeslot + Auction FE"),
+                       
+                       # Keep relevant coefficients including interactions for 'intraday_update_renewables' up to 7
+                       keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
+                                'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot',
+                                "intraday_update_renewables" , "unpredicted_renewables", "wind_solar_tot",
+                                "Published.Limiting.Unavailable.Capacity", "Unpublished.Limiting.Unavailable.Capacity",
+                                "Published.Predicted.Unavailable.Capacity", "Unpublished.Predicted.Unavailable.Capacity",
+                                "intraday_update_renewables:as.factor(auction_before)1",
+                                "intraday_update_renewables:as.factor(auction_before)2",
+                                "intraday_update_renewables:as.factor(auction_before)3",
+                                "intraday_update_renewables:as.factor(auction_before)4",
+                                "intraday_update_renewables:as.factor(auction_before)5",
+                                "intraday_update_renewables:as.factor(auction_before)6"
+                       )
+)
+# Get all interaction terms related to 'intraday_update_renewables:as.factor(auction_before)'
+
+
+
+```
+
+
+
+```{r}
+# Obtenir tous les coefficients du modèle
+coefficients_ <- coef(summary(m_renew_plant_int))
+
+
+# Filter for intraday_update_renewables and its interactions
+target_coeffs_id <- coefficients[grep("intraday_update_renewables|intraday_update_renewables:as.factor\\(auction_before\\)", rownames(coefficients)), ]
+
+id_serie <- target_coeffs_id[,1]
+id_serie[2:length(id_serie)] <- id_serie[2:length(id_serie)] - as.numeric(id_serie[1])
+# Extract standard errors for the relevant coefficients (intraday_update_renewables and interactions)
+target_sd_id <- cl_se_control_renew_int[grep("intraday_update_renewables|intraday_update_renewables:as.factor\\(auction_before\\)", names(cl_se_control_renew_int))]
+
+# Get all model coefficients
+
+# Filter for day_ahead_renewable_forecast and its interactions
+target_coeffs_da <- coefficients[grep("day_ahead_renewable_forecast|day_ahead_renewable_forecast:as.factor\\(auction_before\\)", rownames(coefficients)), ]
+da_serie <- target_coeffs_da[,1]
+da_serie[2:length(da_serie)] <- da_serie[2:length(da_serie)] - as.numeric(da_serie[1])
+da_sd <- target_coeffs_da[,2]
+
+target_sd_da <- cl_se_control_renew_int[grep("day_ahead_renewable_forecast|day_ahead_renewable_forecast:as.factor\\(auction_before\\)", names(cl_se_control_renew_int))]
+
+
+
+# Print the coefficients
+abciss <- c(1:7)
+ggplot()+
+  geom_point(aes(x = abciss, y = id_serie, color = "Intraday Update"))+
+  geom_errorbar(aes(x = abciss, ymin = id_serie - 2*target_sd_id, ymax = id_serie + 2*target_sd_id), width = 0.2)+
+  geom_point(aes(x = abciss, y = da_serie, color = "Day Ahead"))+
+  geom_errorbar(aes(x = abciss, ymin = da_serie - 2*target_sd_da, ymax = da_serie + 2*target_sd_da), width = 0.2)+
+  labs(title = "Renewable Dynamic effects",
+       x = "Auction Before",
+       y = "Coefficient")+
+  theme_minimal()
+
+```

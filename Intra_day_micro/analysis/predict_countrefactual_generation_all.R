@@ -8,7 +8,7 @@ library(dplyr)
 library(arrow)
 library(lubridate)
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp')
 generation_by_fuel <-  read_parquet('generation_by_fuel.parquet')
 colnames(generation_by_fuel)
 fields <- c("('Solar', 'Actual Aggregated')",
@@ -28,10 +28,10 @@ generation_by_fuel <- generation_by_fuel %>%
 generation_by_fuel$`__index_level_0__` <- 
   with_tz(generation_by_fuel$`__index_level_0__`, tzone ='Europe/Brussels')
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel')
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
 write_parquet(generation_by_fuel, 'generation_by_fuel_format.parquet')
 
-generation_by_fuel <- read_parquet('generation_by_fuel_format.parquet')
+generation_by_fuel <- read_parquet('generation_by_fuel_format_esp.parquet')
 
 
 
@@ -81,14 +81,20 @@ for (col in duplicated_names){
 
 #estimate all the rf models only once
 
-
+library(ranger)
 # Initialize an empty list to store models
 rf_models <- list()
+colnames(prediction_data)
+
+#enlever les .1
+
 
 centrales <- colnames(generation_per_plant %>% 
                         select(-c('__index_level_0__')))# Replace with your actual plant names
+
+centrale <- centrales[1]
 # Loop over different centrale values
-for (centrale in centrales[1:10]) {
+for (centrale in centrales) {
   print(centrale)
   mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
                                               'day_of_week', 'creneau',
@@ -118,7 +124,10 @@ centrale <- centrales[1]
 rf_models[[centrale]]
 
 getwd()
-saveRDS(rf_models, 'rf_models.rds')
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
+saveRDS(rf_models, 'rf_models_all.rds')
+
+rf_models <- readRDS( 'rf_models.rds')
 #maintenant on charge toutes les prediction dates demandees
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'

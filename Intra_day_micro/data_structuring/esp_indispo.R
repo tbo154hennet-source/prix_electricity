@@ -4,8 +4,8 @@ library(purrr)
 library(lubridate)
 Sys.setenv(lang = "en_US")
 
-read_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/ENTSOE_unavailabilities/ES'
-setwd(read_path )
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/ENTSOE_unavailabilities/ES'
+setwd(save_path_esp)
 my_files <-  list.files(pattern = "\\.parquet$")
 
 indispo_ENTSOE_data <- NULL
@@ -126,7 +126,8 @@ bout_indispo_ENTSOE_data$duration <- bout_indispo_ENTSOE_data$datetime_fin- bout
 unexpected_indispo_ENTSOE_data <- bout_indispo_ENTSOE_data %>% 
   filter(businesstype == "Unplanned outage")
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp")
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/ENTSOE_unavailabilities/ES/formatted'
+setwd(save_path_esp)
 write_parquet(bout_indispo_ENTSOE_data, "indispo_ENTSOE_data.parquet")
 write_parquet(unexpected_indispo_ENTSOE_data, "unexpected_indispo_ENTSOE_data.parquet")
 

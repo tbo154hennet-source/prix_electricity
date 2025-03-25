@@ -10,31 +10,31 @@ save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitl
 setwd(save_var_path)
 
 detrended_data <- read_parquet('low_freq_data.parquet')
-IV_data_log <- read_parquet('low_freq_data_log.parquet')
+IV_data_log<- read_parquet('low_freq_data_log.parquet')
 IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')
 headers_proxies = c("cold_excess_instrument",
                     "heat_excess_instrument",
-                    "renewable_generation_log",
+                    "renewable_generation_log_diff",
                     "gas_supply_shock"
 )
 
-colnames(IV_data_log)
+colnames(IV_data_log_diff)
 
 
 
-proxies <- ts(IV_data_log[, c(headers_proxies)], frequency=12)
+proxies <- ts(IV_data_log_diff[, c(headers_proxies)], frequency=12)
 
 
-headers_var = c("gen_tot_log",
-                "spot_price_log",
-                "IPI_log",
-                # "ECB_rate_log",
-                # "E_Index_log",
-                # "Exp_pi_log",
-                # "UnE_log" ,
-                "NE_Index_log"
+headers_var = c("gen_tot_log_diff",
+                "spot_price_log_diff",
+                "IPI_log_diff",
+                # "ECB_rate_log_diff",
+                # "E_Index_log_diff",
+                # "Exp_pi_log_diff",
+                # "UnE_log_diff" ,
+                "NE_Index_log_diff"
 )
-vars<- ts(IV_data_log[, c(headers_var)], frequency=12)
+vars<- ts(IV_data_log_diff[, c(headers_var)], frequency=12)
 
 
 p = 4     
@@ -128,32 +128,32 @@ print(reliability_measure)
 
 
 data <- data.frame(cbind(res[,1:k], Z))
-colnames(data) <- c('res_gen_tot_log', 'res_spot_price_log',headers_proxies)
+colnames(data) <- c('res_gen_tot_log_diff', 'res_spot_price_log_diff',headers_proxies)
 
 # Régression linéaire
-# price_model <- lm(data = data, res_spot_price_log ~ gas_supply_shock + renewable_generation_log
-#                   +  T_avg_log)
+# price_model <- lm(data = data, res_spot_price_log_diff ~ gas_supply_shock + renewable_generation_log_diff
+#                   +  T_avg_log_diff)
 # 
 # summary(price_model)
 # 
 # 
-# demand_model <- lm(data = data, res_gen_tot_log ~ gas_supply_shock + renewable_generation_log
+# demand_model <- lm(data = data, res_gen_tot_log_diff ~ gas_supply_shock + renewable_generation_log_diff
 #                    + cold_excess_instrument)
 # 
 # summary(demand_model)
 
 
 # 
-#data$renewable_generation_log <- IV_data_log$renewable_generation_log[c(-1:-p)]
-# data$nuclear_indispo_log <- IV_data_log$nuclear_indispo_log[c(-1:-p)]
-# data$unexpected_nuclear_indispo_log <- IV_data_log$unexpected_nuclear_indispo.x_log[c(-1:-p)]
-# data$tot_indispo_log <- IV_data_log$tot_indispo_log[c(-1:-p)]
+#data$renewable_generation_log_diff <- IV_data_log_diff$renewable_generation_log_diff[c(-1:-p)]
+# data$nuclear_indispo_log_diff <- IV_data_log_diff$nuclear_indispo_log_diff[c(-1:-p)]
+# data$unexpected_nuclear_indispo_log_diff <- IV_data_log_diff$unexpected_nuclear_indispo.x_log_diff[c(-1:-p)]
+# data$tot_indispo_log_diff <- IV_data_log_diff$tot_indispo_log_diff[c(-1:-p)]
 
 # Construct the formula
-formula_price <- as.formula(paste('res_spot_price_log', "~",
+formula_price <- as.formula(paste('res_spot_price_log_diff', "~",
                                   paste(headers_proxies, collapse = "+")))
 # Construct the formula
-formula_demand <- as.formula(paste('res_gen_tot_log', "~",
+formula_demand <- as.formula(paste('res_gen_tot_log_diff', "~",
                                    paste(headers_proxies, collapse = "+")))
 
 m_price <- lm( formula_price, data = data)
