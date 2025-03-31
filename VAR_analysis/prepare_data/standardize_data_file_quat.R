@@ -118,7 +118,7 @@ monthly_crossborder_data <- price_merge_CBF %>%
   summarise(
     NTC_ESP_FR = mean(NTC_ESP_FR, na.rm = TRUE),
     NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
-    gen_tot = mean(gen_tot_esp, na.rm = TRUE),
+    gen_tot = mean(gen_tot_esp + gen_tot_fr, na.rm = TRUE)/2,
     datetime = first(datetime)
   ) %>%
   arrange(datetime) %>% 
@@ -134,8 +134,11 @@ colnames(VAR_series)
 colnames(monthly_energy_data)
 colnames(gas_fundamental_data)
 colnames(temperature_instrument)
+colnames(monthly_crossborder_data)
 
 IV_data <- merge(VAR_series, monthly_energy_data, by= c('month', 'year'))
+IV_data <- merge(IV_data, monthly_crossborder_data,
+                 by= c('month', 'year'))
 IV_data <- merge(IV_data, gas_fundamental_data,
                  by= c('month', 'year'))
 IV_data <- merge(IV_data, temperature_instrument,

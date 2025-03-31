@@ -1,0 +1,259 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+
+
+
+mrids <- intersect(long_format_indispo_rf$mrid,
+          long_format_indispo_non_published_rf$mrid)
+
+long_format_info_fric <- rbind(long_format_indispo_rf %>% 
+  filter(mrid %in% mrids) %>% 
+    mutate(publication_status = "Published"),
+      long_format_indispo_non_published_rf %>% 
+        filter(mrid %in% mrids) %>% 
+        mutate(publication_status = "Non Published")
+    ) %>% 
+  arrange(datetime) %>% 
+  distinct()
+
+
+dim(long_format_info_fric %>% 
+  distinct(plant_type, electricity_delivery_date) )
+
+```
+
+
+
+```{r}
+
+library(tidyverse)
+final_real_info_fric <- long_format_info_fric %>% 
+  pivot_wider(names_from = publication_status, 
+              values_from = predicted_real_unavailability) %>%
+  replace_na(list(Published = 0, `Non Published` = 0)) %>%
+  group_by(electricity_delivery_date, auction_before,
+           auction_after, creneau) %>% 
+  summarise(
+            Unpublished.Predicted.Unavailable.Capacity = sum(as.numeric(`Non Published`)),
+            Published.Predicted.Unavailable.Capacity = sum(as.numeric(Published))
+            ) %>%
+  ungroup()
+
+
+
+first_stage_data_info_fric <- price_diff_data  %>% 
+  mutate(electricity_delivery_date = as.character(delivery_date)) %>% 
+  left_join(final_real_info_fric%>% 
+              mutate(creneau= as.factor(creneau))
+            , by = c('auction_before', 'auction_after', 
+                     'creneau', "electricity_delivery_date")) %>% 
+  arrange(datetime)
+
+first_stage_data_info_fric <- first_stage_data_info_fric %>% 
+  arrange(datetime, creneau, auction_before)
+colnames(first_stage_data_info_fric)
+
+
+#getting outages share
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
+setwd(save_path_data)
+
+renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
+colnames(renewable_forecasts)
+
+#nota bene intradailiy forecast commence à partir du 13 février 2018 13-02-2018
+#sample start
+
+first_stage_data_info_fric  <- first_stage_data_info_fric  %>%
+  left_join(renewable_forecasts, by=c('datetime' = '__index_level_0__'))
+
+# Identify all capacity-related columns dynamically
+capacity_cols <- colnames(first_stage_data_info_fric )[grepl("Capacity", colnames(first_stage_data_info_fric ))]
+
+# Drop rows with NA in log_price column
+first_stage_data_info_fric   <- 
+  first_stage_data_info_fric [!is.na(first_stage_data_info_fric $log_price_diff), ]%>%
+  mutate(across(all_of(capacity_cols), ~ replace_na(.x, 0))) 
+#%>%  mutate(across(all_of(capacity_cols), ~ .x / gen_tot, .names = "{.col}_Share"))
+first_stage_data_info_fric$weekday <- weekdays(first_stage_data_info_fric $delivery_date) 
+
+
+
+```
+
+
+```{r}
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+setwd(save_path_entsoe_output)
+write_parquet(first_stage_data_info_fric, 'first_stage_data_info_fric.parquet')
+
+```
+
+
+
+```{r}
+
+first_stage_test_bis_predicted <- first_stage_data_info_fric %>%
+  mutate(Predicted.Unavailable.Capacity = Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity,
+    predicted_unavailability_creneau = (Predicted.Unavailable.Capacity >0),
+    pub_predicted_unavailability_creneau = (Published.Predicted.Unavailable.Capacity >0),
+    unpub_predicted_unavailability_creneau = (Unpublished.Predicted.Unavailable.Capacity >0),
+    #uneff_predicted_unavailability_creneau = (Uneffective.Unavailable.Capacity >0),
+    ) %>% 
+  group_by(delivery_date, creneau) %>%
+  mutate(creneau_unavailability = sum(predicted_unavailability_creneau, na.rm = TRUE),
+         pub_creneau_unavailability = sum(pub_predicted_unavailability_creneau, na.rm = TRUE),
+         unpub_creneau_unavailability = sum(unpub_predicted_unavailability_creneau, na.rm = TRUE),
+         #uneff_creneau_unavailability = sum(uneff_predicted_unavailability_creneau, na.rm = TRUE)
+         )%>%
+  ungroup() %>% 
+  group_by(delivery_date) %>%
+  mutate(day_unavailability = sum(predicted_unavailability_creneau, na.rm = TRUE),
+         pub_day_unavailability = sum(pub_predicted_unavailability_creneau, na.rm = TRUE),
+         unpub_day_unavailability = sum(unpub_predicted_unavailability_creneau, na.rm = TRUE),
+         #uneff_day_unavailability = sum(uneff_predicted_unavailability_creneau, na.rm = TRUE)
+         )%>%
+  ungroup() %>% 
+  arrange(datetime)
+
+
+price_data_predicted <- first_stage_test_bis_predicted %>% 
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(unavailability_trigger = 
+           max(0, ifelse(auction_before ==0, predicted_unavailability_creneau, predicted_unavailability_creneau - lag(predicted_unavailability_creneau))),
+         
+         pub_unavailability_trigger = 
+           max(0, ifelse(auction_before ==0, pub_predicted_unavailability_creneau, pub_predicted_unavailability_creneau - lag(pub_predicted_unavailability_creneau))),
+         unpub_unavailability_trigger = 
+           max(0, ifelse(auction_before ==0, unpub_predicted_unavailability_creneau, unpub_predicted_unavailability_creneau - lag(unpub_predicted_unavailability_creneau))),
+         # uneff_unavailability_trigger =
+         #   max(0, ifelse(auction_before ==0, uneff_predicted_unavailability_creneau, uneff_predicted_unavailability_creneau - lag(uneff_predicted_unavailability_creneau))),
+         # 
+         ) %>%
+  ungroup()
+
+```
+
+
+
+```{r}
+
+price_data_predicted_pub <- price_data_predicted %>%
+  filter(unpub_unavailability_trigger !=1 | pub_unavailability_trigger !=1) %>%
+  # Définir l'enchère de référence
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(
+    auction_before = as.numeric(auction_before),
+    reference_auction = if (any(pub_predicted_unavailability_creneau == TRUE, na.rm = TRUE)) {
+      min(auction_before[pub_predicted_unavailability_creneau == TRUE], na.rm = TRUE)
+    } else {
+      sample(0:6, 1)
+    },
+    distance_auction = auction_before - reference_auction
+  ) %>%
+  ungroup()%>% 
+group_by(electricity_delivery_date, 
+           pub_predicted_unavailability_creneau
+           ) %>% 
+  
+    mutate(
+    unavail_pub_level = ifelse(pub_predicted_unavailability_creneau== 0,
+         0, mean(Published.Predicted.Unavailable.Capacity[pub_unavailability_trigger == 1], na.rm = TRUE)),
+
+    unavail_pub = unavail_pub_level* pub_unavailability_trigger,
+    )%>% 
+  
+  # Filtrer pour ne garder que les distances entre -4 et 4
+ 
+  ungroup() 
+
+
+price_data_predicted_unpub <- price_data_predicted %>%
+  filter(unpub_unavailability_trigger !=1 | pub_unavailability_trigger !=1) %>%
+  # Définir l'enchère de référence
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(
+    auction_before = as.numeric(auction_before),
+    reference_auction = if (any(unpub_predicted_unavailability_creneau == TRUE, na.rm = TRUE)) {
+      min(auction_before[unpub_predicted_unavailability_creneau == TRUE], na.rm = TRUE)
+    } else {
+      sample(0:6, 1)
+    },
+    distance_auction = auction_before - reference_auction
+  ) %>%
+  ungroup()%>% 
+group_by(electricity_delivery_date, 
+           unpub_predicted_unavailability_creneau
+           ) %>% 
+  
+    mutate(
+    unavail_unpub_level = ifelse(unpub_predicted_unavailability_creneau== 0,
+         0, mean(Unpublished.Predicted.Unavailable.Capacity[unpub_unavailability_trigger == 1], na.rm = TRUE)),
+
+    unavail_unpub = unavail_unpub_level* unpub_unavailability_trigger,
+    )%>% 
+  
+  # Filtrer pour ne garder que les distances entre -4 et 4
+ 
+  ungroup() 
+
+
+```
+
+
+
+
+```{r}
+
+prepare_price_data_multiple <- function(data, unavail_cols) {
+  results <- lapply(unavail_cols, function(unavail_col) {
+    data %>%
+      distinct(electricity_delivery_date, creneau, distance_auction, !!sym(unavail_col), .keep_all = TRUE) %>%
+      group_by(electricity_delivery_date, creneau, distance_auction, !!sym(unavail_col)) %>%
+      select(electricity_delivery_date, creneau, distance_auction, !!sym(unavail_col), price_diff,
+             gen_tot, unpredicted_renewables, intraday_update_renewables,
+             reference_auction, Published.Predicted.Unavailable.Capacity, 
+             Unpublished.Predicted.Unavailable.Capacity, Predicted.Unavailable.Capacity) %>%
+      pivot_wider(names_from = distance_auction, 
+                  names_prefix = paste0("price_", unavail_col, "_"), 
+                  values_from = price_diff) %>%
+      {
+        price_cols <- grep(paste0("^price_", unavail_col, "_"), colnames(.), value = TRUE)
+        price_cols_filtered <- price_cols[as.numeric(sub(paste0("price_", unavail_col, "_"), "", price_cols)) %in% -2:2]
+        price_cols_sorted <- mixedsort(price_cols_filtered)
+        non_price_cols <- setdiff(colnames(.), price_cols)
+        .[, c(non_price_cols, price_cols_sorted)]
+      }
+  })
+  
+  # Combine results into a single dataframe
+  reduce(results, full_join, by = c("electricity_delivery_date", "creneau", "gen_tot",
+                                    "unpredicted_renewables", "intraday_update_renewables", "reference_auction"))
+}
+
+
+# Apply function
+price_data_predicted_wide_test <- prepare_price_data_multiple(price_data_predicted_pub, c("unavail_pub","unavail_unpub"))
+
+# Apply the function to each dataset
+price_data_predicted_grouped_pub <- group_and_summarize(price_data_predicted_wide_pub, "unavail_pub")
+price_data_predicted_grouped_unpub <- group_and_summarize(price_data_predicted_wide_unpub, "unavail_unpub")
+
+
+
+```
+
+
+
+
+
+
+
+
+
+

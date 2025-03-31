@@ -11,6 +11,7 @@ output: html_notebook
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 first_stage_data <- read_parquet('first_stage_data.parquet') 
+first_stage_data$weekday <- weekdays(first_stage_data$delivery_date) 
 
 
 # on va pondérer par une mesure multiplicative n_creneau_unavail * n_creneau_trend
@@ -22,10 +23,11 @@ colnames(first_stage_data)
 
 
 ```{r}
-first_stage_data$weekday <- weekdays(first_stage_data$delivery_date) 
+
+
 
 first_stage_test_bis_predicted <- first_stage_data %>%
-  mutate(Predicted.Unavailable.Capacity = Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity,
+  mutate(Predicted.Unavailable.Capacity = Predicted.Unavailable.Capacity,
     predicted_unavailability_creneau = (Predicted.Unavailable.Capacity >0)) %>% 
   group_by(delivery_date, creneau) %>%
   mutate(creneau_unavailability = sum(predicted_unavailability_creneau, na.rm = TRUE))%>%
@@ -47,31 +49,30 @@ my_test_predicted <- first_stage_test_bis_predicted %>%
 
 my_test_predicted <- my_test_predicted %>% 
   group_by(electricity_delivery_date, creneau) %>%
-  mutate(unavailability_trigger =  ifelse(auction_before ==0, predicted_unavailability_creneau, predicted_unavailability_creneau -  lag(predicted_unavailability_creneau))) %>% 
+  mutate(unavailability_trigger = 
+           ifelse(auction_before ==0, predicted_unavailability_creneau, predicted_unavailability_creneau - 
+                    lag(predicted_unavailability_creneau)),
+         unavailability_trigger = ifelse(unavailability_trigger==-1, 0, unavailability_trigger)) %>%
   ungroup()
 
 
-
 log_price_data_predicted <- my_test_predicted  %>% 
-  filter(creneau_unavailability > 0) %>%
   group_by(electricity_delivery_date, creneau) %>%
-  
   # Définir l'enchère de référence
-  mutate(reference_auction = min(auction_before[unavailability_trigger == 1], na.rm = TRUE),
-         unavail_pub_level = min(Predicted.Unavailable.Capacity[unavailability_trigger == 1], na.rm = TRUE),
-         unavail_unpub_level = min(Unpublished.Predicted.Unavailable.Capacity[unavailability_trigger == 1], na.rm = TRUE),
-         unavail_pub = unavail_pub_level* unavailability_trigger,
-         unavail_unpub = unavail_unpub_level* unavailability_trigger
-         ) %>%
-  
-  # Calculer la distance de l'enchère
-  mutate(distance_auction = as.numeric(auction_before) - as.numeric(reference_auction)) %>%
+  mutate(auction_before = as.numeric(auction_before), 
+    reference_auction = ifelse(creneau_unavailability== 0, 
+                                     sample(0:6, 1), min(auction_before[unavailability_trigger == 1], na.rm = TRUE)),
+         unavail_level = ifelse(creneau_unavailability== 0, 
+                                0, min(Predicted.Unavailable.Capacity[unavailability_trigger == 1], na.rm = TRUE)),
+         
+         unavail = unavail_level* unavailability_trigger,
+    distance_auction = as.numeric(auction_before) - as.numeric(reference_auction)) %>% 
   
   # Filtrer pour ne garder que les distances entre -4 et 4
   filter(distance_auction >= -4 & distance_auction <= 4) %>%
   
   # Agréger les valeurs si plusieurs existent par (date, creneau, distance)
-  group_by(electricity_delivery_date, creneau, distance_auction, unavail_pub, unavail_unpub) %>%
+  group_by(electricity_delivery_date, creneau, distance_auction, unavail) %>%
   summarise(price_diff = mean(price_diff, na.rm = TRUE), 
             reference_auction = first(reference_auction),
             Predicted.Unavailable.Capacity = mean(Predicted.Unavailable.Capacity, na.rm = TRUE),.groups = "drop") %>%
@@ -80,6 +81,7 @@ log_price_data_predicted <- my_test_predicted  %>%
   pivot_wider(names_from = distance_auction, 
               names_prefix = "price_", 
               values_from = price_diff)
+
 ```
 
 
@@ -89,25 +91,22 @@ log_price_data_predicted <- my_test_predicted  %>%
 #attention je perds de la variation
 
 
-
 log_price_data_predicted_grouped <- log_price_data_predicted %>%  
-  arrange(electricity_delivery_date, creneau, unavail_pub, unavail_unpub) %>% 
+  arrange(electricity_delivery_date, creneau, unavail) %>% 
   group_by(electricity_delivery_date, creneau) %>%
   summarize(across(starts_with("price"), ~ ifelse(all(is.na(.)), NA, sum(., na.rm = TRUE))),
             creneau = first(creneau),
             reference_auction = first(reference_auction),
-            unavail_pub = last(unavail_pub),
-            unavail_unpub = last(unavail_unpub),
+            unavail = last(unavail),
             electricity_delivery_date = first(electricity_delivery_date),
             .groups = "drop") %>% 
-  filter(!is.na(unavail_pub) & !is.na(unavail_pub))
+  filter(!is.na(unavail))
 
 log_price_data_predicted_grouped <- left_join(log_price_data_predicted_grouped,
                                               first_stage_data %>% 
                                                 select(electricity_delivery_date,creneau, gen_tot,
                                                        unpredicted_renewables, intraday_update_renewables, day_ahead_forecast, month, year, weekday) %>%  distinct(),
                                                 by = c("electricity_delivery_date", "creneau"))
-
 ```
 
 
@@ -118,9 +117,12 @@ table_coefficients_predicted  <- data.frame()
 
 for (col in colnames(log_price_data_predicted_grouped)[3:10]){
   # Créer la formule pour la régression
-  formula <- as.formula(paste("`" , col, "`" , " ~ unavail_pub + unavail_unpub + 
-                              intraday_update_renewables + unpredicted_renewables + as.factor(reference_auction) + gen_tot
+  
+  # Créer la formule en utilisant backticks pour le nom de colonne
+  formula <- as.formula(paste("`" , col, "`" , " ~ unavail + gen_tot +
+                              intraday_update_renewables + unpredicted_renewables + as.factor(reference_auction)+ as.factor(creneau)
                               " , sep = ""))
+  
   # Ajuster le modèle
   model <- lm(formula, data = log_price_data_predicted_grouped)
   
@@ -132,25 +134,20 @@ for (col in colnames(log_price_data_predicted_grouped)[3:10]){
   coefficients <- summary(model)$coefficients
   n_ddl <- summary(model)$df[2]
   # Créer un dataframe temporaire avec les variables et les coefficients
-  temp_pub <- data.frame(status = "Published",
-                         variable = col,
+  temp_df <- data.frame(variable = col,
                         estimate = coefficients[2, 1],  # Estimation du coefficient
                         std_error = cl_se[2],  # Erreur standard modifiée
                         t_value = coefficients[2, 1] / cl_se[2],  # Recalcul de la valeur t
-                        p_value = 2 * (1 - pt(abs(coefficients[2, 1] / cl_se[2]), df = n_ddl)))  # Recalcul de
-  
-  temp_unpub <- data.frame(status = "Unpublished",
-                           variable = col,
-                        estimate = coefficients[2, 2],  # Estimation du coefficient
-                        std_error = cl_se[3],  # Erreur standard modifiée
-                        t_value = coefficients[2, 2] / cl_se[3],  # Recalcul de la valeur t
-                        p_value = 2 * (1 - pt(abs(coefficients[2, 2] / cl_se[3]), df = n_ddl)))  # Recalcul de
-  
-  
-  
+                        p_value = 2 * (1 - pt(abs(coefficients[2, 1] / cl_se[2]), df = n_ddl)))  # Recalcul de la valeur p
+    # temp_df <- data.frame(variable = col,
+    #                     estimate = coefficients[2, 1],  # Estimation du coefficient
+    #                     std_error = coefficients[2, 2],  # Erreur standard modifiée
+    #                     t_value = coefficients[2, 3], # Recalcul de la valeur t
+    #                     p_value = coefficients[2, 4])  # Recalcul de la valeur p
+    # 
+    # 
   # Ajouter les résultats à table_coefficients
-  table_coefficients_predicted  <- rbind(table_coefficients_predicted , temp_pub)
-  table_coefficients_predicted  <- rbind(table_coefficients_predicted ,  temp_unpub)
+  table_coefficients_predicted  <- rbind(table_coefficients_predicted , temp_df)
 }
 
 ```
@@ -158,25 +155,19 @@ for (col in colnames(log_price_data_predicted_grouped)[3:10]){
 
 
 ```{r}
-
 table_coefficients_predicted <- table_coefficients_predicted %>%
   arrange(as.numeric(gsub("price_", "", variable)))
 
 
-
-ggplot(data = table_coefficients_predicted) +
-  geom_point(aes(x = as.numeric(gsub("price_", "", variable)), 
-                 y = estimate, color = status)) +
-  geom_errorbar(aes(x = as.numeric(gsub("price_", "", variable)), 
-                    ymin = estimate - 1.96 * std_error,
-                    ymax = estimate + 1.96 * std_error, 
-                    color = status), width = 0.2, alpha = 0.5) +
+ggplot(data = table_coefficients_predicted, aes( x = c(-4:3),y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - qnorm(0.975)*std_error,
+                  ymax = estimate + qnorm(0.975)*std_error), width = 0.2, alpha= 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(title = "Dynamic response to plan availability shock",
+  #coord_flip() +
+  labs(title = "Dynamic response to plant availability shock",
        x = "Auction",
-       y = "EUR/MWh") +
-  theme_minimal()
-
+       y = "EUR/MWh")
 
 ```
 

@@ -4,16 +4,16 @@ import pandas as pd
 from entsoe import EntsoePandasClient
 
 client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
-country_code = 'PT'  
+country_code = 'FR'  
 
 #2016-03
 # Define start and end dates
-start_date = pd.Timestamp('20170201', tz='Europe/Brussels')
-end_date = pd.Timestamp('20171231', tz='Europe/Brussels')
+start_date = pd.Timestamp('20240101', tz='Europe/Brussels')
+end_date = pd.Timestamp('20240531', tz='Europe/Brussels')
 # Generate monthly date ranges
 monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
 import os
-path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant\pt'  # Remplacez par votre chemin
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_by_plant\fr'  # Remplacez par votre chemin
 os.chdir(path)
 
 # Changer le répertoire de travail

@@ -25,8 +25,7 @@ Load the data
 save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/ENTSOE_unavailabilities/ES/formatted'
 setwd(save_path_esp)
 bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet")
-```
-```{r}
+
 bout_indispo_ENTSOE_data %>% 
   group_by(businesstype) %>% 
   summarise(n = n())
@@ -73,20 +72,15 @@ setwd(save_path_entsoe_output)
 non_duplicated_indispo <- read_parquet('non_duplicated_indispo_credible.parquet')
 colnames(non_duplicated_indispo)
 
-save_path_entsoe_output_long <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
-setwd(save_path_entsoe_output_long)
-
-long_format_indispo <- read_parquet( 'long_format_indispo.parquet')
-colnames(long_format_indispo)
 
 path_rf_output <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction"
 setwd(path_rf_output)
-real_indispo_rf <- read_parquet('real_indispo_rf.parquet')
+real_indispo_rf <- read_parquet('all_rf_indispo.parquet')
 colnames(real_indispo_rf)
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
-rf_predictions_data <- read_parquet('rf_predictions_data.parquet')
+rf_predictions_data <- read_parquet('xgb_predictions_data_all.parquet')
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
@@ -192,23 +186,29 @@ plot1 <- ggplot() +
   
   geom_col(data = rf_plot_data, aes(x = plant_type, y = -predicted_real_unavailability, fill = plant_type), 
            stat = "identity", position = "dodge") +
-  
-  labs(x = 'Date de publication', y = "Unavailable Capacity") +
-  theme(axis.text.x = element_text(angle = 30, hjust =1))
+  labs(y = "Unavailable.Capacity") +
+theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
+        axis.text.x = element_blank(),
+        legend.position = "none")  # Désactiver les ticks de l'axe des x
 
-custom_legend <- cowplot::get_legend(plot1)
 
-plot1 <-plot1 +
-  theme(legend.position = "none")
-  
+# plot1 <-plot1 +
+#   theme(legend.position = "none")
+#   
 # Deuxième graphique: Nombre d'indisponibilités (n_indispo)
 plot2 <- ggplot() +
  geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type), alpha=0.4) +
   geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type), 
            stat = "identity", position = "dodge") +
-  theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
-        axis.text.x = element_blank(),
-        legend.position = "none")  # Désactiver les ticks de l'axe des x
+  labs(x = 'Date de publication', y = "Nombre") +
+  theme(axis.text.x = element_text(angle = 30, hjust =1))
+
+custom_legend <- cowplot::get_legend(plot2)
+
+plot2 <-plot2 +
+  theme(legend.position = "none")
+
+
   # Ajouter un titre personnalisé comme annotation
   #+annotate("text", x = Inf, y = -Inf, label = "Number of Power Outages", 
            #hjust = 1.4, vjust = -1.5, size = 5)
@@ -227,8 +227,6 @@ final_plot
 
 
 
-
-
 Those figures are to be compared with the total capacity installed in Spain that is between 120 (ENTSOE platform data for 2024) and 150 GW (sum of IIP installed capacity).
 The daily generation of energy is about 80 GWh.
 The hourly generation power ranges between 20 GW at the night without wind and 40 GW during the day
@@ -241,6 +239,219 @@ maybe it depends from fuel type and whether or not 'pilotable'
 
 This magnitude is rather small.
 Yet, we expect that the price setting mechanism of marginal pricing will have a substantial (and maybe discontinuous) impact on prices by forcing a new high-cost unit to produce on the market.
+
+
+Je veux montrer à la fni ce à quoi resseble ma shock serie
+
+```{r}
+
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+setwd(save_path_entsoe_output)
+
+first_stage_data <- read_parquet('first_stage_data.parquet') 
+
+price_indispo_data <- first_stage_data %>% 
+  mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         Published.Dismissed.Unavailable.Capacity = Published.Dismissed.Unavailable.Capacity - Published.Dismissed.Unavailable.Nuclear.Capacity,
+         Unpublished.Dismissed.Unavailable.Capacity = Unpublished.Dismissed.Unavailable.Capacity - Unpublished.Dismissed.Unavailable.Nuclear.Capacity
+
+         ) %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Published = ifelse(all(Published.Unavailable.Capacity <= 0 | is.na(Published.Unavailable.Capacity)), 
+                       0, 
+                       mean(Published.Unavailable.Capacity[Published.Unavailable.Capacity > 0], na.rm = TRUE)),
+    Published_Dismissed = ifelse(all(Published.Dismissed.Unavailable.Capacity <= 0 | is.na(Published.Dismissed.Unavailable.Capacity)), 
+                       0, 
+                       mean(Published.Dismissed.Unavailable.Capacity[Published.Dismissed.Unavailable.Capacity > 0], na.rm = TRUE)),
+    
+    Unpublished = ifelse(all(Unpublished.Unavailable.Capacity <= 0 | is.na(Unpublished.Unavailable.Capacity)), 
+                         0, 
+                         mean(Unpublished.Unavailable.Capacity[Unpublished.Unavailable.Capacity > 0], na.rm = TRUE)),
+    Unpublished_Dismissed = ifelse(all(Unpublished.Dismissed.Unavailable.Capacity <= 0 | is.na(Unpublished.Dismissed.Unavailable.Capacity)), 
+                         0, 
+                         mean(Unpublished.Dismissed.Unavailable.Capacity[Unpublished.Dismissed.Unavailable.Capacity > 0], na.rm = TRUE))
+  )
+
+
+
+
+
+predict_price_indispo_data <- first_stage_data %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Published = ifelse(all(Published.Predicted.Unavailable.Capacity <= 0 | is.na(Published.Predicted.Unavailable.Capacity)), 
+                       0, 
+                       mean(Published.Predicted.Unavailable.Capacity[Published.Predicted.Unavailable.Capacity > 0], na.rm = TRUE)),
+    Published_Dismissed = ifelse(all(Published.Dismissed.Predicted.Unavailable.Capacity <= 0 | is.na(Published.Dismissed.Predicted.Unavailable.Capacity)), 
+                       0, 
+                       mean(Published.Dismissed.Predicted.Unavailable.Capacity[Published.Dismissed.Predicted.Unavailable.Capacity > 0], na.rm = TRUE)),
+    
+    Unpublished = ifelse(all(Unpublished.Predicted.Unavailable.Capacity <= 0 | is.na(Unpublished.Predicted.Unavailable.Capacity)), 
+                         0, 
+                         mean(Unpublished.Predicted.Unavailable.Capacity[Unpublished.Predicted.Unavailable.Capacity > 0], na.rm = TRUE)),
+    Unpublished_Dismissed = ifelse(all(Unpublished.Dismissed.Predicted.Unavailable.Capacity <= 0 | is.na(Unpublished.Dismissed.Predicted.Unavailable.Capacity)), 
+                         0, 
+                         mean(Unpublished.Dismissed.Predicted.Unavailable.Capacity[Unpublished.Dismissed.Predicted.Unavailable.Capacity > 0], na.rm = TRUE))
+  )
+
+```
+
+```{r}
+
+unavail_plot <- ggplot(data = predict_price_indispo_data, aes(x= delivery_date))+
+  geom_line(aes(y = Unpublished, color = "Unpublished"))+
+  geom_line(aes(y = Published, color = "Published"))+
+  geom_line(aes(y = -Unpublished_Dismissed, color = "Unpublished"))+
+  geom_line(aes(y = -Published_Dismissed, color = "Published")) +
+  labs(x= "Time", y = "MWh", title = "Predicted Plant Unavailabilities")+
+  theme_minimal()
+unavail_plot 
+  
+
+```
+
+
+
+
+
+
+
+```{r}
+
+nuclear_price_indispo_data <- first_stage_data %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Published = ifelse(all(Published.Unavailable.Nuclear.Capacity <= 0 | is.na(Published.Unavailable.Nuclear.Capacity)), 
+                       0, 
+                       mean(Published.Unavailable.Nuclear.Capacity[Published.Unavailable.Nuclear.Capacity > 0], na.rm = TRUE)),
+    Published_Dismissed = ifelse(all(Published.Dismissed.Unavailable.Nuclear.Capacity <= 0 | is.na(Published.Dismissed.Unavailable.Nuclear.Capacity)), 
+                       0, 
+                       mean(Published.Dismissed.Unavailable.Nuclear.Capacity[Published.Dismissed.Unavailable.Nuclear.Capacity > 0], na.rm = TRUE)),
+    
+    Unpublished = ifelse(all(Unpublished.Unavailable.Nuclear.Capacity <= 0 | is.na(Unpublished.Unavailable.Nuclear.Capacity)), 
+                         0, 
+                         mean(Unpublished.Unavailable.Nuclear.Capacity[Unpublished.Unavailable.Nuclear.Capacity > 0], na.rm = TRUE)),
+    Unpublished_Dismissed = ifelse(all(Unpublished.Dismissed.Unavailable.Nuclear.Capacity <= 0 | is.na(Unpublished.Dismissed.Unavailable.Nuclear.Capacity)), 
+                         0, 
+                         mean(Unpublished.Dismissed.Unavailable.Nuclear.Capacity[Unpublished.Dismissed.Unavailable.Nuclear.Capacity > 0], na.rm = TRUE))
+  )
+
+
+
+```
+
+
+```{r}
+
+unavail_plot <- ggplot(data = nuclear_price_indispo_data, aes(x= delivery_date))+
+  geom_line(aes(y = Unpublished, color = "Unpublished"))+
+  geom_line(aes(y = Published, color = "Published"))+
+  geom_line(aes(y = -Unpublished_Dismissed, color = "Unpublished"))+
+  geom_line(aes(y = -Published_Dismissed, color = "Published")) +
+  labs(x= "Time", y = "MWh", title = "Predicted Plant Unavailabilities")+
+  theme_minimal()
+unavail_plot 
+  
+
+```
+
+
+```{r}
+
+count = price_indispo_data %>% 
+  summarise(
+    count_published = sum(Published >0, na.rm = TRUE),
+    count_unpublished = sum(Unpublished >0, na.rm = TRUE),
+    count_published_dismissed = sum(Published_Dismissed >0, na.rm = TRUE),
+    count_unpublished_dismissed = sum(Unpublished_Dismissed >0, na.rm = TRUE))
+
+mean = price_indispo_data %>%
+  summarise(
+    Published = mean(Published[Published > 0], na.rm = TRUE),
+    Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE),
+    Published_Dismissed = mean(Published_Dismissed[Published_Dismissed > 0], na.rm = TRUE),
+    Unpublished_Dismissed = mean(Unpublished_Dismissed[Unpublished_Dismissed > 0], na.rm = TRUE)
+  )
+
+
+predict_count <- predict_price_indispo_data %>% 
+  summarise(
+    count_published = sum(Published >0, na.rm = TRUE),
+    count_unpublished = sum(Unpublished >0, na.rm = TRUE),
+    count_published_dismissed = sum(Published_Dismissed >0, na.rm = TRUE),
+    count_unpublished_dismissed = sum(Unpublished_Dismissed >0, na.rm = TRUE))
+
+predict_mean <- predict_price_indispo_data %>% 
+  summarise(
+   # Mean only for nonzero values
+    Published = mean(Published[Published > 0], na.rm = TRUE),
+    Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE),
+    Published_Dismissed = mean(Published_Dismissed[Published_Dismissed > 0], na.rm = TRUE),
+    Unpublished_Dismissed = mean(Unpublished_Dismissed[Unpublished_Dismissed > 0], na.rm = TRUE)
+  )
+
+nuclear_count <- nuclear_price_indispo_data %>% 
+  summarise(
+    count_published = sum(Published >0, na.rm = TRUE),
+    count_unpublished = sum(Unpublished >0, na.rm = TRUE),
+    count_published_dismissed = sum(Published_Dismissed >0, na.rm = TRUE),
+    count_unpublished_dismissed = sum(Unpublished_Dismissed >0, na.rm = TRUE)
+
+  )
+
+nuclear_mean <- nuclear_price_indispo_data %>%
+  summarise(
+    Published = mean(Published[Published > 0], na.rm = TRUE),
+    Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE),
+    Published_Dismissed = mean(Published_Dismissed[Published_Dismissed > 0], na.rm = TRUE),
+    Unpublished_Dismissed = mean(Unpublished_Dismissed[Unpublished_Dismissed > 0], na.rm = TRUE)
+  )
+
+```
+
+```{r}
+
+library(gt)
+
+data <- data.frame(
+  cbind(
+    t(round(count)), t(round(mean, 1)),
+    t(round(predict_count)), t(round(predict_mean, 1)), 
+    t(round(nuclear_count)), t(round(nuclear_mean,1))
+  )
+)
+rownames(data) <- c("Published",  "Unpublished","Published Dismissed", "Unpublished Dismissed")
+# Create a gt table with styling
+# Convert data to a data frame and transpose it
+gt_table <- as.data.frame(t(data)) %>%
+  mutate(
+    Row_Label = c("Nbre", "Avg Unavailability", "Nbre", "Avg Unavailability", "Nbre", "Avg Unavailability") # Adding row labels
+  ) %>%
+  gt(rowname_col = "Row_Label") %>%  # Set row labels
+  tab_row_group(
+    group = "All Declared",
+    rows = 1:2  # Rows 1 and 2 for Predicted
+  ) %>%
+  tab_row_group(
+    group = "Predicted",
+    rows = 3:4  # Rows 1 and 2 for Predicted
+  ) %>%
+  tab_row_group(
+    group = "Nuclear",
+    rows = 5:6  # Rows 3 and 4 for Nuclear
+  ) %>%
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "gray", weight = px(2)),
+    locations = cells_row_groups(groups = everything())
+  ) %>%
+  tab_options(
+    table.width = pct(100)
+  )
+
+gt_table
+```
 
 
 

@@ -1,18 +1,20 @@
+library(data.table)
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp")
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
-rf_predictions_data_esp <- read_parquet('rf_predictions_data.parquet') %>% 
+rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb.parquet') %>% 
   distinct() %>% 
   group_by(centrale, `__index_level_0__`) %>% 
-  slice(1) %>% 
+  slice_head(n = 1) %>%  # Utilisation de slice_head au lieu de slice(1)
   ungroup()
+
 
 colnames(rf_predictions_data_esp)
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
-filtered_indispo_esp <- read_parquet("filtered_indispo.parquet") %>% 
+filtered_indispo_esp <- read_parquet("filtered_indispo_esp.parquet") %>% 
   arrange(datetime_slot)
 colnames(filtered_indispo_esp)
 
@@ -23,7 +25,7 @@ filtered_indispo_esp <- filtered_indispo_esp%>%
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
-publi_bout_indispo_ENTSOE_data_esp <- read_parquet("save_indispo_with_ub_status.parquet")
+publi_bout_indispo_ENTSOE_data_esp <- read_parquet("save_indispo_with_pub_status_esp.parquet")
 
 
 final_indispo_esp <- filtered_indispo_esp  %>%
@@ -48,10 +50,10 @@ long_final_indispo_esp  <- long_final_indispo_esp  %>%
   filter(datetime_slot != end_datetime)
 
 
-long_indispo_limitantes <- long_final_indispo_esp %>%
-  filter(Installed.Capacity!= Unavailable.Capacity) %>%
-  filter(as.numeric(Installed.Capacity) - as.numeric(Unavailable.Capacity) < centrale_prod*1.1) %>% 
-  filter(previous_day_prod > as.numeric(Installed.Capacity)*0.9)
+# long_indispo_limitantes <- long_final_indispo_esp %>%
+#   filter(Installed.Capacity!= Unavailable.Capacity) %>%
+#   filter(as.numeric(Installed.Capacity) - as.numeric(Unavailable.Capacity) < centrale_prod*1.1) %>% 
+#   filter(previous_day_prod > as.numeric(Installed.Capacity)*0.9)
 
 long_indispo_nuclear <- long_final_indispo_esp %>%
   filter(plant_type == "Nuclear")
@@ -65,9 +67,6 @@ long_indispo_nuclear %>%
   group_by(publication_status) %>% 
   summarise(n= n())
 
-long_indispo_limitantes %>% 
-  group_by(publication_status) %>% 
-  summarise(n= n())
 
 long_final_indispo_frpred %>% 
   group_by(publication_status) %>% 
@@ -78,9 +77,9 @@ final_indispo_esp <- long_final_indispo_esp[,lapply(.SD, sum),
                                           .SDcols = c("Unavailable.Capacity"),
                                           by = c("publication_status","datetime_slot")]
 
-final_indispo_esp_limitantes <- long_indispo_limitantes[,lapply(.SD, sum), 
-                                                       .SDcols = c("Unavailable.Capacity"),
-                                                       by = c("publication_status", "datetime_slot")]
+# final_indispo_esp_limitantes <- long_indispo_limitantes[,lapply(.SD, sum), 
+#                                                        .SDcols = c("Unavailable.Capacity"),
+#                                                        by = c("publication_status", "datetime_slot")]
 
 
 final_indispo_esp_rfpred <- long_final_indispo_frpred[,lapply(.SD, sum), 
@@ -93,10 +92,10 @@ final_indispo_esp_nuclear <- long_indispo_nuclear[,lapply(.SD, sum),
                                                  by = c("publication_status", "datetime_slot")]
 
 
-final_indispo_tot_esp <- left_join(final_indispo_esp , 
-                                  final_indispo_esp_limitantes%>% 
-                                    rename(Limiting.Capacity = Unavailable.Capacity),
-                                  by = c("publication_status", "datetime_slot")) %>% 
+final_indispo_tot_esp <- final_indispo_esp %>%  
+                                  # final_indispo_esp_limitantes%>% 
+                                  #   rename(Limiting.Capacity = Unavailable.Capacity),
+                                  # by = c("publication_status", "datetime_slot")) %>% 
   left_join(final_indispo_esp_nuclear %>% 
               rename(Unavailable.Nuclear.Capacity = Unavailable.Capacity),
             by = c("publication_status",  "datetime_slot")) %>% 
@@ -104,32 +103,35 @@ final_indispo_tot_esp <- left_join(final_indispo_esp ,
               rename(Cluster.Capacity = Unavailable.Capacity), 
             by = c("publication_status",  "datetime_slot"))
 
+
+getwd()
+
 #pour bien formatter le cluster_rf_id
 # c'est une approximation
-final_indispo_tot_esp <- final_indispo_tot_esp %>%
-  mutate(date = as.Date(datetime_slot)) %>%  # Extraire la date
-  group_by(date, publication_status) %>%  # Grouper par jour
-  mutate(transitions = Cluster.Capacity != lag(Cluster.Capacity, default = first(Cluster.Capacity)),
-         n_unique_values = n_distinct(Cluster.Capacity, na.rm = TRUE),  # Count distinct values
-         n_transitions = sum(transitions, na.rm = TRUE),
-         #ex 2 valeurs d'indispo différentes
-         #il devrait y avoir une indispo
-         
-         # cas de bord n_transitions = 0, n_unique_values=0
-         Cluster.Capacity = ifelse( n_transitions > max(n_unique_values -1,0) , max(Cluster.Capacity, na.rm = TRUE), Cluster.Capacity)
-  ) %>%  # Fixer à la valeur max du jour
-  ungroup()
+# final_indispo_tot_esp <- final_indispo_tot_esp %>%
+#   mutate(date = as.Date(datetime_slot)) %>%  # Extraire la date
+#   group_by(publication_status) %>%  # Grouper par jour
+#   mutate(transitions = Cluster.Capacity != lag(Cluster.Capacity, default = first(Cluster.Capacity)),
+#          n_unique_values = n_distinct(Cluster.Capacity, na.rm = TRUE),  # Count distinct values
+#          n_transitions = sum(transitions, na.rm = TRUE),
+#          #ex 2 valeurs d'indispo différentes
+#          #il devrait y avoir une indispo
+#          
+#          # cas de bord n_transitions = 0, n_unique_values=0
+#          Cluster.Capacity = ifelse( n_transitions > max(n_unique_values -1,0) , max(Cluster.Capacity, na.rm = TRUE), Cluster.Capacity)
+#   ) %>%  # Fixer à la valeur max du jour
+#   ungroup()
 
 
 
 final_indispo_tot_wide_esp <- final_indispo_tot_esp %>% 
   group_by(datetime_slot, publication_status) %>% 
-  summarise(across(c(Unavailable.Nuclear.Capacity, Limiting.Capacity, 
+  summarise(across(c(Unavailable.Nuclear.Capacity, #Limiting.Capacity, 
                      Unavailable.Capacity, Predicted.Unavailable.Capacity, Cluster.Capacity), 
                    ~ sum(.x, na.rm = TRUE)), .groups = "drop") %>% 
   pivot_wider(
     names_from = publication_status, 
-    values_from = c(Unavailable.Nuclear.Capacity, Limiting.Capacity, 
+    values_from = c(Unavailable.Nuclear.Capacity, #Limiting.Capacity, 
                     Unavailable.Capacity, Predicted.Unavailable.Capacity, Cluster.Capacity), 
     names_glue = "{publication_status}.{.value}"
   )
@@ -146,15 +148,20 @@ final_indispo_tot_wide_esp <- final_indispo_tot_wide_esp %>%
                         Published.Unavailable.Nuclear.Capacity, 
                         Unpublished.Unavailable.Nuclear.Capacity,
                         Uneffective.Unavailable.Nuclear.Capacity),
-         cl_lm_id  = rleid(Planned.Limiting.Capacity,
-                           Published.Limiting.Capacity,
-                           Unpublished.Limiting.Capacity,
-                           Uneffective.Limiting.Capacity),
+         # cl_lm_id  = rleid(Planned.Limiting.Capacity,
+         #                   Published.Limiting.Capacity,
+         #                   Unpublished.Limiting.Capacity,
+         #                   Uneffective.Limiting.Capacity),
          cl_rf_id  = rleid(Planned.Cluster.Capacity,
                            Published.Cluster.Capacity,
                            Unpublished.Cluster.Capacity,
                            Uneffective.Cluster.Capacity)
   )
+
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+
+write_parquet(final_indispo_tot_wide_esp, "final_indispo_tot_wide_esp.parquet")
 
 
 library(lubridate)
@@ -229,5 +236,16 @@ setwd(save_path_data)
 write_parquet(price_indispo_merge_esp, "price_indispo_merge_esp.parquet")
 
 
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/cross_border_flows")
 
+cross_border_flows <- read_parquet("fr_esp_cross_border_flows.parquet")
+colnames(cross_border_flows)
+
+
+price_indispo_merge_esp_NTC <- merge(price_indispo_merge_esp, cross_border_flows %>% 
+                                       select(NTC_ESP_FR,NTC_FR_ESP, time), 
+                         by.x ="datetime", by.y ="time")
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+setwd(save_path_data)
+write_parquet(price_indispo_merge_esp_NTC, "price_indispo_merge_esp_NTC.parquet")
 

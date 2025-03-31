@@ -76,7 +76,37 @@ for (col in duplicated_names){
   generation_per_plant <- generation_per_plant[, -indexes[2]]
 }
 
+#Get plants for which I can match unavailabilities
 
+
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+setwd(save_path_entsoe_output)
+
+dismissed_long_format_indispo <- read_parquet('dismissed_long_format_indispo.parquet')
+dismissed_long_format_indispo_non_published <- read_parquet('dismissed_long_format_indispo_non_published.parquet')
+
+long_format_indispo <- read_parquet('long_format_indispo.parquet')
+long_format_indispo_non_published <- read_parquet('long_format_indispo_non_published.parquet')
+
+
+# Add a dummy column to differentiate the sources
+dismissed_long_format_indispo$source <- "dismissed_published"
+dismissed_long_format_indispo_non_published$source <- "dismissed_non_published"
+long_format_indispo$source <- "published"
+long_format_indispo_non_published$source <- "non_published"
+dismissed_long_format_indispo$chevauche <- 0
+dismissed_long_format_indispo_non_published$chevauche <- 0
+
+colnames(dismissed_long_format_indispo)
+colnames(dismissed_long_format_indispo_non_published)
+colnames(long_format_indispo)
+colnames(long_format_indispo_non_published)
+
+# Combine the two dataframes
+all_indispo <- rbind(dismissed_long_format_indispo,
+                     dismissed_long_format_indispo_non_published)
+all_indispo <- rbind(all_indispo, long_format_indispo)
+all_indispo <- rbind(all_indispo, long_format_indispo_non_published)
 
 
 #estimate all the rf models only once
@@ -91,10 +121,15 @@ colnames(prediction_data)
 
 centrales <- colnames(generation_per_plant %>% 
                         select(-c('__index_level_0__')))# Replace with your actual plant names
+indispo_centrales <- all_indispo %>% 
+  distinct(production_resource_psr_name) %>% 
+  pull(production_resource_psr_name)
 
-centrale <- centrales[1]
+active_centrales <- intersect(centrales, indispo_centrales)
+
+centrale <- active_centrales[5]
 # Loop over different centrale values
-for (centrale in centrales) {
+for (centrale in active_centrales[1:10]) {
   print(centrale)
   mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
                                               'day_of_week', 'creneau',
@@ -113,50 +148,42 @@ for (centrale in centrales) {
   # Fit a random forest model
   formula_str <- paste0("`", centrale, "` ~ gen_tot + wind_solar_tot + previous_day_prod + day_of_week + month + creneau")
   # Fit and store the model
-  rf_models[[centrale]] <- ranger(
+  rf_model <- ranger(
     formula = as.formula(formula_str),
     data = mini_prediction_data
   )
+
+  rf_models[[centrale]] <- list(
+    forest = rf_model$forest,  # Arbres du modèle
+    variables = rf_model$independent.variable.names,  # Variables utilisées
+    treetype = rf_model$treetype  # Type d'arbre (ex: "regression")
+  )
 }
 
-centrale <- centrales[1]
-# Access a model by name
-rf_models[[centrale]]
+
 
 getwd()
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
 saveRDS(rf_models, 'rf_models_all.rds')
 
-rf_models <- readRDS( 'rf_models.rds')
-#maintenant on charge toutes les prediction dates demandees
+rf_models <- readRDS( 'rf_models_all.rds')
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
-setwd(save_path_entsoe_output)
+# rf_model_light <- list(
+#   forest = rf_model$forest,  # Arbres du modèle
+#   variables = rf_model$independent.variable.names,  # Variables utilisées
+#   treetype = rf_model$treetype  # Type d'arbre (ex: "regression")
+# )
+# #maintenant on charge toutes les prediction dates demandees
+# print(centrale)
+# size_full <- object.size(rf_model)
+# size_light <- object.size(rf_model_light)
+# 
+# print(size_full)  # Taille du modèle complet
+# print(size_light)  # Taille du modèle allégé
 
-dismissed_long_format_indispo <- read_parquet('dismissed_long_format_indispo.parquet')
-dismissed_long_format_indispo_non_published <- read_parquet('dismissed_long_format_indispo_non_published.parquet')
-
-long_format_indispo <- read_parquet('long_format_indispo.parquet')
-long_format_indispo_non_published <- read_parquet('long_format_indispo_non_published.parquet')
-
-
-# Add a dummy column to differentiate the sources
-dismissed_long_format_indispo$source <- "dismissed_published"
-dismissed_long_format_indispo_non_published$source <- "dismissed_non_published"
-long_format_indispo$source <- "published"
-long_format_indispo_non_published$source <- "non_published"
-dismissed_long_format_indispo$chevauche <- 0
-
-colnames(dismissed_long_format_indispo)
-colnames(dismissed_long_format_indispo_non_published)
-colnames(long_format_indispo)
-colnames(long_format_indispo_non_published)
-
-# Combine the two dataframes
-all_indispo <- rbind(dismissed_long_format_indispo,
-                                       dismissed_long_format_indispo_non_published)
-all_indispo <- rbind(all_indispo, long_format_indispo)
-all_indispo <- rbind(all_indispo, long_format_indispo_non_published)
+# Comparer la réduction en pourcentage
+# reduction <- (1 - (size_light / size_full)) * 100
+# cat("Réduction de taille :", round(reduction, 2), "%\n")
 
  
 get_predictions <- function(centrale){
@@ -195,7 +222,16 @@ get_predictions <- function(centrale){
                              'wind_solar_tot', 'gen_tot','day_of_week','creneau','previous_day_prod',
                               centrale)]
   
-  rf_model_ranger <- rf_models[[centrale]]
+  # Charger le modèle allégé
+  rf_model <- rf_models[[centrale]]
+  
+  # Recréer un objet ranger minimal pour prédire
+  rf_model_ranger <- ranger(
+    dependent.variable.name = centrale,
+    num.trees = length(rf_model_light$forest$trees),  # Nombre d'arbres
+    treetype = rf_model_light$treetype,  # Type d'arbre
+    forest = rf_model_light$forest  # Restaurer la forêt
+  )
   # Make predictions
   predictions <- predict(rf_model_ranger, data=test_data)
   

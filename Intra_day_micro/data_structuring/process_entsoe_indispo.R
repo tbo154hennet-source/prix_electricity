@@ -7,7 +7,7 @@ library(ggplot2)
 
 Sys.setenv(lang = "en_US")
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_microoutputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 actual_ENTSOE_indispo <- read_parquet('actual_ENTSOE_indispo.parquet') %>% 

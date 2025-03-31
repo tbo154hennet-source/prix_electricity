@@ -1,0 +1,235 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(arrow)
+library(stargazer)
+library(lmtest)
+library(data.table)
+library(sandwich)
+```
+  
+
+```{r}
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+setwd(save_path_data)
+price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
+price_indispo_merge <- price_indispo_merge %>%
+  fill(spot_gas, .direction = "up")
+
+
+
+```
+
+```{r}
+
+colnames_with_capacity <- colnames(price_indispo_merge)[grepl("Capacity", colnames(price_indispo_merge))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables",
+    "NTC_FR_ESP", "NTC_ESP_FR"
+    
+    )
+
+price_indispo_merge[colnames_with_capacity] <- lapply(price_indispo_merge[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+#
+price_indispo_merge <- price_indispo_merge %>% 
+  mutate(across(all_of(capacity_fields), 
+                ~ . / 1000)) %>% 
+  mutate(
+    Planned.Unavailable.Capacity = Planned.Unavailable.Capacity - Planned.Unavailable.Nuclear.Capacity,
+    Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity,
+         ) 
+
+price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]
+
+price_indispo_merge <- price_indispo_merge[!rowSums(sapply(price_indispo_merge, is.infinite)), ]
+
+price_indispo_merge$weekday <- weekdays(price_indispo_merge$delivery_date)
+
+colnames(price_indispo_merge)  
+  #group_by(year, month) %>% 
+  # mutate(Tot_Unplanned_Unavailability_avg = mean(Tot_Unplanned_Unavailability ,na.rm = TRUE),
+  #         Tot_Planned_Unavailability_avg = mean(Tot_Planned_Unavailability ,na.rm = TRUE),
+  #        unpredicted_renewables_sq = unpredicted_renewables^2,)
+```
+
+On simplifie sans regarder les différences published/Unpublished pour avoir des spécifications plus simples.
+Planned + Unpublished + Published concaténées,
+Uneffective
+
+```{r}
+price_indispo_merge$Effective.Unavailable.Capacity <- price_indispo_merge$Planned.Unavailable.Capacity + price_indispo_merge$Published.Unavailable.Capacity + price_indispo_merge$Unpublished.Unavailable.Capacity
+
+price_indispo_merge$Effective.Unavailable.Nuclear.Capacity <- price_indispo_merge$Planned.Unavailable.Nuclear.Capacity + price_indispo_merge$Published.Unavailable.Nuclear.Capacity + price_indispo_merge$Unpublished.Unavailable.Nuclear.Capacity
+
+price_indispo_merge$Effective.Predicted.Unavailable.Capacity <- price_indispo_merge$Planned.Predicted.Unavailable.Capacity + price_indispo_merge$Published.Predicted.Unavailable.Capacity + price_indispo_merge$Unpublished.Predicted.Unavailable.Capacity
+
+
+```
+
+
+```{r}
+
+# perform first stage regression
+m_log <- lm(
+  log(price) ~  Effective.Unavailable.Capacity +Uneffective.Unavailable.Capacity + 
+     Effective.Unavailable.Nuclear.Capacity +Uneffective.Unavailable.Nuclear.Capacity+
+    + gen_tot+ day_ahead_forecast,
+  data= price_indispo_merge)
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_log, type = "HC0")
+cl_se_log<- sqrt(diag(vcov_cluster))
+# Matrice de variance-covariance clusterisée
+vcov_cluster_unavailable  <- vcovCL(m_log, type = "HC0", cluster = ~ cl_id)
+cl_se_log_unavailable <- sqrt(diag(vcov_cluster))
+# Erreurs standard clusterisées
+vcov_cluster_nu <- vcovCL(m_log, type = "HC0", cluster = ~ cl_nu_id)
+cl_se_log_nu <- sqrt(diag(vcov_cluster_nu))
+
+unavailable_names <- names(coefficients(m_log))[grep("Unavailable", names(coefficients(m_log)))]
+nuclear_names <- names(coefficients(m_log))[grep("Nuclear", names(coefficients(m_log)))]
+cl_se_log[unavailable_names] <- cl_se_log_unavailable[unavailable_names]
+cl_se_log[nuclear_names] <- cl_se_log_nu[nuclear_names]
+
+
+
+
+m_log_FE <- lm(
+  log(price) ~ Effective.Unavailable.Capacity +Uneffective.Unavailable.Capacity + 
+     Effective.Unavailable.Nuclear.Capacity +Uneffective.Unavailable.Nuclear.Capacity+
+    gen_tot+ day_ahead_forecast  + 
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_log_FE, type = "HC0")
+cl_se_log_FE<- sqrt(diag(vcov_cluster))
+# Matrice de variance-covariance clusterisée
+vcov_cluster_unavailable  <- vcovCL(m_log_FE, type = "HC0", cluster = ~ cl_id)
+cl_se_log_unavailable <- sqrt(diag(vcov_cluster))
+# Erreurs standard clusterisées
+vcov_cluster_nu <- vcovCL(m_log_FE, type = "HC0", cluster = ~ cl_nu_id)
+cl_se_log_nu <- sqrt(diag(vcov_cluster_nu))
+
+unavailable_names <- names(coefficients(m_log_FE))[grep("Unavailable", names(coefficients(m_log_FE)))]
+nuclear_names <- names(coefficients(m_log_FE))[grep("Nuclear", names(coefficients(m_log_FE)))]
+cl_se_log_FE[unavailable_names] <- cl_se_log_unavailable[unavailable_names]
+cl_se_log_FE[nuclear_names] <- cl_se_log_nu[nuclear_names]
+
+
+m_log_control <- lm(
+  log(price) ~ Effective.Unavailable.Capacity +Uneffective.Unavailable.Capacity + 
+     Effective.Unavailable.Nuclear.Capacity +Uneffective.Unavailable.Nuclear.Capacity+
+    gen_tot+ day_ahead_forecast   +
+    spot_gas + unpredicted_renewables + intraday_update_renewables + 
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+  data= price_indispo_merge)
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_log_control, type = "HC0")
+cl_se_log_control<- sqrt(diag(vcov_cluster))
+# Matrice de variance-covariance clusterisée
+vcov_cluster_unavailable  <- vcovCL(m_log_control, type = "HC0", cluster = ~ cl_id)
+cl_se_log_unavailable <- sqrt(diag(vcov_cluster))
+# Erreurs standard clusterisées
+vcov_cluster_nu <- vcovCL(m_log_control, type = "HC0", cluster = ~ cl_nu_id)
+cl_se_log_nu <- sqrt(diag(vcov_cluster_nu))
+
+unavailable_names <- names(coefficients(m_log_control))[grep("Unavailable", names(coefficients(m_log_control)))]
+nuclear_names <- names(coefficients(m_log_control))[grep("Nuclear", names(coefficients(m_log_control)))]
+cl_se_log_control[unavailable_names] <- cl_se_log_unavailable[unavailable_names]
+cl_se_log_control[nuclear_names] <- cl_se_log_nu[nuclear_names]
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_log, m_log_FE, m_log_control, 
+    type = "html",
+    se = list(cl_se_log, cl_se_log_FE, cl_se_log_control),
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "+ Controls"),
+    keep = c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity", "Effective.Unavailable.Capacity", 
+     "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
+     "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
+     "Effective.Unavailable.Nuclear.Capacity",
+    "Uneffective.Unavailable.Nuclear.Capacity", "Planned.Unavailable.Nuclear.Capacity","gen_tot",
+             "day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables")
+)
+ 
+```
+
+
+
+```{r}
+# perform first stage regression
+m_rf <- lm(
+  log(price) ~ Effective.Predicted.Unavailable.Capacity+  
+    Uneffective.Predicted.Unavailable.Capacity + 
+     gen_tot+ day_ahead_forecast   + spot_gas,
+  data= price_indispo_merge)
+
+
+vcov_cluster <- vcovCL(m_rf , type = "HC0", cluster = ~ cl_rf_id)
+cl_se_rf <- sqrt(diag(vcov_cluster))
+# # Matrice de variance-covariance clusterisée
+# vcov_cluster <- vcovCL(m_rf , type = "HC0", cluster = ~ cl_rf_id)
+# # Erreurs standard clusterisées
+# cl_se <- sqrt(diag(vcov_cluster))
+# rf_names <- names(coefficients(m_log_control))[grep("Predicted", names(coefficients(m_log_control)))]
+# cl_se_rf[rf_names] <- cl_se[rf_names]
+
+
+m_rf_FE <- lm(
+  log(price) ~  Effective.Predicted.Unavailable.Capacity+  
+    Uneffective.Predicted.Unavailable.Capacity + 
+    gen_tot+ day_ahead_forecast   + spot_gas + 
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_FE , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_FE <- sqrt(diag(vcov_cluster))
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer(  m_rf, m_rf_FE,  
+    type = "html",
+    se = list( cl_se_rf, cl_se_rf_FE),
+    title = "Regression Results",
+    column.labels = c( "Declared", "Declared FE",  "RF", "RF FE"),
+    keep = c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
+             "Effective.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity",
+              "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",
+    "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "Uneffective.Limiting.Capacity",
+      "gen_tot",
+             "day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables")
+)
+ 
+```
+
+
+
+
+
+
+
+

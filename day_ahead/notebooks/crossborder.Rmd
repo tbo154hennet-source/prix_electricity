@@ -27,22 +27,30 @@ Est ce que les imports sont une marge d'ajustement fce aux chocs d'offre
 ```{r}
 
 
-price_merge_CBF <-price_merge_CBF %>% 
-  mutate(SCH_EX_DA_FR_ES = as.numeric(SCH_EX_DA_FR_ES),
-         SCH_EX_DA_ES_FR = as.numeric(SCH_EX_DA_ES_FR),
-         SCH_EX_TOT_FR_ES = as.numeric(SCH_EX_TOT_FR_ES),
-         SCH_EX_TOT_ES_FR = as.numeric(SCH_EX_TOT_ES_FR),
-        SCH_EX_Spread_FR_ES = SCH_EX_TOT_FR_ES - SCH_EX_DA_FR_ES ,
-         SCH_EX_Spread_ES_FR = SCH_EX_TOT_ES_FR - SCH_EX_DA_ES_FR)
+
 
 colnames_with_capacity <- colnames(price_merge_CBF)[grepl("Capacity", colnames(price_merge_CBF))]
 #get monthly avg of unavailabilities
 capacity_fields <- 
   c(colnames_with_capacity,
     "day_ahead_forecast_esp",  "unpredicted_renewables_esp", "intraday_update_renewables_esp",
-  "day_ahead_forecast_fr",  "unpredicted_renewables_fr", "intraday_update_renewables_fr")
+  "day_ahead_forecast_fr",  "unpredicted_renewables_fr", "intraday_update_renewables_fr",
+  "NTC_ESP_FR", "NTC_FR_ESP"
+  
+  )
 
 price_merge_CBF[colnames_with_capacity] <- lapply(price_merge_CBF[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+
+price_merge_CBF <-price_merge_CBF %>% 
+  mutate(SCH_EX_DA_FR_ES = as.numeric(SCH_EX_DA_FR_ES),
+         SCH_EX_DA_ES_FR = as.numeric(SCH_EX_DA_ES_FR),
+         SCH_EX_TOT_FR_ES = as.numeric(SCH_EX_TOT_FR_ES),
+         SCH_EX_TOT_ES_FR = as.numeric(SCH_EX_TOT_ES_FR),
+        SCH_EX_Spread_FR_ES = SCH_EX_TOT_FR_ES - SCH_EX_DA_FR_ES ,
+         SCH_EX_Spread_ES_FR = SCH_EX_TOT_ES_FR - SCH_EX_DA_ES_FR,
+        creneau = hour(datetime)) %>% 
+  mutate(across(all_of(capacity_fields), 
+                ~ . / 1000))
 
 price_merge_CBF$weekday <- weekdays(price_merge_CBF$delivery_date)
 
@@ -67,7 +75,7 @@ on répond aux indispos et renouvelables par des imports
 import_data <- price_merge_CBF %>% 
   select(SCH_EX_Spread_FR_ES, SCH_EX_Spread_ES_FR, 
          SCH_EX_DA_FR_ES, SCH_EX_DA_ES_FR,
-         year, month, weekday,
+         year, month, weekday, creneau,
          cl_rf_id_esp , cl_rf_id_fr, 
          Uneffective.Predicted.Unavailable.Capacity_esp,
          Uneffective.Predicted.Unavailable.Capacity_fr,
@@ -112,7 +120,7 @@ m_ES_FR_FE <- lm(SCH_EX_Spread_ES_FR ~ SCH_EX_DA_ES_FR +
                       Planned.Predicted.Unavailable.Capacity_fr+
                       day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
                       day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+
-    as.factor(year) + as.factor(month) + as.factor(weekday),
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
                     data = import_data)
 
 vcov_cluster <- vcovCL(m_ES_FR_FE , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
@@ -124,7 +132,7 @@ m_FR_ES_FE <- lm(SCH_EX_Spread_FR_ES~ SCH_EX_DA_FR_ES +Uneffective.Predicted.Una
                       Planned.Predicted.Unavailable.Capacity_fr+
                       day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
                       day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+ 
-    as.factor(year) + as.factor(month) + as.factor(weekday),
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
                     data = import_data)
 vcov_cluster <- vcovCL(m_FR_ES_FE , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
 # Erreurs standard clusterisées
@@ -155,21 +163,26 @@ reg_table <- stargazer( m_FR_ES,  m_FR_ES_FE, m_ES_FR, m_ES_FR_FE,
 
 On a donc établi que les imports sont une marge d'ajustement face aux chocs d'offre
 sur le marché intradaily
-Cette marge pourrait se décomposer entre un effet prix et un effet géographique
-à savoir une fois que je contrôle par la différence de prix qu'engendre ce choc d'offre national,
-est ce que je trouve le même effet ?
-On a pas les prix intradaily ici, mais on peut se posser la question sur le marché day ahead.
 
+
+
+
+On regarde une transmission chocs de prix à l'étranger
+Même regression que esp_day_ahead mais cette fois sur le prix de l'autre pays
+On vérifie qu'en contrôlant par la différence de prix, ce lien disparaît
+
+On considère d'abord l'effet des indispos + renouvelables (chocs d'offre) sur le prix en France
 
 ```{r}
 
 import_data <- price_merge_CBF %>% 
   select(SCH_EX_Spread_FR_ES, SCH_EX_Spread_ES_FR, 
          SCH_EX_DA_FR_ES, SCH_EX_DA_ES_FR,
+         NTC_ESP_FR, NTC_FR_ESP,
          price_fr, price_esp,
          cl_rf_id_esp, cl_rf_id_fr,
          gen_tot_esp, gen_tot_fr,
-         year, month, weekday,
+         year, month, weekday, creneau,
          spot_gas_esp ,
          Uneffective.Predicted.Unavailable.Capacity_esp,
          Uneffective.Predicted.Unavailable.Capacity_fr,
@@ -188,94 +201,10 @@ import_data <- price_merge_CBF %>%
          ) %>%
   na.omit()
 
-m_CBF <- lm(CBF_DA ~ 
-              price_esp + price_diff_fr_esp+
-                Uneffective.Predicted.Unavailable.Capacity_esp+
-                      Uneffective.Predicted.Unavailable.Capacity_fr+
-              Unpublished.Predicted.Unavailable.Capacity_esp+
-                      Unpublished.Predicted.Unavailable.Capacity_fr+
-                Published.Predicted.Unavailable.Capacity_esp+
-                      Published.Predicted.Unavailable.Capacity_fr+
-              Planned.Predicted.Unavailable.Capacity_esp+
-         Planned.Predicted.Unavailable.Capacity_fr+
-            gen_tot_esp+ gen_tot_fr+
-             day_ahead_forecast_esp +  day_ahead_forecast_fr  ,
-                    data = import_data)
-
-vcov_cluster <- vcovCL(m_CBF , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
-# Erreurs standard clusterisées
-cl_se_cbf <- sqrt(diag(vcov_cluster))
-
-m_CBF_FE <- lm(CBF_DA ~ price_esp + price_diff_fr_esp+
-                   Uneffective.Predicted.Unavailable.Capacity_esp+
-                      Uneffective.Predicted.Unavailable.Capacity_fr+
-                   Published.Predicted.Unavailable.Capacity_esp+
-                      Published.Predicted.Unavailable.Capacity_fr+
-                 Unpublished.Predicted.Unavailable.Capacity_esp+
-                      Unpublished.Predicted.Unavailable.Capacity_fr+
-                 Planned.Predicted.Unavailable.Capacity_esp+
-         Planned.Predicted.Unavailable.Capacity_fr+
-           gen_tot_esp+ gen_tot_fr+
-                      day_ahead_forecast_esp + unpredicted_renewables_esp + intraday_update_renewables_esp+
-                      day_ahead_forecast_fr + unpredicted_renewables_fr + intraday_update_renewables_fr+
-    as.factor(year) + as.factor(month) + as.factor(weekday),
-                    data = import_data)
-
-vcov_cluster <- vcovCL(m_CBF , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
-# Erreurs standard clusterisées
-cl_se_cbf_fe <- sqrt(diag(vcov_cluster))
-
-```
-
-```{r, results = 'asis'}
-
-
-reg_table <- stargazer( m_CBF, m_CBF_FE,
-    type = "html",
-    se = list(cl_se_cbf, cl_se_cbf_fe),
-    #se = list(cl_se_log, cl_se_log_FE, cl_se_control),
-    title = "Regression Results",
-    column.labels = c("ES -> FR", "ES -> FR (with FE)"),
-    keep = c("Uneffective.Predicted.Unavailable.Capacity_esp", "SCH_EX_DA_FR_ES", "SCH_EX_DA_ES_FR",
-              "Uneffective.Predicted.Unavailable.Capacity_fr",
-             "price_diff_fr_esp", "price_fr", "price_esp",
-             "Planned.Predicted.Unavailable.Capacity_esp",
-                      "Planned.Predicted.Unavailable.Capacity_fr",
-             "Published.Predicted.Unavailable.Capacity_esp",
-                      "Published.Predicted.Unavailable.Capacity_fr",
-             "Unpublished.Predicted.Unavailable.Capacity_esp",
-                      "Unpublished.Predicted.Unavailable.Capacity_fr",
-              "day_ahead_forecast_esp","unpredicted_renewables_esp", "intraday_update_renewables_esp",
-                      "day_ahead_forecast_fr", "unpredicted_renewables_fr", "intraday_update_renewables_fr")
-)
- 
-```
-
-
-On regarde une transmission chocs de prix à l'étranger
-Même regression que esp_day_ahead mais cette fois sur le prix de l'autre pays
-On vérifie qu'en contrôlant par la différence de prix, ce lien disparaît
-
-On considère d'abord l'effet des indispos + renouvelables (chocs d'offre) sur le prix en France
-
-```{r}
-
 import_data_reg <- import_data %>% 
-  filter(is.finite(log(price_esp)))
+  filter(is.finite(log(price_esp)) & is.finite(log(price_fr)))
 
 
-colnames_with_capacity <- colnames(import_data_reg)[grepl("Capacity", colnames(import_data_reg))]
-#get monthly avg of unavailabilities
-capacity_fields <- 
-  c(colnames_with_capacity,
-    "day_ahead_forecast_esp",  "unpredicted_renewables_esp", "intraday_update_renewables_esp",
-    "day_ahead_forecast_fr",  "unpredicted_renewables_fr", "intraday_update_renewables_fr")
-
-import_data_reg[colnames_with_capacity] <- lapply(import_data_reg[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
-#
-import_data_reg <- import_data_reg %>% 
-  mutate(across(all_of(capacity_fields), 
-                ~ . / 1000))
 
 import_data_reg <- import_data_reg[complete.cases(import_data_reg),]
 import_data_reg <- import_data_reg[!rowSums(sapply(import_data_reg, is.infinite)), ]
@@ -300,7 +229,7 @@ m_rf_FE <- lm(
     Uneffective.Predicted.Unavailable.Capacity_esp + 
     gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp +
     spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp + 
-    as.factor(year) + as.factor(month) + as.factor(weekday),
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
   data=import_data_reg)
 # Matrice de variance-covariance clusterisée
 vcov_cluster <- vcovCL(m_rf_FE , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
@@ -319,7 +248,7 @@ m_rf_control <- lm(
     gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp + day_ahead_forecast_fr+
     spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp +
     unpredicted_renewables_fr + intraday_update_renewables_fr +
-    as.factor(year) + as.factor(month) + as.factor(weekday),
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
   data= import_data_reg)
 # Matrice de variance-covariance clusterisée
 vcov_cluster <- vcovCL(m_rf_control  , type = "HC0", cluster = ~ cl_rf_id_esp + cl_rf_id_fr)
@@ -345,10 +274,90 @@ reg_table <- stargazer( m_rf, m_rf_FE, m_rf_control,
  
 ```
 
-On fait cette super IV regression
+On cherche à montrer que la NTC a un pouvoir prédictif que l'on pourrit également utiliser comme instrument
+Dans les cas où c'est saturé soit 60 % du temps,
+impose une limite à la quantité exportée, donc possiblement au prix
+
+
+```{r}
+
+# perform first stage regression
+
+m_ntc_es <- lm(
+  log(price_esp) ~ NTC_ESP_FR + NTC_FR_ESP +
+    gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp +
+    spot_gas_esp + day_ahead_forecast_fr ,
+  data=import_data_reg)
+
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_ntc_es , type = "HC0")
+# Erreurs standard clusterisées
+cl_se_ntc_es <- sqrt(diag(vcov_cluster))
+
+m_ntc_es_FE <- lm(
+  log(price_esp) ~ NTC_ESP_FR + NTC_FR_ESP + 
+    gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp + day_ahead_forecast_fr+
+    spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp +
+    unpredicted_renewables_fr + intraday_update_renewables_fr +
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= import_data_reg)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_ntc_es_FE, type = "HC0")
+# Erreurs standard clusterisées
+cl_se_ntc_es_FE  <- sqrt(diag(vcov_cluster))
 
 
 
+# perform first stage regression
+
+m_ntc_fr <- lm(
+  log(price_fr) ~ NTC_ESP_FR + NTC_FR_ESP +
+    gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp +
+    spot_gas_esp + day_ahead_forecast_fr ,
+  data=import_data_reg)
+
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_ntc_fr , type = "HC0")
+# Erreurs standard clusterisées
+cl_se_ntc_fr <- sqrt(diag(vcov_cluster))
+
+m_ntc_fr_FE <- lm(
+  log(price_fr) ~ NTC_ESP_FR + NTC_FR_ESP + 
+    gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp + day_ahead_forecast_fr+
+    spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp +
+    unpredicted_renewables_fr + intraday_update_renewables_fr +
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= import_data_reg)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_ntc_fr_FE, type = "HC0")
+# Erreurs standard clusterisées
+cl_se_ntc_fr_FE  <- sqrt(diag(vcov_cluster))
+
+
+
+
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_ntc_es, m_ntc_es_FE,  m_ntc_fr, m_ntc_fr_FE,
+    type = "html",
+    se = list(cl_se_ntc_es, cl_se_ntc_es_FE, cl_se_ntc_fr, cl_se_ntc_fr_FE),
+    title = "Regression Results",
+    column.labels = c("ESP", "ESP FE", "FR", "FR FE"),
+    keep = c(".Capacity", "gen_tot", "NTC",
+             "day_ahead_forecast", "spot_gas", 
+             "unpredicted_renewables", "intraday_update_renewables")
+)
+ 
+```
 
 
 

@@ -12,6 +12,7 @@ save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electr
 setwd(save_path_entsoe_output)
 first_stage_data <- read_parquet('first_stage_data.parquet') 
 
+first_stage_data$weekday <- weekdays(first_stage_data$delivery_date) 
 
 # on va pondérer par une mesure multiplicative n_creneau_unavail * n_creneau_trend
 #pour savoir si c'est très représentatif ou pas
@@ -22,9 +23,8 @@ colnames(first_stage_data)
 
 
 ```{r}
-first_stage_data$weekday <- weekdays(first_stage_data$delivery_date) 
 
-first_stage_test_bis_predicted <- first_stage_data %>%
+first_stage_test_bis_nuclear <- first_stage_data %>%
   mutate(Unavailable.Nuclear.Capacity = Published.Unavailable.Nuclear.Capacity + Unpublished.Unavailable.Nuclear.Capacity,
     nuclear_unavailability_creneau = (Unavailable.Nuclear.Capacity >0)) %>% 
   group_by(delivery_date, creneau) %>%
@@ -35,7 +35,7 @@ first_stage_test_bis_predicted <- first_stage_data %>%
   ungroup() %>% 
   arrange(datetime)
 
-my_test_predicted <- first_stage_test_bis_predicted %>% 
+my_test_nuclear <- first_stage_test_bis_nuclear %>% 
   filter(day_unavailability > 0) %>% 
   arrange(datetime)
 
@@ -45,36 +45,43 @@ my_test_predicted <- first_stage_test_bis_predicted %>%
 # à savoir si le même creneau  de l'auction suivante 
 # a une indisponibilité différente
 
-my_test_predicted <- my_test_predicted %>% 
+my_test_nuclear <- my_test_nuclear %>% 
   group_by(electricity_delivery_date, creneau) %>%
-  mutate(unavailability_trigger =  ifelse(auction_before ==0, nuclear_unavailability_creneau, nuclear_unavailability_creneau -  lag(nuclear_unavailability_creneau))) %>% 
+  mutate(unavailability_trigger =  ifelse(auction_before ==0, nuclear_unavailability_creneau, nuclear_unavailability_creneau -  lag(nuclear_unavailability_creneau)),
+ unavailability_trigger = ifelse(unavailability_trigger==-1, 0, unavailability_trigger)) %>%
   ungroup()
 
 
 
-log_price_data_predicted <- my_test_predicted  %>% 
-  filter(creneau_unavailability > 0) %>%
+log_price_data_nuclear <- my_test_nuclear  %>% 
   group_by(electricity_delivery_date, creneau) %>%
   
   # Définir l'enchère de référence
-  mutate(reference_auction = min(auction_before[unavailability_trigger == 1], na.rm = TRUE),
-         unavail_pub_level = min(Unavailable.Nuclear.Capacity[unavailability_trigger == 1], na.rm = TRUE),
-         unavail_unpub_level = min(Unpublished.Unavailable.Nuclear.Capacity[unavailability_trigger == 1], na.rm = TRUE),
-         unavail_pub = unavail_pub_level* unavailability_trigger,
-         unavail_unpub = unavail_unpub_level* unavailability_trigger
-         ) %>%
-  
-  # Calculer la distance de l'enchère
-  mutate(distance_auction = as.numeric(auction_before) - as.numeric(reference_auction)) %>%
-  
-  # Filtrer pour ne garder que les distances entre -4 et 4
-  filter(distance_auction >= -4 & distance_auction <= 4) %>%
+  mutate(
+      auction_before = as.numeric(auction_before), 
+    reference_auction = ifelse(creneau_unavailability== 0, 
+     sample(0:6, 1), min(auction_before[unavailability_trigger == 1], na.rm = TRUE)),
+     unavail_pub_level = ifelse(creneau_unavailability== 0, 
+       0, min(Published.Unavailable.Nuclear.Capacity[unavailability_trigger == 1], na.rm = TRUE)),
+     unavail_unpub_level = ifelse(creneau_unavailability== 0, 
+       0, min(Unpublished.Unavailable.Nuclear.Capacity[unavailability_trigger == 1], na.rm = TRUE)),
+    distance_auction = as.numeric(auction_before) - as.numeric(reference_auction),
+    unavail_level = ifelse(creneau_unavailability== 0, 
+      0, min(Unavailable.Nuclear.Capacity[unavailability_trigger == 1], na.rm = TRUE)),
+   unavail_pub = unavail_pub_level* unavailability_trigger,
+   unavail_unpub = unavail_unpub_level* unavailability_trigger,
+   unavail = unavail_level* unavailability_trigger
+   ) %>%
   
   # Agréger les valeurs si plusieurs existent par (date, creneau, distance)
-  group_by(electricity_delivery_date, creneau, distance_auction, unavail_pub, unavail_unpub) %>%
+  group_by(electricity_delivery_date, creneau, distance_auction, unavail_pub, unavail_unpub, unavail) %>%
   summarise(price_diff = mean(price_diff, na.rm = TRUE), 
             reference_auction = first(reference_auction),
-            Unavailable.Nuclear.Capacity = mean(Unavailable.Nuclear.Capacity, na.rm = TRUE),.groups = "drop") %>%
+            Published.Unavailable.Nuclear.Capacity = mean(Published.Unavailable.Nuclear.Capacity, na.rm = TRUE),
+            Unpublished.Unavailable.Nuclear.Capacity = mean(Unpublished.Unavailable.Nuclear.Capacity, na.rm = TRUE),
+            
+            Unavailable.Nuclear.Capacity = mean(Unavailable.Nuclear.Capacity, na.rm = TRUE),
+            .groups = "drop") %>%
   
   # Transformer en format large par distance_auction
   pivot_wider(names_from = distance_auction, 
@@ -82,7 +89,7 @@ log_price_data_predicted <- my_test_predicted  %>%
               values_from = price_diff)
 ```
 
-
+Les warnings sont dûs au fait qu'il n'y a pas le prix day ahead a partir de janvier 2024
 
 ```{r}
 #il y a souvent annonce, puis désannonce (à savoir fin de l'indisponibilité à un créneau suivant)
@@ -92,7 +99,7 @@ library(lmtest)
 library(data.table)
 library(sandwich)
 
-log_price_data_nuclear_grouped <- log_price_data_predicted %>%  
+log_price_data_nuclear_grouped <- log_price_data_nuclear %>%  
   arrange(electricity_delivery_date, creneau, unavail_pub, unavail_unpub) %>% 
   group_by(electricity_delivery_date, creneau) %>%
   summarize(across(starts_with("price"), ~ ifelse(all(is.na(.)), NA, sum(., na.rm = TRUE))),
@@ -100,6 +107,7 @@ log_price_data_nuclear_grouped <- log_price_data_predicted %>%
             reference_auction = first(reference_auction),
             unavail_pub = last(unavail_pub),
             unavail_unpub = last(unavail_unpub),
+            unavail = last(unavail),
             electricity_delivery_date = first(electricity_delivery_date),
             .groups = "drop") %>% 
   filter(!is.na(unavail_pub) & !is.na(unavail_pub))
@@ -116,7 +124,7 @@ log_price_data_nuclear_grouped <- left_join(log_price_data_nuclear_grouped,
 ```{r}
 
 
-table_coefficients_predicted  <- data.frame()
+table_coefficients_nuclear  <- data.frame()
 
 for (col in colnames(log_price_data_nuclear_grouped)[3:10]){
   # Créer la formule pour la régression
@@ -151,22 +159,76 @@ for (col in colnames(log_price_data_nuclear_grouped)[3:10]){
   
   
   # Ajouter les résultats à table_coefficients
-  table_coefficients_predicted  <- rbind(table_coefficients_predicted , temp_pub)
-  table_coefficients_predicted  <- rbind(table_coefficients_predicted ,  temp_unpub)
+  table_coefficients_nuclear  <- rbind(table_coefficients_nuclear , temp_pub)
+  table_coefficients_nuclear  <- rbind(table_coefficients_nuclear ,  temp_unpub)
 }
 
 ```
 
 
 
+
 ```{r}
 
-table_coefficients_predicted <- table_coefficients_predicted %>%
+table_coefficients_nuclear_bis  <- data.frame()
+
+for (col in colnames(log_price_data_nuclear_grouped)[3:10]){
+  # Créer la formule pour la régression
+  formula <- as.formula(paste("`" , col, "`" , " ~ unavail + 
+                              intraday_update_renewables + unpredicted_renewables + as.factor(reference_auction) + gen_tot + as.factor(creneau)
+                              " , sep = ""))
+  # Ajuster le modèle
+  model <- lm(formula, data = log_price_data_nuclear_grouped)
+  
+  vcov_cluster <- vcovCL(model, type = "HC0", cluster = ~ electricity_delivery_date)
+  # Erreurs standard clusterisées
+  cl_se<- sqrt(diag(vcov_cluster))
+  
+  
+  coefficients <- summary(model)$coefficients
+  n_ddl <- summary(model)$df[2]
+  # Créer un dataframe temporaire avec les variables et les coefficients
+  temp_df <- data.frame(variable = col,
+                        estimate = coefficients[2, 1],  # Estimation du coefficient
+                        std_error = cl_se[2],  # Erreur standard modifiée
+                        t_value = coefficients[2, 1] / cl_se[2],  # Recalcul de la valeur t
+                        p_value = 2 * (1 - pt(abs(coefficients[2, 1] / cl_se[2]), df = n_ddl)))  # Recalcul de
+  
+  
+  # Ajouter les résultats à table_coefficients
+  table_coefficients_nuclear_bis   <- rbind(table_coefficients_nuclear_bis ,  temp_df)
+}
+
+```
+
+```{r}
+table_coefficients_nuclear_bis <- table_coefficients_nuclear_bis %>%
   arrange(as.numeric(gsub("price_", "", variable)))
 
 
 
-ggplot(data = table_coefficients_predicted) +
+ggplot(data = table_coefficients_nuclear_bis) +
+  geom_point(aes(x = as.numeric(gsub("price_", "", variable)), 
+                 y = estimate)) +
+  geom_errorbar(aes(x = as.numeric(gsub("price_", "", variable)), 
+                    ymin = estimate - 1.96 * std_error,
+                    ymax = estimate + 1.96 * std_error), width = 0.2, alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Dynamic response to nuclear plan availability shock",
+       x = "Auction",
+       y = "EUR/MWh") +
+  theme_minimal()
+```
+
+
+```{r}
+
+table_coefficients_nuclear <- table_coefficients_nuclear %>%
+  arrange(as.numeric(gsub("price_", "", variable)))
+
+
+
+ggplot(data = table_coefficients_nuclear) +
   geom_point(aes(x = as.numeric(gsub("price_", "", variable)), 
                  y = estimate, color = status)) +
   geom_errorbar(aes(x = as.numeric(gsub("price_", "", variable)), 

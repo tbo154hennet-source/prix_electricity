@@ -9,18 +9,17 @@ Dynamic estimation to examine information release
 ```{r}
 first_stage_renewable <- first_stage_data_clean  %>% 
   filter(auction_before!= auction_after) %>% 
-  mutate(day_ahead_forecast = day_ahead_forecast/1000,
+  mutate(day_ahead_renewable_forecast = day_ahead_renewable_forecast/1000,
          wind_solar_tot = wind_solar_tot/1000,
     intraday_update_renewables = intraday_update_renewables/1000,
-         unpredicted_renewables = unpredicted_renewables/1000) %>% 
-  rename(day_ahead_renewable_forecast= day_ahead_forecast)
+         unpredicted_renewables = unpredicted_renewables/1000)
 
 ```
 
 
 ```{r}
 m_basic_renew_int <- lm(
-  log_price_diff ~ intraday_update_renewables*as.factor(auction_before) + gen_tot+
+  price_diff ~ intraday_update_renewables*as.factor(auction_before) + gen_tot+
     as.factor(year) + as.factor(month)+as.factor(weekday) + as.factor(creneau) ,
   data=  first_stage_renewable)
 
@@ -29,7 +28,7 @@ vcov_cluster <- vcovCL(m_basic_renew_int, type = "HC0", cluster = ~ creneau)
 cl_se_basic_renew_int <- sqrt(diag(vcov_cluster))
 
 m_control_renew_int <- lm(
-  log_price_diff ~ intraday_update_renewables*as.factor(auction_before) + unpredicted_renewables +
+  price_diff ~ intraday_update_renewables*as.factor(auction_before) + unpredicted_renewables +
     day_ahead_renewable_forecast*as.factor(auction_before)+   gen_tot+
     as.factor(year) + as.factor(month) +as.factor(weekday) + as.factor(creneau)  ,
   data= first_stage_renewable)
@@ -39,7 +38,7 @@ vcov_cluster <- vcovCL(m_control_renew_int, type = "HC0", cluster = ~ creneau)
 cl_se_control_renew_int <- sqrt(diag(vcov_cluster))
 # perform first stage regression
 # m_renew_plant_int <- lm(
-#   log_price_diff ~ intraday_update_renewables*as.factor(auction_before) + unpredicted_renewables +
+#   price_diff ~ intraday_update_renewables*as.factor(auction_before) + unpredicted_renewables +
 #     day_ahead_renewable_forecast*as.factor(auction_before)+   gen_tot+
 #     Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+
 #     as.factor(year) + as.factor(month)+as.factor(weekday) + as.factor(creneau)  ,
@@ -64,7 +63,7 @@ reg_table <- stargazer(m_basic_renew_int, m_control_renew_int,
                        column.labels = c("Basic", "Timeslot FE", "Timeslot + Auction FE"),
                        
                        # Keep relevant coefficients including interactions for 'intraday_update_renewables' up to 7
-                       keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
+                       keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity","day_ahead_renewable_forecast",
                                 'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot',
                                 "intraday_update_renewables" , "unpredicted_renewables", "wind_solar_tot",
                                 "Published.Limiting.Unavailable.Capacity", "Unpublished.Limiting.Unavailable.Capacity",
@@ -86,25 +85,27 @@ reg_table <- stargazer(m_basic_renew_int, m_control_renew_int,
 
 
 ```{r}
+library(ggplot2)
 # Obtenir tous les coefficients du modèle
-coefficients_ <- coef(summary(m_renew_plant_int))
+coefficients <- coef(m_control_renew_int)
+
+target_coeffs_id <- coef(m_control_renew_int)[grep("intraday_update_renewables|intraday_update_renewables:as.factor\\(auction_before\\)", names(coef(m_control_renew_int)))]
 
 
-# Filter for intraday_update_renewables and its interactions
-target_coeffs_id <- coefficients[grep("intraday_update_renewables|intraday_update_renewables:as.factor\\(auction_before\\)", rownames(coefficients)), ]
 
-id_serie <- target_coeffs_id[,1]
-id_serie[2:length(id_serie)] <- id_serie[2:length(id_serie)] - as.numeric(id_serie[1])
+id_serie <- target_coeffs_id[1]
+id_serie <- c(id_serie, target_coeffs_id[2:length(target_coeffs_id)] - as.numeric(id_serie[1]))
 # Extract standard errors for the relevant coefficients (intraday_update_renewables and interactions)
 target_sd_id <- cl_se_control_renew_int[grep("intraday_update_renewables|intraday_update_renewables:as.factor\\(auction_before\\)", names(cl_se_control_renew_int))]
 
 # Get all model coefficients
 
+target_coeffs_da <- coef(m_control_renew_int)[grep("day_ahead_renewable_forecast|day_ahead_renewable_forecast:as.factor\\(auction_before\\)", names(coef(m_control_renew_int)))]
+
 # Filter for day_ahead_renewable_forecast and its interactions
-target_coeffs_da <- coefficients[grep("day_ahead_renewable_forecast|day_ahead_renewable_forecast:as.factor\\(auction_before\\)", rownames(coefficients)), ]
-da_serie <- target_coeffs_da[,1]
-da_serie[2:length(da_serie)] <- da_serie[2:length(da_serie)] - as.numeric(da_serie[1])
-da_sd <- target_coeffs_da[,2]
+da_serie <- target_coeffs_da[1]
+da_serie <- c(da_serie, target_coeffs_da[2:length(target_coeffs_id)] - as.numeric(da_serie[1]))
+
 
 target_sd_da <- cl_se_control_renew_int[grep("day_ahead_renewable_forecast|day_ahead_renewable_forecast:as.factor\\(auction_before\\)", names(cl_se_control_renew_int))]
 
@@ -114,12 +115,91 @@ target_sd_da <- cl_se_control_renew_int[grep("day_ahead_renewable_forecast|day_a
 abciss <- c(1:7)
 ggplot()+
   geom_point(aes(x = abciss, y = id_serie, color = "Intraday Update"))+
-  geom_errorbar(aes(x = abciss, ymin = id_serie - 2*target_sd_id, ymax = id_serie + 2*target_sd_id), width = 0.2)+
+  geom_errorbar(aes(x = abciss, ymin = id_serie - 2*target_sd_id, ymax = id_serie + 2*target_sd_id, color = "Intraday Update"), width = 0.2)+
   geom_point(aes(x = abciss, y = da_serie, color = "Day Ahead"))+
-  geom_errorbar(aes(x = abciss, ymin = da_serie - 2*target_sd_da, ymax = da_serie + 2*target_sd_da), width = 0.2)+
+  geom_errorbar(aes(x = abciss, ymin = da_serie - 2*target_sd_da, ymax = da_serie + 2*target_sd_da, color = "Day Ahead"), width = 0.2)+
+  geom_hline(yintercept = 0, linetype = "dashed") +
   labs(title = "Renewable Dynamic effects",
-       x = "Auction Before",
-       y = "Coefficient")+
+       x = "Auction",
+       y = "EUR/GWh")+
   theme_minimal()
 
 ```
+
+
+```{r}
+library(sandwich)  # Pour vcovCL
+library(lmtest)    # Pour coeftest
+
+# Créer un dataframe pour stocker les résultats
+results <- data.frame()
+
+# Boucle sur chaque catégorie de référence de 0 à 6
+for (ref_level in 0:6) {
+  
+  # Fixer la référence de auction_before
+  first_stage_renewable$auction_before <- relevel(as.factor(first_stage_renewable$auction_before), ref = as.character(ref_level))
+  
+  # Estimer le modèle
+  m_control_renew_int <- lm(
+    price_diff ~ intraday_update_renewables * as.factor(auction_before) + 
+      unpredicted_renewables + day_ahead_renewable_forecast * as.factor(auction_before) +  
+      gen_tot + as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+    data = first_stage_renewable
+  )
+
+  # Calcul des erreurs standard clusterisées
+  vcov_cluster <- vcovCL(m_control_renew_int, type = "HC0", cluster = ~ creneau)
+  se_cluster <- sqrt(diag(vcov_cluster))
+
+  # Extraire les coefficients et erreurs standard
+  coefs <- coef(m_control_renew_int)
+  coefs_names <- names(coefs)
+
+  # Extraire uniquement le coefficient de intraday_update_renewables
+  coef_value <- coef(m_control_renew_int)["intraday_update_renewables"]
+  se_value <- se_cluster["intraday_update_renewables"]
+
+  coef_value2 <- coef(m_control_renew_int)["day_ahead_renewable_forecast"]
+  se_value2 <- se_cluster["day_ahead_renewable_forecast"]
+  
+  # Stocker les résultats
+  results <- rbind(results, data.frame(ref_level = ref_level, 
+                  coef = coef_value, std_error = se_value, name = "intraday_update_renewables"))
+  results <- rbind(results, data.frame(ref_level = ref_level,
+                  coef = coef_value2, std_error = se_value2, name = "day_ahead_renewable_forecast"))
+  
+}
+
+# Afficher les résultats
+print(results)
+
+# Sauvegarde dans un fichier CSV si besoin
+#write.csv(results, "coefficients_by_reference.csv", row.names = FALSE)
+
+```
+
+
+
+```{r}
+
+id_serie <- results[results$name == "intraday_update_renewables", "coef"]
+target_sd_id <- results[results$name == "intraday_update_renewables", "std_error"]
+
+da_serie <- results[results$name == "day_ahead_renewable_forecast", "coef"]
+target_sd_da <- results[results$name == "day_ahead_renewable_forecast", "std_error"]
+
+# Print the coefficients
+abciss <- c(1:7)
+ggplot()+
+  geom_point(aes(x = abciss, y = id_serie, color = "Intraday Update"))+
+  geom_errorbar(aes(x = abciss, ymin = id_serie - 2*target_sd_id, ymax = id_serie + 2*target_sd_id, color = "Intraday Update"), width = 0.2)+
+  geom_point(aes(x = abciss, y = da_serie, color = "Day Ahead"))+
+  geom_errorbar(aes(x = abciss, ymin = da_serie - 2*target_sd_da, ymax = da_serie + 2*target_sd_da, color = "Day Ahead"), width = 0.2)+
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Renewable Dynamic effects",
+       x = "Auction",
+       y = "EUR/GWh")+
+  theme_minimal()
+```
+
