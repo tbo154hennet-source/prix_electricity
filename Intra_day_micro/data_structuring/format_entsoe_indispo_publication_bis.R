@@ -4,15 +4,19 @@ library(tidyr)
 library(stats)
 library(ggplot2)
 library(lubridate)
+library(furrr)
+library(purrr)
+library(dplyr)
+
 
 save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/data_structuring'
 setwd(save_path_entsoe)
-source("auxiliary_file_ter.R")
+source("auxiliary_file_sixt.R")
 
 save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/ENTSOE_unavailabilities/ES/formatted'
 setwd(save_path_esp)
 
-bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet") %>% 
+bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data_post_2018.parquet") %>% 
   arrange(datetime_debut)
 
 unexpected_indispo_ENTSOE_data  <- bout_indispo_ENTSOE_data %>% 
@@ -61,39 +65,38 @@ ggplot(publication_lapse , aes(x = lapse)) +
 unexpected_indispo_ENTSOE_data <- unexpected_indispo_ENTSOE_data[!(unexpected_indispo_ENTSOE_data$mrid
                                                                    %in% unexpected_indispo_ENTSOE_data$mrid[duplicated(unexpected_indispo_ENTSOE_data$mrid)]), ]
 
-result_df <- NULL
+# ⚡ Active le parallélisme
+plan(multisession) 
 
-# sample <- unexpected_indispo_ENTSOE_data %>%
-#   filter(hour(datetime_pub) < 2 )
-# row <- unexpected_indispo_ENTSOE_data %>%
-#   filter(mrid == "8Rw2gEMG3cv5wnQSvzL3Jg")
-# test <- apply(row, 1, pub_auction_window)
-# sample <- unexpected_indispo_ENTSOE_data %>%
-#   ungroup() %>% 
-#   filter(datetime_pub < datetime_fin) %>% 
-#   sample_n(1000)
-# colnames(sample)
-# sample <- sample %>% 
-#   filter(hour(datetime_pub) >12 & hour(datetime_debut) < 18 )
+#row <- unexpected_indispo_ENTSOE_data[1,]
 
-# test3 <- apply(test, 1, pub_auction_window)
-# auction_ENTSOE_indispo_test <- result_df %>% 
-#   left_join(test,  by = "mrid")%>% 
-#   mutate(duration = as.numeric(datetime_fin - datetime_debut, units = "hours"))%>% 
-#   filter(auction_before!=auction_after & duration >1)
 
-# row <- unexpected_indispo_ENTSOE_data %>% 
-#   filter(mrid =="DRDpGztCsBzVFjPnxosE8Q")
+counter <- 0
+total_rows <- nrow(unexpected_indispo_ENTSOE_data)
 
-test <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window)
+result_list <- future_map(seq_len(total_rows), function(i) {
+  counter <<- counter + 1
+  if (counter %% 200 == 0) message("Lignes traitées : ", counter)
+  tryCatch({
+    pub_auction_window(unexpected_indispo_ENTSOE_data[i, ])
+  }, error = function(e) {
+    print(unexpected_indispo_ENTSOE_data$mrid[i])  # Correction ici
+    return(NULL)  # Ignorer les erreurs
+  })
+  
+})
+
+
+# ✅ Suppression des valeurs NULL et conversion en dataframe
+result_df <- bind_rows(unlist(result_list, recursive = FALSE))
 
 getwd()
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
 write_parquet(result_df, "result_df.parquet")
 # Convert the result to a data frame
 #result_df_bis <- data.frame(t(result_df))
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
-result_df <- read_parquet("result_df.parquet") %>% 
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
+result_df <- read_parquet("my_result_df.parquet") %>% 
   arrange(electricity_delivery_date)
 
 # hour_pub <- hour(row["datetime_pub"][[1]])

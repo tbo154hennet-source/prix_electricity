@@ -11,6 +11,12 @@ save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitl
 setwd(save_var_path)
 IV_data <- read_parquet('IV_data_fr.parquet') 
 
+#prix dépasse un petit peu
+#vérifie la dernière observation
+IV_data$spot_price
+(23-15+1)*12
+IV_data <- IV_data[1:108,]
+
 colnames(IV_data)
 periodicity_test_col <- setdiff(colnames(IV_data),
                                 c("month" , "year" ,                     
@@ -89,12 +95,12 @@ setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_anal
 write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 
 
-colnames(VAR_series)
+colnames(seasonally_adjusted_df)
 non_log_col_var <- c("cold_excess_instrument" ,"heat_excess_instrument",
-                      "Date", "ffr", "Bond_rate", "Exp_pi", 
+                      "Date", "ffr", "Bond_rate", "Exp_pi", "deviation",
                       "PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand",
                       "CDD_excess_instrument", "CDD_intensity_instrument" ,"HDD_excess_instrument" ,    
-                      "HDD_intensity_instrument")
+                      "HDD_intensity_instrument", "month", "year")
 
 
 #attention pour abs shock and relative shock possible valeurs négatives
@@ -119,9 +125,9 @@ IV_data_log[is.na(IV_data_log)] <- 0
 # Detrend the data
 detrended_data <- as.data.frame(detrend(data.matrix(seasonally_adjusted_df)))
 IV_data_log <- as.data.frame(detrend(data.matrix(IV_data_log)))
-
+getwd()
 write.csv(detrended_data, "DATASET_sa_detrended.csv")
-write_parquet(IV_data_log, 'IV_data_fr.parquet')
+write_parquet(IV_data_log, 'IV_data_log_fr.parquet')
 
 #petit plot pour voir l'effet associé
 
@@ -129,11 +135,13 @@ write_parquet(IV_data_log, 'IV_data_fr.parquet')
 par(mar = c(2, 2, 2, 2))
 plot.new()
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y =IV_data$NE_Index , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$NE_Index, color = "Detrended")) +
+  geom_line(aes(y =deviation , color = "Original")) +
+  geom_line(aes(y = cold_excess_instrument , color = "Instrument"))+
+  geom_line(aes(y =heat_excess_instrument, color = "Instrument")) +
+  geom_line(aes(y = seasonally_adjusted_df$deviation, color = "Detrended")) +
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
-  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
+  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red", "Instrument" = "green")) +
   theme_minimal()
 
 ggplot(IV_data, aes(x = datetime)) +
@@ -145,14 +153,23 @@ ggplot(IV_data, aes(x = datetime)) +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red", "S ADj" = "green")) +
   theme_minimal()
 
+
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y = log(IV_data$spot_price) -mean(log(IV_data$spot_price)) , color = "Original")) +
   geom_line(aes(y = IV_data_log$spot_price_log, color = "Detrended")) +
+  geom_line(aes(y = PC1_supply , color = "Gas instrument"))+
   labs(title = "Log Spot price - Original and Detrended",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
+colnames(IV_data_log)
+colnames(IV_data)
+IV_data %>% 
+  dplyr::select(spot_price, avg_spot_price,last_spot_price) %>% 
+  cor(use = "complete.obs")
+model_gas <- lm(avg_spot_diff ~ PC1_supply, data = IV_data)
+summary(model_gas)
 
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y = log(IV_data$gen_tot) -mean(log(IV_data$gen_tot)) , color = "Original")) +

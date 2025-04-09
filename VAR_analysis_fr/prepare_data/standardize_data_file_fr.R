@@ -1,4 +1,6 @@
 
+library(readxl)
+
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/fr")
 
 my_files <- list.files()
@@ -59,7 +61,7 @@ colnames(VAR_series)
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
 setwd(save_path_data)
-price_indispo_merge <- read_parquet("price_indispo_merge_fr.parquet")
+price_indispo_merge <- read_parquet("price_indispo_merge_fr_NTC.parquet")
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -97,6 +99,8 @@ monthly_energy_data <- price_indispo_merge %>%
     nuclear_unavailabilities = weighted_mean(Nuclear.Unavailabilities, gen_tot),
     thermal_unavailabilities = weighted_mean(Thermal.Unavailabilities, gen_tot),
     predicted_unavailabilities = weighted_mean(Predicted.Unavailabilities, gen_tot),
+    NTC_ESP_FR = mean(NTC_ESP_FR, na.rm = TRUE),
+    NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
     gen_tot = mean(gen_tot, na.rm = TRUE),
     datetime = first(datetime)
   ) %>%
@@ -109,14 +113,19 @@ setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data')
 gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
 save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
-temperature_data <- read.csv("temperature_instrument.csv")
+temperature_data <- read.csv("temperature_instrument.csv") %>% 
+  dplyr::select(month, year, T_avg, deviation,
+         cold_excess_instrument, heat_excess_instrument,
+         CDD_excess_instrument, HDD_excess_instrument,
+         CDD_intensity_instrument, HDD_intensity_instrument
+         )
 
 
 
 colnames(VAR_series)
 colnames(monthly_energy_data)
 colnames(gas_fundamental_data)
-colnames(temperature_instrument)
+colnames(temperature_data)
 
 IV_data <- merge(VAR_series, monthly_energy_data, by= c('month', 'year'))
 IV_data <- merge(IV_data, gas_fundamental_data,

@@ -9,9 +9,12 @@ Sys.setenv(lang = "en_US")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-IV_data <- read_parquet('IV_data_esp.parquet') 
+IV_data <- read_parquet('IV_data_esp2.parquet') 
 
 colnames(IV_data)
+dim(IV_data)
+IV_data$spot_price
+IV_data <- IV_data[1:108,]
 periodicity_test_col <- setdiff(colnames(IV_data),
                                 c("month" , "year" ,                     
                                   "datetime", "last_Date", "last_Trading.day",
@@ -64,7 +67,7 @@ dominant_periodicity <- IV_data_detrended %>%
 
 dominant_periodicity <- IV_data_detrended %>%
   dplyr::select(periodicity_test_col) %>%
-  dplyr::select(-c("PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand")) %>%
+  #dplyr::select(-c("PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand")) %>%
   summarise(across(everything(), detect_general_periodicity)) %>% 
   pivot_longer(everything(), names_to = "series", values_to = "dominant_period") %>%
   filter(as.numeric(dominant_period) <= 13)
@@ -101,7 +104,7 @@ write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 
 
 colnames(VAR_series)
-non_log_diff_var <- c(
+non_log_diff_var <- c("month", "year", "datetime", "last_Date", "last_Trading.day",
                       "cold_excess_instrument" ,"heat_excess_instrument",
                       "Date", "ffr", "Bond_rate",
                       "PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand")
@@ -132,7 +135,7 @@ detrended_data <- as.data.frame(detrend(data.matrix(seasonally_adjusted_df)))
 IV_data_log <- as.data.frame(detrend(data.matrix(IV_data_log)))
 
 write.csv(detrended_data, "DATASET_sa_detrended.csv")
-write_parquet(IV_data_log, 'IV_data_esp_log_bis.parquet')
+write_parquet(IV_data_log, 'IV_data_esp_log.parquet')
 
 #petit plot pour voir l'effet associé
 
@@ -166,9 +169,9 @@ ggplot(IV_data, aes(x = datetime)) +
 
 
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y = log(IV_data$gen_tot) -mean(log(IV_data$gen_tot)) , color = "Original")) +
-  geom_line(aes(y = IV_data_log$gen_tot_log, color = "Detrended")) +
-  labs(title = "Demand Growth rate - Original and Detrended",
+  geom_line(aes(y = log(IV_data$NTC_FR_ESP) -mean(log(IV_data$NTC_FR_ESP)) , color = "Original")) +
+  geom_line(aes(y = IV_data_log$NTC_FR_ESP_log, color = "Detrended")) +
+  labs(title = "NTC_FR_ESP",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()

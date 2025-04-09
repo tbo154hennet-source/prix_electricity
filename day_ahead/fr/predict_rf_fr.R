@@ -3,6 +3,7 @@ library(dplyr)
 library(arrow)
 library(lubridate)
 library(data.table)
+library(xgboost)
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr")
 filtered_indispo <- read_parquet("filtered_indispo_fr.parquet")
@@ -38,72 +39,158 @@ for (col in duplicated_names){
   generation_per_plant <- generation_per_plant[, -indexes[2]]
 }
 
+models <- NULL
+
+
+centrales <- colnames(generation_per_plant %>% 
+                        select(-c('__index_level_0__')))# Replace with your actual plant names
+indispo_centrales <- filtered_indispo %>% 
+  distinct(production_resource_name) %>% 
+  pull(production_resource_name)
+
+active_centrales <- intersect(centrales, indispo_centrales)
+centrale = active_centrales[1]
+
+#estimate all models before predicting
+for (centrale in active_centrales) {
+  tryCatch({
+    print(centrale)
+    mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
+                                                'day_of_week', 'creneau',
+                                                'wind_solar_tot', 'gen_tot', centrale)] %>%
+      mutate(previous_day_prod = lag(!!sym(centrale), 24))  # Use !!sym to refer to the variable dynamically
+    
+    mini_prediction_data <- na.omit(mini_prediction_data)
+    
+    
+    mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
+                                                'day_of_week', 'creneau',
+                                                'wind_solar_tot', 'gen_tot', centrale)] %>%
+      mutate(previous_day_prod = lag(!!sym(centrale), 24))  # Use !!sym to refer to the variable dynamically
+    
+    mini_prediction_data <- na.omit(mini_prediction_data)
+    # Convert some columns to factors
+    mini_prediction_data$day_of_week <- as.factor(mini_prediction_data$day_of_week)
+    mini_prediction_data$month <- as.factor(mini_prediction_data$month)
+    mini_prediction_data$creneau <- as.factor(mini_prediction_data$creneau)
+    
+    
+    
+    # Select relevant features
+    features <- c("gen_tot", "wind_solar_tot", "day_of_week", "month", "creneau")
+    
+    #prepare training data
+    # One-hot encoding (turn categorical variables into dummy variables)
+    dummies <- model.matrix(~ day_of_week + month + (creneau - 1), data = mini_prediction_data)
+
+    # Combine encoded categorical variables with numerical features
+    X <- as.matrix(cbind(mini_prediction_data[, c("gen_tot", "wind_solar_tot")], dummies))
+    y <- mini_prediction_data[[centrale]]
+    
+    # Creax = # Create DMatrix (XGBoost format)
+    dtrain <- xgb.DMatrix(data = X, label = y)
+    
+    # Train the model
+    xgb_model <- xgboost(
+      data = dtrain,
+      objective = "reg:squarederror",  # Regression task
+      nrounds = 50,                    # Small number of trees
+      max_depth = 3,                    # Shallow trees for efficiency
+      eta = 0.1,                        # Learning rate
+      verbose = 0                        # Silent mode
+    )
+    
+    models[[centrale]] <- xgb_model
+  }, error = function(e) {
+    print(paste("Error for", centrale))
+  })
+  
+  
+  
+}
+
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf")
+saveRDS(models, 'rf_models_xgb_fr.rds')
+
+models <- readRDS('rf_models_xgb_fr.rds')
+
 
 get_predictions <- function(centrale){
   
   #centrale = "BESOS 3"
   # Prepare mini_prediction_data
   mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
-                                              'day_of_week', 'wind_solar_tot', 'gen_tot', centrale)] %>%
+                                              'day_of_week', 'wind_solar_tot','creneau',  'gen_tot', centrale)] %>%
     mutate(previous_day_prod = lag(!!sym(centrale), 24))  # Use !!sym to refer to the variable dynamically
   
   # Convert some columns to factors
   mini_prediction_data$day_of_week <- as.factor(mini_prediction_data$day_of_week)
   mini_prediction_data$month <- as.factor(mini_prediction_data$month)
+  mini_prediction_data$creneau <- as.factor(mini_prediction_data$creneau)
   
-  #on predit pour toutes les dates où il y a une indisponibilité
+  # Select relevant features
+  features <- c("gen_tot", "wind_solar_tot",  "day_of_week", "month", "creneau")
+  
+  xgb_model <- models[[centrale]]
+  
+  
+  
+  # Prepare test data
+  
   prediction_dates <- filtered_indispo %>% 
     filter(production_resource_name == !!centrale) %>% 
     distinct()
-  #retirer les périodes où indispo
-  #pour l'entraînement
-  training_data <- na.omit(mini_prediction_data) %>% 
-    filter(!(`__index_level_0__` %in% prediction_dates$datetime_slot))
   
-  
-  # Fit a random forest model
-  formula_str <- paste0("`", centrale, "` ~ gen_tot + wind_solar_tot + day_of_week + month")
-  rf_model_ranger <- ranger(
-    formula = as.formula(formula_str),
-    data = training_data
-  )
-  
-  test_data  <- merge(mini_prediction_data,
+  test_data  <- merge(mini_prediction_data, 
                       prediction_dates,
                       by.x = c('__index_level_0__'),
                       by.y = c('datetime_slot') )
-
+  colnames(test_data)
   test_data <- test_data[, c('__index_level_0__', 'month',
-                             'wind_solar_tot', 'gen_tot','day_of_week','previous_day_prod',
-                             centrale)] 
-  # Make predictions
-  predictions <- predict(rf_model_ranger, data=test_data)
+                             'wind_solar_tot', 'gen_tot','day_of_week','creneau',
+                             centrale)]
   
-  #on peut maintenant comparer les predictions avec les données réelles
-  test_data <- cbind(test_data, predictions$predictions)
+  
+  
+  # One-hot encoding for new data
+  new_dummies <- model.matrix(~ day_of_week + month + creneau - 1, data = test_data)
+  
+  # Prepare the feature matrix
+  new_X <- cbind(test_data[, c("gen_tot", "wind_solar_tot")], new_dummies)
+  new_X <- as.matrix(new_X)
+  
+  colnames(X)
+  colnames(new_X)
+  # Convert to DMatrix
+  dtest <- xgb.DMatrix(data = new_X)
+  
+  # Predict
+  predictions <- predict(xgb_model, dtest)
+  
+  # Add predictions to the dataset
+  test_data$predicted_production <- predictions
   test_data <- test_data %>% 
-    mutate(deviation = !!sym(centrale) - predictions$predictions)
+    mutate(deviation = !!sym(centrale) - predicted_production)
   
   
   return(test_data)
   
 }
 
-library(ranger)
-centrales <- colnames(generation_per_plant %>% 
-                        select(-c('__index_level_0__')))# Replace with your actual plant names
+
 setDT(generation_per_plant)# Convertir en data.table
 
 rf_predictions_data <- NULL
-centrale <- centrales[1]
-for (centrale in centrales){
+centrale <- centrales[4]
+for (centrale in active_centrales){
   print(centrale)
   tryCatch({
     
     prediction_centrale <- get_predictions(centrale)%>% 
       mutate(centrale = !!centrale)
     colnames(prediction_centrale) <- c('__index_level_0__', 'month','wind_solar_tot','gen_tot',
-                                       'day_of_week','previous_day_prod', 'centrale_prod', 
+                                       'day_of_week', 'creneau', 'centrale_prod', 
                                        'prediction_prod', 'predicted_real_unavailability', 'centrale')
     
     if (is.null(rf_predictions_data)){
@@ -121,14 +208,14 @@ for (centrale in centrales){
 getwd()
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
-write_parquet(rf_predictions_data, 'rf_predictions_data_fr.parquet')
+write_parquet(rf_predictions_data, 'rf_predictions_data_xgb_fr.parquet')
 
-
+colnames(rf_predictions_data)
 indispo_rf <- merge(filtered_indispo,
                     rf_predictions_data,
                     by.x =  c('datetime_slot', 'production_resource_name'),
                     by.y = c('__index_level_0__', 'centrale')
-                    )
+)
 
 
 real_indispo_rf <- indispo_rf %>% 
@@ -137,4 +224,5 @@ real_indispo_rf <- indispo_rf %>%
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
-write_parquet(real_indispo_rf, 'real_indispo_rf_fr.parquet')
+write_parquet(real_indispo_rf, 'real_indispo_rf_xgb_fr.parquet')
+

@@ -4,15 +4,17 @@ library(tidyr)
 library(stats)
 library(ggplot2)
 library(lubridate)
+library(purrr)
+library(furrr)
 
-save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/data_structuring'
+save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/data_structuring'
 setwd(save_path_entsoe)
-source("auxiliary_file_ter.R")
+source("auxiliary_file_sixt.R")
 
-save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp'
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/ENTSOE_unavailabilities/ES/formatted'
 setwd(save_path_esp)
 
-bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet") %>% 
+bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data_post_2018.parquet") %>% 
   arrange(datetime_debut)
 
 unexpected_indispo_ENTSOE_data  <- bout_indispo_ENTSOE_data %>% 
@@ -28,29 +30,31 @@ unexpected_indispo_ENTSOE_data <- unexpected_indispo_ENTSOE_data[!(unexpected_in
 # but published on some national website 
 
 
-result_df <<- NULL
+plan(multisession) 
+counter <- 0
+total_rows <- nrow(unexpected_indispo_ENTSOE_data)
 
-# sample <- unexpected_indispo_ENTSOE_data %>%
-#   filter(datetime_debut >= '2020-01-01' & datetime_debut <= '2020-01-02')
-# sample <- unexpected_indispo_ENTSOE_data %>%
-#   ungroup() %>% 
-#   sample_n(100)
-# colnames(sample)
-# sample <- sample %>% 
-#   filter(hour(datetime_pub) >12 & hour(datetime_debut) < 18 )
-test <- apply(row, 1, pub_auction_window_theoretical)
-
-test <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window_theoretical)
-
-# Convert the result to a data frame
-#result_df <- data.frame(t(result_df))
+result_list <- future_map(seq_len(total_rows), function(i) {
+  counter <<- counter + 1
+  if (counter %% 200 == 0) message("Lignes traitÃ©es : ", counter)
+  tryCatch({
+    pub_auction_window_theoretical(unexpected_indispo_ENTSOE_data[i, ])
+  }, error = function(e) {
+    print(unexpected_indispo_ENTSOE_data$mrid[i])  # Correction ici
+    return(NULL)  # Ignorer les erreurs
+  })
+})
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
+# ✅ Suppression des valeurs NULL et conversion en dataframe
+result_df <- bind_rows(unlist(result_list, recursive = FALSE))
+
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
 write_parquet(result_df, "result_df_theoretical.parquet")
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
-result_df <- read_parquet("result_df_theoretical.parquet")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
+result_df <- read_parquet("my_result_df_theoretical.parquet")
 
 colnames(result_df)
 colnames(unexpected_indispo_ENTSOE_data)
@@ -76,7 +80,7 @@ actual_ENTSOE_indispo <- actual_ENTSOE_indispo %>%
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(actual_ENTSOE_indispo, 'actual_ENTSOE_indispo_theoretical.parquet')
 

@@ -4,12 +4,12 @@ setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp")
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
-rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb.parquet') %>% 
+rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb_esp.parquet') %>% 
   distinct() %>% 
   group_by(centrale, `__index_level_0__`) %>% 
   slice_head(n = 1) %>%  # Utilisation de slice_head au lieu de slice(1)
-  ungroup()
-
+  ungroup() %>% 
+  arrange(`__index_level_0__`)
 
 colnames(rf_predictions_data_esp)
 
@@ -27,10 +27,10 @@ save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_git
 setwd(save_path_data)
 publi_bout_indispo_ENTSOE_data_esp <- read_parquet("save_indispo_with_pub_status_esp.parquet")
 
-
+colnames(publi_bout_indispo_ENTSOE_data_esp)
 final_indispo_esp <- filtered_indispo_esp  %>%
   left_join(publi_bout_indispo_ENTSOE_data_esp %>% 
-              select(publication_status, mrid, start_datetime,
+              dplyr::select(publication_status, mrid, start_datetime,
                      end_datetime, plant_type, production_resource_name, 
                      Unavailable.Capacity, Installed.Capacity)
             , by = c("start_datetime", "end_datetime",
@@ -188,7 +188,7 @@ day_ahead_prices<- day_ahead_prices %>%
          price_diff = price - lag(price),
          log_price_diff = log(price) - lag(log(price))
          ) %>% 
-  filter(delivery_date >= as.Date('2018-01-01')) %>% 
+  #filter(delivery_date >= as.Date('2018-01-01')) %>% 
   arrange(datetime)
 
 
@@ -223,7 +223,7 @@ gas_prices <- read_excel("gas.xlsx") %>%
          spot_gas = as.numeric(paste0(
            `Gaz naturel, contrats à terme aux Pays-Bas (TTF), euros par megawatt-heure`
                                       ,".",virgule ))) %>% 
-  select(time, spot_gas)
+  dplyr::select(time, spot_gas)
 
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
@@ -231,7 +231,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 nrow(price_indispo_merge_esp)
 price_indispo_merge_esp <- price_indispo_merge_esp %>% distinct()
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_esp, "price_indispo_merge_esp.parquet")
 
@@ -243,9 +243,9 @@ colnames(cross_border_flows)
 
 
 price_indispo_merge_esp_NTC <- merge(price_indispo_merge_esp, cross_border_flows %>% 
-                                       select(NTC_ESP_FR,NTC_FR_ESP, time), 
+                                       dplyr::select(NTC_ESP_FR,NTC_FR_ESP, time), 
                          by.x ="datetime", by.y ="time")
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_esp_NTC, "price_indispo_merge_esp_NTC.parquet")
 

@@ -56,9 +56,9 @@ VAR_series <- VAR_series %>%
 
 colnames(VAR_series)
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
-price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")
+price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -96,6 +96,8 @@ monthly_energy_data <- price_indispo_merge %>%
     nuclear_unavailabilities = weighted_mean(Nuclear.Unavailabilities, gen_tot),
     thermal_unavailabilities = weighted_mean(Thermal.Unavailabilities, gen_tot),
     predicted_unavailabilities = weighted_mean(Predicted.Unavailabilities, gen_tot),
+    # NTC_ESP_FR = mean(NTC_ESP_FR, na.rm = TRUE),
+    # NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
     gen_tot = mean(gen_tot, na.rm = TRUE),
     datetime = first(datetime)
   ) %>%
@@ -105,28 +107,32 @@ monthly_energy_data <- price_indispo_merge %>%
 
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
-price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")
-colnames(price_merge_CBF)
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
 }
-
-monthly_crossborder_data <- price_merge_CBF %>%
-  arrange(datetime) %>% 
+price_merge_CBF <- read_parquet("price_merge_CBF.parquet")
+colnames(price_merge_CBF)
+monthly_crossborder_data <- price_merge_CBF %>% 
+  filter(gen_tot_fr > 0 & gen_tot_esp > 0) %>%
   group_by(month, year) %>%
   summarise(
-    NTC_ESP_FR = mean(NTC_ESP_FR, na.rm = TRUE),
-    NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
-    gen_tot = mean(gen_tot_esp + gen_tot_fr, na.rm = TRUE)/2,
+    renewable_forecast_hors_esp_weighted = weighted_mean(day_ahead_forecast_fr*NTC_FR_ESP/gen_tot_fr, gen_tot_esp),
+    renewable_forecast_hors_fr_weighted = weighted_mean(day_ahead_forecast_esp*NTC_ESP_FR/gen_tot_esp, gen_tot_fr),
+    renewable_forecast_hors_esp = weighted_mean(day_ahead_forecast_fr, gen_tot_esp),
     datetime = first(datetime)
   ) %>%
   arrange(datetime) %>% 
+  dplyr::select(-datetime) %>% 
   ungroup()
+
+#monthly_crossborder_data$renewable_forecast_hors_esp
+
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data')
 gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
-temperature_instrument <- read.csv("temperature_instrument_esp.csv")
+setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Temperature_instrument/esp')
+temperature_instrument <- read.csv("temperature_instrument.xlsx")
 
 
 
@@ -137,7 +143,8 @@ colnames(temperature_instrument)
 colnames(monthly_crossborder_data)
 
 IV_data <- merge(VAR_series, monthly_energy_data, by= c('month', 'year'))
-IV_data <- merge(IV_data, monthly_crossborder_data,
+IV_data <- merge(IV_data, monthly_crossborder_data %>% 
+                   dplyr::select(contains("es"), month, year),
                  by= c('month', 'year'))
 IV_data <- merge(IV_data, gas_fundamental_data,
                  by= c('month', 'year'))
@@ -146,11 +153,10 @@ IV_data <- merge(IV_data, temperature_instrument,
   arrange(Date)
 
 
-        
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-write_parquet(IV_data, 'IV_data_esp.parquet')
+write_parquet(IV_data, 'IV_data_esp2.parquet')
 
 colnames(IV_data)
 

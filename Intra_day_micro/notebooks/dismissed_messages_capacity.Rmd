@@ -25,10 +25,7 @@ Sys.setenv(lang = "en_US")
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 
-first_stage_data <- read_parquet('first_stage_data.parquet') %>% 
-  rename(Published.Predicted.Unavailable.Capacity = Predicted.Unavailable.Capacity,
-         Published.Limiting.Unavailable.Capacity = Limiting.Unavailable.Capacity
-         )
+first_stage_data <- read_parquet('first_stage_data.parquet')
 
 colnames_with_capacity <- colnames(first_stage_data)[grepl("Capacity", colnames(first_stage_data))]
 #get monthly avg of unavailabilities

@@ -87,7 +87,7 @@ setwd(save_path_entsoe_output)
 
 dismissed_long_format_indispo <- read_parquet('dismissed_long_format_indispo.parquet')
 dismissed_long_format_indispo_non_published <- read_parquet('dismissed_long_format_indispo_non_published.parquet')
-dismissed_long_format_indispo_uneffective <- read_parquet('dismissed_uneffective_long_format_indispo.parquet')
+dismissed_long_format_indispo_uneffective <- read_parquet('long_format_indispo_dismissed_uneffective.parquet')
 
 long_format_indispo <- read_parquet('long_format_indispo.parquet')
 long_format_indispo_non_published <- read_parquet('long_format_indispo_non_published.parquet')
@@ -103,16 +103,6 @@ long_format_indispo_non_published$source <- "non_published"
 long_format_indispo_uneffective$source <- "uneffective"
 
 
-dismissed_long_format_indispo$chevauche <- 0
-dismissed_long_format_indispo_non_published$chevauche <- 0
-dismissed_long_format_indispo_uneffective$chevauche <- 0
-
-colnames(dismissed_long_format_indispo)
-colnames(dismissed_long_format_indispo_non_published)
-colnames(dismissed_long_format_indispo_uneffective)
-colnames(long_format_indispo)
-colnames(long_format_indispo_non_published)
-colnames(long_format_indispo_uneffective)
 
 # Combine the two dataframes
 all_indispo <- rbind(dismissed_long_format_indispo,
@@ -330,7 +320,6 @@ long_format_indispo_uneffective <- long_format_indispo_uneffective%>%
   mutate(datetime_slot = as.POSIXct(electricity_delivery_date) + as.difftime(creneau - 1 , units = "hours"))
 
 
-colnames(dismissed_long_format_indispo_rf)
 
 dismissed_long_format_indispo_rf <- merge(dismissed_long_format_indispo,
       rf_predictions_data,

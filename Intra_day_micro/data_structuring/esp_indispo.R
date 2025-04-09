@@ -25,6 +25,13 @@ indispo_ENTSOE_data %>%
   group_by(docstatus, businesstype) %>% 
   summarise(n = n())
 
+dim(indispo_ENTSOE_data)
+
+indispo_ENTSOE_data <- indispo_ENTSOE_data %>% 
+  group_by(across(all_of(setdiff(colnames(indispo_ENTSOE_data), "resolution")))) %>% 
+  summarise(start = min(start), end = max(end), .groups = "drop")
+
+
 # Obtenez la liste des fichiers .parquet
 #my_files <- my_files[grep("\\.csv$", my_files)]
 
@@ -32,6 +39,7 @@ indispo_ENTSOE_data %>%
 # my_files <- setdiff(my_files, parquet_files)
 
 #garder que les primary files
+
 
 
 indispo_ENTSOE_data <-unique(indispo_ENTSOE_data)

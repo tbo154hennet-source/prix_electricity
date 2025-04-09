@@ -10,7 +10,7 @@ save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitl
 setwd(save_var_path)
 
 
-IV_data_log <-  read_parquet('IV_data_esp_log_bis.parquet')
+IV_data_log <-  read_parquet('IV_data_esp_log.parquet')
 headers_proxies = c(
                     # "T_avg_log",
                     "cold_excess_instrument",
@@ -18,8 +18,10 @@ headers_proxies = c(
                     # "wind_forecast_log",
                     # "solar_forecast_log",
                     "renewable_forecast_log",
-                    "PC1_supply",
-                     "nuclear_unavailabilities_log"
+                    "PC1_supply"
+                    # "NTC_ESP_FR_log",
+                    # "NTC_FR_ESP_log",
+                     #"nuclear_unavailabilities_log"
                     # "thermal_unavailabilities_log",
                     #"predicted_unavailabilities_log"
 )
@@ -45,7 +47,7 @@ vars<- ts(IV_data_log[, c(headers_var)], frequency=12)
 
 p = 4     
 irhor = 20
-x =ts(vars , start=c(2018,1), end=c(2023,12), frequency=12)
+x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
 y =vars[-1:-p, ]
 T = nrow(y)
 n <- ncol(y)
@@ -227,6 +229,12 @@ cragg_donald_stat <- n * lambda_min
 print(cragg_donald_stat)
 
 # Save the results
+
+
+
+
+
+#même chose avec juste l'instrument sur les prix
 
 
 

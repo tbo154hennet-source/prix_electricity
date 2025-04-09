@@ -1,7 +1,7 @@
-load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/day_ahead"
+load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/fr/day_ahead"
 setwd(load_path_data)
 
-
+list.files()
 # Lister tous les fichiers dans le dossier avec l'extension .parquet
 parquet_files <- list.files(pattern = "\\.parquet$")
 
@@ -12,7 +12,7 @@ day_ahead_forecast <- parquet_files %>%
   arrange(`__index_level_0__`)
 
 
-load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/intraday"
+load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/FR/intraday"
 setwd(load_path_data)
 list.files()
 # Lister tous les fichiers dans le dossier avec l'extension .parquet

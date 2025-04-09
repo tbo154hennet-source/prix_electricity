@@ -6,8 +6,6 @@ output: html_notebook
 
 ```{r}
 
-
-
 mrids <- intersect(long_format_indispo_rf$mrid,
           long_format_indispo_non_published_rf$mrid)
 
@@ -42,17 +40,22 @@ final_real_info_fric <- long_format_info_fric %>%
             Unpublished.Predicted.Unavailable.Capacity = sum(as.numeric(`Non Published`)),
             Published.Predicted.Unavailable.Capacity = sum(as.numeric(Published))
             ) %>%
-  ungroup()
+  ungroup() %>% 
+  mutate(Unpublished.Predicted.Unavailable.Capacity = - Unpublished.Predicted.Unavailable.Capacity,
+         Published.Predicted.Unavailable.Capacity =  - Published.Predicted.Unavailable.Capacity )
 
-
+class(final_real_info_fric$creneau)
 
 first_stage_data_info_fric <- price_diff_data  %>% 
-  mutate(electricity_delivery_date = as.character(delivery_date)) %>% 
-  left_join(final_real_info_fric%>% 
-              mutate(creneau= as.factor(creneau))
+  mutate(electricity_delivery_date = as.character(delivery_date),
+         creneau = as.numeric(creneau)) %>% 
+  left_join(final_real_info_fric %>% 
+              mutate(creneau = as.numeric(creneau))
             , by = c('auction_before', 'auction_after', 
                      'creneau', "electricity_delivery_date")) %>% 
   arrange(datetime)
+
+
 
 first_stage_data_info_fric <- first_stage_data_info_fric %>% 
   arrange(datetime, creneau, auction_before)
@@ -195,13 +198,48 @@ group_by(electricity_delivery_date,
     unavail_unpub_level = ifelse(unpub_predicted_unavailability_creneau== 0,
          0, mean(Unpublished.Predicted.Unavailable.Capacity[unpub_unavailability_trigger == 1], na.rm = TRUE)),
 
-    unavail_unpub = unavail_unpub_level* unpub_unavailability_trigger,
+    unavail_unpub = unavail_unpub_level* unpub_unavailability_trigger
     )%>% 
   
   # Filtrer pour ne garder que les distances entre -4 et 4
  
   ungroup() 
 
+price_data_predicted_tot <- price_data_predicted %>%
+  #filter(unpub_unavailability_trigger !=1 | pub_unavailability_trigger !=1) %>%
+  # Définir l'enchère de référence
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(
+    auction_before = as.numeric(auction_before),
+    reference_auction = if (any(predicted_unavailability_creneau == TRUE, na.rm = TRUE)) {
+      min(auction_before[predicted_unavailability_creneau == TRUE], na.rm = TRUE)
+    } else {
+      sample(0:6, 1)
+    },
+    distance_auction = auction_before - reference_auction
+  ) %>%
+  ungroup()%>% 
+group_by(electricity_delivery_date, 
+           predicted_unavailability_creneau
+           ) %>% 
+  
+    mutate(
+    unavail_pub_level = ifelse(pub_predicted_unavailability_creneau== 0,
+         0, mean(Published.Predicted.Unavailable.Capacity[pub_unavailability_trigger == 1], na.rm = TRUE)),
+    unavail_pub = unavail_pub_level* pub_unavailability_trigger,
+    unavail_unpub_level = ifelse(unpub_predicted_unavailability_creneau== 0,
+         0, mean(Unpublished.Predicted.Unavailable.Capacity[unpub_unavailability_trigger == 1], na.rm = TRUE)),
+
+    unavail_unpub = unavail_unpub_level* unpub_unavailability_trigger,
+    unavail_level = ifelse(predicted_unavailability_creneau== 0,
+         0, mean(Predicted.Unavailable.Capacity[unavailability_trigger == 1], na.rm = TRUE)),
+
+    unavail = unavail_level* unavailability_trigger
+    )%>% 
+  
+  # Filtrer pour ne garder que les distances entre -4 et 4
+ 
+  ungroup()
 
 ```
 
@@ -236,9 +274,13 @@ prepare_price_data_multiple <- function(data, unavail_cols) {
                                     "unpredicted_renewables", "intraday_update_renewables", "reference_auction"))
 }
 
+# Apply function
+price_data_predicted_wide_pub <- prepare_price_data(price_data_predicted_pub, "unavail_pub")
+price_data_predicted_wide_unpub <- prepare_price_data(price_data_predicted_unpub, "unavail_unpub")
 
 # Apply function
-price_data_predicted_wide_test <- prepare_price_data_multiple(price_data_predicted_pub, c("unavail_pub","unavail_unpub"))
+price_data_predicted_wide_test <- prepare_price_data_multiple(price_data_predicted_tot, c("unavail_pub","unavail_unpub"))
+colnames(price_data_predicted)
 
 # Apply the function to each dataset
 price_data_predicted_grouped_pub <- group_and_summarize(price_data_predicted_wide_pub, "unavail_pub")

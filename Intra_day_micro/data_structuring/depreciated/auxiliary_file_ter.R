@@ -232,6 +232,7 @@ plages_horaires <- function(pub_datetime,start_datetime, end_datetime, ref_day){
   # avant minuit
   # avant la cloture de l'evenement
   new_datetime_str <- as.POSIXct(paste(ref_day, "23:59:00"), tz='Europe/Brussels')
+  new_datetime_str <- with_tz(new_datetime_str, "Europe/Brussels")
   if (end_datetime< pub_datetime){
     token <- 'Lagged : publi after end of incident'
     last_hour <- as.numeric(format(end_datetime, "%H"))
@@ -567,6 +568,7 @@ plages_horaires_theoretical <- function(start_datetime, end_datetime, ref_day){
   # le premier creneau affecte c'est celui apres strat time
   # pour peu qu'on soit informe
   new_datetime_str <- paste(ref_day, "23:59:00", tz='Europe/Brussels')
+  new_datetime_str <- with_tz(new_datetime_str, "Europe/Brussels")
   max_time <- min(end_datetime, new_datetime_str)
   # max_time <- as.POSIXct('2021-02-25 00:30:00')
   last_hour <- as.numeric(format(max_time, "%H"))
@@ -591,10 +593,14 @@ pub_auction_window_theoretical <- function(row){
   end_datetime<- row['datetime_fin']
   mrid <- row['mrid']
   
+  
+  # pub_datetime <- pub_datetime[[1]]
+  # start_datetime <- start_datetime[[1]]
+  # end_datetime <- end_datetime[[1]]
+  
   pub_datetime <- as.POSIXct(pub_datetime,  tz = 'Europe/Brussels')
   start_datetime <- as.POSIXct(start_datetime,  tz = 'Europe/Brussels')
   end_datetime <- as.POSIXct(end_datetime,  tz = 'Europe/Brussels')
-  
   
   
   # look at the different cases depending on the time of pub

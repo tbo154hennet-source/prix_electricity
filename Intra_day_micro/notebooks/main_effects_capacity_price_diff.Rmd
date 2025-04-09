@@ -32,43 +32,41 @@ first_stage_data <- read_parquet('first_stage_data.parquet')
 
 ```{r}
 
-capacity_fields <- c("Published.Unavailable.Capacity"          
-,"Published.Unavailable.Nuclear.Capacity","Unpublished.Unavailable.Capacity"        
-,"Unpublished.Unavailable.Nuclear.Capacity" ,"wind_solar_tot"                          
-, "gen_tot", "Published.Predicted.Unavailable.Capacity", 
-#"Published.Limiting.Unavailable.Capacity", "Unpublished.Limiting.Unavailable.Capacity", 
-"Unpublished.Predicted.Unavailable.Capacity",
-"Published.Dismissed.Unavailable.Capacity", "Unpublished.Dismissed.Unavailable.Capacity",
-"Published.Dismissed.Unavailable.Nuclear.Capacity", "Unpublished.Dismissed.Unavailable.Nuclear.Capacity"
-)
+colnames_with_capacity <- colnames(first_stage_data)[grepl("Capacity", colnames(first_stage_data))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables")
+
+first_stage_data[colnames_with_capacity] <- lapply(first_stage_data[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+
 
 #adjuster l'ordre de grandeur des indispos pour ne pas avoir des coefficients nuls
 first_stage_data_clean <- first_stage_data%>%
-  filter(is.finite(price_diff) & 
+  filter(is.finite(log_price_diff) & 
            is.finite(Published.Unavailable.Capacity))%>% 
    mutate(across(all_of(capacity_fields), 
                 ~ . / 1000)) %>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
-         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity)%>% 
+         Published.Dismissed.Unavailable.Capacity = Published.Dismissed.Unavailable.Capacity - Published.Dismissed.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         Unpublished.Dismissed.Unavailable.Capacity = Unpublished.Dismissed.Unavailable.Capacity - Unpublished.Dismissed.Unavailable.Nuclear.Capacity
+         )%>% 
   rename(day_ahead_renewable_forecast= day_ahead_forecast)
+
+# Créer une variable factorielle pour clusteriser
+first_stage_data_clean <- first_stage_data_clean %>% 
+  mutate(cluster_var = interaction(auction_date_plus_one, auction))
 
 non_finite_rows <- first_stage_data %>%
   filter(!is.finite(price_diff) | !is.finite(Published.Unavailable.Capacity))
 
 first_stage_data_clean$weekday <- weekdays(first_stage_data_clean$delivery_date) 
 
-# Créer une variable factorielle pour clusteriser
-first_stage_data_clean <- first_stage_data_clean %>% 
-  mutate(cluster_var = interaction(auction_date_plus_one, auction))
-
 
 first_stage_renewable <- first_stage_data_clean  %>% 
   filter(auction_before!= auction_after) %>% 
-  filter(auction_before == 4 | auction_before == 5) %>% 
-  mutate(day_ahead_renewable_forecast = day_ahead_renewable_forecast/1000,
-         wind_solar_tot = wind_solar_tot/1000,
-    intraday_update_renewables = intraday_update_renewables/1000,
-         unpredicted_renewables = unpredicted_renewables/1000) 
+  filter(auction_before == 4 | auction_before == 5)
 
 colnames(first_stage_data_clean)
 
@@ -143,7 +141,9 @@ Et l'on compare avec l'indispo déclarée
 
 # perform first stage regression
 m_real <- lm(
-  price_diff ~ Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+ gen_tot+
+  price_diff ~ Published.Predicted.Unavailable.Capacity + Unpublished.Predicted.Unavailable.Capacity+
+    +Uneffective.Predicted.Unavailable.Capacity +
+    gen_tot+
     as.factor(year) + as.factor(month)+ as.factor(weekday)+
     as.factor(creneau) + as.factor(auction_before)+
     intraday_update_renewables + unpredicted_renewables +
@@ -174,7 +174,7 @@ reg_table <- stargazer(m_real, m_real,
     title = "Regression Results",
     column.labels = c("Predicted RF", "Predicted ClSD", "Limiting", "Limiting ClSD"),
     keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Limiting.Unavailable.Capacity",
-             "Unpublished.Limiting.Unavailable.Capacity","Unpublished.Predicted.Unavailable.Capacity",
+             "Capacity","Unpublished.Predicted.Unavailable.Capacity",
              'Unpublished.Unavailable.Capacity', "Published.Predicted.Unavailable.Capacity",'gen_tot')
 )
  
@@ -200,8 +200,8 @@ first_stage_data_clean_bis <- first_stage_data_clean %>%
 
 # perform first stage regression
 m_basic_all <- lm(
-  price_diff ~ Published.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
-    Unpublished.Unavailable.Capacity + Unpublished.Unavailable.Nuclear.Capacity  + gen_tot+
+  price_diff ~ Published.Unavailable.Capacity +Unpublished.Unavailable.Capacity + Uneffective.Unavailable.Capacity + Published.Unavailable.Nuclear.Capacity+
+     Unpublished.Unavailable.Nuclear.Capacity + Uneffective.Unavailable.Nuclear.Capacity + gen_tot+
     intraday_update_renewables + unpredicted_renewables +
     day_ahead_renewable_forecast+
     as.factor(year) + as.factor(month)+ as.factor(weekday)+
@@ -230,7 +230,7 @@ reg_table <- stargazer(m_basic_all, m_basic_all,
     title = "Regression Results",
     column.labels = c("Basic", "Basic ClSD", 'FE', "FE ClSD"),
     keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
-             'Unpublished.Unavailable.Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot')
+             'Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot')
  )
 ```
 

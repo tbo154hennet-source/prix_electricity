@@ -31,7 +31,7 @@ mean_temperatures <- temp_instrument_data %>%
 month=1
 
 mean_temp_instrument <- temp_instrument_data %>% 
-  mutate(cold_excess_instrument = ifelse(month %in% cold_months, 
+  mutate(cold_excess_instrument = -ifelse(month %in% cold_months, 
                                          as.numeric(T_avg) - mean_temperatures[month, 'mean_temp'][[1]], 0),
   heat_excess_instrument = ifelse(month %in% hot_months,
                                   as.numeric(T_avg) - mean_temperatures[month, 'mean_temp'][[1]], 0))
@@ -39,7 +39,7 @@ mean_temp_instrument <- temp_instrument_data %>%
 
 getwd()
 library(openxlsx)
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/esp")
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/esp")
 write.xlsx(mean_temp_instrument, 'temperature_instrument.xlsx')
 
 

@@ -213,7 +213,7 @@ for (centrale in active_centrales){
 getwd()
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
-write_parquet(rf_predictions_data, 'rf_predictions_data_xgb.parquet')
+write_parquet(rf_predictions_data, 'rf_predictions_data_xgb_esp.parquet')
 
 colnames(rf_predictions_data)
 indispo_rf <- merge(filtered_indispo,
@@ -229,4 +229,4 @@ real_indispo_rf <- indispo_rf %>%
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
-write_parquet(real_indispo_rf, 'real_indispo_rf_xgb.parquet')
+write_parquet(real_indispo_rf, 'real_indispo_rf_xgb_esp.parquet')

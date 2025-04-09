@@ -1,0 +1,19 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+
+```{r}
+summary(m_price_esp)
+```
+```{r}
+summary(m_price)
+```
+
+```{r}
+summary(m_demand)
+```
+
