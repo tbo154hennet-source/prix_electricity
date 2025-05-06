@@ -1,6 +1,5 @@
 library(data.table)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp")
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
@@ -14,7 +13,7 @@ rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb_esp.parquet') %
 colnames(rf_predictions_data_esp)
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
-filtered_indispo_esp <- read_parquet("filtered_indispo_esp.parquet") %>% 
+filtered_indispo_esp <- read_parquet("filtered_indispo_esp_OMIE.parquet") %>% 
   arrange(datetime_slot)
 colnames(filtered_indispo_esp)
 
@@ -25,11 +24,12 @@ filtered_indispo_esp <- filtered_indispo_esp%>%
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
-publi_bout_indispo_ENTSOE_data_esp <- read_parquet("save_indispo_with_pub_status_esp.parquet")
 
-colnames(publi_bout_indispo_ENTSOE_data_esp)
+publi_all_matched_indispo <- read_parquet("day_ahead_indispo_formatted.parquet")
+colnames(publi_all_matched_indispo )
 final_indispo_esp <- filtered_indispo_esp  %>%
-  left_join(publi_bout_indispo_ENTSOE_data_esp %>% 
+  left_join(publi_all_matched_indispo  %>% 
+              rename(production_resource_name = centrale_name) %>%
               dplyr::select(publication_status, mrid, start_datetime,
                      end_datetime, plant_type, production_resource_name, 
                      Unavailable.Capacity, Installed.Capacity)
@@ -140,11 +140,13 @@ setDT(final_indispo_tot_wide_esp)
 
 
 final_indispo_tot_wide_esp <- final_indispo_tot_wide_esp %>% 
-  mutate(cl_id  = rleid(Planned.Unavailable.Capacity,
+  mutate(cl_id  = rleid(
+                        #Planned.Unavailable.Capacity,
                         Published.Unavailable.Capacity, 
                         Unpublished.Unavailable.Capacity,
                         Uneffective.Unavailable.Capacity),
-         cl_nu_id  = rleid(Planned.Unavailable.Nuclear.Capacity,
+         cl_nu_id  = rleid(
+                        #Planned.Unavailable.Nuclear.Capacity,
                         Published.Unavailable.Nuclear.Capacity, 
                         Unpublished.Unavailable.Nuclear.Capacity,
                         Uneffective.Unavailable.Nuclear.Capacity),
@@ -152,7 +154,8 @@ final_indispo_tot_wide_esp <- final_indispo_tot_wide_esp %>%
          #                   Published.Limiting.Capacity,
          #                   Unpublished.Limiting.Capacity,
          #                   Uneffective.Limiting.Capacity),
-         cl_rf_id  = rleid(Planned.Cluster.Capacity,
+         cl_rf_id  = rleid(
+                          #Planned.Cluster.Capacity,
                            Published.Cluster.Capacity,
                            Unpublished.Cluster.Capacity,
                            Uneffective.Cluster.Capacity)
@@ -171,14 +174,20 @@ setwd(load_path_data)
 # Lister tous les fichiers dans le dossier avec l'extension .parquet
 parquet_files <- list.files(pattern = "\\.parquet$")
 # Lire tous les fichiers parquet et les fusionner dans un seul dataframe
-day_ahead_prices <- parquet_files %>%
-  lapply(read_parquet) %>% # Lire chaque fichier parquet
-  bind_rows() %>%  # Fusionner tous les dataframes
-  arrange(`__index_level_0__`) 
-day_ahead_prices$`__index_level_0__`
+# Liste des noms de colonnes souhaités
+colnames_target <- c( "price", "datetime")
 
-day_ahead_prices<- day_ahead_prices[,1:2]
-colnames(day_ahead_prices) <- c("price", "datetime")
+# Lecture + renommage dans lapply
+day_ahead_prices <- parquet_files %>%
+  lapply(function(file) {
+    df <- read_parquet(file)
+    names(df) <- colnames_target
+    return(df)
+  }) %>%
+  bind_rows() %>%
+  arrange(datetime)
+
+
 day_ahead_prices<- day_ahead_prices %>% 
   mutate(year = as.character(year(datetime)),
          month = as.integer(month(datetime)),

@@ -1,0 +1,443 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+
+library(gtools)
+library(sandwich)
+library(lmtest)
+library(tidyverse)
+
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+setwd(save_path_entsoe_output)
+first_stage_data <- read_parquet('first_stage_data_all_OMIE_all.parquet') 
+first_stage_data$weekday <- weekdays(first_stage_data$delivery_date) 
+
+colnames_with_capacity <- colnames(first_stage_data)[grepl("Capacity", colnames(first_stage_data))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables")
+
+first_stage_data[colnames_with_capacity] <- lapply(first_stage_data[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+
+
+#adjuster l'ordre de grandeur des indispos pour ne pas avoir des coefficients nuls
+first_stage_data_clean <- first_stage_data%>%
+  filter(is.finite(log_price_diff) & 
+           is.finite(Published.Unavailable.Capacity))%>% 
+   mutate(across(all_of(capacity_fields), 
+                ~ . / 1000)) %>% 
+  mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         # Published.Dismissed.Unavailable.Capacity = Published.Dismissed.Unavailable.Capacity - Published.Dismissed.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         # Unpublished.Dismissed.Unavailable.Capacity = Unpublished.Dismissed.Unavailable.Capacity - Unpublished.Dismissed.Unavailable.Nuclear.Capacity
+         )%>% 
+  rename(day_ahead_renewable_forecast= day_ahead_forecast)
+
+# Créer une variable factorielle pour clusteriser
+first_stage_data_clean <- first_stage_data_clean %>% 
+  mutate(cluster_var = interaction(auction_date_plus_one, auction))
+
+non_finite_rows <- first_stage_data %>%
+  filter(!is.finite(price_diff) | !is.finite(Published.Unavailable.Capacity))
+
+first_stage_data_clean$weekday <- weekdays(first_stage_data_clean$delivery_date) 
+# on va pondérer par une mesure multiplicative n_creneau_unavail * n_creneau_trend
+#pour savoir si c'est très représentatif ou pas
+
+colnames(first_stage_data)
+```
+
+
+
+```{r}
+
+
+first_stage_test_bis_nuclear <- first_stage_data_clean %>%
+  mutate(Unavailable.Nuclear.Capacity = Published.Unavailable.Nuclear.Capacity + Unpublished.Unavailable.Nuclear.Capacity,
+    nuclear_unavailability_creneau = (Unavailable.Nuclear.Capacity >0),
+    pub_nuclear_unavailability_creneau = (Published.Unavailable.Nuclear.Capacity >0),
+    unpub_nuclear_unavailability_creneau = (Unpublished.Unavailable.Nuclear.Capacity >0),
+    uneff_nuclear_unavailability_creneau = (Uneffective.Unavailable.Capacity >0),
+    ) %>% 
+  group_by(delivery_date, creneau) %>%
+  mutate(creneau_unavailability = sum(nuclear_unavailability_creneau, na.rm = TRUE),
+         pub_creneau_unavailability = sum(pub_nuclear_unavailability_creneau, na.rm = TRUE),
+         unpub_creneau_unavailability = sum(unpub_nuclear_unavailability_creneau, na.rm = TRUE),
+         uneff_creneau_unavailability = sum(uneff_nuclear_unavailability_creneau, na.rm = TRUE)
+         )%>%
+  ungroup() %>% 
+  group_by(delivery_date) %>%
+  mutate(day_unavailability = sum(nuclear_unavailability_creneau, na.rm = TRUE),
+         pub_day_unavailability = sum(pub_nuclear_unavailability_creneau, na.rm = TRUE),
+         unpub_day_unavailability = sum(unpub_nuclear_unavailability_creneau, na.rm = TRUE),
+         uneff_day_unavailability = sum(uneff_nuclear_unavailability_creneau, na.rm = TRUE)
+         )%>%
+  ungroup() %>% 
+  arrange(datetime)
+
+```
+
+
+```{r}
+
+#il faut regarder si l'on est un seuil
+# à savoir si le même creneau  de l'auction suivante 
+# a une indisponibilité différente
+
+
+price_data_nuclear <- first_stage_test_bis_nuclear %>% 
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(unavailability_trigger = 
+           max(0, ifelse(auction_before ==0, nuclear_unavailability_creneau, nuclear_unavailability_creneau - lag(nuclear_unavailability_creneau))),
+         
+         pub_unavailability_trigger = 
+           max(0, ifelse(auction_before ==0, pub_nuclear_unavailability_creneau, pub_nuclear_unavailability_creneau - lag(pub_nuclear_unavailability_creneau))),
+         unpub_unavailability_trigger = 
+           max(0, ifelse(auction_before ==0, unpub_nuclear_unavailability_creneau, unpub_nuclear_unavailability_creneau - lag(unpub_nuclear_unavailability_creneau))),
+         uneff_unavailability_trigger =
+           max(0, ifelse(auction_before ==0, uneff_nuclear_unavailability_creneau, uneff_nuclear_unavailability_creneau - lag(uneff_nuclear_unavailability_creneau))),
+         
+         ) %>%
+  ungroup()
+
+
+
+price_data_nuclear %>% 
+  filter(unavailability_trigger != 0, Unavailable.Nuclear.Capacity != 0) %>%
+  group_by(pub_unavailability_trigger, unpub_unavailability_trigger, 
+           uneff_nuclear_unavailability_creneau) %>%
+  summarise(n = n(), 
+            mean_price_diff = mean(price_diff, na.rm = TRUE), 
+            mean_unavailability_size = mean(Unavailable.Nuclear.Capacity, na.rm = TRUE))
+
+
+```
+
+
+```{r}
+
+price_data_nuclear_pub <- price_data_nuclear %>%
+  filter(unpub_unavailability_trigger !=1 | pub_unavailability_trigger !=1) %>%
+  # Définir l'enchère de référence
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(
+    auction_before = as.numeric(auction_before),
+    reference_auction = if (any(pub_nuclear_unavailability_creneau == TRUE, na.rm = TRUE)) {
+      min(auction_before[pub_nuclear_unavailability_creneau == TRUE], na.rm = TRUE)
+    } else {
+      sample(0:6, 1)
+    },
+    distance_auction = auction_before - reference_auction
+  ) %>%
+  ungroup()%>% 
+group_by(electricity_delivery_date, 
+           pub_nuclear_unavailability_creneau
+           ) %>% 
+  
+    mutate(
+    unavail_pub_level = ifelse(pub_nuclear_unavailability_creneau== 0,
+         0, mean(Published.Unavailable.Nuclear.Capacity[pub_unavailability_trigger == 1], na.rm = TRUE)),
+
+    unavail_pub = unavail_pub_level* pub_unavailability_trigger,
+    )%>% 
+  
+  # Filtrer pour ne garder que les distances entre -4 et 4
+ 
+  ungroup() 
+
+
+price_data_nuclear_unpub <- price_data_nuclear %>%
+  filter(unpub_unavailability_trigger !=1 | pub_unavailability_trigger !=1) %>%
+  # Définir l'enchère de référence
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(
+    auction_before = as.numeric(auction_before),
+    reference_auction = if (any(unpub_nuclear_unavailability_creneau == TRUE, na.rm = TRUE)) {
+      min(auction_before[unpub_nuclear_unavailability_creneau == TRUE], na.rm = TRUE)
+    } else {
+      sample(0:6, 1)
+    },
+    distance_auction = auction_before - reference_auction
+  ) %>%
+  ungroup()%>% 
+group_by(electricity_delivery_date, 
+           unpub_nuclear_unavailability_creneau
+           ) %>% 
+  
+    mutate(
+    unavail_unpub_level = ifelse(unpub_nuclear_unavailability_creneau== 0,
+         0, mean(Unpublished.Unavailable.Nuclear.Capacity[unpub_unavailability_trigger == 1], na.rm = TRUE)),
+
+    unavail_unpub = unavail_unpub_level* unpub_unavailability_trigger,
+    )%>% 
+  
+  # Filtrer pour ne garder que les distances entre -4 et 4
+ 
+  ungroup() 
+
+
+
+price_data_nuclear_uneff <- price_data_nuclear %>%
+  # Définir l'enchère de référence
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(
+    auction_before = as.numeric(auction_before),
+    reference_auction = if (any(uneff_nuclear_unavailability_creneau == TRUE, na.rm = TRUE)) {
+      min(auction_before[uneff_nuclear_unavailability_creneau == TRUE], na.rm = TRUE)
+    } else {
+      sample(0:6, 1)
+    },
+    distance_auction = auction_before - reference_auction
+  ) %>%
+  ungroup()%>% 
+  group_by(electricity_delivery_date, 
+           uneff_nuclear_unavailability_creneau
+           ) %>% 
+  
+    mutate(
+    unavail_uneff_level = ifelse(uneff_nuclear_unavailability_creneau== 0,
+         0, mean(Uneffective.Unavailable.Nuclear.Capacity[uneff_unavailability_trigger == 1], na.rm = TRUE)),
+    unavail_uneff = unavail_uneff_level* uneff_unavailability_trigger,
+    )%>% 
+  
+  # Filtrer pour ne garder que les distances entre -4 et 4
+ 
+  ungroup()
+
+
+```
+
+
+
+```{r}
+prepare_price_data <- function(data, unavail_col) {
+  data %>%
+    distinct(electricity_delivery_date, creneau, distance_auction, !!sym(unavail_col), .keep_all = TRUE) %>%
+    group_by(electricity_delivery_date, creneau, distance_auction, !!sym(unavail_col)) %>%
+    select(electricity_delivery_date, creneau, distance_auction, !!sym(unavail_col), price_diff,
+           gen_tot, unpredicted_renewables, intraday_update_renewables,
+           reference_auction, Published.Unavailable.Nuclear.Capacity, 
+           Unpublished.Unavailable.Nuclear.Capacity, Unavailable.Nuclear.Capacity,
+           cluster_var) %>%
+    pivot_wider(names_from = distance_auction, 
+                names_prefix = "price_", 
+                values_from = price_diff) %>%
+    {
+      price_cols <- grep("^price_", colnames(.), value = TRUE)
+      price_cols_filtered <- price_cols[as.numeric(sub("price_", "", price_cols)) %in% -2:2]
+      price_cols_sorted <- mixedsort(price_cols_filtered)
+      non_price_cols <- setdiff(colnames(.), price_cols)
+      .[, c(non_price_cols, price_cols_sorted)]
+    }
+}
+
+# Apply function
+price_data_nuclear_wide_pub <- prepare_price_data(price_data_nuclear_pub, "unavail_pub")
+price_data_nuclear_wide_unpub <- prepare_price_data(price_data_nuclear_unpub, "unavail_unpub")
+price_data_nuclear_wide_uneff <- prepare_price_data(price_data_nuclear_uneff, "unavail_uneff")
+
+
+
+```
+
+
+
+```{r}
+group_and_summarize <- function(data, unavail_col) {
+  data %>%
+    arrange(electricity_delivery_date, creneau, !!sym(unavail_col)) %>%
+    group_by(electricity_delivery_date, creneau, gen_tot, unpredicted_renewables, intraday_update_renewables) %>%
+    summarize(across(starts_with("price"), 
+                     ~ ifelse(all(is.na(.)), NA, sum(., na.rm = TRUE))),
+              creneau = first(creneau),
+              reference_auction = first(reference_auction),
+              !!sym(unavail_col) := last(!!sym(unavail_col)),
+              electricity_delivery_date = first(electricity_delivery_date),
+              cluster_var = first(cluster_var),
+              .groups = "drop") %>%
+    filter(!is.na(!!sym(unavail_col)))
+}
+
+# Apply the function to each dataset
+price_data_nuclear_grouped_pub <- group_and_summarize(price_data_nuclear_wide_pub, "unavail_pub")
+price_data_nuclear_grouped_unpub <- group_and_summarize(price_data_nuclear_wide_unpub, "unavail_unpub")
+price_data_nuclear_grouped_uneff <- group_and_summarize(price_data_nuclear_wide_uneff, "unavail_uneff")
+
+```
+
+
+
+
+```{r}
+var <- "unavail_unpub"
+data <- price_data_nuclear_grouped_uneff
+
+price_cols <- grep("^price_", colnames(price_data_nuclear_grouped_unpub), value = TRUE)
+price_cols_filtered <- price_cols[as.numeric(sub("price_", "", price_cols)) %in% -2:2]
+price_cols_sorted <- mixedsort(price_cols_filtered)
+
+
+evaluate_price_coeff <- function(data, var){
+  table_coefficients_nuclear <- data.frame()
+  col = "price_0"
+  
+  for (col in price_cols_sorted){
+    # Créer la formule pour la régression
+    
+    # Créer la formule en utilisant backticks pour le nom de colonne
+    formula <- as.formula(paste("`" , col, "`" , " ~ ", var ," + gen_tot +
+                                intraday_update_renewables + unpredicted_renewables + as.factor(reference_auction)+ as.factor(creneau)" , sep = ""))
+    
+    # Ajuster le modèle
+    model <- lm(formula, data = data 
+                #%>% filter(!is.na(price_1) & ! is.na(`price_-1`))
+  )
+    vcov_cluster <- vcovCL(model, type = "HC0", cluster = ~ cluster_var)
+    # # Erreurs standard clusterisées
+    cl_se <- sqrt(diag(vcov_cluster))
+
+      # Fit model
+    # Classic (non-clustered) standard errors
+    classic_se <- summary(model)$coefficients[, "Std. Error"]
+
+    # Coefficient name (assumes you're interested in the second regressor)
+    coef_names <- names(coef(model))
+    target_var <- coef_names[2]
+    
+    # Degrees of freedom
+    n_ddl <- df.residual(model)
+    
+    # Create comparison row
+    temp_df <- data.frame(
+      variable = col,
+      estimate = coef(model)[target_var],
+      std_error_classic = classic_se[target_var],
+      std_error_clustered = cl_se[target_var],
+      t_value_classic = coef(model)[target_var] / classic_se[target_var],
+      t_value_clustered = coef(model)[target_var] / cl_se[target_var],
+      p_value_classic = 2 * (1 - pt(abs(coef(model)[target_var] / classic_se[target_var]), df = n_ddl)),
+      p_value_clustered = 2 * (1 - pt(abs(coef(model)[target_var] / cl_se[target_var]), df = n_ddl))
+    )
+
+
+    # Ajouter les résultats à table_coefficients
+    table_coefficients_nuclear <- rbind(table_coefficients_nuclear, temp_df)
+  }
+return(table_coefficients_nuclear)
+}
+
+table_coefficients_nuclear_pub <- evaluate_price_coeff(price_data_nuclear_grouped_pub, "unavail_pub") %>% 
+  mutate(status = "Published")
+
+table_coefficients_nuclear_unpub <- evaluate_price_coeff(price_data_nuclear_grouped_unpub, "unavail_unpub") %>% 
+  mutate(status = "Unpublished")
+
+table_coefficients_nuclear_uneff <- evaluate_price_coeff(price_data_nuclear_grouped_uneff, "unavail_uneff") %>% 
+  mutate(status = "Uneffective")
+
+
+
+```
+
+
+
+
+
+```{r}
+
+table_coefficients_nuclear <- rbind(table_coefficients_nuclear_pub, table_coefficients_nuclear_unpub, table_coefficients_nuclear_uneff)
+
+table_coefficients_nuclear<- table_coefficients_nuclear %>%
+  arrange(as.numeric(gsub("price_", "", variable)))
+
+
+# Ajouter un léger décalage sur l'axe X en fonction de 'status'
+ggplot(data = table_coefficients_nuclear, 
+       aes(x = as.numeric(gsub("price_", "", variable)), 
+           y = estimate, 
+           color = status)) +
+  geom_point(position = position_dodge(width = 0.2)) +  # Décalage horizontal
+  geom_errorbar(aes(ymin = estimate - qnorm(0.975) * std_error_clustered,
+                    ymax = estimate + qnorm(0.975) * std_error_clustered), 
+                width = 0.2, 
+                alpha = 0.5, 
+                position = position_dodge(width = 0.2)) +  # Décalage identique pour barres d'erreur
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Dynamic response to plant availability shock",
+       x = "Auction",
+       y = "EUR/MWh Immobilisé")
+
+
+```
+
+
+
+
+```{r}
+
+price_data_nuclear_tot <- price_data_nuclear %>%
+  # Définir l'enchère de référence
+  group_by(electricity_delivery_date, creneau) %>%
+  mutate(
+    auction_before = as.numeric(auction_before),
+    reference_auction = if (any(nuclear_unavailability_creneau == TRUE, na.rm = TRUE)) {
+      min(auction_before[nuclear_unavailability_creneau == TRUE], na.rm = TRUE)
+    } else {
+      sample(0:6, 1)
+    },
+    distance_auction = auction_before - reference_auction
+  ) %>%
+  ungroup()%>% 
+group_by(electricity_delivery_date, 
+           nuclear_unavailability_creneau
+           ) %>% 
+  
+    mutate(
+    unavail_level = ifelse(nuclear_unavailability_creneau== 0,
+         0, mean(Unavailable.Nuclear.Capacity[unavailability_trigger == 1], na.rm = TRUE)),
+    unavail = unavail_level* unavailability_trigger,
+    )%>% 
+  
+  # Filtrer pour ne garder que les distances entre -4 et 4
+  ungroup() 
+
+price_data_nuclear_wide <- prepare_price_data(price_data_nuclear_tot, "unavail")
+price_data_nuclear_grouped <- group_and_summarize(price_data_nuclear_wide, "unavail")
+
+table_coefficients_nuclear_tot <- evaluate_price_coeff(price_data_nuclear_grouped, "unavail") %>% 
+  mutate(status = "Total")
+
+table_coefficients_nuclear_tot <- table_coefficients_nuclear_tot %>%
+  arrange(as.numeric(gsub("price_", "", variable)))
+
+
+# Ajouter un léger décalage sur l'axe X en fonction de 'status'
+ggplot(data = table_coefficients_nuclear_tot, 
+       aes(x = as.numeric(gsub("price_", "", variable)), 
+           y = estimate)) +
+  geom_point(position = position_dodge(width = 0.2)) +  # Décalage horizontal
+  geom_errorbar(aes(ymin = estimate - qnorm(0.95) * std_error,
+                    ymax = estimate + qnorm(0.95) * std_error), 
+                width = 0.2, 
+                alpha = 0.5, 
+                position = position_dodge(width = 0.2)) +  # Décalage identique pour barres d'erreur
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Dynamic response to plant availability shock",
+       x = "Auction",
+       y = "EUR/MWh Immobilisé")
+
+```
+
+
+
+
+
+
+
+
+

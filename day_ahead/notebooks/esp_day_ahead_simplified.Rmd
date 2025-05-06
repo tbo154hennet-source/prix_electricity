@@ -15,13 +15,11 @@ library(sandwich)
   
 
 ```{r}
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
 price_indispo_merge <- price_indispo_merge %>%
   fill(spot_gas, .direction = "up")
-
-
 
 ```
 
@@ -160,7 +158,7 @@ reg_table <- stargazer( m_log, m_log_FE, m_log_control,
     type = "html",
     se = list(cl_se_log, cl_se_log_FE, cl_se_log_control),
     title = "Regression Results",
-    column.labels = c("Basic", "Time FE", "+ Controls"),
+    column.labels = c("Basic", "Time FE", "Time FE+ Controls"),
     keep = c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity", "Effective.Unavailable.Capacity", 
      "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
      "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
@@ -215,7 +213,7 @@ reg_table <- stargazer(  m_rf, m_rf_FE,
     type = "html",
     se = list( cl_se_rf, cl_se_rf_FE),
     title = "Regression Results",
-    column.labels = c( "Declared", "Declared FE",  "RF", "RF FE"),
+    column.labels = c(  "XGB", "XGB + Time FE"),
     keep = c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
              "Effective.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity",
               "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",

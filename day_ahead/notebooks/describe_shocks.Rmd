@@ -36,8 +36,10 @@ One focusing on the different modalities I have for Unavailabilities
 ```{r}
 
 price_indispo_data <- price_indispo_merge %>% 
-  group_by(delivery_date) %>% 
+  mutate(across(where(is.numeric), ~ replace_na(., 0)))  %>%
+  group_by(year, month) %>% 
   summarise(
+    Date = as.Date(paste0(year, "-", month, "-01")),
     Planned = mean(Planned.Unavailable.Capacity, na.rm = TRUE),
     Published = mean(Published.Unavailable.Capacity, na.rm = TRUE),
     Uneffective = mean(Uneffective.Unavailable.Capacity, na.rm = TRUE),
@@ -45,8 +47,10 @@ price_indispo_data <- price_indispo_merge %>%
   )
 
 predict_price_indispo_data <- price_indispo_merge %>% 
-  group_by(delivery_date) %>% 
+  mutate(across(where(is.numeric), ~ replace_na(., 0)))  %>%
+  group_by(year, month) %>% 
   summarise(
+    Date = as.Date(paste0(year, "-", month, "-01")),
     Planned = mean(Planned.Predicted.Unavailable.Capacity, na.rm = TRUE),
     Published = mean(Published.Predicted.Unavailable.Capacity, na.rm = TRUE),
     Uneffective = mean(Uneffective.Predicted.Unavailable.Capacity, na.rm = TRUE),
@@ -54,14 +58,14 @@ predict_price_indispo_data <- price_indispo_merge %>%
   )
 
 unavail_plot <- ggplot()+
-  geom_line(data = predict_price_indispo_data, aes(x= delivery_date, y = -Planned, color = "Planned"))+
-  geom_line(data = predict_price_indispo_data, aes(x= delivery_date,y = -Uneffective, color = "Uneffective"))+
-  geom_line(data = predict_price_indispo_data, aes(x= delivery_date,y = -Unpublished, color = "Unpublished"))+
-  geom_line(data = predict_price_indispo_data, aes(x= delivery_date,y = -Published, color = "Published"))+
-  geom_line(data = price_indispo_data, aes(x= delivery_date, y = Planned, color = "Planned"))+
-  geom_line(data = price_indispo_data, aes(x= delivery_date,y = Uneffective, color = "Uneffective"))+
-  geom_line(data = price_indispo_data, aes(x= delivery_date,y = Unpublished, color = "Unpublished"))+
-  geom_line(data = price_indispo_data, aes(x= delivery_date,y = Published, color = "Published"))+
+  geom_line(data = predict_price_indispo_data, aes(x= Date, y = -Planned, color = "Planned"))+
+  geom_line(data = predict_price_indispo_data, aes(x= Date,y = -Uneffective, color = "Uneffective"))+
+  geom_line(data = predict_price_indispo_data, aes(x= Date,y = -Unpublished, color = "Unpublished"))+
+  geom_line(data = predict_price_indispo_data, aes(x= Date,y = -Published, color = "Published"))+
+  geom_line(data = price_indispo_data, aes(x= Date, y = Planned, color = "Planned"))+
+  geom_line(data = price_indispo_data, aes(x= Date,y = Uneffective, color = "Uneffective"))+
+  geom_line(data = price_indispo_data, aes(x= Date,y = Unpublished, color = "Unpublished"))+
+  geom_line(data = price_indispo_data, aes(x= Date,y = Published, color = "Published"))+
   labs(x= "Time", y = "Plants Unavailabilities")+
   theme_minimal()
 
@@ -70,15 +74,18 @@ unavail_plot
 
 ```{r}
 nuclear_price_indispo_data <- price_indispo_merge %>% 
-  group_by(delivery_date) %>% 
+  mutate(across(where(is.numeric), ~ replace_na(., 0)))  %>%
+  group_by(year, month) %>% 
   summarise(
+    Date = as.Date(paste0(year, "-", month, "-01")),
     Planned = mean(Planned.Unavailable.Nuclear.Capacity, na.rm = TRUE),
     Published = mean(Published.Unavailable.Nuclear.Capacity, na.rm = TRUE),
     Uneffective = mean(Uneffective.Unavailable.Nuclear.Capacity, na.rm = TRUE),
     Unpublished = mean(Unpublished.Unavailable.Nuclear.Capacity, na.rm = TRUE)
-  )
+  ) 
+  
 
-unavail_plot <- ggplot(data = nuclear_price_indispo_data, aes(x= delivery_date))+
+unavail_plot <- ggplot(data = nuclear_price_indispo_data, aes(x= Date))+
   geom_line(aes(y = Planned, color = "Planned"))+
   geom_line( aes(y = Uneffective, color = "Uneffective"))+
   geom_line(aes(y = Unpublished, color = "Published"))+

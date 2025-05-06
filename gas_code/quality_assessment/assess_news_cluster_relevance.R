@@ -1,4 +1,5 @@
 library(zoo)
+library(tidyr)
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 
@@ -19,7 +20,6 @@ small_info_days_type$Trading.day <- as.Date(small_info_days_type$Trading.day, fo
 high_info_days_type <- read.csv("high_info_days_type.csv")
 high_info_days_type$Trading.day <- as.Date(high_info_days_type$Trading.day, format = "%Y-%m-%d")
 
-colnames(small_info_days_type)
 
 #on a bien aussi les demand shocks
 # small_info_days_type %>% 
@@ -262,6 +262,7 @@ data_with_p_values_and_stars$Category <- factor(data_with_p_values_and_stars$Cat
                                                            ,"Demand Small Clutering","Demand Large Clustering"
                                                            ))
 
+getwd()
 # Créer le tableau GT avec les étGases
 data_with_p_values_and_stars %>%
   arrange(Category) %>% 
@@ -276,13 +277,12 @@ data_with_p_values_and_stars %>%
     )
   ) %>%
   tab_options(
-    table.width = pct(80),
+    table.width = pct(40),
     table.font.size = 14
   ) %>%
   gtsave("compare_supply_shocks_clustered_with_significance.html")
 
 
-getwd()
 
 #je veux rajouter le nombre de top 20 variation days included in the corpus
 

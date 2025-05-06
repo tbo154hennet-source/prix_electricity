@@ -5,8 +5,8 @@ from entsoe import EntsoePandasClient
 
 client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
 
-country_code_from = 'PT' 
-country_code_to =   'ES'
+country_code_from = 'FR'  #  / CH/ IT ou IT-NORD, IT_NORD, LU
+country_code_to =   'DE'
 
 # Define start and end dates
 start_date = pd.Timestamp('20150101', tz='Europe/Brussels')
@@ -17,7 +17,7 @@ yearly_dates = pd.date_range(start=start_date, end=end_date, freq='YS')
 
 import os
 #path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Wind_solar_forecast\PT\day_ahead'  # Remplacez par votre chemin
-path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\cross_border_flows\NTC\ES_PT'
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\cross_border_flows\NTC\FR_DE'
 os.chdir(path)
 
 # Changer le répertoire de travail
@@ -30,7 +30,7 @@ for date in yearly_dates:
     end_year = date +  pd.offsets.YearBegin(1) # End of the current month
     print(start_year)
     print(end_year)
-    string = start_year.strftime('%Y') + '.parquet'
+    string = country_code_from + '_' + country_code_to + '_' + start_year.strftime('%Y') + '.parquet'
 
     #day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_year, end=end_year)
     

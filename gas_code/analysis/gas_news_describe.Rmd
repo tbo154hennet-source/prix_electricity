@@ -11,6 +11,8 @@ library(arrow)
 library(ggplot2)
 library(dplyr)
 library(zoo)
+library(lubridate)
+library(DT)
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data')
 # Import the functions from 'my_functions.R'
@@ -159,5 +161,23 @@ ggplot(event_complete_data, aes(x = datetime, y = news_per_day, color = event_ty
        y = "Number of news") +
   theme_minimal()
 
+```
+
+
+
+```{r}
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data/clustered_news")
+my_instrumented_days <- read.csv("final_clustered_instrumented_days.csv")
+colnames(my_instrumented_days)
+my_instrumented_days %>% 
+  mutate(year = year(datetime)) %>%
+  group_by(year) %>% 
+  slice_max(n= 2, order_by = PC1) %>% 
+  ungroup() %>% 
+  select(datetime, summary, high_cluster_label, small_cluster_label) %>% 
+  arrange(datetime) %>%
+  datatable(options = list(pageLength = 15), 
+            caption = 'Instrumented Days Summary Table')
 ```
 

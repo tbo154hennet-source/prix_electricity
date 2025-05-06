@@ -51,7 +51,8 @@ VAR_series <- VAR_series %>%
          NE_Index= `00XE00ESM086NEST`,
          E_Index = ENRGY0ESM086NEST,
          UnE = LRHUTTTTESM156S,
-         Bond_rate = IR3TIB01ESM156N
+         Bond_rate = IR3TIB01ESM156N,
+         Spot_gas =PNGASEUUSDM
   )
 
 colnames(VAR_series)
@@ -111,19 +112,40 @@ setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahea
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
 }
-price_merge_CBF <- read_parquet("price_merge_CBF.parquet")
+
+price_merge_CBF <- read_parquet("price_merge_CBF_max.parquet")
 colnames(price_merge_CBF)
 monthly_crossborder_data <- price_merge_CBF %>% 
   filter(gen_tot_fr > 0 & gen_tot_esp > 0) %>%
   group_by(month, year) %>%
   summarise(
-    renewable_forecast_hors_esp_weighted = weighted_mean(day_ahead_forecast_fr*NTC_FR_ESP/gen_tot_fr, gen_tot_esp),
-    renewable_forecast_hors_fr_weighted = weighted_mean(day_ahead_forecast_esp*NTC_ESP_FR/gen_tot_esp, gen_tot_fr),
-    renewable_forecast_hors_esp = weighted_mean(day_ahead_forecast_fr, gen_tot_esp),
+    renewable_day_ahead_forecast_ex_es = weighted_mean(renewable_day_ahead_forecast_pt +
+                                                         renewable_day_ahead_forecast_fr , 
+                                                       gen_tot_esp),
+    cbf_es = weighted_mean(CBF_ES_pred, gen_tot_esp),
+    
+    renewable_day_ahead_forecast_pt = weighted_mean(renewable_day_ahead_forecast_pt, gen_tot_esp),
+    renewable_day_ahead_forecast_fr = weighted_mean(renewable_day_ahead_forecast_fr, 
+                                                    gen_tot_esp),
+    
+    
+    renewable_day_ahead_forecast_ex_fr = weighted_mean(renewable_day_ahead_forecast_esp+
+                                                         renewable_day_ahead_forecast_it_nord+
+                                                         renewable_day_ahead_forecast_de+
+                                                         renewable_day_ahead_forecast_be+
+                                                         renewable_day_ahead_forecast_ch+
+                                                         renewable_day_ahead_forecast_gb, 
+                                                       gen_tot_fr),
+    cbf_fr = weighted_mean(CBF_FR_pred, gen_tot_fr),
+    renewable_day_ahead_forecast_esp = weighted_mean(renewable_day_ahead_forecast_esp, gen_tot_fr),
+    renewable_day_ahead_forecast_it_nord = weighted_mean(renewable_day_ahead_forecast_it_nord, gen_tot_fr),
+    renewable_day_ahead_forecast_de = weighted_mean(renewable_day_ahead_forecast_de, gen_tot_fr),
+    renewable_day_ahead_forecast_be = weighted_mean(renewable_day_ahead_forecast_be, gen_tot_fr),
+    renewable_day_ahead_forecast_ch = weighted_mean(renewable_day_ahead_forecast_ch, gen_tot_fr),
+    renewable_day_ahead_forecast_gb = weighted_mean(renewable_day_ahead_forecast_gb, gen_tot_fr),
     datetime = first(datetime)
   ) %>%
   arrange(datetime) %>% 
-  dplyr::select(-datetime) %>% 
   ungroup()
 
 #monthly_crossborder_data$renewable_forecast_hors_esp
@@ -132,7 +154,7 @@ monthly_crossborder_data <- price_merge_CBF %>%
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data')
 gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Temperature_instrument/esp')
-temperature_instrument <- read.csv("temperature_instrument.xlsx")
+temperature_instrument <- read_excel("temperature_instrument.xlsx")
 
 
 
@@ -156,7 +178,41 @@ IV_data <- merge(IV_data, temperature_instrument,
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-write_parquet(IV_data, 'IV_data_esp2.parquet')
+write_parquet(IV_data, 'IV_data_esp.parquet')
 
 colnames(IV_data)
+
+
+
+plot_data <- monthly_crossborder_data %>%
+  select(datetime, FR = renewable_day_ahead_forecast_fr, 
+         PT = renewable_day_ahead_forecast_pt) %>%
+  pivot_longer(cols = -datetime, names_to = "zone", values_to = "forecast") 
+
+ggplot(data = plot_data) +
+  geom_area( aes(x = datetime, y = forecast, fill = zone),position = "stack", alpha = 0.6) +
+  geom_line(data = monthly_crossborder_data, 
+            aes(x= datetime, y = renewable_day_ahead_forecast_ex_es ,linetype = "dashed")) +
+  labs(title = "Contributions des prévisions renouvelables FR et PT",
+       y = "Prévision (MW)", x = "Date", fill = "Zone") +
+  theme_minimal()
+
+plot_data <- monthly_crossborder_data %>%
+  select(datetime, ES = renewable_day_ahead_forecast_fr, 
+         CH = renewable_day_ahead_forecast_ch,
+         DE = renewable_day_ahead_forecast_de,
+         BE = renewable_day_ahead_forecast_be,
+         IT = renewable_day_ahead_forecast_it_nord,
+         GB = renewable_day_ahead_forecast_gb
+         
+         ) %>%
+  pivot_longer(cols = -datetime, names_to = "zone", values_to = "forecast") 
+
+ggplot(data = plot_data) +
+  geom_area( aes(x = datetime, y = forecast, fill = zone),position = "stack", alpha = 0.6) +
+  geom_line(data = monthly_crossborder_data, 
+            aes(x= datetime, y = renewable_day_ahead_forecast_ex_fr ,linetype = "dashed")) +
+  labs(title = "Contributions des prévisions renouvelables FR et PT",
+       y = "Prévision (MW)", x = "Date", fill = "Zone") +
+  theme_minimal()
 

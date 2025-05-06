@@ -360,4 +360,194 @@ reg_table <- stargazer( m_ntc_es, m_ntc_es_FE,  m_ntc_fr, m_ntc_fr_FE,
 ```
 
 
+Nouvelle question intermédiaire,
+On cherche à déterminer si avec la NTC et les renouvebles, on peu prévoir de manière correcte les CBFs
+
+
+```{r}
+
+# perform first stage regression
+
+m_cbf_pred_no_NTC <- lm(
+  CBF_DA ~ gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp + day_ahead_forecast_fr+
+    spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp +
+    unpredicted_renewables_fr + intraday_update_renewables_fr +
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= import_data_reg)
+
+
+m_cbf_pred_NTC <- lm(
+  CBF_DA ~ NTC_ESP_FR + NTC_FR_ESP + 
+    gen_tot_esp + gen_tot_fr + day_ahead_forecast_esp + day_ahead_forecast_fr+
+    spot_gas_esp + unpredicted_renewables_esp + intraday_update_renewables_esp +
+    unpredicted_renewables_fr + intraday_update_renewables_fr +
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= import_data_reg)
+
+
+
+```
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_cbf_pred_no_NTC, m_cbf_pred_NTC, 
+    type = "html",
+    #se = list(cl_se_ntc_es, cl_se_ntc_es_FE, cl_se_ntc_fr, cl_se_ntc_fr_FE),
+    title = "Regression Results",
+    column.labels = c("CBF ESP -> FR", "CBF ESP -> FR FE"),
+    keep = c(".Capacity", "gen_tot", "NTC", "CBF_DA",
+             "day_ahead_forecast", "spot_gas", 
+             "unpredicted_renewables", "intraday_update_renewables")
+)
+ 
+```
+
+
+I have shown effects, but I would like to increase the prediction abilities of my model by considering the non-linear features (especially saturation with the NTC threshold)
+
+
+```{r}
+library(mgcv)
+
+import_data_reg$flow_sign <- ifelse(import_data_reg$CBF_DA >= 0, "pos", "neg")
+
+m_gam_sign <- gam(
+  CBF_DA ~ 
+    s(NTC_ESP_FR, by = as.factor(flow_sign)) + 
+    s(NTC_FR_ESP, by = as.factor(flow_sign)) +
+    s(gen_tot_esp) + s(gen_tot_fr) + 
+    s(day_ahead_forecast_esp) + s(day_ahead_forecast_fr) +
+    spot_gas_esp +
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data = import_data_reg
+)
+
+```
+
+Assess the performances of the models
+
+
+```{r}
+# Plot GAM smooth terms
+plot(m_gam_sign, pages = 1, se = TRUE, main = "GAM Smooth Effects")
+
+# Check model diagnostics (residuals, QQ-plot, etc.)
+gam.check(m_gam_sign)
+
+# Predict on the original dataset
+import_data_reg$CBF_DA_pred_gam <- predict(m_gam_sign, newdata = import_data_reg)
+
+# Plot predicted vs actual
+library(ggplot2)
+
+ggplot(import_data_reg, aes(x = CBF_DA, y = CBF_DA_pred_gam)) +
+  geom_point(alpha = 0.4) +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Predicted vs Actual (GAM)", x = "Actual CBF_DA", y = "Predicted CBF_DA") +
+  theme_minimal()
+
+```
+
+
+
+
+
+
+
+```{r}
+library(Metrics)
+
+import_data_reg$CBF_DA_pred_lin <- predict(m_cbf_pred_NTC, newdata = import_data_reg)
+ 
+import_data_reg$CBF_DA_pred_lin_saturated <- predict(m_cbf_pred_no_NTC, newdata = import_data_reg)
+import_data_reg <- import_data_reg %>% 
+  mutate(CBF_DA_pred_lin_saturated = ifelse(CBF_DA_pred_lin_saturated > 1000*NTC_ESP_FR, 
+                                            1000*NTC_ESP_FR, CBF_DA_pred_lin_saturated),
+         CBF_DA_pred_lin_saturated = ifelse(CBF_DA_pred_lin_saturated < -1000*NTC_FR_ESP,
+                                            -1000*NTC_FR_ESP, CBF_DA_pred_lin_saturated))
+
+rmse_gam <- rmse(import_data_reg$CBF_DA, import_data_reg$CBF_DA_pred_gam)
+#rmse_surv <- rmse(import_data_reg$CBF_DA, import_data_reg$CBF_DA_pred_surv*10**6)
+rmse_lin <- rmse(import_data_reg$CBF_DA, import_data_reg$CBF_DA_pred_lin)
+rmse_lin_saturated <- rmse(import_data_reg$CBF_DA, import_data_reg$CBF_DA_pred_lin_saturated)
+
+cat("RMSE GAM:", rmse_gam, "\n")
+#cat("RMSE Interval Regression:", rmse_surv, "\n")
+cat("RMSE Linear Regression:", rmse_lin, "\n")
+cat("RMSE Linear Regression (saturated):", rmse_lin_saturated, "\n")
+
+# Predicted values (already calculated earlier)
+pred <- import_data_reg$CBF_DA_pred_gam
+obs <- import_data_reg$CBF_DA
+
+# Compute R² manually
+r2_gam <- 1 - sum((obs - pred)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
+
+cat("Pseudo R² (based on gam predictions):", round(r2_gam, 4), "\n")
+# Compute R² for linear regression
+r2_lin <- summary(m_cbf_pred_NTC)$r.squared
+
+cat("R² Linear model:", round(r2_lin, 4), "\n")
+
+
+# Compute R² for linear regression with saturation
+r2_lin_saturated <- 1 - sum((import_data_reg$CBF_DA - import_data_reg$CBF_DA_pred_lin_saturated)^2, na.rm = TRUE) /
+  sum((import_data_reg$CBF_DA - mean(import_data_reg$CBF_DA, na.rm = TRUE))^2, na.rm = TRUE)
+cat("R² Linear model (saturated):", round(r2_lin_saturated, 4), "\n")
+
+```
+
+Se rendre compte de l'erreur à l'échelle mensuelle
+
+```{r}
+#colnames(import_data_reg)
+import_data_reg_monthly <- import_data_reg %>% 
+  group_by(year, month) %>% 
+  summarise(CBF_DA = mean(CBF_DA, na.rm = TRUE),
+            CBF_DA_pred_gam = mean(CBF_DA_pred_gam, na.rm = TRUE),
+            CBF_DA_pred_lin_saturated = mean(CBF_DA_pred_lin_saturated, na.rm = TRUE),
+            Date = as.Date(paste0(year, '-', month, '-01'))) %>% 
+  ungroup()
+
+ggplot(import_data_reg_monthly, aes(x = Date)) +
+  geom_line(aes(y = CBF_DA, color = "Actual")) +
+  geom_line(aes(y = CBF_DA_pred_gam, color = "GAM Predicted")) +
+  geom_line(aes(y = CBF_DA_pred_lin_saturated, color = "Linear Predicted")) +
+  labs(title = "Monthly Average CBF_DA vs Predictions",
+       x = "Date", y = "CBF_DA") +
+  scale_color_manual(values = c("Actual" = "black", "GAM Predicted" = "blue",
+                                "Linear Predicted" = "red")) +
+  theme_minimal()
+
+```
+
+
+```{r}
+# Remove NA to ensure consistency
+monthly_df <- import_data_reg_monthly %>% 
+  filter(!is.na(CBF_DA), !is.na(CBF_DA_pred_gam), !is.na(CBF_DA_pred_lin_saturated))
+
+# R² for GAM
+r2_gam <- 1 - sum((monthly_df$CBF_DA - monthly_df$CBF_DA_pred_gam)^2) /
+              sum((monthly_df$CBF_DA - mean(monthly_df$CBF_DA))^2)
+
+# R² for Linear
+r2_lin <- 1 - sum((monthly_df$CBF_DA - monthly_df$CBF_DA_pred_lin_saturated)^2) /
+               sum((monthly_df$CBF_DA - mean(monthly_df$CBF_DA))^2)
+
+cat("Monthly R² (GAM):", round(r2_gam, 4), "\n")
+cat("Monthly R² (Linear):", round(r2_lin, 4), "\n")
+
+```
+
+
+
+
+
+
+
+
+
 

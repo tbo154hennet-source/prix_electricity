@@ -3,10 +3,11 @@ library(dplyr)
 library(arrow)
 library(lubridate)
 library(data.table)
+library(xgboost)
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
-filtered_indispo <- read_parquet("filtered_indispo_esp.parquet")
-
+filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE.parquet")
+colnames(filtered_indispo)
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 
@@ -48,6 +49,8 @@ indispo_centrales <- filtered_indispo %>%
 
 active_centrales <- intersect(centrales, indispo_centrales)
 centrale = active_centrales[1]
+
+models = list()
 
 #estimate all models before predicting
 for (centrale in active_centrales) {
@@ -117,9 +120,9 @@ for (centrale in active_centrales) {
 
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf")
-saveRDS(models, 'rf_models_xgb_esp.rds')
+saveRDS(models, 'rf_models_xgb_esp_day_ahead.rds')
 
-models <- readRDS('rf_models_xgb_esp.rds')
+models <- readRDS('rf_models_xgb_esp_day_ahead.rds')
 
 
 

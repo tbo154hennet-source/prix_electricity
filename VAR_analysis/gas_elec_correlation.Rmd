@@ -13,8 +13,8 @@ To be compared with electricity price
 ```{r}
 save_path_var <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output"
 setwd(save_path_var)
-IV_data <- read_parquet('low_freq_data.parquet')
-my_plot <- ggplot(data= IV_data)+
+IV_data_bis <- read_parquet('low_freq_data.parquet')
+my_plot <- ggplot(data= IV_data_bis)+
   geom_line(aes(x=datetime, y=spot_price, color="electricity"))+
   geom_line(aes(x=datetime, y=gas_price, color="gas"))+
   theme_minimal()
@@ -23,18 +23,13 @@ my_plot
 
 ```{r}
 
-gas_elec_data <- IV_data %>% 
+gas_elec_data <- IV_data_bis %>% 
   arrange(datetime)%>% 
   mutate(log_diff_gas = log(gas_price) - log(lag(gas_price)),
-         log_diff_spot = log(spot_price) - log(lag(spot_price)))
+         log_diff_spot = log(spot_price) - log(lag(spot_price))) %>% 
+  dplyr::select(-Date)
 
-
-gas_elec_data <- left_join(gas_elec_data, shock_series_all %>% 
-                             mutate(datetime = as.POSIXct(Date)) %>% 
-                                      select(datetime, Value_PC1_AG),
-                           by = "datetime") %>% 
-  select(-Date)
-
+colnames(gas_elec_data)
 # shock_series_all$Value_PC1_AG
 # shock_series_all %>% 
 # select(Date, Value_PC1_AG) %>% 
@@ -71,7 +66,7 @@ Déjà est ce que ma série est un bon instrument pour gas price, avant de parle
 # Aligner les données avec lead
 gas_elec_data_lead <- gas_elec_data %>%
   mutate(
-    Value_PC1_AG_lead = lead(Value_PC1_AG, 1),
+  #alue_PC1_AG_lead = lead(Value_PC1_AG, 1),
     gas_supply_shock_lead = lead(gas_supply_shock, 1)
   ) %>%
   filter(!is.na(gas_supply_shock_lead)) # Supprimer les lignes NA dues à lead

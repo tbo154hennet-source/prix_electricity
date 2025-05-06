@@ -1,104 +1,121 @@
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("reliability_auxiliary.R")
+
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+setwd(source_path)
 source("auxiliary_control.R")
+
 library(MASS)
-
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
-setwd(save_var_path)
-
-IV_data_log <- read_parquet('low_freq_data_log.parquet')
-IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')
-
-# IV_data_log$unexpected_nuclear_indispo_log <- IV_data_log$unexpected_nuclear_indispo.x_log 
-# IV_data_log_diff$unexpected_nuclear_indispo_log_diff <- IV_data_log_diff$unexpected_nuclear_indispo.x_log_diff
+library(gt)
 
 
-#in growth rates
-
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
-setwd(save_var_path)
-
-headers_proxies = c(
-  # "CDD_excess_instrument_log_diff",
-  # "HDD_excess_instrument_log_diff", 
-  # "abs_gas_shock",                 
-  # "rel_gas_shock" ,
-  # "cold_excess_instrument",
-  # "heat_excess_instrument",
-  "gas_supply_shock",
-  "T_avg_log_diff",
-  "wind_log_diff", 
-  "solar_log_diff",
-  "unexpected_tot_indispo_log_diff",          
-  "unexpected_nuclear_indispo_log_diff" 
-)
-colnames(IV_data_log_diff)
-
-
-proxies <- ts(IV_data_log_diff[, c(headers_proxies)], frequency=12)
-
-headers_var = c("gen_tot_log_diff",
-                "spot_price_log_diff",
-                "IPI_log_diff",
-                # "ECB_rate_log_diff",
-                # "E_Index_log_diff",
-                # "Exp_pi_log_diff",
-                # "UnE_log_diff" ,
-                "NE_Index_log_diff"
-)
-vars<- ts(IV_data_log_diff[, c(headers_var)], frequency=12)
-save_reliable_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/reliability"
-setwd(save_reliable_path)
-get_table(vars,p, proxies, "reliability_table_gr_wind_solar.png", headers_proxies)
-
-
-
-
-#in log levels
-
-headers_proxies = c(
-  #"CDD_excess_instrument_log",
-  #"HDD_excess_instrument_log",
-  # "cold_excess_instrument",
-  # "heat_excess_instrument",
-  # "abs_gas_shock",                 
-  # "rel_gas_shock" ,
-  "gas_supply_shock",
-  "T_avg_log",
-  "wind_log", 
-  "solar_log",
-  "unexpected_tot_indispo_log",          
-  "unexpected_nuclear_indispo_log" 
-)
-
-proxies <- ts(IV_data_log[, c(headers_proxies)], frequency=12)
-
-headers_var = c("gen_tot_log",
-                "spot_price_log",
-                "IPI_log",
-                # "ECB_rate_log_diff",
-                # "E_Index_log_diff",
-                # "Exp_pi_log_diff",
-                # "UnE_log_diff" ,
-                "NE_Index_log"
-)
-vars<- ts(IV_data_log[, c(headers_var)], frequency=12)
-
-
-getwd()
 
 # most complete specification FE + controls for the whole period
 #for title don't forget .png
-setwd(save_reliable_path)
-get_table(vars,p, proxies, "reliability_table_levels_solar_wind.png", headers_proxies)
-  
+headers_var = c("spot_price_log",
+                "gen_tot_log",
+                "IPI_log",
+                # "ECB_rate_log",
+                # "E_Index_log",
+                # "Exp_pi_log",
+                # "UnE_log" ,
+                "NE_Index_log"
+)
+headers_proxies = c(
+  # "T_avg_log",
+  "cold_excess_instrument",
+  #"heat_excess_instrument",
+  # "wind_forecast_log",
+  # "solar_forecast_log",
+  #"diff_cbf",
+  #"log_diff_ex_renewable",
+  #"renewable_forecast_log",
+  #"renewable_forecast_hors_esp_weighted_log",
+  "PC1_supply",
+  "log_diff_renewable"
+  # "NTC_ESP_FR_log",
+  # "NTC_FR_ESP_log"
+  #"nuclear_unavailabilities_log"
+  # "thermal_unavailabilities_log",
+  #"predicted_unavailabilities_log"
+)
+getwd()
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+setwd(save_var_path)
+IV_data_log_esp <-  read_parquet('IV_data_esp_log.parquet')
 
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+setwd(save_var_path)
+IV_data_log_fr <-  read_parquet('IV_data_fr_log.parquet')
+
+
+save_reliable_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/reliability"
+setwd(save_reliable_path)
+get_table(IV_data_log_esp, headers_var, headers_proxies ,p ,  "reliability_table_levels_es_with_ex_renewable.png")
+
+
+save_reliable_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output_fr/reliability"
+setwd(save_reliable_path)
+get_table(IV_data_log_fr, headers_var, headers_proxies ,p ,  "reliability_table_levels_fr.png")
+
+
+demand_instruments <- c("cold_excess_instrument","heat_excess_instrument")
+supply_instruments = c("PC1_supply","log_diff_renewable")
+
+
+get_table_compare(headers_var,IV_data_log_esp, IV_data_log_fr,
+                  demand_instruments, supply_instruments,
+                  save_reliable_path, "test")
+
+demand_instruments <- c("cold_excess_instrument","heat_excess_instrument")
+supply_instruments = c("PC1_supply","log_diff_renewable", "diff_cbf")
+
+
+get_table_compare(headers_var,IV_data_log_esp, IV_data_log_fr,
+                  demand_instruments, supply_instruments,
+                  save_reliable_path, "test_cbf")
+
+
+library(gt)
   
-  
-  
-  
-  
-  
+# Rassembler les données dans un tableau unique
+summary_table <- tibble::tibble(
+  Pays = c("France", "France", "France", "Espagne", "Espagne", "Espagne"),
+  Modèle = c("Prix (k=1)", "Demande (k=1)", "Joint (k=2)",
+             "Prix (k=1)", "Demande (k=1)", "Joint (k=2)"),
+  `F-statistic` = c(round(result_price_fr$fstat,2), round(result_gen_fr$fstat,2), 
+                    paste(round(result_fr$fstat_price,2), round(result_fr$fstat_gen,2)),
+                          round(result_price_esp$fstat,2), round(result_gen_esp$fstat,2), 
+                    paste(round(result_esp$fstat_price,2), round(result_esp$fstat_gen,2)) ),
+  `Cragg-Donald` = c(NA, NA, round(result_fr$cragg_donald_stat,2),
+                     NA, NA, round(result_esp$cragg_donald_stat,2)),
+  `Mertens and Ravn (2013)` = c(NA, NA, paste(round(result_fr$reliability_measure[1:2], 2), collapse = ", "),
+                                NA, NA, paste(round(result_esp$reliability_measure[1:2], 2), collapse = ", ")),
+
+)
+
+# Générer le tableau avec séparation France/Espagne
+iv_table <- summary_table %>%
+  gt(groupname_col = "Pays") %>%
+  tab_header(
+    title = md("**IV Relevance**")
+  ) %>%
+  cols_label(
+    Modèle = "Modèle",
+    `F-statistic` = "F-stat",
+    `Cragg-Donald` = "Cragg-Donald",
+    `Mertens and Ravn (2013)` = "Mertens and Ravn (2013)"
+  ) %>%
+  fmt_missing(
+    columns = everything(),
+    missing_text = "-"
+  ) %>%
+  tab_options(row_group.as_column = TRUE) 
+
+getwd()
+# Sauvegarder en PNG
+gtsave(iv_table, filename = "iv_relevance_table.html")
+
   
   

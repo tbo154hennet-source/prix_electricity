@@ -9,12 +9,12 @@ Sys.setenv(lang = "en_US")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-IV_data <- read_parquet('IV_data_esp2.parquet') 
+IV_data <- read_parquet('IV_data_esp.parquet') 
 
-colnames(IV_data)
-dim(IV_data)
-IV_data$spot_price
-IV_data <- IV_data[1:108,]
+# colnames(IV_data)
+# dim(IV_data)
+# IV_data$spot_price
+# IV_data <- IV_data[1:108,]
 periodicity_test_col <- setdiff(colnames(IV_data),
                                 c("month" , "year" ,                     
                                   "datetime", "last_Date", "last_Trading.day",
@@ -53,7 +53,6 @@ exclude_keywords <- c("instrument", "gas_shock", "PC1")
 # Create a single pattern from the keywords
 exclude_pattern <- paste(exclude_keywords, collapse = "|")
 # Filter out rows where 'title' contains any of the exclude keywords
-filtered_news <- filtered_news[!grepl(exclude_pattern, filtered_news$title, ignore.case = TRUE), ]
 periodicity_test_col <- periodicity_test_col[!grepl(periodicity_test_col, pattern = exclude_pattern)]
 
 
@@ -103,11 +102,11 @@ setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_anal
 write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 
 
-colnames(VAR_series)
+
 non_log_diff_var <- c("month", "year", "datetime", "last_Date", "last_Trading.day",
                       "cold_excess_instrument" ,"heat_excess_instrument",
                       "Date", "ffr", "Bond_rate",
-                      "PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand")
+                      "PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand", "cbf_es")
 
 non_log_col_var <- c(non_log_diff_var)
 
@@ -120,22 +119,40 @@ IV_data_log <- seasonally_adjusted_df
 cols_to_transform <- setdiff(periodicity_test_col, non_log_col_var)
 # 1. Calculate log transformation and store with suffix "_log"
 for (col in cols_to_transform) {
-  IV_data_log[[paste0(col, "_log")]] <- log(IV_data_log[[col]]+1)
+  numeric_col <- as.numeric(IV_data_log[[col]])  # Ensure numeric
+  #detrended_col <- detrend(numeric_col)          # Detrend
+  IV_data_log[[paste0(col, "_log")]] <- log(numeric_col + 1)  # Log transform
 }
 
 # 3. Remove the original columns (except the non-transformed ones)
-IV_data_log <- IV_data_log[, !names(IV_data_log) %in% cols_to_transform]
+#IV_data_log <- IV_data_log[, !names(IV_data_log) %in% cols_to_transform]
 
 
 seasonally_adjusted_df[is.na(seasonally_adjusted_df)] <- 0
 IV_data_log[is.na(IV_data_log)] <- 0
 
-# Detrend the data
-detrended_data <- as.data.frame(detrend(data.matrix(seasonally_adjusted_df)))
-IV_data_log <- as.data.frame(detrend(data.matrix(IV_data_log)))
 
+
+
+IV_data_log <- IV_data_log %>% 
+  mutate(
+    temp_excess_instrument = cold_excess_instrument + heat_excess_instrument,
+    log_diff_gas = avg_spot_price_log - lag(as.numeric(avg_spot_price_log)),
+    log_diff_spot = spot_price_log - lag(as.numeric(spot_price_log)),
+    diff_cbf = cbf_es - lag(as.numeric(cbf_es)),
+    log_diff_renewable = renewable_day_ahead_forecast_esp_log - lag(as.numeric(renewable_day_ahead_forecast_esp_log)),
+    log_diff_ex_renewable = renewable_day_ahead_forecast_ex_es_log - lag(as.numeric(renewable_day_ahead_forecast_ex_es_log))
+    ) %>%
+  arrange(datetime)
+
+getwd()
 write.csv(detrended_data, "DATASET_sa_detrended.csv")
 write_parquet(IV_data_log, 'IV_data_esp_log.parquet')
+
+
+#write_parquet(IV_data_log, 'IV_data_esp_log_detrended.parquet')
+
+
 
 #petit plot pour voir l'effet associé
 
@@ -161,7 +178,7 @@ ggplot(IV_data, aes(x = datetime)) +
 
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y = log(IV_data$spot_price) -mean(log(IV_data$spot_price)) , color = "Original")) +
-  geom_line(aes(y = IV_data_log$spot_price_log, color = "Detrended")) +
+  geom_line(aes(y = IV_data_log_detrended$spot_price_log, color = "Detrended")) +
   labs(title = "Log Spot price - Original and Detrended",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
@@ -176,4 +193,13 @@ ggplot(IV_data, aes(x = datetime)) +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
+ggplot() +
+  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = renewable_day_ahead_forecast_esp_log, color ="ES", linetype = "Baseline" )) +
+  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = renewable_day_ahead_forecast_ex_es_log - mean(renewable_day_ahead_forecast_ex_es_log), color ="ex-ES", linetype = "Baseline" )) +
+  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = detrended_renewable_day_ahead_forecast_esp_log, color ="ES", linetype = "Detrended" )) +
+  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = detrended_renewable_day_ahead_forecast_ex_es_log, color ="ex-ES", linetype = "Detrended" )) +
+  labs(title = "Should I detrend instruments ?",
+       x = "Time",
+       y = "GWh") +
+  theme_minimal()
 

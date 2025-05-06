@@ -184,16 +184,19 @@ setwd(load_path_data)
 # Lister tous les fichiers dans le dossier avec l'extension .parquet
 parquet_files <- list.files(pattern = "\\.parquet$")
 # Lire tous les fichiers parquet et les fusionner dans un seul dataframe
+
+# Lecture + renommage dans lapply
 day_ahead_prices <- parquet_files %>%
-  lapply(read_parquet) %>% # Lire chaque fichier parquet
-  bind_rows() %>%  # Fusionner tous les dataframes
-  arrange(`__index_level_0__`) 
+  lapply(function(file) {
+    df <- read_parquet(file)
+    names(df) <- colnames_target
+    return(df)
+  }) %>%
+  bind_rows() %>%
+  arrange(datetime)
 
 
-day_ahead_prices<- day_ahead_prices[,1:2]
-colnames(day_ahead_prices) <- c("price", "datetime")
-day_ahead_prices<- day_ahead_prices%>% 
-  arrange(datetime) %>% 
+day_ahead_prices<- day_ahead_prices %>% 
   mutate(year = as.character(year(datetime)),
          month = as.integer(month(datetime)),
          day = as.integer(day(datetime)),
@@ -201,8 +204,9 @@ day_ahead_prices<- day_ahead_prices%>%
          price = as.numeric(price),
          price_diff = price - lag(price),
          log_price_diff = log(price) - lag(log(price))
-  )
-
+  ) %>% 
+  #filter(delivery_date >= as.Date('2018-01-01')) %>% 
+  arrange(datetime)
 
 price_indispo_merge_fr <- left_join(day_ahead_prices,
                                     final_indispo_tot_wide_fr,

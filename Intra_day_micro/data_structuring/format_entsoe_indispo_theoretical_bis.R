@@ -5,7 +5,6 @@ library(stats)
 library(ggplot2)
 library(lubridate)
 library(purrr)
-library(furrr)
 
 save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/data_structuring'
 setwd(save_path_entsoe)
@@ -29,20 +28,21 @@ unexpected_indispo_ENTSOE_data <- unexpected_indispo_ENTSOE_data[!(unexpected_in
 #because it was not published on REMIT
 # but published on some national website 
 
-
+# ⚡ Active le parallélisme
 plan(multisession) 
 counter <- 0
 total_rows <- nrow(unexpected_indispo_ENTSOE_data)
 
 result_list <- future_map(seq_len(total_rows), function(i) {
   counter <<- counter + 1
-  if (counter %% 200 == 0) message("Lignes traitÃ©es : ", counter)
+  if (counter %% 200 == 0) message("Lignes traitées : ", counter)
   tryCatch({
     pub_auction_window_theoretical(unexpected_indispo_ENTSOE_data[i, ])
   }, error = function(e) {
     print(unexpected_indispo_ENTSOE_data$mrid[i])  # Correction ici
     return(NULL)  # Ignorer les erreurs
   })
+  
 })
 
 
@@ -51,10 +51,10 @@ result_df <- bind_rows(unlist(result_list, recursive = FALSE))
 
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
-write_parquet(result_df, "result_df_theoretical.parquet")
+write_parquet(result_df, "result_df_theoretical_all_OMIE.parquet")
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
-result_df <- read_parquet("my_result_df_theoretical.parquet")
+result_df <- read_parquet("result_df_theoretical_all_OMIE.parquet")
 
 colnames(result_df)
 colnames(unexpected_indispo_ENTSOE_data)
@@ -62,10 +62,10 @@ colnames(unexpected_indispo_ENTSOE_data)
 auction_ENTSOE_indispo <- result_df %>% 
   left_join(unexpected_indispo_ENTSOE_data,  by = "mrid")
 
-auction_ENTSOE_indispo <- auction_ENTSOE_indispo  %>% 
-  mutate( dummy = ifelse( auction_before ==2 & auction_after ==3 & sprintf("%02d:%02d", hour(datetime_pub), minute_pub )< time_ref, 1, 0),
-          auction_before = ifelse( dummy, 1, auction_before),
-          auction_after = ifelse( dummy, 2, auction_after))
+# auction_ENTSOE_indispo <- auction_ENTSOE_indispo  %>% 
+#   mutate( dummy = ifelse( auction_before ==2 & auction_after ==3 & sprintf("%02d:%02d", hour(datetime_pub), minute_pub )< time_ref, 1, 0),
+#           auction_before = ifelse( dummy, 1, auction_before),
+#           auction_after = ifelse( dummy, 2, auction_after))
 
 
 actual_ENTSOE_indispo <- auction_ENTSOE_indispo  %>% 
@@ -82,7 +82,7 @@ actual_ENTSOE_indispo <- actual_ENTSOE_indispo %>%
 
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
-write_parquet(actual_ENTSOE_indispo, 'actual_ENTSOE_indispo_theoretical.parquet')
+write_parquet(actual_ENTSOE_indispo, 'actual_OMIE_indispo_theoretical_all.parquet')
 
 
 colnames(actual_ENTSOE_indispo)
