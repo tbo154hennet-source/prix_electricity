@@ -1,5 +1,12 @@
 
 library(readxl)
+library(arrow)
+library(dplyr)
+library(tidyr)
+library(stats)
+library(ggplot2)
+library(lubridate)
+library(purrr)
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/fr")
 

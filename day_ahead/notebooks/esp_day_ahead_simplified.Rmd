@@ -30,8 +30,7 @@ colnames_with_capacity <- colnames(price_indispo_merge)[grepl("Capacity", colnam
 capacity_fields <- 
   c(colnames_with_capacity,
     "day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables",
-    "NTC_FR_ESP", "NTC_ESP_FR"
-    
+    "NTC_FR_ESP", "NTC_ESP_FR","gen_tot_da" , "gen_tot_da_conso" ,"gen_tot_da_net"
     )
 
 price_indispo_merge[colnames_with_capacity] <- lapply(price_indispo_merge[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
@@ -40,10 +39,11 @@ price_indispo_merge <- price_indispo_merge %>%
   mutate(across(all_of(capacity_fields), 
                 ~ . / 1000)) %>% 
   mutate(
-    Planned.Unavailable.Capacity = Planned.Unavailable.Capacity - Planned.Unavailable.Nuclear.Capacity,
+    #Planned.Unavailable.Capacity = Planned.Unavailable.Capacity - Planned.Unavailable.Nuclear.Capacity,
     Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
          Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
          Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity,
+    temperature_mismatch = temperature_supply - temperature_demand
          ) 
 
 price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]
@@ -51,6 +51,7 @@ price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]
 price_indispo_merge <- price_indispo_merge[!rowSums(sapply(price_indispo_merge, is.infinite)), ]
 
 price_indispo_merge$weekday <- weekdays(price_indispo_merge$delivery_date)
+price_indispo_merge$creneau <- hour(price_indispo_merge$datetime)
 
 colnames(price_indispo_merge)  
   #group_by(year, month) %>% 
@@ -59,27 +60,18 @@ colnames(price_indispo_merge)
   #        unpredicted_renewables_sq = unpredicted_renewables^2,)
 ```
 
-On simplifie sans regarder les différences published/Unpublished pour avoir des spécifications plus simples.
-Planned + Unpublished + Published concaténées,
-Uneffective
-
-```{r}
-price_indispo_merge$Effective.Unavailable.Capacity <- price_indispo_merge$Planned.Unavailable.Capacity + price_indispo_merge$Published.Unavailable.Capacity + price_indispo_merge$Unpublished.Unavailable.Capacity
-
-price_indispo_merge$Effective.Unavailable.Nuclear.Capacity <- price_indispo_merge$Planned.Unavailable.Nuclear.Capacity + price_indispo_merge$Published.Unavailable.Nuclear.Capacity + price_indispo_merge$Unpublished.Unavailable.Nuclear.Capacity
-
-price_indispo_merge$Effective.Predicted.Unavailable.Capacity <- price_indispo_merge$Planned.Predicted.Unavailable.Capacity + price_indispo_merge$Published.Predicted.Unavailable.Capacity + price_indispo_merge$Unpublished.Predicted.Unavailable.Capacity
+On simplifie sans regarder les différences published/Unpublished Uneffective pour avoir des spécifications plus simples.
 
 
-```
+
 
 
 ```{r}
 
 # perform first stage regression
 m_log <- lm(
-  log(price) ~  Effective.Unavailable.Capacity +Uneffective.Unavailable.Capacity + 
-     Effective.Unavailable.Nuclear.Capacity +Uneffective.Unavailable.Nuclear.Capacity+
+  log(price) ~  Published.Unavailable.Capacity +Unpublished.Unavailable.Capacity + 
+     Published.Unavailable.Nuclear.Capacity +Unpublished.Unavailable.Nuclear.Capacity+
     + gen_tot+ day_ahead_forecast,
   data= price_indispo_merge)
 
@@ -102,8 +94,8 @@ cl_se_log[nuclear_names] <- cl_se_log_nu[nuclear_names]
 
 
 m_log_FE <- lm(
-  log(price) ~ Effective.Unavailable.Capacity +Uneffective.Unavailable.Capacity + 
-     Effective.Unavailable.Nuclear.Capacity +Uneffective.Unavailable.Nuclear.Capacity+
+  log(price) ~ Published.Unavailable.Capacity +Unpublished.Unavailable.Capacity + 
+     Published.Unavailable.Nuclear.Capacity +Unpublished.Unavailable.Nuclear.Capacity+
     gen_tot+ day_ahead_forecast  + 
     as.factor(year) + as.factor(month) + as.factor(weekday),
   data= price_indispo_merge)
@@ -124,8 +116,8 @@ cl_se_log_FE[nuclear_names] <- cl_se_log_nu[nuclear_names]
 
 
 m_log_control <- lm(
-  log(price) ~ Effective.Unavailable.Capacity +Uneffective.Unavailable.Capacity + 
-     Effective.Unavailable.Nuclear.Capacity +Uneffective.Unavailable.Nuclear.Capacity+
+  log(price) ~ Published.Unavailable.Capacity +Unpublished.Unavailable.Capacity + 
+     Published.Unavailable.Nuclear.Capacity +Unpublished.Unavailable.Nuclear.Capacity+
     gen_tot+ day_ahead_forecast   +
     spot_gas + unpredicted_renewables + intraday_update_renewables + 
     as.factor(year) + as.factor(month) + as.factor(weekday),
@@ -159,11 +151,11 @@ reg_table <- stargazer( m_log, m_log_FE, m_log_control,
     se = list(cl_se_log, cl_se_log_FE, cl_se_log_control),
     title = "Regression Results",
     column.labels = c("Basic", "Time FE", "Time FE+ Controls"),
-    keep = c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity", "Effective.Unavailable.Capacity", 
-     "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
+    keep = c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity", "Published.Unavailable.Capacity", 
+     "Unpublished.Unavailable.Capacity","UnPublished.Unavailable.Capacity", 
      "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
-     "Effective.Unavailable.Nuclear.Capacity",
-    "Uneffective.Unavailable.Nuclear.Capacity", "Planned.Unavailable.Nuclear.Capacity","gen_tot",
+     "Published.Unavailable.Nuclear.Capacity",
+    "UnPublished.Unavailable.Nuclear.Capacity", "Planned.Unavailable.Nuclear.Capacity","gen_tot",
              "day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables")
 )
  
@@ -174,8 +166,8 @@ reg_table <- stargazer( m_log, m_log_FE, m_log_control,
 ```{r}
 # perform first stage regression
 m_rf <- lm(
-  log(price) ~ Effective.Predicted.Unavailable.Capacity+  
-    Uneffective.Predicted.Unavailable.Capacity + 
+  log(price) ~ Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
      gen_tot+ day_ahead_forecast   + spot_gas,
   data= price_indispo_merge)
 
@@ -191,8 +183,8 @@ cl_se_rf <- sqrt(diag(vcov_cluster))
 
 
 m_rf_FE <- lm(
-  log(price) ~  Effective.Predicted.Unavailable.Capacity+  
-    Uneffective.Predicted.Unavailable.Capacity + 
+  log(price) ~  Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
     gen_tot+ day_ahead_forecast   + spot_gas + 
     as.factor(year) + as.factor(month) + as.factor(weekday),
   data= price_indispo_merge)
@@ -215,9 +207,9 @@ reg_table <- stargazer(  m_rf, m_rf_FE,
     title = "Regression Results",
     column.labels = c(  "XGB", "XGB + Time FE"),
     keep = c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
-             "Effective.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity",
+             "Published.Predicted.Unavailable.Capacity", "UnPublished.Predicted.Unavailable.Capacity",
               "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",
-    "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "Uneffective.Limiting.Capacity",
+    "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "UnPublished.Limiting.Capacity",
       "gen_tot",
              "day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables")
 )

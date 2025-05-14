@@ -14,13 +14,29 @@ generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
 generation_by_fuel <- read_parquet('generation_by_fuel_format_esp.parquet')
 
+gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+setwd(gas_path)
+
+gas_prices <- read_excel("gas.xlsx") %>% 
+  mutate(time = as.Date(time),
+         spot_gas = as.numeric(paste0(
+           `Gaz naturel, contrats à terme aux Pays-Bas (TTF), euros par megawatt-heure`
+           ,".",virgule ))) %>% 
+  dplyr::select(time, spot_gas)
 
 prediction_data <- merge(generation_by_fuel, generation_per_plant, 
                          by='__index_level_0__') %>% 
-  mutate(month= month(`__index_level_0__`),
+  mutate(#year = year(`__index_level_0__`),
+         month= month(`__index_level_0__`),
          day_of_week = weekdays(`__index_level_0__`),
+         date = as.Date(`__index_level_0__`),
          creneau = hour(`__index_level_0__`) +1)
 
+prediction_data <- merge(prediction_data,
+                         gas_prices,
+                         by.x = c('date'),
+                         by.y = c('time')) 
+colnames(prediction_data)
 
 # Sort the columns by alphabetical order
 generation_per_plant <- generation_per_plant[, order(colnames(generation_per_plant))]
@@ -58,7 +74,7 @@ for (centrale in active_centrales) {
     print(centrale)
     mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
                                                 'day_of_week', 'creneau',
-                                                'wind_solar_tot', 'gen_tot', centrale)] %>%
+                                                'wind_solar_tot', 'gen_tot', "spot_gas", centrale)] %>%
       mutate(previous_day_prod = lag(!!sym(centrale), 24))  # Use !!sym to refer to the variable dynamically
     
     mini_prediction_data <- na.omit(mini_prediction_data)
@@ -73,7 +89,7 @@ for (centrale in active_centrales) {
     
     mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
                                                 'day_of_week', 'creneau',
-                                                'wind_solar_tot', 'gen_tot', centrale)] %>%
+                                                'wind_solar_tot', 'gen_tot',"spot_gas", centrale)] %>%
       mutate(previous_day_prod = lag(!!sym(centrale), 24))  # Use !!sym to refer to the variable dynamically
     
     mini_prediction_data <- na.omit(mini_prediction_data)
@@ -131,7 +147,7 @@ get_predictions <- function(centrale){
   #centrale = "BESOS 3"
   # Prepare mini_prediction_data
   mini_prediction_data <- prediction_data[, c('__index_level_0__', 'month',
-                                              'day_of_week', 'wind_solar_tot','creneau',  'gen_tot', centrale)] %>%
+                                              'day_of_week', 'wind_solar_tot','creneau',  'gen_tot',"spot_gas", centrale)] %>%
     mutate(previous_day_prod = lag(!!sym(centrale), 24))  # Use !!sym to refer to the variable dynamically
   
   # Convert some columns to factors

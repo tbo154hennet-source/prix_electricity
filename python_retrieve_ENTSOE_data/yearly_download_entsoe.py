@@ -4,20 +4,20 @@ import pandas as pd
 from entsoe import EntsoePandasClient
 
 client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
-country_code = 'GB'
+country_code = 'ES'
 # DE-AT-LU / CH/ IT ou IT-NORD, IT_NORD, LU
 #country_code_from = 'ES'
 #country_code_to = 'PT'   
 
 # Define start and end dates
-start_date = pd.Timestamp('20160101', tz='Europe/Brussels')
+start_date = pd.Timestamp('20150101', tz='Europe/Brussels')
 #end_date = pd.Timestamp('20170101', tz='Europe/Brussels')
 end_date = pd.Timestamp('20231231', tz='Europe/Brussels')
 # Generate monthly date ranges
 yearly_dates = pd.date_range(start=start_date, end=end_date, freq='YS')
 
 import os
-path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_tot\eu\GB'  # Remplacez par votre chemin
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_tot\esp'  # Remplacez par votre chemin
 #path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\cross_border_flows\actual_flows\ES_PT'
 os.chdir(path)
 
@@ -53,7 +53,7 @@ for date in yearly_dates:
     #net_transfer_capacity_yearahead = client.query_net_transfer_capacity_yearahead(country_code_from, country_code_to,  start = start_year, end = end_year)
     
     
-    table = pa.Table.from_pandas(generation_forecast.to_frame())
+    table = pa.Table.from_pandas(generation_forecast)
     #day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_year, end=end_year)
     # Write the table to a Parquet file
     pq.write_table(table, string)

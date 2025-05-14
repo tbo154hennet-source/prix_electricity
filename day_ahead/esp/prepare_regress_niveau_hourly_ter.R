@@ -221,6 +221,45 @@ colnames(renewable_forecasts)
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
   left_join(renewable_forecasts, by=c('datetime' = '__index_level_0__'))
 
+
+#add temperature  and other weather conditions
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
+colnames(temperature_openmeteo_data)
+
+price_indispo_merge_esp <- price_indispo_merge_esp %>%
+  left_join(temperature_openmeteo_data, by=c('datetime' = 'date'))
+
+
+
+
+#add day ahead generation
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp")
+# Get all files in the directory
+# List only .parquet files in the directory
+my_files <- list.files(pattern = "\\.parquet$")
+# Read all files into a list of data frames
+gen_list <- lapply(my_files, function(file) {
+  message(file)  # equivalent to print
+  read_parquet(file)
+})
+
+# Combine all data frames and remove duplicates
+gen_data <- unique(do.call(rbind, gen_list))
+# Rename columns
+colnames(gen_data) <- c('gen_tot_da', 'gen_tot_da_conso', 'datetime')
+gen_data$gen_tot_da_net <- gen_data$gen_tot_da -  gen_data$gen_tot_da_conso 
+
+
+
+price_indispo_merge_esp <- price_indispo_merge_esp %>%
+  left_join(gen_data, by=c('datetime'))
+
+
+colnames(price_indispo_merge_esp)
+
 # pour l'estimation en niveau,
 #on rajoute le spot gas price
 library(readxl)
@@ -245,15 +284,59 @@ setwd(save_path_data)
 write_parquet(price_indispo_merge_esp, "price_indispo_merge_esp.parquet")
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/cross_border_flows")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
-cross_border_flows <- read_parquet("fr_esp_cross_border_flows.parquet")
-colnames(cross_border_flows)
+weighted_mean <- function(x, w) {
+  sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
+}
+
+price_merge_CBF <- read_parquet("price_merge_CBF_max.parquet")
+colnames(price_merge_CBF)
+crossborder_data <- price_merge_CBF %>% 
+  filter(gen_tot_fr > 0 & gen_tot_esp > 0) %>%
+  summarise(NTC_ES_FR = NTC_ES_FR,
+            NTC_FR_ES = NTC_FR_ES,
+            NTC_ES_PT = NTC_ES_PT,
+            NTC_PT_ES = NTC_PT_ES,
+    renewable_day_ahead_forecast_ex_es = weighted_mean(renewable_day_ahead_forecast_pt +
+                                                         renewable_day_ahead_forecast_fr , 
+                                                       gen_tot_esp),
+    cbf_es = weighted_mean(CBF_ES_pred, gen_tot_esp),
+    
+    renewable_day_ahead_forecast_pt = weighted_mean(renewable_day_ahead_forecast_pt, gen_tot_esp),
+    renewable_day_ahead_forecast_fr = weighted_mean(renewable_day_ahead_forecast_fr, 
+                                                    gen_tot_esp),
+    
+    
+    renewable_day_ahead_forecast_ex_fr = weighted_mean(renewable_day_ahead_forecast_esp+
+                                                         renewable_day_ahead_forecast_it_nord+
+                                                         renewable_day_ahead_forecast_de+
+                                                         renewable_day_ahead_forecast_be+
+                                                         renewable_day_ahead_forecast_ch+
+                                                         renewable_day_ahead_forecast_gb, 
+                                                       gen_tot_fr),
+    cbf_fr = weighted_mean(CBF_FR_pred, gen_tot_fr),
+    renewable_day_ahead_forecast_esp = weighted_mean(renewable_day_ahead_forecast_esp, gen_tot_fr),
+    renewable_day_ahead_forecast_it_nord = weighted_mean(renewable_day_ahead_forecast_it_nord, gen_tot_fr),
+    renewable_day_ahead_forecast_de = weighted_mean(renewable_day_ahead_forecast_de, gen_tot_fr),
+    renewable_day_ahead_forecast_be = weighted_mean(renewable_day_ahead_forecast_be, gen_tot_fr),
+    renewable_day_ahead_forecast_ch = weighted_mean(renewable_day_ahead_forecast_ch, gen_tot_fr),
+    renewable_day_ahead_forecast_gb = weighted_mean(renewable_day_ahead_forecast_gb, gen_tot_fr),
+    datetime = datetime
+  ) %>%
+  arrange(datetime) %>% 
+  ungroup()
 
 
-price_indispo_merge_esp_NTC <- merge(price_indispo_merge_esp, cross_border_flows %>% 
-                                       dplyr::select(NTC_ESP_FR,NTC_FR_ESP, time), 
-                         by.x ="datetime", by.y ="time")
+price_indispo_merge_esp_NTC <- merge(price_indispo_merge_esp, crossborder_data %>% 
+                                       dplyr::select(NTC_ES_FR,NTC_FR_ES,                          
+                                        NTC_ES_PT, NTC_PT_ES,
+                                        renewable_day_ahead_forecast_ex_es, cbf_es,
+                                                     datetime), 
+                                     by ="datetime")
+
+
+
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_esp_NTC, "price_indispo_merge_esp_NTC.parquet")

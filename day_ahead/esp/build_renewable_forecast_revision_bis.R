@@ -46,30 +46,53 @@ wind_solar_headers <- c(
   "('Wind Onshore', 'Actual Aggregated')"
 )
 
+thermal_headers <- c(
+  "('Biomass', 'Actual Aggregated')",                        
+  "('Fossil Brown coal/Lignite', 'Actual Aggregated')",      
+  "('Fossil Coal-derived gas', 'Actual Aggregated')",        
+  "('Fossil Gas', 'Actual Aggregated')"  ,                   
+  "('Fossil Hard coal', 'Actual Aggregated')",               
+  "('Fossil Oil', 'Actual Aggregated')"   ,                  
+  "('Fossil Oil shale', 'Actual Aggregated')" ,              
+  "('Fossil Peat', 'Actual Aggregated')"
+)
+
+hydro_headers <- c(
+  "('Hydro Pumped Storage', 'Actual Aggregated')",           
+  "('Hydro Pumped Storage', 'Actual Consumption')"  ,        
+  "('Hydro Run-of-river and poundage', 'Actual Aggregated')",
+  "('Hydro Water Reservoir', 'Actual Aggregated')",          
+  "('Marine', 'Actual Aggregated')"
+)
+
 # Calculer la somme des colonnes spécifiées
 generation_by_fuel_final <- generation_by_fuel %>%
   rowwise() %>%
   mutate(across(-`__index_level_0__`, as.numeric)) %>%
   mutate(
-    gen_tot = sum(c_across(-`__index_level_0__`), na.rm = TRUE),
-    wind_solar_tot = sum(c_across(all_of(wind_solar_headers)), na.rm = TRUE) # Nouvelle colonne pour la somme
+    gen_tot = sum(c_across(-`__index_level_0__`), na.rm = TRUE),# Nouvelle colonne pour la somme
+    wind_solar_tot = sum(c_across(all_of(wind_solar_headers)), na.rm = TRUE),
+    hydro_tot = sum(c_across(all_of(hydro_headers)), na.rm = TRUE),
+    thermal_tot = sum(c_across(all_of(thermal_headers)), na.rm = TRUE)
   ) %>%
   ungroup()
 
 
-save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel'
-setwd(save_path_esp)
-write_parquet(generation_by_fuel_final, 'generation_by_fuel_format.parquet')
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot")
+write_parquet(generation_by_fuel_final, 'generation_by_fuel_format_esp.parquet')
 
-generation_by_fuel_final <- read_parquet('generation_by_fuel_format.parquet')
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot")
+generation_by_fuel_final <- read_parquet('generation_by_fuel_format_esp.parquet')
 
 colnames(generation_by_fuel_final)
-
 
 wind_solar_actual <- generation_by_fuel_final[,c("('Solar', 'Actual Aggregated')",
                                                  "('Wind Offshore', 'Actual Aggregated')",
                                                  "('Wind Onshore', 'Actual Aggregated')",
-                                                 'gen_tot', 'wind_solar_tot', "__index_level_0__")]
+                                                 "('Nuclear', 'Actual Aggregated')" ,
+                                                 'gen_tot', 'wind_solar_tot', 
+                                                 "thermal_tot", "hydro_tot", "__index_level_0__")] %>% 
+  rename(nuclear = "('Nuclear', 'Actual Aggregated')")
 
 
 colnames(wind_solar_actual)[1:3] <- c('Solar', 'Wind Offshore','Wind Onshore')
@@ -88,8 +111,8 @@ renewable_forecasts <- renewable_forecasts %>%
          unpredicted_renewables = wind_solar_tot - intraday_forecast ,
          intraday_update_renewables = intraday_forecast - day_ahead_forecast)
 
-load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/renewable_forecast"
-setwd(load_path_data)
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
+setwd(save_path_data)
 
 write_parquet(renewable_forecasts, 'renewable_forecasts_esp.parquet')
 

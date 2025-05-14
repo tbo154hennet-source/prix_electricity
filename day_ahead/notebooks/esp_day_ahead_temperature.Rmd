@@ -1,0 +1,304 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(arrow)
+library(stargazer)
+library(lmtest)
+library(data.table)
+library(sandwich)
+```
+  
+
+```{r}
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+setwd(save_path_data)
+price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")
+price_indispo_merge <- price_indispo_merge %>%
+  fill(spot_gas, .direction = "up") %>% 
+  rename(renewable_day_ahead_forecast = day_ahead_forecast)
+
+
+
+```
+
+```{r}
+
+colnames_with_capacity <- colnames(price_indispo_merge)[grepl("Capacity", colnames(price_indispo_merge))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "renewable_day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables"
+    
+    )
+price_indispo_merge[colnames_with_capacity] <- lapply(price_indispo_merge[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+#
+price_indispo_merge <- price_indispo_merge %>% 
+  mutate(across(all_of(capacity_fields), 
+                ~ . / 1000)) %>% 
+  mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity,
+              temperature_mismatch = temperature_demand - temperature_supply ,
+         gen_tot = gen_tot - gen_tot_da
+         ) 
+
+price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]
+
+price_indispo_merge <- price_indispo_merge[!rowSums(sapply(price_indispo_merge, is.infinite)), ]
+
+price_indispo_merge$weekday <- weekdays(price_indispo_merge$delivery_date)
+price_indispo_merge$creneau <- hour(price_indispo_merge$datetime)
+
+
+#design partie temperature
+
+cold_months <- c(1, 2, 11, 12)
+hot_months <- c(6, 7, 8, 9)
+
+# "temperature_2m_hydro"                      
+# [51] "temperature_2m_nuclear"                    
+# [52] "temperature_2m_thermal"
+price_indispo_merge <- price_indispo_merge %>% 
+  mutate(cold_excess_demand = -ifelse(temperature_demand <= 10, 
+                                          temperature_demand, 0),
+         heat_excess_demand = ifelse(temperature_demand >= 20,
+                                         temperature_demand, 0),
+         cold_excess_supply = -ifelse(temperature_supply <= 10, 
+                                          temperature_supply, 0),
+         heat_excess_supply = ifelse(temperature_supply >= 20,
+                                         temperature_supply, 0),
+         cold_excess_hydro = -ifelse(temperature_2m_hydro <= 10, 
+                                          temperature_2m_hydro, 0),
+         heat_excess_hydro = ifelse(temperature_2m_hydro >= 20,
+                                         temperature_2m_hydro, 0),
+         cold_excess_nuclear = -ifelse(temperature_2m_nuclear <= 10, 
+                                          temperature_2m_nuclear, 0),
+         heat_excess_nuclear = ifelse(temperature_2m_nuclear >= 20,
+                                         temperature_2m_nuclear, 0),
+         cold_excess_thermal = -ifelse(temperature_2m_thermal <= 10, 
+                                          temperature_2m_thermal, 0),
+         heat_excess_thermal = ifelse(temperature_2m_thermal >= 20,
+                                         temperature_2m_thermal, 0),
+         cold_excess_mismatch = ifelse(month %in% cold_months,
+                                       temperature_supply - temperature_demand, 0),
+         heat_excess_mismatch = ifelse(month %in% hot_months,
+                                       temperature_demand - temperature_supply, 0),
+         
+         temp_excess_demand = cold_excess_demand + heat_excess_demand,
+         temp_excess_supply = cold_excess_supply + heat_excess_demand,
+         temp_excess_mismatch = cold_excess_mismatch + heat_excess_mismatch,
+         temp_excess_hydro = cold_excess_hydro + heat_excess_hydro,
+         temp_excess_nuclear = cold_excess_nuclear + heat_excess_nuclear,
+         temp_excess_thermal = cold_excess_thermal + heat_excess_thermal,
+         
+         
+  )
+colnames(price_indispo_merge)
+
+```
+
+On suggère deux hypothèses, soit différence en niveau sur longue période, soit différence immédiate sur des conditions quasi similaires lors de l'activation d'une indispo à deux créneaux proches.
+
+Attention le fait d'avoir pris des heures arrondies à l'heure plien la plus proche peut fausser
+les résultats.
+
+```{r}
+
+m_rf_temp <- lm(
+  log(price) ~  temperature_demand + temperature_supply + 
+    #temperature_mismatch +
+    Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    Uneffective.Predicted.Unavailable.Capacity +
+    gen_tot_da + gen_tot +  gen_tot_da_conso + renewable_day_ahead_forecast   + 
+    thermal_tot + hydro_tot+ nuclear+
+    spot_gas + 
+    unpredicted_renewables + intraday_update_renewables+
+    
+    precipitation_demand + precipitation_supply +
+    relative_humidity_demand + relative_humidity_supply+
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_temp , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_temp <- sqrt(diag(vcov_cluster))
+
+
+
+m_rf_temp_excess <- lm(
+  log(price) ~  
+    temp_excess_demand + temp_excess_supply + 
+    #temp_excess_mismatch+
+    Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    Uneffective.Predicted.Unavailable.Capacity +
+    gen_tot_da + gen_tot +  gen_tot_da_conso + renewable_day_ahead_forecast   + spot_gas + 
+    thermal_tot + hydro_tot+ nuclear+
+    unpredicted_renewables + intraday_update_renewables+
+    precipitation_demand + precipitation_supply +
+    relative_humidity_demand + relative_humidity_supply+
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_temp_excess , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_temp_excess<- sqrt(diag(vcov_cluster))
+
+
+m_rf_heat_cold_excess <- lm(
+  log(price) ~  
+    heat_excess_demand + cold_excess_demand + 
+    heat_excess_supply+ cold_excess_supply+
+    #heat_excess_mismatch+ cold_excess_mismatch+
+    Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    Uneffective.Predicted.Unavailable.Capacity +
+    gen_tot_da + gen_tot +  gen_tot_da_conso + renewable_day_ahead_forecast   + spot_gas + 
+    thermal_tot + hydro_tot+ nuclear+
+    unpredicted_renewables + intraday_update_renewables+
+    precipitation_demand + precipitation_supply +
+    relative_humidity_demand + relative_humidity_supply+
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_heat_cold_excess , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_heat_cold_excess <- sqrt(diag(vcov_cluster))
+
+
+
+
+```
+
+
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer(  m_rf_temp, m_rf_temp_excess,  m_rf_heat_cold_excess,
+    type = "html",
+    se = list( cl_se_rf_temp, cl_se_rf_temp_excess, cl_se_rf_heat_cold_excess),
+    title = "Regression Results",
+    column.labels = c(  "Temperature", "Heat/Cold Excess", "Temperature Excess"),
+    keep = c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
+             "Published.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity",
+              "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",
+    "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "UnPublished.Limiting.Capacity",
+      "gen_tot",
+             "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables", "temp_excess_supply", "temp_excess_mismatch",
+    "heat_excess_supply", "cold_excess_supply", "heat_excess_mismatch",  "cold_excess_mismatch", 
+    "temperature_mismatch", "temperature_supply", "temperature_demand", "temp_excess_demand",
+    "precipitation_supply", "precipitation_demand",
+    "relative_humidity_supply", "relative_humidity_demand",
+     "heat_excess_demand","cold_excess_demand")
+)
+ 
+```
+
+On essaye maintenant de décomposer par type d'énergie
+
+```{r}
+excess_headers <- c("heat_excess_hydro" , "cold_excess_hydro",
+   "heat_excess_nuclear" , "cold_excess_nuclear",
+    "heat_excess_thermal" ,"cold_excess_thermal",
+    "heat_excess_mismatch", "cold_excess_mismatch",
+   "temp_excess_hydro" , "temp_excess_nuclear",
+   "temp_excess_thermal" , "temp_excess_mismatch","temperature_demand", "temp_excess_demand","heat_excess_demand","cold_excess_demand",
+   "temperature_2m_hydro", "temperature_2m_nuclear","temperature_2m_thermal"
+   )
+
+m_rf_type <- lm(
+  log(price) ~  temperature_demand + temperature_2m_hydro + temperature_2m_nuclear + temperature_2m_thermal+
+    thermal_tot + hydro_tot+ nuclear+ renewable_day_ahead_forecast   + 
+    gen_tot_da + gen_tot +  gen_tot_da_conso + 
+    Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    Uneffective.Predicted.Unavailable.Capacity +
+    spot_gas + 
+    unpredicted_renewables + intraday_update_renewables+
+    
+    precipitation_demand + precipitation_supply +
+    relative_humidity_demand + relative_humidity_supply+
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_type , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_type <- sqrt(diag(vcov_cluster))
+
+m_rf_type_cold_heat <- lm(
+  log(price) ~  heat_excess_demand + cold_excess_demand +
+    heat_excess_hydro + cold_excess_hydro+
+    heat_excess_nuclear + cold_excess_nuclear+
+    heat_excess_thermal + cold_excess_thermal+
+    thermal_tot + hydro_tot+ nuclear+ renewable_day_ahead_forecast   + 
+    gen_tot_da + gen_tot +  gen_tot_da_conso + 
+    Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    Uneffective.Predicted.Unavailable.Capacity +
+    spot_gas + 
+    unpredicted_renewables + intraday_update_renewables+
+    
+    precipitation_demand + precipitation_supply +
+    relative_humidity_demand + relative_humidity_supply+
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_type_cold_heat , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_type_cold_heat<- sqrt(diag(vcov_cluster))
+
+
+m_rf_type_temp <- lm(
+  log(price) ~  
+    temp_excess_demand +
+    temp_excess_hydro + 
+    temp_excess_nuclear + temp_excess_thermal +
+    thermal_tot + hydro_tot+ nuclear+ renewable_day_ahead_forecast   + 
+    gen_tot_da + gen_tot +  gen_tot_da_conso + 
+    Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    Uneffective.Predicted.Unavailable.Capacity +
+    spot_gas + 
+    unpredicted_renewables + intraday_update_renewables+
+    
+    precipitation_demand + precipitation_supply +
+    relative_humidity_demand + relative_humidity_supply+
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovCL(m_rf_type_temp , type = "HC0", cluster = ~ cl_rf_id)
+# Erreurs standard clusterisées
+cl_se_rf_type_temp<- sqrt(diag(vcov_cluster))
+
+```
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer(  m_rf_type, m_rf_type_cold_heat,  m_rf_type_temp,
+    type = "html",
+    se = list( cl_se_rf_type, cl_se_rf_type_cold_heat, cl_se_rf_type_temp),
+    title = "Regression Results",
+    column.labels = c(  "Temperature", "Heat/Cold Excess", "Temperature Excess"),
+    keep = c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
+             "Published.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity",
+              "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",
+    "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "UnPublished.Limiting.Capacity",
+      "gen_tot",
+             "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables", "temp_excess_supply", "temp_excess_mismatch",
+    "heat_excess_supply", "cold_excess_supply", "heat_excess_mismatch",  "cold_excess_mismatch", 
+    "temperature_mismatch", "temperature_supply",
+    "precipitation_supply", "precipitation_demand",
+    "relative_humidity_supply", "relative_humidity_demand", excess_headers )
+)
+ 
+```
+

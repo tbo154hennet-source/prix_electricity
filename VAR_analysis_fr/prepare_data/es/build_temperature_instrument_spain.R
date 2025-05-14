@@ -22,7 +22,7 @@ library(lubridate)
 cold_months <- c(1, 2, 11, 12)
 hot_months <- c(6, 7, 8, 9)
 
-class(temp_instrument_data$T_avg)
+#class(temp_instrument_data$T_avg)
 
 mean_temperatures <- temp_instrument_data %>% 
   group_by(month) %>% 

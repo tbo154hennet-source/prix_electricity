@@ -3,12 +3,18 @@ source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab
 setwd(source_path)
 source("reliability_auxiliary.R")
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr'
-setwd(source_path)
-source("auxiliary_control.R")
+# source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr'
+# setwd(source_path)
+# source("auxiliary_control.R")
 
 library(MASS)
-
+library(arrow)
+library(dplyr)
+library(tidyr)
+library(stats)
+library(ggplot2)
+library(lubridate)
+library(purrr)
 #my_IV_data <- IV_data_log_esp
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
