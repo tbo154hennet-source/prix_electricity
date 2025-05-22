@@ -43,8 +43,7 @@ price_indispo_merge <- price_indispo_merge %>%
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
          Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
          Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity,
-              temperature_mismatch = temperature_demand - temperature_supply ,
-         gen_tot = gen_tot - gen_tot_da
+              temperature_mismatch = temperature_demand - temperature_supply 
          ) 
 
 price_indispo_merge <- price_indispo_merge[complete.cases(price_indispo_merge),]

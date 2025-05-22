@@ -1,6 +1,6 @@
 library(data.table)
 
-
+  
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb_esp.parquet') %>% 
@@ -165,7 +165,7 @@ final_indispo_tot_wide_esp <- final_indispo_tot_wide_esp %>%
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 
 write_parquet(final_indispo_tot_wide_esp, "final_indispo_tot_wide_esp.parquet")
-
+#final_indispo_tot_wide_esp <- read_parquet("final_indispo_tot_wide_esp.parquet")
 
 library(lubridate)
 
@@ -228,10 +228,58 @@ setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahea
 temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
 colnames(temperature_openmeteo_data)
 
+#question sou-jacente
+#quelle est la temporalité d'ajustement au froid
+
+mean_temperatures_hour <- temperature_openmeteo_data %>% 
+  mutate(week = week(date),
+         hour = hour(date)) %>%
+  group_by(week, hour) %>% 
+  summarise(
+    mean_temp_demand = mean(as.numeric(temperature_demand), na.rm = TRUE),
+    mean_temp_supply = mean(as.numeric(temperature_supply), na.rm = TRUE),
+    mean_temp_nuclear = mean(as.numeric(temperature_2m_nuclear), na.rm = TRUE),
+    .groups = "drop"
+  )
+
+cold_months <- c(1, 2, 11, 12)
+hot_months <- c(6, 7, 8, 9)
+
+temperature_openmeteo_data_test <- temperature_openmeteo_data %>%
+  mutate(
+    week = week(date),
+    hour = hour(date),
+    month = month(date),
+    year = year(date),
+    day_month = format(date, "%d-%m")
+  ) %>%
+  # Join hourly means
+  left_join(mean_temperatures_hour, by = c("week", "hour")) %>%
+  rename(hourly_mean_temp_demand = mean_temp_demand,
+         hourly_mean_temp_supply = mean_temp_supply,
+         hourly_mean_temp_nuclear = mean_temp_nuclear
+         ) %>%
+  mutate(
+    cold_excess_supply = -ifelse(month %in% cold_months, 
+                                      temperature_supply - hourly_mean_temp_supply, 0),
+    heat_excess_supply = ifelse(month %in% hot_months, 
+                                     temperature_supply - hourly_mean_temp_supply, 0),
+    cold_excess_demand = -ifelse(month %in% cold_months, 
+                                      temperature_demand - hourly_mean_temp_demand, 0),
+    heat_excess_demand = ifelse(month %in% hot_months, 
+                                     temperature_demand - hourly_mean_temp_demand, 0),
+    cold_excess_nuclear = -ifelse(month %in% cold_months, 
+                                      temperature_2m_nuclear - hourly_mean_temp_nuclear, 0),
+    heat_excess_nuclear = ifelse(month %in% hot_months,
+                                     temperature_2m_nuclear - hourly_mean_temp_nuclear, 0)
+    
+  )
+
+
+
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
-  left_join(temperature_openmeteo_data, by=c('datetime' = 'date'))
-
-
+  left_join(temperature_openmeteo_data_test %>% 
+              select(-year, -month), by=c('datetime' = 'date'))
 
 
 #add day ahead generation
@@ -298,30 +346,19 @@ crossborder_data <- price_merge_CBF %>%
             NTC_FR_ES = NTC_FR_ES,
             NTC_ES_PT = NTC_ES_PT,
             NTC_PT_ES = NTC_PT_ES,
-    renewable_day_ahead_forecast_ex_es = weighted_mean(renewable_day_ahead_forecast_pt +
-                                                         renewable_day_ahead_forecast_fr , 
-                                                       gen_tot_esp),
-    cbf_es = weighted_mean(CBF_ES_pred, gen_tot_esp),
-    
-    renewable_day_ahead_forecast_pt = weighted_mean(renewable_day_ahead_forecast_pt, gen_tot_esp),
-    renewable_day_ahead_forecast_fr = weighted_mean(renewable_day_ahead_forecast_fr, 
-                                                    gen_tot_esp),
+    renewable_day_ahead_forecast_ex_es = renewable_day_ahead_forecast_pt +
+                                                         renewable_day_ahead_forecast_fr,
+    cbf_es = CBF_ES_pred,
+
     
     
-    renewable_day_ahead_forecast_ex_fr = weighted_mean(renewable_day_ahead_forecast_esp+
+    renewable_day_ahead_forecast_ex_fr = renewable_day_ahead_forecast_esp+
                                                          renewable_day_ahead_forecast_it_nord+
                                                          renewable_day_ahead_forecast_de+
                                                          renewable_day_ahead_forecast_be+
                                                          renewable_day_ahead_forecast_ch+
-                                                         renewable_day_ahead_forecast_gb, 
-                                                       gen_tot_fr),
-    cbf_fr = weighted_mean(CBF_FR_pred, gen_tot_fr),
-    renewable_day_ahead_forecast_esp = weighted_mean(renewable_day_ahead_forecast_esp, gen_tot_fr),
-    renewable_day_ahead_forecast_it_nord = weighted_mean(renewable_day_ahead_forecast_it_nord, gen_tot_fr),
-    renewable_day_ahead_forecast_de = weighted_mean(renewable_day_ahead_forecast_de, gen_tot_fr),
-    renewable_day_ahead_forecast_be = weighted_mean(renewable_day_ahead_forecast_be, gen_tot_fr),
-    renewable_day_ahead_forecast_ch = weighted_mean(renewable_day_ahead_forecast_ch, gen_tot_fr),
-    renewable_day_ahead_forecast_gb = weighted_mean(renewable_day_ahead_forecast_gb, gen_tot_fr),
+                                                         renewable_day_ahead_forecast_gb,
+    cbf_fr = CBF_FR_pred,
     datetime = datetime
   ) %>%
   arrange(datetime) %>% 
@@ -334,7 +371,6 @@ price_indispo_merge_esp_NTC <- merge(price_indispo_merge_esp, crossborder_data %
                                         renewable_day_ahead_forecast_ex_es, cbf_es,
                                                      datetime), 
                                      by ="datetime")
-
 
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"

@@ -11,7 +11,7 @@ save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitl
 setwd(save_var_path)
 IV_data <- read_parquet('IV_data_esp.parquet') 
 
-# colnames(IV_data)
+#colnames(IV_data)
 # dim(IV_data)
 # IV_data$spot_price
 # IV_data <- IV_data[1:108,]
@@ -98,7 +98,7 @@ for (var in colnames(IV_data)) {
 
 getwd()
 seasonally_adjusted_df <- as.data.frame(adjusted_data)
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 
 
@@ -106,6 +106,9 @@ write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 non_log_diff_var <- c("month", "year", "datetime", "last_Date", "last_Trading.day",
                       "cold_excess_instrument" ,"heat_excess_instrument",
                       "Date", "ffr", "Bond_rate",
+                      "cold_excess_demand" , "heat_excess_demand", "cold_excess_supply",                
+                       "heat_excess_supply" , "heat_excess_mismatch" ,"cold_excess_mismatch" ,             
+                       "temp_excess_demand" , "temp_excess_supply" ,"temp_excess_mismatch",
                       "PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand", "cbf_es")
 
 non_log_col_var <- c(non_log_diff_var)
@@ -136,7 +139,6 @@ IV_data_log[is.na(IV_data_log)] <- 0
 
 IV_data_log <- IV_data_log %>% 
   mutate(
-    temp_excess_instrument = cold_excess_instrument + heat_excess_instrument,
     log_diff_gas = avg_spot_price_log - lag(as.numeric(avg_spot_price_log)),
     log_diff_spot = spot_price_log - lag(as.numeric(spot_price_log)),
     diff_cbf = cbf_es - lag(as.numeric(cbf_es)),
@@ -203,4 +205,13 @@ ggplot() +
        x = "Time",
        y = "GWh") +
   theme_minimal()
+
+ggplot(IV_data, aes(x = datetime)) +
+  geom_line(aes(y =IV_data$cold_excess_demand , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$cold_excess_demand, color = "Detrended")) +
+  labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
+       x = "Date", y = "Index") +
+  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
+  theme_minimal()
+
 

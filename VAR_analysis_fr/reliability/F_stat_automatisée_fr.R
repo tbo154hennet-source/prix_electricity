@@ -58,9 +58,9 @@ result_price_fr <- run_iv_analysis(IV_data_log_fr, headers_var, headers_proxies,
 print(result_price_fr$fstat)
 print(summary(result_price_fr$m_summary))
 
-
+colnames(IV_data_log_fr)
 headers_proxies = c(
-  "cold_excess_instrument"
+  "T_avg_log"
 )
 result_gen_fr <- run_iv_analysis(IV_data_log_fr, headers_var, headers_proxies, p = 4,
                                  dependent = "gen_tot_log", k = 1)
@@ -70,7 +70,8 @@ print(summary(result_gen_fr$m_summary))
 headers_proxies = c(
   "cold_excess_instrument",
   "PC1_supply",
-  "log_diff_renewable"#, "log_diff_pred_unavail"
+  "log_diff_renewable",
+  "diff_cbf"
 )
 result_fr <- run_iv_analysis(IV_data_log_fr, headers_var, headers_proxies, p = 4,
                              dependent = "", k = 2)

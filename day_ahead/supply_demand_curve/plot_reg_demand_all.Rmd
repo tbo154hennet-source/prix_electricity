@@ -1,0 +1,92 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+setwd("Z:/code_supply_demand")
+# coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse.rds")
+# coef_demand_unmatched_data <- rbindlist(coef_supply_unmatched)
+# 
+# coef_supply_matched <- readRDS("reg_shift_result_qty_supply_matched_sparse.rds")
+# coef_supply_matched_data <- rbindlist(coef_supply_matched)
+
+
+coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse.rds")
+coef_demand_unmatched_data <- rbindlist(coef_demand_unmatched)
+
+
+# coef_supply_matched <- readRDS("reg_shift_result_qty_demand_matched_sparse.rds")
+# coef_supply_matched_data <- rbindlist(coef_supply_matched)
+```
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = temperature_factors,
+   type = "Demand", matched = "unmatched")
+
+
+```
+
+
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = renewable_factors,
+   type = "Demand", matched = "unmatched")
+
+
+```
+
+
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = indispo_factors,
+   type = "Demand", matched = "unmatched")
+
+
+```
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = international_exchanges_factors,
+   type = "Demand", matched = "unmatched")
+
+
+```
+
+# Variations with temperature
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_demand_unmatched_temp_variation<-readRDS("reg_shift_result_qty_demand_unmatched_sparse_temp_bis_variation.rds")
+coef_demand_unmatched_data_temp_variation <- rbindlist(coef_demand_unmatched_temp_variation)
+
+temp_factors <- c(
+                  "cold_excess_demand", "heat_excess_demand",
+                         "cold_excess_mismatch", "heat_excess_mismatch")
+
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_temp_variation, 
+   variables = temp_factors,
+   type = "demand", matched = "unmatched")
+
+
+
+```
+
+
+```{r}
+
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_temp_variation, 
+   variables = renewable_factors,
+   type = "demand", matched = "unmatched")
+
+
+
+```
+
+
+
+

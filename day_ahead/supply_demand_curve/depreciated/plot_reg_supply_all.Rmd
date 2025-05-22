@@ -1,0 +1,55 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+
+```{r}
+plot_shift_with_hist(coef_data = coef_supply_matched_data, 
+   variables = temperature_factors,
+   type = "Supply", matched = "matched")
+
+
+```
+
+```{r}
+plot_shift_with_hist(coef_data = coef_supply_matched_data, 
+   variables = other_weather_factors,
+   type = "Supply", matched = "matched")
+
+
+```
+
+
+
+```{r}
+plot_shift_with_hist(coef_data = coef_supply_matched_data, 
+   variables = international_exchanges_factors,
+   type = "Supply", matched = "matched")
+
+
+```
+
+```{r}
+plot_shift_with_hist(coef_data = coef_supply_matched_data, 
+   variables = renewable_factors,
+   type = "Supply", matched = "matched")
+
+
+```
+
+```{r}
+plot_shift_with_hist(coef_data = coef_supply_matched_data, 
+   variables = indispo_factors,
+   type = "Supply", matched = "matched")
+
+
+```
+
+
+
+
+
+

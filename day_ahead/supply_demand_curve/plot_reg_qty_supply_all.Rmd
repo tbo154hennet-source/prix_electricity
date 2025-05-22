@@ -1,0 +1,236 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
+  
+
+  plot_data <- coef_data %>% 
+    filter(variable %in% variables) 
+  # %>% 
+  #   filter(price_test >= -100)
+  
+  # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
+  scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$gen_tot_da, plot = FALSE)$counts)
+  
+  my_plot <- ggplot(data = plot_data) +
+    # Courbe principale avec bande de confiance
+    geom_line(aes(x = price_test, y = estimate, color = variable)) +
+    geom_point(aes(x = price_test, y = estimate, color = variable)) +
+    geom_line(aes(x = price_test, y = 0), linetype = "dashed")+
+    geom_ribbon(
+      aes(
+        x = price_test, 
+        ymin = estimate - 1.96 * std_error, 
+        ymax = estimate + 1.96 * std_error,
+        fill = variable
+      ), 
+      alpha = 0.2
+    ) + 
+    labs(
+      title = paste0("Shift in ", type, " Curve"),
+      x = "Price (€)",
+      y = "Cumulative Energy (MWh)",
+      color = "Variable",
+      fill = "Variable"
+    ) +
+    theme_minimal()
+
+  if (matched == "matched"){
+    # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
+    scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$price, plot = FALSE)$counts)
+  
+    my_plot <- my_plot + 
+    # Histogramme mis à l'échelle
+    geom_histogram(
+      data = price_indispo_merge_esp,
+      mapping = aes( x = price,  y = ..count.. * scale_factor),
+      bins = 60,
+      color = "black",
+      fill = NA
+    )
+    
+    # Axe secondaire
+    # scale_y_continuous(
+    #   name = "Price (€/GWh)",
+    #   sec.axis = sec_axis(~ . / scale_factor, name = "Fréquence de gen_tot")
+    # )
+  }
+  my_plot <- my_plot +
+  coord_flip(xlim = c(-20, 300))
+
+  return(my_plot)
+}
+
+```
+
+```{r}
+
+
+renewable_factors <- c("renewable_day_ahead_forecast", "unpredicted_renewables", 
+                     "intraday_update_renewables", "renewable_day_ahead_forecast_ex_es")
+
+international_exchanges_factors <- c("NTC_ES_FR" ,"NTC_FR_ES",                                 
+                             "NTC_ES_PT", "NTC_PT_ES"
+                             )
+temperature_factors <- c(
+  "temperature_supply", "temperature_mismatch","temperature_demand", 
+  "cold_excess_supply", "heat_excess_supply",
+  "cold_excess_demand", "heat_excess_demand",
+  "cold_excess_mismatch", "heat_excess_mismatch"
+  
+)
+
+other_weather_factors <- c("precipitation_supply", "relative_humidity_supply",
+                           "precipitation_demand","precipitation_mismatch",
+                           "relative_humidity_demand","relative_humidity_mismatch")
+indispo_factors <- c("Published.Unavailable.Capacity", "Uneffective.Unavailable.Capacity", 
+                     "Unpublished.Unavailable.Capacity")
+
+sum_up_factors <- c(
+  "Published.Unavailable.Capacity","renewable_day_ahead_forecast",
+  "cold_excess_supply", "heat_excess_supply",
+  "cold_excess_mismatch", "heat_excess_mismatch"
+)
+```
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse.rds")
+coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
+
+coef_supply_matched <- readRDS("reg_shift_result_qty_supply_matched_sparse.rds")
+coef_supply_matched_data <- rbindlist(coef_supply_matched)
+
+
+# coef_supply_unmatched <- readRDS("reg_shift_result_supply_unmatched.rds")
+# coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
+# 
+# 
+# coef_supply_matched <- readRDS("reg_shift_result_supply_matched.rds")
+# coef_supply_matched_data <- rbindlist(coef_supply_matched)
+```
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = temperature_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = other_weather_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = renewable_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = indispo_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = international_exchanges_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+# Introduire des variations
+
+
+#Que se passe t-il si je regarde temperature demand ?
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_demand_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_demand_variation.rds")
+coef_supply_unmatched_data_demand_variation <- rbindlist(coef_supply_unmatched_demand_variation)
+
+
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_demand_variation, 
+   variables = temperature_factors,
+   type = "Supply", matched = "unmatched")
+
+
+
+```
+
+
+#Que se passe t-il si je regarde les indispos nucléaires uniquement ?
+
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_nuclear_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_nuclear_variation.rds")
+coef_supply_unmatched_data_nuclear_variation <- rbindlist(coef_supply_unmatched_nuclear_variation)
+
+nuclear_indispo_factors <- c("Published.Unavailable.Nuclear.Capacity", "Uneffective.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity")
+
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_nuclear_variation, 
+   variables = nuclear_indispo_factors,
+   type = "Supply", matched = "unmatched")
+
+
+
+```
+
+#Que se passe t-il quand je condense les infos météorologiques ?
+
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_condensed_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_condensed_variation.rds")
+coef_supply_unmatched_data_condensed_variation <- rbindlist(coef_supply_unmatched_condensed_variation)
+
+names(coef_supply_unmatched_condensed_variation)
+
+```
+```{r}
+weather_factors <- c("renewable_day_ahead_forecast", "unpredicted_renewables", 
+                     "renewable_day_ahead_forecast_ex_es",
+                               "intraday_update_renewables","weather_condition_index_demand",
+                        "weather_condition_index_mismatch")
+
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_condensed_variation, 
+   variables = weather_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_condensed_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_temp_variation.rds")
+coef_supply_unmatched_data_condensed_variation <- rbindlist(coef_supply_unmatched_condensed_variation)
+
+temp_factors <- c("temperature_supply",  "temperature_mismatch")
+
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_condensed_variation, 
+   variables = temp_factors,
+   type = "Supply", matched = "unmatched")
+
+
+
+```

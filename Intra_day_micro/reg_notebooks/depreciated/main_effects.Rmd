@@ -25,7 +25,7 @@ Sys.setenv(lang = "en_US")
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_entsoe_output)
 
-first_stage_data <- read_parquet('first_stage_data_all_OMIE_all.parquet') 
+first_stage_data <- read_parquet('first_stage_data_OMIE.parquet') 
 
 ```
 

@@ -59,8 +59,8 @@ tot_publi_OMIE_indispo <- final_publi_OMIE_indispo %>%
   mutate(datetime = as.POSIXct(paste(electricity_delivery_date, as.numeric(creneau)-1)
                                , format="%Y-%m-%d %H", tz = 'Europe/Brussels')) %>%
   left_join(final_real_indispo_rf %>%
-              mutate(Published.Predicted.Unavailable.Capacity = -predicted_real_unavailability)%>%
-              select(-predicted_real_unavailability, -Available.Capacity))
+              mutate(Published.Predicted.Unavailable.Capacity = predicted_real_unavailability)%>%
+              select(-predicted_real_unavailability))
 
 
 tot_publi_OMIE_indispo <- tot_publi_OMIE_indispo %>% 
@@ -71,24 +71,26 @@ tot_publi_OMIE_indispo <- tot_publi_OMIE_indispo %>%
               rename(Unpublished.Unavailable.Nuclear.Capacity = Unavailable.Capacity) %>% 
               select(-c('Installed.Capacity', 'Available.Capacity'))) %>%
   left_join(final_not_publi_rf %>%
-              mutate(Unpublished.Predicted.Unavailable.Capacity = -predicted_real_unavailability) %>%
-              select(-predicted_real_unavailability, -Available.Capacity)
+              mutate(Unpublished.Predicted.Unavailable.Capacity = predicted_real_unavailability) %>%
+              select(-predicted_real_unavailability)
   )
 
 tot_publi_OMIE_indispo <- tot_publi_OMIE_indispo %>%
   full_join(final_uneffective_OMIE_indispo %>%
               rename(Uneffective.Unavailable.Capacity = Unavailable.Capacity) %>%
-              select(-c('Installed.Capacity', 'Available.Capacity'))) %>%
+              select(-c('Installed.Capacity'))) %>%
   full_join(final_uneffective_nuclear_OMIE_indispo %>%
               rename(Uneffective.Unavailable.Nuclear.Capacity = Unavailable.Capacity) %>%
-              select(-c('Installed.Capacity', 'Available.Capacity'))) %>%
+              select(-c('Installed.Capacity'))) %>%
   left_join(final_uneffective_rf %>%
-              mutate(Uneffective.Predicted.Unavailable.Capacity = -predicted_real_unavailability) %>%
+              mutate(Uneffective.Predicted.Unavailable.Capacity = predicted_real_unavailability) %>%
               select(-predicted_real_unavailability))
 
-
+colnames(tot_publi_OMIE_indispo)
 getwd()
 write_parquet(tot_publi_OMIE_indispo, 'tot_publi_OMIE_indispo.parquet')
+#tot_publi_OMIE_indispo <- read_parquet('tot_publi_OMIE_indispo.parquet')
+
 # setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 # final_indispo_tot_wide_esp_da <- read_parquet("final_indispo_tot_wide_esp.parquet")%>%
 #   mutate(creneau = as.character(hour(datetime_slot) + 1),
@@ -198,13 +200,21 @@ save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_fore
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
-colnames(renewable_forecasts)
+
+#add temperature  and other weather conditions
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
+colnames(temperature_openmeteo_data)
 
 #nota bene intradailiy forecast commence à partir du 13 février 2018 13-02-2018
 #sample start
 
 first_stage_data <- first_stage_data %>%
   left_join(renewable_forecasts, by=c('datetime' = '__index_level_0__'))
+
+first_stage_data <- first_stage_data %>%
+  left_join(temperature_openmeteo_data, by=c('datetime' = 'date'))
 
 # Identify all capacity-related columns dynamically
 capacity_cols <- colnames(first_stage_data)[grepl("Capacity", colnames(first_stage_data))]
@@ -219,7 +229,9 @@ getwd()
 
 save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
-write_parquet(first_stage_data, 'first_stage_data_OMIE_bis.parquet')
+write_parquet(first_stage_data, 'first_stage_data_OMIE.parquet')
+
+
 
 
 

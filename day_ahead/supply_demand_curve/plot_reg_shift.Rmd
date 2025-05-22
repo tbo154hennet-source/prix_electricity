@@ -1,0 +1,264 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+ 
+```{r}
+library(tidyr)
+library(dplyr)
+library(arrow)
+library(stargazer)
+library(lmtest)
+library(data.table)
+library(sandwich)
+library(ggplot2)
+```
+ 
+```{r}
+
+
+renewable_factors <- c("renewable_day_ahead_forecast", "unpredicted_renewables", 
+                     "intraday_update_renewables", "renewable_day_ahead_forecast_ex_es")
+
+international_exchanges_factors <- c("NTC_ES_FR" ,"NTC_FR_ES",                                 
+                             "NTC_ES_PT", "NTC_PT_ES"
+                             )
+temperature_factors <- c(
+  "temperature_supply", "temperature_mismatch","temperature_demand", 
+  "cold_excess_supply", "heat_excess_supply",
+  "cold_excess_demand", "heat_excess_demand",
+  "cold_excess_mismatch", "heat_excess_mismatch"
+  
+)
+
+other_weather_factors <- c("precipitation_supply", "relative_humidity_supply",
+                           "precipitation_demand","precipitation_mismatch",
+                           "relative_humidity_demand","relative_humidity_mismatch")
+indispo_factors <- c("Published.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity", 
+                     "Unpublished.Predicted.Unavailable.Capacity")
+
+sum_up_factors <- c(
+  "Published.Predicted.Unavailable.Capacity","renewable_day_ahead_forecast",
+  "cold_excess_supply", "heat_excess_supply",
+  "cold_excess_mismatch", "heat_excess_mismatch"
+)
+```
+ 
+
+```{r}
+plot_shift_with_hist <- function(coef_data, variables, type, matched){
+  
+  
+  plot_data <- coef_data %>% 
+  filter(variable %in% variables) %>% 
+  filter(cum_energy_test >= 5000)
+
+
+  
+  my_plot <- ggplot(data = plot_data) +
+    # Courbe principale avec bande de confiance
+    geom_line(aes(x = cum_energy_test, y = estimate, color = variable)) +
+    geom_ribbon(
+      aes(
+        x = cum_energy_test, 
+        ymin = estimate - 1.96 * std_error, 
+        ymax = estimate + 1.96 * std_error,
+        fill = variable
+      ), 
+      alpha = 0.2
+    ) +
+    coord_cartesian(xlim = c(0, 60000)) +
+    labs(
+      title = paste0("Shift in Demand Curve by additional unit"),
+      x = "Cumulative Energy (MWh)",
+      y = "Price (€)",
+      color = "Variable",
+      fill = "Variable"
+    ) +
+    theme_minimal()
+
+  if (matched == "matched"){
+    # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
+    scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$gen_tot_da, plot = FALSE)$counts)
+  
+    my_plot <- my_plot + 
+    # Histogramme mis à l'échelle
+    geom_histogram(
+      data = price_indispo_merge_esp,
+      mapping = aes(x = gen_tot_da, y = ..count.. * scale_factor),
+      bins = 60,
+      color = "black",
+      fill = NA
+    )+
+    # Axe secondaire
+    scale_y_continuous(
+      name = "Price (€)",
+      sec.axis = sec_axis(~ . / scale_factor, name = "Fréquence de gen_tot")
+    )
+  }
+  
+  # if (type == "Supply") {
+  #   my_plot <- my_plot + 
+  #     coord_flip()
+  # }
+  
+  return(my_plot)
+}
+```
+
+
+
+```{r}
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
+coef_supply_unmatched <- readRDS("reg_shift_result_supply_unmatched.rds")
+coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
+
+coef_supply_matched <- readRDS("reg_shift_result_supply_matched.rds")
+coef_supply_matched_data <- rbindlist(coef_supply_matched)
+
+
+coef_demand_unmatched <- readRDS("reg_shift_result_demand_unmatched.rds")
+coef_demand_unmatched_data <- rbindlist(coef_demand_unmatched)
+
+
+coef_demand_matched <- readRDS("reg_shift_result_demand_matched.rds")
+coef_demand_matched_data <- rbindlist(coef_demand_matched)
+
+cum_grid <- seq(0, 60000, length.out = 1000)
+names(coef_supply_matched) <- round(cum_grid,0)
+
+
+
+```
+
+
+
+
+```{r}
+plot_shift_with_hist(coef_data = coef_supply_matched_data, 
+   variables = temperature_factors, type = "Supply", matched = "matched")
+
+
+```
+
+
+```{r}
+plot_shift_with_hist(coef_data = coef_supply_unmatched_data,
+   variables = temperature_factors, type = "Supply", matched = "unmatched")
+
+```
+
+
+
+
+
+```{r}
+
+price_grid <- seq(-200, 1000, length.out = 1001)
+
+setwd("Z:/code_supply_demand")
+list.files()
+coef_supply_unmatched_qty <- readRDS("reg_shift_result_qty_supply_unmatched.rds")
+coef_supply_unmatched_qty_data <- rbindlist(coef_supply_unmatched_qty)
+
+# coef_supply_matched_qty <- readRDS("reg_shift_result_qty_supply_matched.rds")
+# coef_supply_matched_qty_data <- rbindlist(coef_supply_matched_qty)
+# 
+# coef_demand_unmatched_qty <- readRDS("reg_shift_result_qty_demand_unmatched.rds")
+# coef_demand_unmatched_qty_data <- rbindlist(coef_demand_unmatched_qty)
+# 
+# coef_demand_matched_qty <- readRDS("reg_shift_result_qty_demand_matched.rds")
+# coef_demand_matched_qty_data <- rbindlist(coef_demand_matched_qty)
+
+
+```
+
+
+
+```{r}
+
+plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
+  
+
+  plot_data <- coef_data %>% 
+    filter(variable %in% variables) 
+  # %>% 
+  #   filter(price_test >= -100)
+  
+  # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
+  scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$gen_tot_da, plot = FALSE)$counts)
+  
+  my_plot <- ggplot(data = plot_data) +
+    # Courbe principale avec bande de confiance
+    geom_line(aes(x = price_test, y = estimate, color = variable)) +
+    geom_point(aes(x = price_test, y = estimate, color = variable)) +
+    geom_line(aes(x = price_test, y = 0), linetype = "dashed")+
+    geom_ribbon(
+      aes(
+        x = price_test, 
+        ymin = estimate - 1.96 * std_error, 
+        ymax = estimate + 1.96 * std_error,
+        fill = variable
+      ), 
+      alpha = 0.2
+    ) + 
+    labs(
+      title = paste0("Shift in ", type, " Curve"),
+      x = "Price (€)",
+      y = "Cumulative Energy (MWh)",
+      color = "Variable",
+      fill = "Variable"
+    ) +
+    theme_minimal()
+
+  if (matched == "matched"){
+    # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
+    scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$price, plot = FALSE)$counts)
+  
+    my_plot <- my_plot + 
+    # Histogramme mis à l'échelle
+    geom_histogram(
+      data = price_indispo_merge_esp,
+      mapping = aes( x = price,  y = ..count.. * scale_factor),
+      bins = 60,
+      color = "black",
+      fill = NA
+    )
+    
+    # Axe secondaire
+    # scale_y_continuous(
+    #   name = "Price (€/GWh)",
+    #   sec.axis = sec_axis(~ . / scale_factor, name = "Fréquence de gen_tot")
+    # )
+  }
+  my_plot <- my_plot +
+  coord_flip(xlim = c(-20, 300))
+
+  return(my_plot)
+}
+
+```
+
+
+```{r}
+
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_qty_data, 
+   variables = c("cold_excess_supply", "heat_excess_supply"),
+   type = "Supply", matched = "unmatched")
+
+```
+
+
+```{r}
+
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_qty_data, 
+   variables = temperature_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+
+
+

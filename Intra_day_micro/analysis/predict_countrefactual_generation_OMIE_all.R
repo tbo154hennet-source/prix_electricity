@@ -333,6 +333,7 @@ getwd()
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'xgb_predictions_data_OMIE.parquet')
+#rf_predictions_data <- read_parquet( 'xgb_predictions_data_OMIE.parquet')
 
 
 colnames(rf_predictions_data)
@@ -346,6 +347,7 @@ process_indispo_rf <- function(indispo_df, rf_predictions_data) {
           by.x = c('datetime_slot', 'production_resource_psr_name', 'creneau')) %>%
     rename(datetime = datetime_slot) %>%
     filter(prediction_prod_conservative > 50) %>%
+    filter(Available.Capacity >= centrale_prod -10 ) %>% 
     #get predicted wanted change
     mutate(predicted_real_unavailability = ifelse(
       Unavailable.Capacity > 0,
@@ -366,13 +368,18 @@ long_format_indispo_uneffective_rf <- process_indispo_rf(long_format_indispo_une
 #on fait un petit plot pour voir quelle est la relation entre les indispos annoncées
 # et les predicted
 
-
-
 all_rf_indispo <- rbind(
   long_format_indispo_rf,
   long_format_indispo_non_published_rf,
   long_format_indispo_uneffective_rf
-)
+) %>% 
+  distinct(production_resource_psr_name,
+           electricity_delivery_date, auction_before,
+           auction_after, .keep_all = TRUE)
+
+View(all_rf_indispo %>% 
+       select(prediction_prod, Available.Capacity, centrale_prod,
+              predicted_real_unavailability))
 
 all_rf_indispo %>% 
   group_by(Unavailable.Capacity >0) %>% 
@@ -385,18 +392,25 @@ ggplot()+
   theme_minimal()
 
 getwd()
+
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(all_rf_indispo, 'all_rf_indispo_OMIE.parquet')
 
 
 final_real_indispo_rf <- long_format_indispo_rf %>% 
+  distinct(production_resource_psr_name,
+           electricity_delivery_date, auction_before,
+           auction_after, .keep_all = TRUE) %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(predicted_real_unavailability = sum(as.numeric(predicted_real_unavailability))) %>%
   ungroup()
 
 final_not_publi_rf <- long_format_indispo_non_published_rf %>% 
+  distinct(production_resource_psr_name,
+           electricity_delivery_date, auction_before,
+           auction_after, .keep_all = TRUE) %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(predicted_real_unavailability = sum(as.numeric(predicted_real_unavailability))) %>%
@@ -404,6 +418,9 @@ final_not_publi_rf <- long_format_indispo_non_published_rf %>%
 
 
 final_uneffective_rf <- long_format_indispo_uneffective_rf %>% 
+  distinct(production_resource_psr_name,
+           electricity_delivery_date, auction_before,
+           auction_after, .keep_all = TRUE) %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(predicted_real_unavailability = sum(as.numeric(predicted_real_unavailability))) %>%
@@ -412,7 +429,7 @@ final_uneffective_rf <- long_format_indispo_uneffective_rf %>%
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_entsoe_output)
 getwd()
 write_parquet(final_real_indispo_rf, 'final_real_indispo_rf_OMIE.parquet')

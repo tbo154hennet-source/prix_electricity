@@ -17,10 +17,23 @@ library(lubridate)
 library(purrr)
 #my_IV_data <- IV_data_log_esp
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_esp <-  read_parquet('IV_data_esp_log.parquet')
 
+# correct for the Iberian exception
+colnames(IV_data_log_esp)
+IV_data_log_esp$observation_date <- as.Date(IV_data_log_esp$observation_date)
+IV_data_log_esp <- IV_data_log_esp %>%
+  mutate(
+    PC1_supply = ifelse(observation_date >= as.Date("2022-06-01") & observation_date <= as.Date("2023-05-31"),
+                        0, PC1_supply),
+    PC1_supply = ifelse(observation_date == as.Date("2022-06-01"), -0.5, PC1_supply)
+    )
+#pour la baisse du 06-01 on encode par un -1
+
+# View(IV_data_log_esp %>% 
+#        dplyr::select(PC1_supply, observation_date, spot_price_log))
 
 headers_proxies = c(
   # "T_avg_log",
@@ -65,7 +78,7 @@ print(result_price_esp$fstat)
 print(summary(result_price_esp$m_summary))
 
 headers_proxies = c(
-  "temp_excess_instrument"
+  "temp_excess_demand"
 )
 result_gen_esp <- run_iv_analysis(IV_data_log_esp, headers_var, headers_proxies, p = 4,
                           dependent = "gen_tot_log", k = 1)
@@ -73,13 +86,12 @@ result_gen_esp <- run_iv_analysis(IV_data_log_esp, headers_var, headers_proxies,
 print(result_gen_esp$fstat)
 print(summary(result_gen_esp$m_summary))
 
-
-
+colnames(IV_data_log_esp)
 headers_proxies = c(
-  "cold_excess_instrument",
-  "heat_excess_instrument",
+  "temp_excess_supply",
   "PC1_supply",
-  "log_diff_renewable"#,"log_diff_pred_unavail"
+  "log_diff_renewable",
+  "diff_cbf"
   
 )
 

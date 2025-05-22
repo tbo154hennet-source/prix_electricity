@@ -3,6 +3,7 @@ library(dplyr)
 library(readxl)
 library(arrow)
 library(lubridate)
+library(data.table)
 
 Sys.setenv(lang = "en_US")
 
@@ -37,7 +38,8 @@ find_intersection <- function(supply_curve, demand_curve) {
   
   return(intersection)
 }
-
+# curve <- file
+# my_hour <- 1
 execute_code <- function(curve){
    #2023-09-28 23:00:00
   csv_file <- read.csv2(curve, header = FALSE,

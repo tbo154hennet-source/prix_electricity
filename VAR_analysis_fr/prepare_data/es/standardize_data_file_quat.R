@@ -70,20 +70,20 @@ monthly_energy_data <- price_indispo_merge %>%
   arrange(datetime) %>% 
   mutate(
     Nuclear.Unavailabilities =
-      coalesce(Planned.Unavailable.Nuclear.Capacity, 0) +
+      #coalesce(Planned.Unavailable.Nuclear.Capacity, 0) +
       coalesce(Published.Unavailable.Nuclear.Capacity, 0) +
       coalesce(Uneffective.Unavailable.Nuclear.Capacity, 0) +
       coalesce(Unpublished.Unavailable.Nuclear.Capacity, 0),
     
     Thermal.Unavailabilities =
-      coalesce(Planned.Unavailable.Capacity, 0) +
+      #coalesce(Planned.Unavailable.Capacity, 0) +
       coalesce(Published.Unavailable.Capacity, 0) +
       coalesce(Uneffective.Unavailable.Capacity, 0) +
       coalesce(Unpublished.Unavailable.Capacity, 0) -
       coalesce(Nuclear.Unavailabilities, 0),
     
     Predicted.Unavailabilities =
-      coalesce(Planned.Predicted.Unavailable.Capacity, 0) +
+      #coalesce(Planned.Predicted.Unavailable.Capacity, 0) +
       coalesce(Published.Predicted.Unavailable.Capacity, 0) +
       coalesce(Uneffective.Predicted.Unavailable.Capacity, 0) +
       coalesce(Unpublished.Predicted.Unavailable.Capacity, 0)
@@ -100,6 +100,7 @@ monthly_energy_data <- price_indispo_merge %>%
     # NTC_ESP_FR = mean(NTC_ESP_FR, na.rm = TRUE),
     # NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
     gen_tot = mean(gen_tot, na.rm = TRUE),
+    gen_tot_da = mean(gen_tot_da, na.rm = TRUE),
     datetime = first(datetime)
   ) %>%
   arrange(datetime) %>% 
@@ -153,16 +154,54 @@ monthly_crossborder_data <- price_merge_CBF %>%
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data')
 gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Temperature_instrument/esp')
-temperature_instrument <- read_excel("temperature_instrument.xlsx")
+# setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Temperature_instrument/esp')
+# temperature_instrument <- read_excel("temperature_instrument.xlsx")
 
+
+#design partie temperature
+
+cold_months <- c(1, 2, 11, 12)
+hot_months <- c(6, 7, 8, 9)
+
+price_indispo_merge <- price_indispo_merge %>% 
+  mutate(precipitation_mismatch = precipitation_demand - precipitation_supply,
+         relative_humidity_mismatch = relative_humidity_demand - relative_humidity_supply,
+         temperature_mismatch = temperature_demand - temperature_supply,
+         cold_excess_mismatch = cold_excess_demand - cold_excess_supply,
+         heat_excess_mismatch = heat_excess_demand - heat_excess_supply
+  )
+
+#backfill spot gas
+
+monthly_weather_data <- price_indispo_merge %>%
+  arrange(datetime) %>% 
+  group_by(month, year) %>%
+  summarise(
+    cold_excess_demand = mean(cold_excess_demand, na.rm = TRUE),
+    heat_excess_demand = mean(heat_excess_demand, na.rm = TRUE),
+    cold_excess_supply = mean(cold_excess_supply, na.rm = TRUE),
+    heat_excess_supply = mean(heat_excess_supply, na.rm = TRUE),
+    heat_excess_mismatch = mean(heat_excess_mismatch, na.rm = TRUE),
+    cold_excess_mismatch = mean(cold_excess_mismatch, na.rm = TRUE),
+    temp_excess_demand = heat_excess_demand + cold_excess_demand,
+    temp_excess_supply = heat_excess_supply + cold_excess_supply,
+    temp_excess_mismatch = heat_excess_mismatch + cold_excess_mismatch,
+    precipitation_demand = mean(precipitation_demand, na.rm = TRUE),
+    relative_humidity_demand = mean(relative_humidity_demand, na.rm = TRUE),
+    precipitation_mismatch = mean(precipitation_mismatch, na.rm = TRUE),
+    relative_humidity_mismatch = mean(relative_humidity_mismatch, na.rm = TRUE),
+    datetime = first(datetime)
+  ) %>%
+  arrange(datetime) %>% 
+  ungroup()
 
 
 colnames(VAR_series)
 colnames(monthly_energy_data)
 colnames(gas_fundamental_data)
-colnames(temperature_instrument)
+#colnames(temperature_instrument)
 colnames(monthly_crossborder_data)
+colnames(monthly_weather_data)
 
 IV_data <- merge(VAR_series, monthly_energy_data, by= c('month', 'year'))
 IV_data <- merge(IV_data, monthly_crossborder_data %>% 
@@ -170,10 +209,10 @@ IV_data <- merge(IV_data, monthly_crossborder_data %>%
                  by= c('month', 'year'))
 IV_data <- merge(IV_data, gas_fundamental_data,
                  by= c('month', 'year'))
-IV_data <- merge(IV_data, temperature_instrument,
+IV_data <- merge(IV_data, monthly_weather_data %>% 
+                   select(-datetime),
                  by= c('month', 'year'))%>%
-  arrange(Date)
-
+  arrange(datetime)
 
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'

@@ -108,7 +108,7 @@ summary_stat <- non_duplicated_indispo %>%
          duration = as.numeric(duration),
           Unavailable.Capacity = as.numeric( Unavailable.Capacity)
          ) %>% 
-  select(hours_affected,
+  dplyr::select(hours_affected,
          duration, Unavailable.Capacity)
 # summary_stat[, c()] 
  colnames(non_duplicated_indispo)
@@ -132,17 +132,17 @@ library(ggplot2)
 
 
 plot_data <- non_duplicated_indispo %>% 
-  select(electricity_delivery_date, Unavailable.Capacity, plant_type) %>% 
+  dplyr::select(electricity_delivery_date, Unavailable.Capacity, plant_type) %>% 
   group_by(plant_type) %>% 
   summarise(Unavailable.Capacity.mean = mean(as.numeric(Unavailable.Capacity)),
          n_indispo = n()) 
 
 
 rf_indispo <- indispo_rf %>% 
-  select(c("production_resource_psr_name" ,"electricity_delivery_date", "mrid",
+  dplyr::select(c("production_resource_psr_name" ,"electricity_delivery_date", "mrid",
                "Installed.Capacity","Unavailable.Capacity", "plant_type", "duration", "predicted_real_unavailability", "datetime_slot")) %>% 
   full_join(non_duplicated_indispo %>% 
-          select(c("production_resource_psr_name" ,"electricity_delivery_date", "mrid",
+          dplyr::select(c("production_resource_psr_name" ,"electricity_delivery_date", "mrid",
                "Installed.Capacity","Unavailable.Capacity", "plant_type")), 
         by = c("production_resource_psr_name" ,"electricity_delivery_date", "mrid",
                "Installed.Capacity","Unavailable.Capacity", "plant_type") )
@@ -162,7 +162,7 @@ colnames(rf_indispo)
 class(rf_indispo$predicted_real_unavailability)
 rf_plot_data <- rf_indispo %>% 
   filter(predicted_real_unavailability < -50) %>% 
-  select(electricity_delivery_date, predicted_real_unavailability, plant_type, duration_rf) %>% 
+  dplyr::select(electricity_delivery_date, predicted_real_unavailability, plant_type, duration_rf) %>% 
   group_by(plant_type) %>% 
   summarise(predicted_real_unavailability = mean(predicted_real_unavailability, na.rm = TRUE),
             duration_rf = mean(as.numeric(duration_rf, na.rm = TRUE) ),
