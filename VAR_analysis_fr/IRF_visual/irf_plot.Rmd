@@ -1,0 +1,158 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(ggplot2)
+library(latex2exp)
+library(cowplot)
+library(gridExtra)
+```
+
+Take care of the legend
+
+```{r}
+simul_data <- as.data.frame(rnorm(100))
+colors <- c( '90%', '68%')
+simul_data$`Confidence Bands` <- rep(colors, length.out = 20)
+# fake plot just to construct the correct legend
+plot_legend <- ggplot(data =simul_data, aes(x=rnorm(100), fill = `Confidence Bands`))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+    values = c( "blue", "lightblue"),
+    labels = c('90%', '68%'),
+    drop=FALSE
+  ) 
+# Légende personnalisée (à ajuster selon vos besoins)
+custom_legend <- cowplot::get_legend(plot_legend)
+```
+
+
+```{r}
+#solution <-gen_benchmark
+
+plot_irf_from_gen_benchmark <- function(solution, variable_names = NULL, 
+                                        shock="price" ) {
+  if (shock == "price"){
+   shock_label = "$P_{elec}$ shock IRF"
+  }else if (shock == "gen"){
+    shock_label = "$Q_{elec}$ shock IRF"
+  }else{
+    return("Invalid shock type. Please use 'price' or 'quantity'.")
+  }
+  index <- grep(shock, solution$headers_var)
+  lambda_name <- sprintf("lambda_0%d", index)
+  
+  #lambda_0_log <- solution$lambda_0
+  lambda_0_median <- solution$median_50
+  #dim(lambda_0_median)
+  band_68 <- solution$bandwith_68
+  band_90 <- solution$bandwith_90
+  
+  n <- dim(lambda_0_median)[2]  # number of variables
+  irhor <- dim(lambda_0_median)[1]
+  
+  # Default names if none are supplied
+  if (is.null(variable_names)) {
+    variable_names <- paste0("Var ", 1:n)
+  }
+  
+  plot_irf <- function(i=1) {
+    #trick I just put 0.5 twice
+    main_prediction <- lambda_0_median[, i, "lower", lambda_name]
+    #dim(lambda_0_median)
+    time_horizon <- 1:irhor
+    
+    lower_68 <- band_68[, i, "lower", lambda_name]
+    upper_68 <- band_68[, i, "upper", lambda_name]
+    lower_90 <- band_90[, i, "lower", lambda_name]
+    upper_90 <- band_90[, i, "upper", lambda_name]
+    
+    ggplot() +
+      geom_ribbon(aes(x = time_horizon, ymin = lower_90, ymax = upper_90), fill = "blue", alpha = 0.4) +
+      geom_ribbon(aes(x = time_horizon, ymin = lower_68, ymax = upper_68), fill = "lightblue", alpha = 0.6) +
+      geom_line(aes(x = time_horizon, y = main_prediction), color = "blue", linetype = 'dashed') +
+      geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
+      labs(
+        title = TeX(variable_names[i]),
+        x = "Time",
+        y = "Unit Points"
+      ) +
+      theme_minimal()
+  }
+  
+  # Generate plots
+  plots_list <- lapply(1:n, plot_irf)
+  grid_plots <- do.call("grid.arrange", c(plots_list, nrow = 2))
+  
+  legend_plot <- plot_grid(grid_plots, custom_legend , ncol = 1, rel_heights = c(1, 0.1))
+
+  # Title and final composition
+  title <- ggdraw() + draw_label(TeX(shock_label), fontface = 'bold', x = 0.5, hjust = 0.5)
+  final_plot <- plot_grid(title, legend_plot, ncol = 1, rel_heights = c(0.1, 1))
+  
+  return(final_plot)
+}
+
+```
+
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+gen_benchmark_esp <- readRDS( "gen_benchmark_esp.rds")
+
+```
+
+# For Spain
+
+```{r}
+#Plot the IRFs
+irf_gen_shock <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$NE Index$'),
+  shock = "price"
+)
+irf_gen_shock
+```
+
+```{r}
+#Plot the IRFs
+irf_gen_shock <- plot_irf_from_gen_benchmark(
+  gen_benchmark_esp,
+  variable_names = c('$Q_{elec}$', '$P_{elec}$',  "IPI", '$NE Index$'),
+  shock = "gen"
+)
+irf_gen_shock
+```
+
+
+
+# For France
+
+
+```{r}
+#Plot the IRFs
+irf_gen_shock <- plot_irf_from_gen_benchmark(
+  gen_benchmark_fr,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$NE Index$'),
+  shock = "price"
+)
+irf_gen_shock
+```
+
+
+```{r}
+#Plot the IRFs
+irf_gen_shock <- plot_irf_from_gen_benchmark(
+  gen_benchmark_fr,
+  variable_names = c('$Q_{elec}$', '$P_{elec}$',  "IPI", '$NE Index$'),
+  shock = "gen"
+)
+irf_gen_shock
+```
+

@@ -50,7 +50,10 @@ headers_proxies = c(
   # "NTC_FR_ESP_log"
   #"nuclear_unavailabilities_log"
   # "thermal_unavailabilities_log",
-  #"predicted_unavailabilities_log"
+  #"predicted_unavailabilities_log",
+  #"log_diff_wind",
+  #"log_diff_solar",
+  #log_diff_cloud_cover
 )
 
 
@@ -66,8 +69,11 @@ headers_var = c("spot_price_log",
 )
 
 headers_proxies = c(
-  "PC1_supply",
-  "log_diff_renewable"#, "log_diff_pred_unavail"
+  # "log_diff_pred_unavail",
+  #"log_diff_wind",
+  #"log_diff_solar",
+  "log_diff_renewable",
+  "PC1_supply"
 )
 
 
@@ -89,10 +95,10 @@ print(summary(result_gen_esp$m_summary))
 colnames(IV_data_log_esp)
 headers_proxies = c(
   "temp_excess_supply",
-  "PC1_supply",
+  #"log_diff_pred_unavail",
+  #"PC1_supply",
   "log_diff_renewable",
   "diff_cbf"
-  
 )
 
 colnames(IV_data_log_esp)

@@ -189,7 +189,7 @@ IV_data <- merge(IV_data, temperature_data,
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-write_parquet(IV_data, 'IV_data_fr2.parquet')
+write_parquet(IV_data, 'IV_data_fr.parquet')
 
 colnames(IV_data)
 

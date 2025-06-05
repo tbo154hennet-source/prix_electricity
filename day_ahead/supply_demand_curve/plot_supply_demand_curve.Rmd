@@ -15,7 +15,7 @@ setwd(curve_path)
 # 
 # file <- my_files[1]
 
-curve = "curva_pbc_20210627.1"
+curve = "curva_pbc_20210610.1"
 csv_file <- read.csv2(curve, header = FALSE,
                       skip = 1)
 colnames(csv_file) <- as.character(csv_file[1, ]) 
@@ -150,17 +150,22 @@ Donc, il faut que j'ai de l'énergie en trop.
 
 
 ```{r}
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 
-my_datetime_slot = "2021-12-12 20:00:00"
-CBF_ESP_FR <- price_merge_CBF %>% 
-  filter(datetime == my_datetime_slot) %>%
-  pull(CBF_ESP_FR)
-CBF_FR_ESP<- price_merge_CBF %>% 
-  filter(datetime == my_datetime_slot) %>%
-  pull(CBF_FR_ESP)
-CBF <- ifelse(CBF_ESP_FR == 0 ,  -CBF_FR_ESP, CBF_ESP_FR)
+price_indispo_merge_esp_NTC <- read_parquet("price_indispo_merge_esp_NTC.parquet")
+colnames(price_indispo_merge_esp_NTC)
 
-cross_border_exchanges <- data.frame(Hour = 19, DATE = "2023-09-28 19:00:00", OFFER_TYPE = "V",
+my_datetime_slot = "2021-06-10 20:00:00"
+
+cbf_es <- price_indispo_merge_esp_NTC %>% 
+  filter(datetime == my_datetime_slot) %>%
+  pull(cbf_es)
+cbf_es <- price_indispo_merge_esp_NTC %>% 
+  filter(datetime == my_datetime_slot) %>%
+  pull(cbf_es)
+CBF <- ifelse(cbf_es == 0 ,  -cbf_es, cbf_es)
+
+cross_border_exchanges <- data.frame(Hour = 19, DATE = "2021-06-10 19:00:00", OFFER_TYPE = "V",
            ENERGY = CBF, PRICE = 0.0, MATCHED = "O")
 
 new_supply_curve_adj <- plot_data %>%

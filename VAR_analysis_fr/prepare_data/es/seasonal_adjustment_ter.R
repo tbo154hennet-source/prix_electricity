@@ -135,7 +135,7 @@ seasonally_adjusted_df[is.na(seasonally_adjusted_df)] <- 0
 IV_data_log[is.na(IV_data_log)] <- 0
 
 
-
+colnames(IV_data_log)
 
 IV_data_log <- IV_data_log %>% 
   mutate(
@@ -144,7 +144,14 @@ IV_data_log <- IV_data_log %>%
     diff_cbf = cbf_es - lag(as.numeric(cbf_es)),
     log_diff_renewable = renewable_day_ahead_forecast_esp_log - lag(as.numeric(renewable_day_ahead_forecast_esp_log)),
     log_diff_ex_renewable = renewable_day_ahead_forecast_ex_es_log - lag(as.numeric(renewable_day_ahead_forecast_ex_es_log)),
-    log_diff_pred_unavail = predicted_unavailabilities_log - lag(as.numeric(predicted_unavailabilities_log))
+    log_diff_pred_unavail = predicted_unavailabilities_log - lag(as.numeric(predicted_unavailabilities_log)),
+    log_diff_temperature = temperature_demand_log - lag(as.numeric(temperature_demand_log)),
+    log_diff_temp_mismatch = temperature_mismatch_log - lag(as.numeric(temperature_mismatch_log)),
+    log_diff_precipitation = precipitation_demand_log - lag(as.numeric(precipitation_demand_log)),
+    log_diff_humidity = relative_humidity_demand_log - lag(as.numeric(relative_humidity_demand_log)),
+    log_diff_wind = wind_speed_100m_log - lag(as.numeric(wind_speed_100m_log)),
+    log_diff_solar = global_tilted_irradiance_log - lag(as.numeric(global_tilted_irradiance_log)),
+
     ) %>%
   arrange(datetime)
 
@@ -170,48 +177,23 @@ ggplot(IV_data, aes(x = datetime)) +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
-ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y =IV_data$wind_forecast , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$wind_forecast, color = "S ADj")) +
-  geom_line(aes(x = datetime, y = detrended_data$wind_forecast, color = "Detrended"))+
-  labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
-       x = "Date", y = "Index") +
-  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red", "S ADj" = "green")) +
-  theme_minimal()
 
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y = log(IV_data$spot_price) -mean(log(IV_data$spot_price)) , color = "Original")) +
-  geom_line(aes(y = IV_data_log_detrended$spot_price_log, color = "Detrended")) +
-  labs(title = "Log Spot price - Original and Detrended",
-       x = "Date", y = "Index") +
-  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
-  theme_minimal()
-
-
-ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y = log(IV_data$NTC_FR_ESP) -mean(log(IV_data$NTC_FR_ESP)) , color = "Original")) +
-  geom_line(aes(y = IV_data_log$NTC_FR_ESP_log, color = "Detrended")) +
-  labs(title = "NTC_FR_ESP",
-       x = "Date", y = "Index") +
-  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
-  theme_minimal()
-
-ggplot() +
-  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = renewable_day_ahead_forecast_esp_log, color ="ES", linetype = "Baseline" )) +
-  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = renewable_day_ahead_forecast_ex_es_log - mean(renewable_day_ahead_forecast_ex_es_log), color ="ex-ES", linetype = "Baseline" )) +
-  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = detrended_renewable_day_ahead_forecast_esp_log, color ="ES", linetype = "Detrended" )) +
-  geom_line(data = IV_data_log_detrended, aes(x = c(1:108), y = detrended_renewable_day_ahead_forecast_ex_es_log, color ="ex-ES", linetype = "Detrended" )) +
-  labs(title = "Should I detrend instruments ?",
-       x = "Time",
-       y = "GWh") +
-  theme_minimal()
-
-ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y =IV_data$cold_excess_demand , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$cold_excess_demand, color = "Detrended")) +
+  geom_line(aes(y =IV_data$IPI , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$IPI, color = "Detrended")) +
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
+
+
+ggplot(IV_data_log, aes(x = datetime)) +
+  geom_line(aes(y =log_diff_renewable , color = "Renewable")) +
+  geom_line(aes(y = log_diff_wind, color = "Wind")) +
+  geom_line(aes(y = log_diff_solar, color = "Solar")) +
+  labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
+       x = "Date", y = "Index") +
+  theme_minimal()
+
 
 

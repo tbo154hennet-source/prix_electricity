@@ -171,12 +171,16 @@ price_indispo_merge <- price_indispo_merge %>%
          heat_excess_mismatch = heat_excess_demand - heat_excess_supply
   )
 
+colnames(price_indispo_merge)
 #backfill spot gas
 
 monthly_weather_data <- price_indispo_merge %>%
   arrange(datetime) %>% 
   group_by(month, year) %>%
   summarise(
+    temperature_demand = mean(temperature_demand, na.rm = TRUE),
+    temperature_supply = mean(temperature_supply, na.rm = TRUE),
+    temperature_mismatch = mean(temperature_mismatch, na.rm = TRUE),
     cold_excess_demand = mean(cold_excess_demand, na.rm = TRUE),
     heat_excess_demand = mean(heat_excess_demand, na.rm = TRUE),
     cold_excess_supply = mean(cold_excess_supply, na.rm = TRUE),
@@ -190,6 +194,9 @@ monthly_weather_data <- price_indispo_merge %>%
     relative_humidity_demand = mean(relative_humidity_demand, na.rm = TRUE),
     precipitation_mismatch = mean(precipitation_mismatch, na.rm = TRUE),
     relative_humidity_mismatch = mean(relative_humidity_mismatch, na.rm = TRUE),
+    wind_speed_100m = mean(wind_speed_100m, na.rm = TRUE),
+    cloud_cover = mean(cloud_cover, na.rm = TRUE),
+    global_tilted_irradiance = mean(global_tilted_irradiance, na.rm = TRUE),
     datetime = first(datetime)
   ) %>%
   arrange(datetime) %>% 
@@ -222,7 +229,7 @@ write_parquet(IV_data, 'IV_data_esp.parquet')
 colnames(IV_data)
 
 
-
+library(ggplot2)
 plot_data <- monthly_crossborder_data %>%
   select(datetime, FR = renewable_day_ahead_forecast_fr, 
          PT = renewable_day_ahead_forecast_pt) %>%
@@ -254,4 +261,29 @@ ggplot(data = plot_data) +
   labs(title = "Contributions des prévisions renouvelables FR et PT",
        y = "Prévision (MW)", x = "Date", fill = "Zone") +
   theme_minimal()
+
+colnames(IV_data)
+
+plot_data_elec <- IV_data %>%
+  select(datetime, 
+         wind_forecast, solar_forecast
+         
+  )  %>%
+  pivot_longer(cols = -datetime, names_to = "energy", values_to = "forecast") 
+
+
+ggplot(data = plot_data_elec) +
+  geom_area( aes(x = datetime, y = forecast, fill = energy),position = "stack", alpha = 0.6) +
+  geom_line(data = IV_data, 
+            aes(x= datetime, y = renewable_forecast ,linetype = "dashed")) +
+  geom_line(data = IV_data, aes(x= datetime, y = wind_speed_100m*100, color = "Wind speed")) +
+  geom_line(data = IV_data, aes(x= datetime, y = global_tilted_irradiance*10 , color = "Solar radiance")) +
+  labs(title = "Renewable energy decomposition",
+       y = "Prévision (MW)", x = "Date", fill = "Zone") +
+  theme_minimal()
+
+
+
+
+
 

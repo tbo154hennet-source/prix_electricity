@@ -89,4 +89,19 @@ plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_temp_variation,
 
 
 
+```{r}
 
+setwd("Z:/code_supply_demand")
+coef_demand_unmatched_wind_sun_variation <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_wind_sun_variation.rds")
+coef_demand_unmatched_data_wind_sun_variation <- rbindlist(coef_demand_unmatched_wind_sun_variation)
+
+
+
+new_renewable_factors <- c("wind_speed_100m", "cloud_cover" , "global_tilted_irradiance")
+
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_wind_sun_variation, 
+   variables = new_renewable_factors,
+   type = "Demand", matched = "unmatched")
+
+
+```

@@ -85,9 +85,8 @@ m_log_control <- lm(
     renewable_day_ahead_forecast   +
     gen_tot_da + gen_tot +  gen_tot_da_conso + 
     spot_gas + unpredicted_renewables + intraday_update_renewables+
-    temperature_supply + temperature_mismatch +
-    precipitation_demand + precipitation_supply +
-    relative_humidity_demand + relative_humidity_supply,
+    temperature_demand +
+    precipitation_demand + relative_humidity_demand ,
   data= price_indispo_merge)
 
 
@@ -116,9 +115,9 @@ m_log_FE <- lm(
     renewable_day_ahead_forecast   +
     gen_tot_da + gen_tot +  gen_tot_da_conso + 
     spot_gas + unpredicted_renewables + intraday_update_renewables + 
-    temperature_supply + temperature_mismatch +
-    precipitation_demand + precipitation_supply +
-    relative_humidity_demand + relative_humidity_supply +
+    temperature_demand +
+    precipitation_demand + 
+    relative_humidity_demand  +
     as.factor(year) + as.factor(month)+
     + as.factor(weekday) + as.factor(creneau),
   data= price_indispo_merge)
@@ -152,16 +151,18 @@ reg_table <- stargazer( m_log_control ,m_log_FE,
     type = "html",
     se = list(cl_se_log_control, cl_se_log_FE),
     title = "Regression Results",
-    column.labels = c("Basic",  "+ Controls","Time FE"),
-    keep = c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity",
-     "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
-     "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
-    "Uneffective.Unavailable.Nuclear.Capacity", "Planned.Unavailable.Nuclear.Capacity","gen_tot",
-             "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables", 
-    "temperature_mismatch", "temperature_supply",
-    "precipitation_supply", "precipitation_demand",
-    "relative_humidity_supply", "relative_humidity_demand"
-    )
+    column.labels = c("Basic",  "Time FE", "+ Controls"),
+    keep = c("Capacity","renewable_day_ahead_forecast", 
+             "unpredicted_renewables", "intraday_update_renewables")
+    #   c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity",
+    #  "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
+    #  "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
+    # "Uneffective.Unavailable.Nuclear.Capacity", "Planned.Unavailable.Nuclear.Capacity","gen_tot",
+    #          "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables", 
+    # "temperature_mismatch", "temperature_supply",
+    # "precipitation_supply", "precipitation_demand",
+    # "relative_humidity_supply", "relative_humidity_demand"
+    # )
 )
  
 ```
@@ -176,9 +177,9 @@ m_rf <- lm(
      renewable_day_ahead_forecast   + 
      gen_tot_da + gen_tot +  gen_tot_da_conso +spot_gas+
     unpredicted_renewables + intraday_update_renewables+
-    temperature_supply + temperature_mismatch +
-    precipitation_demand + precipitation_supply +
-    relative_humidity_demand + relative_humidity_supply
+    temperature_demand +
+    precipitation_demand + 
+    relative_humidity_demand 
     ,
   data= price_indispo_merge)
 
@@ -200,9 +201,9 @@ m_rf_FE <- lm(
     renewable_day_ahead_forecast   +
     gen_tot_da + gen_tot +  gen_tot_da_conso +  spot_gas + 
     unpredicted_renewables + intraday_update_renewables+
-    temperature_supply + temperature_mismatch +
-    precipitation_demand + precipitation_supply +
-    relative_humidity_demand + relative_humidity_supply+
+    temperature_demand +
+    precipitation_demand + 
+    relative_humidity_demand +
     as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
   data= price_indispo_merge)
 # Matrice de variance-covariance clusterisée
@@ -222,15 +223,17 @@ reg_table <- stargazer(  m_rf, m_rf_FE,
     se = list( cl_se_rf, cl_se_rf_FE),
     title = "Regression Results",
     column.labels = c(  "XGB", "XGB + Time FE"),
-    keep = c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
-             "Published.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity",
-              "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",
-    "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "UnPublished.Limiting.Capacity",
-      "gen_tot",
-             "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables",
-    "temperature_mismatch", "temperature_supply",
-    "precipitation_supply", "precipitation_demand",
-    "relative_humidity_supply", "relative_humidity_demand")
+    keep = c("Capacity", "renewable_day_ahead_forecast", 
+             "unpredicted_renewables", "intraday_update_renewables")
+    #   c("Published.Predicted.Unavailable.Capacity" , "Unpublished.Predicted.Unavailable.Capacity",
+    #          "Published.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity",
+    #           "Planned.Predicted.Unavailable.Capacity", "Planned.Limiting.Capacity",
+    # "Published.Limiting.Capacity", "Unpublished.Limiting.Capacity", "UnPublished.Limiting.Capacity",
+    #   "gen_tot",
+    #          "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables",
+    # "temperature_mismatch", "temperature_supply",
+    # "precipitation_supply", "precipitation_demand",
+    # "relative_humidity_supply", "relative_humidity_demand")
 )
  
 ```
@@ -310,4 +313,274 @@ reg_table <- stargazer( m_log_offpeak,
     "precipitation_supply", "precipitation_demand",
     "relative_humidity_supply", "relative_humidity_demand")
 )
+```
+
+```{r}
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+setwd(save_path_data)
+price_indispo_merge_NTC <- read_parquet("price_indispo_merge_esp_ntc.parquet")
+price_indispo_merge_NTC <- price_indispo_merge_NTC %>%
+  fill(spot_gas, .direction = "up") %>% 
+  rename(renewable_day_ahead_forecast = day_ahead_forecast)
+colnames_with_capacity <- colnames(price_indispo_merge_NTC)[grepl("Capacity", colnames(price_indispo_merge_NTC))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "renewable_day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables",
+     "NTC_ES_FR", "NTC_FR_ES","NTC_PT_ES" ,"renewable_day_ahead_forecast_ex_es" ,"cbf_es"
+    )
+price_indispo_merge_NTC[colnames_with_capacity] <- lapply(price_indispo_merge_NTC[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+#
+price_indispo_merge_NTC <- price_indispo_merge_NTC %>% 
+  mutate(across(all_of(capacity_fields), 
+                ~ . / 1000)) %>% 
+  mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity,
+              temperature_mismatch = temperature_demand - temperature_supply 
+         ) 
+
+price_indispo_merge_NTC <- price_indispo_merge_NTC[complete.cases(price_indispo_merge_NTC),]
+
+price_indispo_merge_NTC <- price_indispo_merge_NTC[!rowSums(sapply(price_indispo_merge_NTC, is.infinite)), ]
+
+price_indispo_merge_NTC$weekday <- weekdays(price_indispo_merge_NTC$delivery_date)
+price_indispo_merge_NTC$creneau <- hour(price_indispo_merge_NTC$datetime)
+
+#backfill spot gas
+price_indispo_merge_NTC<- price_indispo_merge_NTC %>%
+  fill(spot_gas, .direction = "down")
+
+```
+
+
+```{r}
+# perform first stage regression
+m_ntc <- lm(
+  log(price) ~ cbf_es + Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    #Uneffective.Predicted.Unavailable.Capacity +
+     renewable_day_ahead_forecast   + 
+     gen_tot_da + gen_tot +  gen_tot_da_conso +spot_gas+
+    unpredicted_renewables + intraday_update_renewables+
+    temperature_demand +
+    precipitation_demand + 
+    relative_humidity_demand 
+    ,
+  data= price_indispo_merge_NTC)
+
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_ntc, type = "HC0")
+cl_se_ntc<- sqrt(diag(vcov_cluster))
+# # Matrice de variance-covariance clusterisée
+# vcov_cluster <- vcovCL(m_rf , type = "HC0", cluster = ~ cl_rf_id)
+# # Erreurs standard clusterisées
+# cl_se <- sqrt(diag(vcov_cluster))
+# rf_names <- names(coefficients(m_log_control))[grep("Predicted", names(coefficients(m_log_control)))]
+# cl_se_rf[rf_names] <- cl_se[rf_names]
+
+
+m_ntc_FE <- lm(
+  log(price) ~  cbf_es +Published.Predicted.Unavailable.Capacity+  
+    Unpublished.Predicted.Unavailable.Capacity + 
+    #Uneffective.Predicted.Unavailable.Capacity +
+    renewable_day_ahead_forecast   +
+    gen_tot_da + gen_tot +  gen_tot_da_conso +  spot_gas + 
+    unpredicted_renewables + intraday_update_renewables+
+    temperature_demand +
+    precipitation_demand + 
+    relative_humidity_demand +
+    as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge_NTC)
+# Matrice de variance-covariance clusterisée
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_ntc_FE, type = "HC0")
+cl_se_ntc_fe <- sqrt(diag(vcov_cluster))
+
+
+
+```
+
+```{r, results = 'asis'}
+reg_table <- stargazer( m_ntc, m_ntc_FE, 
+    type = "html",
+    se = list(cl_se_ntc, cl_se_ntc_fe),
+    title = "Regression Results",
+    column.labels = c("Basic", "Time FE", "+ Controls"),
+    keep = c( "cbf_es", "Capacity", 
+             "renewable_day_ahead_forecast", "unpredicted_renewables", "intraday_update_renewables")
+)
+```
+
+
+
+Do a final regression table concatenating my main results
+
+```{r, results = 'asis'}
+reg_table <- stargazer(m_log_FE, m_rf_FE, m_ntc_FE, 
+    type = "html",
+    se = list(cl_se_log_FE,cl_se_rf_FE, cl_se_ntc_fe),
+    title = "Regression Results",
+    column.labels = c("Basic", "Predicted", "CrossBorder"),
+    keep = c( "cbf_es", "Capacity", 
+             "renewable_day_ahead_forecast", "unpredicted_renewables", "intraday_update_renewables")
+)
+```
+
+
+
+# Studying the Demand side
+
+
+```{r}
+
+colnames_with_gen <- colnames(price_indispo_merge)[grepl("gen", colnames(price_indispo_merge))]
+
+price_indispo_merge <- price_indispo_merge %>% 
+  mutate(across(all_of(colnames_with_gen), 
+                ~ . / 1000))
+
+```
+
+
+
+```{r}
+
+m_gen <- lm(
+  log(gen_tot) ~ 
+    cold_excess_demand + heat_excess_demand+
+    price +
+    Published.Unavailable.Capacity + Unpublished.Unavailable.Capacity+
+    #Uneffective.Unavailable.Capacity + 
+      Published.Unavailable.Nuclear.Capacity+
+     Unpublished.Unavailable.Nuclear.Capacity +
+    #Uneffective.Unavailable.Nuclear.Capacity+
+    renewable_day_ahead_forecast   +
+    spot_gas + unpredicted_renewables + intraday_update_renewables+
+    precipitation_demand + relative_humidity_demand ,
+  data= price_indispo_merge)
+
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_gen, type = "HC0")
+cl_se_gen_control<- sqrt(diag(vcov_cluster))
+
+
+m_gen_FE <- lm(
+  log(gen_tot) ~ cold_excess_demand + heat_excess_demand+
+    price +
+    Published.Unavailable.Capacity + Unpublished.Unavailable.Capacity+
+    #Uneffective.Unavailable.Capacity + 
+      Published.Unavailable.Nuclear.Capacity+
+     Unpublished.Unavailable.Nuclear.Capacity +
+    #Uneffective.Unavailable.Nuclear.Capacity+
+    renewable_day_ahead_forecast   +
+    spot_gas + unpredicted_renewables + intraday_update_renewables+
+    precipitation_demand + relative_humidity_demand  +
+    as.factor(year) + as.factor(month)+
+    + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_gen_FE, type = "HC0")
+cl_se_gen_FE<- sqrt(diag(vcov_cluster))
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_gen ,m_gen_FE, 
+    type = "html",
+    se = list(cl_se_gen_control, cl_se_gen_FE),
+    title = "Regression Results",
+    column.labels = c("Basic",  "Time FE", "+ Controls"),
+    keep = c("gen", "excess", "price")
+    #   c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity",
+    #  "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
+    #  "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
+    # "Uneffective.Unavailable.Nuclear.Capacity", "Planned.Unavailable.Nuclear.Capacity","gen_tot",
+    #          "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables", 
+    # "temperature_mismatch", "temperature_supply",
+    # "precipitation_supply", "precipitation_demand",
+    # "relative_humidity_supply", "relative_humidity_demand"
+    # )
+)
+ 
+```
+
+
+```{r}
+
+m_gen_da <- lm(
+  log(gen_tot_da) ~ 
+    cold_excess_demand + heat_excess_demand+
+    price +
+    Published.Unavailable.Capacity + Unpublished.Unavailable.Capacity+
+    #Uneffective.Unavailable.Capacity + 
+      Published.Unavailable.Nuclear.Capacity+
+     Unpublished.Unavailable.Nuclear.Capacity +
+    #Uneffective.Unavailable.Nuclear.Capacity+
+    renewable_day_ahead_forecast   +
+    spot_gas + unpredicted_renewables + intraday_update_renewables+
+    precipitation_demand + relative_humidity_demand ,
+  data= price_indispo_merge)
+
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_gen_da, type = "HC0")
+cl_se_gen_da_control<- sqrt(diag(vcov_cluster))
+
+
+m_gen_da_FE <- lm(
+  log(gen_tot_da) ~ cold_excess_demand + heat_excess_demand+
+    price +
+    Published.Unavailable.Capacity + Unpublished.Unavailable.Capacity+
+    #Uneffective.Unavailable.Capacity + 
+      Published.Unavailable.Nuclear.Capacity+
+     Unpublished.Unavailable.Nuclear.Capacity +
+    #Uneffective.Unavailable.Nuclear.Capacity+
+    renewable_day_ahead_forecast   +
+    spot_gas + unpredicted_renewables + intraday_update_renewables+
+    precipitation_demand + relative_humidity_demand  +
+    as.factor(year) + as.factor(month)+
+    + as.factor(weekday) + as.factor(creneau),
+  data= price_indispo_merge)
+
+
+# Matrice de variance-covariance clusterisée
+vcov_cluster <- vcovHC(m_gen_da_FE, type = "HC0")
+cl_se_gen_da_FE<- sqrt(diag(vcov_cluster))
+
+
+```
+
+
+
+```{r, results = 'asis'}
+
+
+reg_table <- stargazer( m_gen_da ,m_gen_da_FE, 
+    type = "html",
+    se = list(cl_se_gen_da_control, cl_se_gen_da_FE),
+    title = "Regression Results",
+    column.labels = c("Basic",  "Time FE", "+ Controls"),
+    keep = c("gen", "excess", "price")
+    #   c("Published.Unavailable.Capacity" , "Planned.Unavailable.Capacity",
+    #  "Unpublished.Unavailable.Capacity","Uneffective.Unavailable.Capacity", 
+    #  "Published.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Nuclear.Capacity"  ,
+    # "Uneffective.Unavailable.Nuclear.Capacity", "Planned.Unavailable.Nuclear.Capacity","gen_tot",
+    #          "renewable_day_ahead_forecast", "spot_gas", "unpredicted_renewables","unpredicted_renewables_sq", "intraday_update_renewables", 
+    # "temperature_mismatch", "temperature_supply",
+    # "precipitation_supply", "precipitation_demand",
+    # "relative_humidity_supply", "relative_humidity_demand"
+    # )
+)
+ 
 ```

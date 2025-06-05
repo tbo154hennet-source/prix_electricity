@@ -1,0 +1,230 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+
+
+plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
+  
+
+  plot_data <- coef_data %>% 
+    filter(variable %in% variables) %>% 
+    mutate(estimate = ifelse(variable == "global_tilted_irradiance", estimate*10, estimate),
+           pretty_variable = case_when(
+      variable == "renewable_day_ahead_forecast" ~ "Renewable Day-ahead Forecast (MWh)",
+      variable == "global_tilted_irradiance" ~ "Irradiance (0.1W/m2)",
+      variable == "wind_speed_100m" ~ "Wind Speed (m/s)",
+      variable == "unpredicted_renewables" ~ "Unpredicted Renewables (MWh)",
+      variable == "intraday_update_renewables" ~ "Intraday Update Renewables (MWh)",
+      variable == "cbf_es" ~ "CBF (MWh)",
+      variable == "cold_excess_supply" ~ "Excess Cold (°C)",
+      variable == "heat_excess_supply" ~ "Excess Heat (°C)",
+      variable == "cold_excess_demand" ~ "Excess Cold (°C)",
+      variable == "heat_excess_demand" ~ "Excess Heat (°C)",
+      TRUE ~ variable  # fallback
+    ),
+    )
+  # %>% 
+  #   filter(price_test >= -100)
+  
+  # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
+  scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$gen_tot_da, plot = FALSE)$counts)
+  
+  my_plot <- ggplot(data = plot_data) +
+    # Courbe principale avec bande de confiance
+    geom_line(aes(x = price_test, y = estimate, color = pretty_variable)) +
+    geom_point(aes(x = price_test, y = estimate, color = pretty_variable)) +
+    geom_line(aes(x = price_test, y = 0), linetype = "dashed")+
+    geom_ribbon(
+      aes(
+        x = price_test, 
+        ymin = estimate - 1.96 * std_error, 
+        ymax = estimate + 1.96 * std_error,
+        fill = pretty_variable
+      ), 
+      alpha = 0.2
+    ) + 
+    labs(
+      title = paste0("Shift in ", type, " Curve"),
+      x = "Price (€)",
+      y = "Cumulative Energy (MWh)",
+      color = "Variable",
+      fill = "Variable"
+    ) +
+    theme_minimal()
+
+  if (matched == "matched"){
+    # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
+    scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$price, plot = FALSE)$counts)
+  
+    my_plot <- my_plot + 
+    # Histogramme mis à l'échelle
+    geom_histogram(
+      data = price_indispo_merge_esp,
+      mapping = aes( x = price,  y = ..count.. * scale_factor),
+      bins = 60,
+      color = "black",
+      fill = NA
+    )
+    
+    # Axe secondaire
+    # scale_y_continuous(
+    #   name = "Price (€/GWh)",
+    #   sec.axis = sec_axis(~ . / scale_factor, name = "Fréquence de gen_tot")
+    # )
+  }
+  my_plot <- my_plot +
+  coord_flip(xlim = c(-20, 165))
+
+  return(my_plot)
+}
+
+```
+
+
+
+
+```{r}
+
+
+renewable_factors <- c("renewable_day_ahead_forecast", "unpredicted_renewables", 
+                     "intraday_update_renewables")
+
+# international_exchanges_factors <- c("NTC_ES_FR" ,"NTC_FR_ES",                                 
+#                              "NTC_ES_PT", "NTC_PT_ES"
+#                              )
+
+international_exchanges_factors <- c("cbf_es")
+
+temperature_factors <- c(
+  "temperature_supply", "temperature_demand", 
+  "cold_excess_supply", "heat_excess_supply",
+  "cold_excess_demand", "heat_excess_demand"
+  
+)
+
+other_weather_factors <- c("precipitation_supply", "relative_humidity_supply",
+                           "precipitation_demand","relative_humidity_demand")
+indispo_factors <- c("Published.Unavailable.Capacity", "Uneffective.Unavailable.Capacity", 
+                     "Unpublished.Unavailable.Capacity",
+                     "Published.Unavailable.Nuclear.Capacity", 
+                     "Uneffective.Unavailable.Nuclear.Capacity",
+                     "Unpublished.Unavailable.Nuclear.Capacity",
+                     "Published.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity", 
+                     "Unpublished.Predicted.Unavailable.Capacity"
+                     )
+
+sum_up_factors <- c(
+  "Published.Unavailable.Capacity","renewable_day_ahead_forecast", "cbf_es",
+  "cold_excess_supply", "heat_excess_supply"
+)
+
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+setwd(save_path_data)
+price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
+
+
+
+```
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse.rds")
+coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
+
+coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse.rds")
+coef_demand_unmatched_data <- rbindlist(coef_demand_unmatched)
+
+
+```
+
+
+# Supply side
+
+
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = sum_up_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+
+# Demand side
+
+
+```{r}
+sum_up_factor_demand <- c(
+  "Published.Unavailable.Capacity", "renewable_day_ahead_forecast", "cbf_es",
+  "cold_excess_demand", "heat_excess_demand"
+)
+
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = sum_up_factor_demand,
+   type = "Demand", matched = "unmatched")
+
+
+```
+
+# Variations
+
+
+## Using wind and solar irradiation directly for renwables
+
+
+```{r}
+
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_wind_sun_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_wind_sun_variation.rds")
+coef_supply_unmatched_data_wind_sun_variation <- rbindlist(coef_supply_unmatched_wind_sun_variation)
+
+coef_supply_combined <- rbind(coef_supply_unmatched_data, coef_supply_unmatched_data_wind_sun_variation)
+
+new_renewable_factors <- c("wind_speed_100m" , "global_tilted_irradiance", "renewable_day_ahead_forecast",  
+                     "intraday_update_renewables")
+
+plot_shift_with_hist_qty(coef_data = coef_supply_combined, 
+   variables = new_renewable_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+
+```{r}
+coef_demand_combined <- rbind(coef_demand_unmatched_data, coef_demand_unmatched_data_wind_sun_variation)
+
+plot_shift_with_hist_qty(coef_data = coef_demand_combined, 
+   variables = new_renewable_factors,
+   type = "Demand", matched = "unmatched")
+
+```
+
+
+
+
+## Using different indispo types
+
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = indispo_factors,
+   type = "Supply", matched = "unmatched")
+
+
+```
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = indispo_factors,
+   type = "Demand", matched = "unmatched")
+
+
+```
+
+

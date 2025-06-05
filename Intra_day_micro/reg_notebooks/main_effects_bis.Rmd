@@ -178,9 +178,6 @@ m_control_renew_fe <- feols(
   )
 
 
-
-
-
 # Model for horizon 6
 
 
@@ -242,19 +239,7 @@ cl_se_real_hc <- sqrt(diag(vcov_cluster))
 
 
 
-```{r, results = 'asis'}
 
-reg_table <- stargazer(m_real, m_real,
-    type = "html",
-    se = list(cl_se_real_hc, cl_se_real_cl),
-    title = "Regression Results",
-    column.labels = c("Predicted RF", "Predicted ClSD", "Limiting", "Limiting ClSD"),
-    keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Limiting.Unavailable.Capacity",
-             "Capacity","Unpublished.Predicted.Unavailable.Capacity",
-             'Unpublished.Unavailable.Capacity', "Published.Predicted.Unavailable.Capacity",'gen_tot')
-)
- 
-```
 
 
 
@@ -294,16 +279,18 @@ cl_se_basic_cl <- sqrt(diag(vcov_cluster))
 
 
 ```{r, results = 'asis'}
-# Create LaTeX code with regression results
-reg_table <- stargazer(m_basic_all, m_basic_all,   
+
+reg_table <- stargazer( m_basic_all, m_real,
     type = "html",
-    se = list(cl_se_basic_hc, cl_se_basic_cl),
+    se = list(cl_se_basic_cl, cl_se_real_cl),
     title = "Regression Results",
-    column.labels = c("Basic", "Basic ClSD", 'FE', "FE ClSD"),
-    keep = c('Constant', 'Published.Unavailable.Capacity', "Published.Unavailable.Nuclear.Capacity",
-             'Capacity', "Unpublished.Unavailable.Nuclear.Capacity",'gen_tot')
- )
+    column.labels = c("Basic", "Predicted", "Limiting", "Limiting ClSD"),
+    keep = c('Capacity')
+)
+ 
 ```
+
+
 
 
 

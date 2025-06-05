@@ -138,7 +138,6 @@ temp_instrument_data <- temp_instrument_data %>%
   filter(year >= 2015)
 
 
-
 ggplot()+
   geom_line(data = temperature_openmeteo_data_monthly, aes(x = Date, y = temperature_2m, color = "Open Meteo Population")) +
   geom_line(data = temperature_openmeteo_plant_data_monthly, aes(x = Date, y = temperature_2m, color = "Open Meteo Plant")) +

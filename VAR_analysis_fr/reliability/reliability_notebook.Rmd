@@ -3,127 +3,40 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-
-# Spain
-
 ```{r}
 library(stargazer)
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
-setwd(save_var_path)
-IV_data_log_esp <-  read_parquet('IV_data_esp_log.parquet')
-
-
-
-
-headers_var = c("spot_price_log",
-                "gen_tot_log",
-                "IPI_log",
-                # "ECB_rate_log",
-                # "E_Index_log",
-                # "Exp_pi_log",
-                # "UnE_log" ,
-                "NE_Index_log"
-)
-
-headers_proxies = c(
-  "PC1_supply",
-  "log_diff_renewable", "diff_cbf"
-)
-result_price_esp <- run_iv_analysis(IV_data_log_esp, headers_var, headers_proxies, p = 4,
-                          dependent = "spot_price_log", k = 1)
-
-headers_proxies = c(
-  "cold_excess_instrument",
-  "heat_excess_instrument"
-)
-result_gen_esp <- run_iv_analysis(IV_data_log_esp, headers_var, headers_proxies, p = 4,
-                          dependent = "gen_tot_log", k = 1)
-
-
-
-headers_proxies = c(
-  "cold_excess_instrument",
-  "heat_excess_instrument",
-  "PC1_supply",
-  "log_diff_renewable", "diff_cbf"
-)
-
-result_esp <- run_iv_analysis(IV_data_log_esp, headers_var, headers_proxies, p = 4,
-                                dependent = "", k = 2)
-
 
 ```
 
 
-```{r, results = 'asis'}
-models <- list(
-  result_price_esp$m_summary,
-  result_gen_esp$m_summary,
-  result_esp$m_price_summary,
-  result_esp$m_demand_summary
-)
-
-models_valid <- Filter(function(m) inherits(m, "lm"), models)
-
-reg_table <- stargazer(
-  models_valid,
-  type = "html",
-  title = "First stage Regression"
-)
-
-```
-
-# France
 
 
 ```{r}
 
-
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
-setwd(save_var_path)
-IV_data_log_fr <-  read_parquet('IV_data_fr_log.parquet')
-
-
-
-headers_proxies = c(
-  "PC1_supply",
-  "log_diff_renewable", "diff_cbf"
-)
-result_price_fr <- run_iv_analysis(IV_data_log_fr, headers_var, headers_proxies, p = 4,
-                          dependent = "spot_price_log", k = 1)
-
-headers_proxies = c(
-  "cold_excess_instrument",
-  "heat_excess_instrument"
-)
-result_gen_fr <- run_iv_analysis(IV_data_log_fr, headers_var, headers_proxies, p = 4,
-                          dependent = "gen_tot_log", k = 1)
-
-
-
 headers_proxies = c(
   "cold_excess_instrument",
   "heat_excess_instrument",
-  "PC1_supply",
-  "log_diff_renewable", "diff_cbf"
+  "log_diff_pred_unavail",
+  "log_diff_renewable",
+  "diff_cbf"
 )
 
-result_fr <- run_iv_analysis(IV_data_log_fr, headers_var, headers_proxies, p = 4,
+result_esp <- run_iv_analysis(IV_data_log_esp %>% 
+                                rename(cold_excess_instrument =cold_excess_supply,
+                                       heat_excess_instrument = heat_excess_supply ),
+                              headers_var, headers_proxies, p = 4,
                                 dependent = "", k = 2)
 
-
-
-
+result_fr <- run_iv_analysis(IV_data_log_fr, headers_var, headers_proxies, p = 4,
+                              dependent = "", k = 2)
 ```
-
-
 
 
 
 ```{r, results = 'asis'}
 models <- list(
-  result_price_fr$m_summary,
-  result_gen_fr$m_summary,
+  result_esp$m_price_summary,
+  result_esp$m_demand_summary,
   result_fr$m_price_summary,
   result_fr$m_demand_summary
 )
@@ -132,11 +45,15 @@ models_valid <- Filter(function(m) inherits(m, "lm"), models)
 
 reg_table <- stargazer(
   models_valid,
+  column.labels = c("ES", "ES", "FR", "FR"),
+  dep.var.labels = c("Price", "Demand", "Price", "Demand"),
   type = "html",
   title = "First stage Regression"
 )
 
 ```
+
+
 
 
 

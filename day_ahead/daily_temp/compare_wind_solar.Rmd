@@ -1,0 +1,120 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(stargazer)
+```
+
+
+```{r}
+
+plot_data <- wind_solar_data_tot %>% 
+  filter( as.Date(date) >= "2020-05-01" & as.Date(date) <= "2020-05-05" )
+
+ggplot(plot_data, aes( x= date))+
+  geom_line(aes(y= global_tilted_irradiance*10, color = "Sun Irradiance")) +
+  geom_line(aes(y= wind_speed_100m*100, color = "Wind Speed")) +
+  geom_line(aes(y= Fore_Wind, color = "Wind P°")) +
+  geom_line(aes(y= Fore_Solar, color = "Solar P°"))+
+  labs(
+    title = "Wind and Solar Data",
+    x = "Date",
+    y = "Value",
+    color = "Legend"
+  )
+  
+```
+
+
+
+```{r}
+
+reg_table <- stargazer(model_solar, model_solarc, model_solarfe,
+    type = "text",
+    title = "Regression Results",
+    column.labels = c("Basic",  "+ Controls","Time FE"),
+    keep = c(
+    "precipitation_demand", "temperature_demand", "relative_humidity_demand",
+    "wind_speed_100m", "global_tilted_irradiance"
+    )
+)
+```
+
+
+```{r}
+
+reg_table <- stargazer(model_wind, model_windc, model_windfe,
+    type = "text",
+    title = "Regression Results",
+    column.labels = c("Basic",  "+ Controls","Time FE"),
+    keep = c(
+    "precipitation_demand", "temperature_demand", "relative_humidity_demand",
+    "wind_speed_100m", "global_tilted_irradiance"
+    )
+)
+```
+
+
+```{r}
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+setwd(save_path_data)
+price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
+
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
+setwd(save_path_data)
+price_indispo_merge_fr <- read_parquet( "price_indispo_merge_fr.parquet")
+
+  
+
+
+```
+
+
+
+```{r}
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_var_path)
+IV_data_esp <- read_parquet('IV_data_esp.parquet') 
+
+setwd(save_var_path)
+IV_data_fr <- read_parquet('IV_data_fr.parquet') 
+
+library(ggplot2)
+
+ggplot() +
+  # Temperature-related instruments (on secondary axis)
+  geom_line(data = IV_data_fr, aes(x = datetime, y = cold_excess_instrument, color = "Cold Excess")) +
+  geom_line(data = IV_data_fr, aes(x = datetime, y = heat_excess_instrument, color = "Heat Excess")) +
+  # Generation lines (scaled down)
+  geom_line(data = IV_data_esp, aes(x = datetime, y = gen_tot / 10000, color = "ES Generation")) +
+  geom_line(data = IV_data_fr, aes(x = datetime, y = gen_tot / 10000, color = "FR Generation")) +
+
+  # Primary axis for generation
+  scale_y_continuous(
+    name = "Temperature Excess Index",
+    sec.axis = sec_axis(~ .*10, name = "Generation (GW)")  # second axis, same scale
+  ) +
+  labs(
+    title = "Generation and Temperature Patterns",
+    x = "Date",
+    color = "Variable"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom"
+  )
+
+
+
+```
+
+
+
+
+
+
+

@@ -1,6 +1,9 @@
 library(data.table)
+library(dplyr)
+library(tidyr)  
+library(arrow)
+library(lubridate)
 
-  
 save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb_esp.parquet') %>% 
@@ -164,8 +167,8 @@ final_indispo_tot_wide_esp <- final_indispo_tot_wide_esp %>%
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 
-write_parquet(final_indispo_tot_wide_esp, "final_indispo_tot_wide_esp.parquet")
-#final_indispo_tot_wide_esp <- read_parquet("final_indispo_tot_wide_esp.parquet")
+#write_parquet(final_indispo_tot_wide_esp, "final_indispo_tot_wide_esp.parquet")
+final_indispo_tot_wide_esp <- read_parquet("final_indispo_tot_wide_esp.parquet")
 
 library(lubridate)
 
@@ -282,6 +285,14 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
               select(-year, -month), by=c('datetime' = 'date'))
 
 
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+wind_solar_openmeteo_data <- read_parquet("wind_solar_data.parquet")
+colnames(wind_solar_openmeteo_data )
+
+price_indispo_merge_esp <- price_indispo_merge_esp %>%
+  left_join(wind_solar_openmeteo_data %>% 
+              select(-year, -month), by=c('datetime' = 'date'))
+
 #add day ahead generation
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp")
@@ -321,7 +332,7 @@ gas_prices <- read_excel("gas.xlsx") %>%
                                       ,".",virgule ))) %>% 
   dplyr::select(time, spot_gas)
 
-
+colnames(price_indispo_merge_esp)
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
   left_join(gas_prices, by=c('delivery_date' = 'time'))
 nrow(price_indispo_merge_esp)

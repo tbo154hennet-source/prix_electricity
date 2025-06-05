@@ -20,7 +20,13 @@ os.chdir("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data")
 os.getcwd()
 
 news_data = pd.read_parquet('labeled_news_distinct.parquet') #, engine='pyarrow')
+# Filter out None or NaT values
+#valid_dates = news_data['datetime'].dropna()
 
+# Then get the minimum
+#min_date = valid_dates.min()
+
+#print(min_date)
 news_data['datetime'] =pd.to_datetime(news_data['date'], format='mixed', dayfirst=True, errors='coerce')
 news_data.dropna(subset=['datetime'], inplace=True)
 # Correct way to drop a column

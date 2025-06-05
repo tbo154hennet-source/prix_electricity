@@ -25,7 +25,8 @@ intraday_wind_solar_forecast  <- parquet_files %>%
   arrange(`__index_level_0__`)
 
 
-save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel'
+#save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/gen_by_fuel'
+save_path_esp <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp/by_fuel"
 setwd(save_path_esp)
 
 # Lister tous les fichiers dans le dossier avec l'extension .parquet
@@ -77,6 +78,12 @@ generation_by_fuel_final <- generation_by_fuel %>%
   ) %>%
   ungroup()
 
+# generation_by_fuel %>%
+#   #slice(1:10) %>%
+#   slice((nrow(generation_by_fuel)-10):nrow(generation_by_fuel)) %>%
+#   rowwise() %>%
+#   summarise(row_sum = sum(c_across(where(is.numeric)), na.rm = TRUE)) %>%
+#   ungroup()
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot")
 write_parquet(generation_by_fuel_final, 'generation_by_fuel_format_esp.parquet')

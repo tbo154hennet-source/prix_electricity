@@ -174,6 +174,10 @@ rf_plot_data <- rf_indispo %>%
 
 
 ```{r}
+# plot_data <- plot_data %>% 
+#   mutate(plant_type = ifelse(plant_type == "Fossil Hard Coal", "Coal/Lignite", plant_type))
+# rf_plot_data <- rf_plot_data %>% 
+#   mutate(plant_type = ifelse(plant_type == "Fossil Hard Coal", "Coal/Lignite", plant_type))
 
 # Premier graphique: Unavailable Capacity par Fuel Type
 plot1 <- ggplot() +
@@ -195,8 +199,9 @@ plot2 <- ggplot() +
  geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type), alpha=0.4) +
   geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type), 
            stat = "identity", position = "dodge") +
-  labs(x = 'Date de publication', y = "Nombre") +
-  theme(axis.text.x = element_text(angle = 30, hjust =1))
+  labs( y = "Event count", fill = "Fuel type") +
+  theme(axis.text.x = element_text(angle = 30, hjust =1),
+        axis.title.x = element_blank())
 
 custom_legend <- cowplot::get_legend(plot2)
 
@@ -245,7 +250,7 @@ setwd(save_path_entsoe_output)
 
 first_stage_data <- read_parquet('first_stage_data_OMIE.parquet') 
 
-price_indispo_data <- first_stage_data %>% 
+intraday_price_indispo_data <- first_stage_data %>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
          Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
          # Published.Dismissed.Unavailable.Capacity = Published.Dismissed.Unavailable.Capacity - Published.Dismissed.Unavailable.Nuclear.Capacity,
@@ -273,7 +278,7 @@ price_indispo_data <- first_stage_data %>%
 
 
 
-predict_price_indispo_data <- first_stage_data %>% 
+predict_intraday_price_indispo_data <- first_stage_data %>% 
   group_by(delivery_date) %>% 
   summarise(
     Published = ifelse(all(Published.Predicted.Unavailable.Capacity <= 0 | is.na(Published.Predicted.Unavailable.Capacity)), 
@@ -295,7 +300,7 @@ predict_price_indispo_data <- first_stage_data %>%
 
 ```{r}
 
-unavail_plot <- ggplot(data = predict_price_indispo_data, aes(x= delivery_date))+
+unavail_plot <- ggplot(data = predict_intraday_price_indispo_data, aes(x= delivery_date))+
   geom_line(aes(y = Unpublished, color = "Unpublished"))+
   geom_line(aes(y = Published, color = "Published"))+
   #geom_line(aes(y = -Unpublished_Dismissed, color = "Unpublished"))+
@@ -315,7 +320,7 @@ unavail_plot
 
 ```{r}
 
-nuclear_price_indispo_data <- first_stage_data %>% 
+nuclear_intraday_price_indispo_data <- first_stage_data %>% 
   group_by(delivery_date) %>% 
   summarise(
     Published = ifelse(all(Published.Unavailable.Nuclear.Capacity <= 0 | is.na(Published.Unavailable.Nuclear.Capacity)), 
@@ -340,7 +345,7 @@ nuclear_price_indispo_data <- first_stage_data %>%
 
 ```{r}
 
-unavail_plot <- ggplot(data = nuclear_price_indispo_data, aes(x= delivery_date))+
+unavail_plot <- ggplot(data = nuclear_intraday_price_indispo_data, aes(x= delivery_date))+
   geom_line(aes(y = Unpublished, color = "Unpublished"))+
   geom_line(aes(y = Published, color = "Published"))+
   # geom_line(aes(y = -Unpublished_Dismissed, color = "Unpublished"))+
@@ -355,7 +360,7 @@ unavail_plot
 
 ```{r}
 
-count = price_indispo_data %>% 
+count = intraday_price_indispo_data %>% 
   summarise(
     count_published = sum(Published >0, na.rm = TRUE),
     count_unpublished = sum(Unpublished >0, na.rm = TRUE),
@@ -363,7 +368,7 @@ count = price_indispo_data %>%
     # count_unpublished_dismissed = sum(Unpublished_Dismissed >0, na.rm = TRUE)
     )
 
-mean = price_indispo_data %>%
+mean = intraday_price_indispo_data %>%
   summarise(
     Published = mean(Published[Published > 0], na.rm = TRUE),
     Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE),
@@ -372,7 +377,7 @@ mean = price_indispo_data %>%
   )
 
 
-predict_count <- predict_price_indispo_data %>% 
+predict_count <- predict_intraday_price_indispo_data %>% 
   summarise(
     count_published = sum(Published >0, na.rm = TRUE),
     count_unpublished = sum(Unpublished >0, na.rm = TRUE),
@@ -380,7 +385,7 @@ predict_count <- predict_price_indispo_data %>%
     # count_unpublished_dismissed = sum(Unpublished_Dismissed >0, na.rm = TRUE)
     )
 
-predict_mean <- predict_price_indispo_data %>% 
+predict_mean <- predict_intraday_price_indispo_data %>% 
   summarise(
    # Mean only for nonzero values
     Published = mean(Published[Published > 0], na.rm = TRUE),
@@ -389,7 +394,7 @@ predict_mean <- predict_price_indispo_data %>%
     # Unpublished_Dismissed = mean(Unpublished_Dismissed[Unpublished_Dismissed > 0], na.rm = TRUE)
   )
 
-nuclear_count <- nuclear_price_indispo_data %>% 
+nuclear_count <- nuclear_intraday_price_indispo_data %>% 
   summarise(
     count_published = sum(Published >0, na.rm = TRUE),
     count_unpublished = sum(Unpublished >0, na.rm = TRUE),
@@ -398,7 +403,7 @@ nuclear_count <- nuclear_price_indispo_data %>%
 
   )
 
-nuclear_mean <- nuclear_price_indispo_data %>%
+nuclear_mean <- nuclear_intraday_price_indispo_data %>%
   summarise(
     Published = mean(Published[Published > 0], na.rm = TRUE),
     Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE),
@@ -412,17 +417,17 @@ nuclear_mean <- nuclear_price_indispo_data %>%
 
 library(gt)
 
-data <- data.frame(
+intraday_data <- data.frame(
   cbind(
     t(round(count)), t(round(mean, 1)),
     t(round(predict_count)), t(round(predict_mean, 1)), 
     t(round(nuclear_count)), t(round(nuclear_mean,1))
   )
 )
-rownames(data) <- c("Published",  "Unpublished")#,"Published Dismissed", "Unpublished Dismissed")
+rownames(intraday_data) <- c("Published",  "Unpublished")#,"Published Dismissed", "Unpublished Dismissed")
 # Create a gt table with styling
 # Convert data to a data frame and transpose it
-gt_table <- as.data.frame(t(data)) %>%
+gt_table <- as.data.frame(t(intraday_data)) %>%
   mutate(
     Row_Label = c("Nbre", "Avg Unavailability", "Nbre", "Avg Unavailability", "Nbre", "Avg Unavailability") # Adding row labels
   ) %>%
@@ -449,6 +454,69 @@ gt_table <- as.data.frame(t(data)) %>%
 
 gt_table
 ```
+
+
+
+
+
+```{r}
+
+data <- rbind(intraday_data, data_dayahead_data )
+
+#rownames(data) <- c("Published",  "Unpublished", "Published",  "Unpublished")#,"Published Dismissed", "Unpublished Dismissed")
+# Create a gt table with styling
+# Convert data to a data frame and transpose it
+# Transpose and convert
+gt_data <- as.data.frame(t(data)) %>%
+  mutate(
+    Row_Label = c(
+      "Nbre", "Avg Unavailability", 
+      "Nbre", "Avg Unavailability", 
+      "Nbre", "Avg Unavailability"
+    )
+  )
+
+colnames(gt_data)[1:4] <- c("Published", "Unpublished", "Published ", "Unpublished ")
+
+gt_table <- gt_data %>%
+  gt(rowname_col = "Row_Label") %>%
+  tab_row_group(
+    group = "All Declared",
+    rows = 1:2
+  ) %>%
+  tab_row_group(
+    group = "Predicted",
+    rows = 3:4
+  ) %>%
+  tab_row_group(
+    group = "Nuclear",
+    rows = 5:6
+  ) %>%
+  tab_spanner(
+    label = "Intraday",
+    columns = c("Published", "Unpublished")
+  ) %>%
+  tab_spanner(
+    label = "Day-Ahead",
+    columns = c("Published ", "Unpublished ")
+  ) %>%
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "gray", weight = px(2)),
+    locations = cells_row_groups(groups = everything())
+  ) %>%
+  tab_options(
+    table.width = pct(100)
+  )
+
+gt_table
+
+```
+
+
+
+
+
+
 
 
 
