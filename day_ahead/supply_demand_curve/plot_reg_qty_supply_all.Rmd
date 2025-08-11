@@ -23,6 +23,8 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
       variable == "heat_excess_supply" ~ "Excess Heat (°C)",
       variable == "cold_excess_demand" ~ "Excess Cold (°C)",
       variable == "heat_excess_demand" ~ "Excess Heat (°C)",
+      variable == "Published.Unavailable.Capacity" ~ "Plant Unavailability (MWh)",
+      variable == "Published.Unavailable.Nuclear.Capacity" ~ "Nuclear Plant Unavailability (MWh)",
       TRUE ~ variable  # fallback
     ))
   # %>% 
@@ -276,3 +278,58 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_wind_sun_variati
 
 ```
 
+
+
+## Using different indispo types
+
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_predicted_indispo_variation.rds")
+coef_supply_unmatched_predicted_indispo_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
+
+coef_demand_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_predicted_indispo_variation.rds")
+coef_demand_unmatched_predicted_indispo_data <- rbindlist(coef_demand_unmatched_predicted_indispo)
+
+coef_supply_combined <- rbind(coef_supply_unmatched_data, coef_supply_unmatched_predicted_indispo_data %>% 
+                                filter(variable == "Published.Predicted.Unavailable.Capacity" |
+                                       variable == "Unpublished.Predicted.Unavailable.Capacity" ))
+coef_demand_combined <- rbind(coef_demand_unmatched_data, coef_demand_unmatched_predicted_indispo_data%>% 
+                                filter(variable == "Published.Predicted.Unavailable.Capacity" |
+                                       variable == "Unpublished.Predicted.Unavailable.Capacity" ))
+
+
+```
+
+
+Je veux rajouter les indispo
+
+```{r}
+
+new_indispo_factors <- indispo_factors[!grepl("nuclear", indispo_factors, ignore.case = TRUE)]
+
+supply_indispo <- plot_shift_with_hist_qty(coef_data = coef_supply_combined, 
+   variables = new_indispo_factors,
+   type = "Supply", matched = "unmatched")
+
+supply_indispo 
+```
+
+```{r}
+
+published_factors <- grep("Published", indispo_factors, value = TRUE)
+
+supply_indispo <- plot_shift_with_hist_qty(coef_data = coef_supply_combined, 
+   variables = published_factors,
+   type = "Supply", matched = "unmatched")
+
+supply_indispo 
+```
+
+```{r}
+demand_indispo <- plot_shift_with_hist_qty(coef_data = coef_demand_combined, 
+   variables = new_indispo_factors,
+   type = "Demand", matched = "unmatched")
+
+demand_indispo 
+```

@@ -293,6 +293,17 @@ ggplot(plot_data)+
   theme_minimal()
 
 
+ggplot(plot_data %>% 
+         filter(datetime >= as.POSIXct("2023-01-01", tz = "Europe/Brussels")))+
+  geom_line(aes(x=datetime, y=price_fr, color = "France")) +
+  geom_line(aes(x=datetime, y=price_esp, color = "Espagne")) +
+  geom_vline(xintercept = exception_start_date, linetype = "dashed", color = "red") +
+  geom_vline(xintercept = exception_end_date, linetype = "dashed", color = "red") +
+  labs(title = "Day-ahead electricity prices in France and Spain",
+       x = "Date", y = "Price (€/MWh)") +
+  theme_minimal()
+
+
 #regarder quelles sont les dates perdues dans le merge
 #données 2024
 

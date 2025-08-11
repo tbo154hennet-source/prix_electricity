@@ -12,7 +12,9 @@ setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/fr")
 
 my_files <- list.files()
 
-my_files <-  my_files[grep("\\.xls$|\\.xlsx$", my_files)]
+my_files_xls <-  my_files[grep("\\.xls$$", my_files)]
+
+my_files_xlsx <-  my_files[grep("\\.xlsx$", my_files)]
 
 
 # Create a data frame with specified column names
@@ -23,7 +25,8 @@ dates <- data.frame(serie = character(),
 
 VAR_series <- NULL
 
-for (file in my_files){
+
+for (file in my_files_xls){
   print(file)
   # Split the file name by underscore
   split_file <-  strsplit(file, split = "[_.]")
@@ -33,7 +36,6 @@ for (file in my_files){
   name <- paste(split_parts, collapse = " ")
   # Concatenate the split parts with automatic line breaks
   title_text <- paste(strwrap(name, width = 30), collapse = "\n")
-  
   excel_file <- read_excel(file, skip=10)
   
   excel_file$observation_date <- as.Date(excel_file$observation_date)
@@ -49,8 +51,38 @@ for (file in my_files){
   }else{
     VAR_series <- merge( VAR_series ,excel_file, by= 'observation_date')
   }
-
+  
 }
+
+for (file in my_files_xlsx){
+  #file <- my_files_xlsx[1]
+  print(file)
+  # Split the file name by underscore
+  split_file <-  strsplit(file, split = "[_.]")
+  # Extract the parts (strsplit returns a list)
+  split_parts <- unlist(split_file)
+  split_parts <- split_parts[3:length(split_parts)-1]
+  name <- paste(split_parts, collapse = " ")
+  # Concatenate the split parts with automatic line breaks
+  title_text <- paste(strwrap(name, width = 30), collapse = "\n")
+  excel_file <- read_excel(file, sheet = "Monthly")
+  
+  excel_file$observation_date <- as.Date(excel_file$observation_date)
+  # print(class(excel_file %>% head(1)))
+  # print(colnames(excel_file %>% head(1)))
+  
+  start_date <- excel_file %>% head(1) %>% dplyr::select(observation_date)
+  end_date <- excel_file %>% tail(1) %>% dplyr::select(observation_date)
+  dates <<- rbind(dates, c(file, start_date[[1]], end_date[[1]]))
+  
+  if(is.null(VAR_series)){
+    VAR_series <- excel_file
+  }else{
+    VAR_series <- merge( VAR_series ,excel_file, by= 'observation_date')
+  }
+  
+}
+
 
 VAR_series <- VAR_series %>% 
   mutate(year = year(observation_date),
@@ -61,7 +93,9 @@ VAR_series <- VAR_series %>%
          E_Index = LRHUTTTTFRM156S,
          Exp_pi = CSINFT02FRM460S,
          P_man = FRAPROMANMISMEI,
-         Spot_gas =PNGASEUUSDM
+         Spot_gas =PNGASEUUSDM,
+         HICP = CP0000FRM086NEST,
+         CPElec = CP0451FRM086NEST
   )
 
 colnames(VAR_series)

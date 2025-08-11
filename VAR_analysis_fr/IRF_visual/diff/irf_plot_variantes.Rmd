@@ -1,0 +1,242 @@
+
+
+# Alternate Ordering
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+irf_cholesky_esp_spot_first <- readRDS("irf_cholesky_esp_spot_first.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+gen_benchmark_esp_spot_first <- readRDS( "gen_benchmark_esp_spot_first.rds")
+
+```
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_spot_first,
+  irf_cholesky = irf_cholesky_esp_spot_first,
+  variable_names = c('$P_{elec}$', '$Q_{elec}$',  "IPI", '$HCPI_t$'),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+
+```{r}
+#Plot the IRFs
+
+irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_spot_first,
+  irf_cholesky = irf_cholesky_esp_spot_first,
+  variable_names = c('$P_{elec}$','$Q_{elec}$', "IPI", '$HCPI_t$'),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+
+# Gas control
+
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+irf_cholesky_esp_gas <- readRDS("irf_cholesky_esp_gas.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+gen_benchmark_esp_gas <- readRDS( "gen_benchmark_esp_gas.rds")
+
+```
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_gas,
+  irf_cholesky = irf_cholesky_esp_gas,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI_t$'),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+
+```{r}
+#Plot the IRFs
+irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
+  gen_benchmark_esp_gas,
+  irf_cholesky = irf_cholesky_esp_gas,
+  variable_names = c('$Q_{elec}$', '$P_{elec}$',  "IPI", '$HCPI_t$'),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+irf_cholesky_fr_gas <- readRDS("irf_cholesky_fr_gas.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+gen_benchmark_fr_gas <- readRDS( "gen_benchmark_fr_gas.rds")
+
+```
+
+
+```{r}
+#Plot the IRFs
+irf_price_shock_fr <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_fr_gas,
+  irf_cholesky = irf_cholesky_fr_gas,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI_t$'),
+  shock = "price"
+)
+irf_price_shock_fr
+```
+
+```{r}
+#Plot the IRFs
+irf_gen_shock_fr <- plot_irf_from_gen_benchmark(
+  gen_benchmark_fr_gas,
+  irf_cholesky = irf_cholesky_fr_gas,
+  variable_names = c('$Q_{elec}$', '$P_{elec}$',  "IPI", '$HCPI_t$'),
+  shock = "gen"
+)
+irf_gen_shock_fr
+```
+
+# Monetary policy
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+irf_cholesky_esp_mp <- readRDS("irf_cholesky_esp_mp.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+gen_benchmark_esp_mp <- readRDS( "gen_benchmark_esp_mp.rds")
+
+```
+
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_mp,
+  irf_cholesky = irf_cholesky_esp_mp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$', "IPI", '$HCPI_t$', 'ECB rate'),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+```{r}
+#Plot the IRFs
+irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_mp,
+  irf_cholesky = irf_cholesky_esp_mp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',   "IPI", '$HCPI_t$', 'ECB rate'),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+irf_cholesky_esp_mp_gas <- readRDS("irf_cholesky_esp_mp_gas.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+gen_benchmark_esp_gas_mp <- readRDS( "gen_benchmark_esp_gas_mp.rds")
+
+```
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_gas_mp,
+  irf_cholesky = irf_cholesky_esp_mp_gas,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI_t$', 'ECB rate'),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+
+```{r}
+#Plot the IRFs
+irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_gas_mp,
+  irf_cholesky = irf_cholesky_esp_mp_gas,
+  variable_names = c('$Q_{elec}$','$P_{elec}$', 'ECB rate',  "IPI", '$HCPI_t$', 'ECB rate'),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+
+
+#Using decomposition
+
+
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+irf_cholesky_esp_spot_first <- readRDS("irf_cholesky_esp_spot_first.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+setwd(save_rds_path)
+gen_benchmark_esp_spot_first <- readRDS( "gen_benchmark_esp_spot_first.rds")
+
+```
+
+
+
+
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_decomp,
+  irf_cholesky = irf_cholesky_esp_decomp,
+  variable_names = c( '$Q_{elec}$', '$P_{elec}$',
+                     "IPI", '$CPI^{e}_t$', '$CPI^{ne}_t$', '$HCPI_t$', "ffr"),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+
+```{r}
+#Plot the IRFs
+
+irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
+  solution = gen_benchmark_esp_decomp,
+  irf_cholesky = irf_cholesky_esp_decomp,
+  variable_names = c( '$Q_{elec}$', '$P_{elec}$',
+                     "IPI", '$CPI^{e}_t$', '$CPI^{ne}_t$', '$HCPI_t$', "ffr"),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+

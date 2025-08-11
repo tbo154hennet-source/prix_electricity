@@ -80,7 +80,7 @@ unavail_plot
 ```
 
 ```{r}
-nuclear_dayahead_price_indispo_data <- first_stage_data %>% 
+nuclear_dayahead_price_indispo_data <- price_indispo_merge %>% 
   group_by(delivery_date) %>% 
   summarise(
     Published = ifelse(all(Published.Unavailable.Nuclear.Capacity <= 0 | is.na(Published.Unavailable.Nuclear.Capacity)), 
@@ -300,7 +300,7 @@ nuclear_mean <- nuclear_dayahead_price_indispo_data %>%
 
 ```{r}
 sum_unavail <- price_indispo_merge %>% 
-  select(
+  dplyr::select(
     Published.Unavailable.Capacity, Unpublished.Unavailable.Capacity,
     Published.Unavailable.Nuclear.Capacity, Unpublished.Unavailable.Nuclear.Capacity,
     Published.Predicted.Unavailable.Capacity, Unpublished.Predicted.Unavailable.Capacity
@@ -365,22 +365,46 @@ Get the numbers
 ```{r}
 
 dayahead_price_indispo_data <- price_indispo_merge %>% 
-  group_by(delivery_date) %>% 
+  group_by(year, month) %>% 
   summarise(
-    Solar = mean(Solar, na.rm = TRUE),
-    Wind_Onshore = mean(`Wind Onshore`, na.rm = TRUE),
-    Renewable_Generation = mean(day_ahead_forecast, na.rm = TRUE)
+    Solar = mean(Solar, na.rm = TRUE)/1000,
+    Wind_Onshore = mean(`Wind Onshore`, na.rm = TRUE)/1000,
+    Renewable_Generation = mean(day_ahead_forecast, na.rm = TRUE)/1000,
+    delivery_date = first(delivery_date)
     #Wind_Onshore = mean(`Wind Onshore`, na.rm = TRUE),
   )
-
-renew_plot <- ggplot(data = dayahead_price_indispo_data, aes(x= delivery_date))+
-  geom_line(aes(y = Renewable_Generation, color = "Renewable_Generation"))+
-  geom_line(aes(y = Wind_Onshore, color = "Wind Onshore"))+
-  geom_line(aes(y = Solar, color = "Solar"))+
-  labs(x= "Time", y = "Renewable Generation")+
+#class(dayahead_price_indispo_data$delivery_date)
+renew_plot <- ggplot(data = dayahead_price_indispo_data %>% 
+                       filter(delivery_date <=as.Date("2023-01-01")), aes(x = delivery_date)) +
+  geom_line(aes(y = Renewable_Generation, color = "Renewable Total")) +
+  geom_line(aes(y = Wind_Onshore, color = "Wind Onshore")) +
+  geom_line(aes(y = Solar, color = "Solar")) +
+  labs(x = "Time", y = "Power (GW)") +
+  scale_color_manual(
+    name = "Energy",  # Legend title
+    values = c(
+      "Renewable Total" = "#1b9e77",
+      "Wind Onshore" = "#d95f02",
+      "Solar" = "#7570b3"
+    )
+  ) +
   theme_minimal()
+
 renew_plot
 ```
+
+
+```{r}
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("renewable_description.png", plot = renew_plot, width = 8, height = 6, dpi = 300)
+
+
+```
+
+
+
 
 
 ```{r}

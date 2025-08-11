@@ -1,7 +1,13 @@
 library(gt)
 library(dplyr)
 library(tibble)
-
+library(arrow)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(data.table)
+library(ggplot2)
 # Données
 df <- tribble(
   ~Market, ~Announcement, ~Nuclear, ~Thermal, ~Predicted,
@@ -57,7 +63,7 @@ df2 <- tribble(
 table_all <- df2 %>%
   gt(rowname_col = "Market") %>%
   tab_header(
-    title = "Price Elasticity by Event Type"
+    title = "Price semi-elasticity by shock"
   ) %>%
   cols_label(
     Plant_Unavailability = "Plant Unavailability",
@@ -119,5 +125,201 @@ table_demand <- df3 %>%
     heading.align = "center"
   ) %>%
   opt_table_lines()
+
+
+
+#US Elec data
+# year	The year of the observation
+# month	The month of the observation
+# stateDescription	The name of the state
+# sectorName	The sector of the electricity market (residential, commercial, industrial, other, or all sectors)
+# customers	The number of customers (missing for some observations)
+# price	The average price of electricity per kilowatt-hour (kWh) in cents
+# revenue	The total revenue generated from electricity sales in millions of dollars
+# sales	The total electricity sales in millions of kilowatt-hours (kWh)
+US_path <- "C:/Users/DBT3KD/Desktop/uncertainty_shocks/DATA/macro_data"
+setwd(US_path)
+US_data_cpi <-read_excel( 'CPIAUCSL_kanzig_cpi.xlsx', sheet = "Monthly")
+US_data_cpi <- US_data_cpi %>% 
+  mutate(observation_date = as.Date(observation_date)) %>% 
+  mutate(CPI_log_diff = log(CPIAUCSL) - log(lag(CPIAUCSL, 1)),
+         inflation_12m = 100*slide_dbl(CPI_log_diff, sum, .before = 11, .complete = TRUE)) %>% 
+  filter(observation_date >= as.Date("2015-01-01"))
+  
+FR_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/fr"
+setwd(FR_path)
+FR_data_cpi <-read_excel('all_cpi_CP0000FRM086NEST.xlsx', sheet = "Monthly")
+FR_data_cpi <- FR_data_cpi %>% 
+  mutate(observation_date = as.Date(observation_date)) %>% 
+  mutate(CPI_log_diff = log(CP0000FRM086NEST) - log(lag(CP0000FRM086NEST, 1)),
+         inflation_12m = 100*slide_dbl(CPI_log_diff, sum, .before = 11, .complete = TRUE)) %>% 
+  filter(observation_date >= as.Date("2015-01-01"))
+
+
+
+#c("observation_date", "CPIAUSCL")
+
+#index on 2015
+
+US_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA'
+setwd(US_path)
+US_data <-read.csv( 'US_elec_data.csv')
+
+
+US_trend <- US_data %>% 
+  filter(sectorName == "all sectors") %>% 
+  group_by(year, month) %>% 
+  summarise( price = weighted.mean(price, sales)  )
+
+#kwh per cent
+#vs Euro per MWh
+
+setwd("C:/Users/DBT3KD/Desktop/uncertainty_shocks/DATA")
+us_eu_exchang_rate <- read_excel("USD_EU_exchange_rate.xlsx", skip = 10) %>% 
+  mutate(month = month(observation_date),
+         year = year(observation_date)) %>% 
+  summarise(
+    DEXUSEU = mean(DEXUSEU, na.rm = TRUE),
+    observation_date = first(observation_date),
+    .by = c("year", "month")
+  )
+
+#conversion
+US_trend <- merge(US_trend, us_eu_exchang_rate, by = c("year", "month")) %>% 
+  mutate(price = price * DEXUSEU *10) %>% 
+  filter(year >= 2015)
+
+
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_var_path)
+IV_data <-read_parquet( 'IV_data_fr.parquet')%>% 
+  mutate(HICP_log_diff = log(HICP) - log(lag(HICP, 1)),
+         inflation_12m = slide_dbl(HICP_log_diff, sum, .before = 11, .complete = TRUE))
+
+
+motivation_plot <- ggplot(data = IV_data) +
+
+  geom_line(aes(x = observation_date, y = CPElec,
+                color = "FR",
+                linetype = "P[elec]")) +
+  
+  geom_line(data = US_trend , aes(x = as.Date(observation_date), y = price, color = "US", linetype = "P[elec]")) +
+  geom_line(data = FR_data_cpi, aes(x = observation_date, y = 100 +3* inflation_12m, color = "FR", linetype = "pi"))+
+  geom_line(data = US_data_cpi, aes(x = observation_date, y = 100 + 3*inflation_12m, color = "US", linetype = "pi"))+
+
+  scale_color_manual(
+    values = c("FR" = "red",
+               "US" = "blue"
+               ),
+    name = "Country"
+  ) +
+  scale_linetype_manual(
+    values = c("pi" ="dashed" , "P[elec]" = "solid"),
+    labels = c("pi" = expression(pi[CPI]), 
+               "P[elec]" = expression(P[elec])),
+    name = "Indicator"
+  ) +
+  labs(
+    title = "Inflation and Electricity Price – France vs US",
+    x = "Date",
+    y = "Value"
+  ) +
+  scale_y_continuous(
+    name = "Electricity Price",
+    sec.axis = sec_axis(~ (. - 100)/3, name = "Inflation (%)")  # On décale l’axe secondaire de 100 (car tu as fait 100 + inflation)
+  ) +
+  theme_minimal()
+
+motivation_plot
+
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("trends_elec_inflation.png", plot = motivation_plot, width = 18, height = 6, dpi = 300)
+
+
+
+
+
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/Output'
+setwd(save_var_path)
+IV_data_esp <-  read_parquet('IV_data_esp.parquet')
+IV_data_fr <-  read_parquet('IV_data_fr.parquet')
+
+my_gas_plot <- ggplot()+
+  geom_line(data = IV_data_esp, aes(x = observation_date, y = spot_gas_capped, color ="Gas Capped"), linetype ="dashed")+
+  geom_line(data = IV_data_esp, aes(x = observation_date, y = spot_gas, color ="Gas"))+
+  geom_line(data = IV_data_esp, aes(x = observation_date, y = spot_price, color = "Electricity", linetype ="ESP"))+
+  geom_line(data = IV_data_fr, aes(x = observation_date, y = spot_price, color = "Electricity", linetype ="FR"))+
+  scale_color_manual(
+    values = c(
+      "Gas" = "darkblue",
+      "Gas Capped" = "blue",
+      "Electricity" = "orange"
+    )
+  ) +
+  labs(title = "Iberian exception effect",
+       x = "Date",
+       y = "Price (EUR/MWh)",
+       color = "Legend") 
+
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
+setwd(save_plot_path)
+ggsave("gas_elec_prices.png", plot = my_gas_plot, width = 18, height = 6, dpi = 300)
+
+
+
+
+
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+setwd(save_var_path)
+IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff.parquet')
+
+IV_data_log_diff_esp$observation_date
+
+
+my_plot_adj_margin <- ggplot(data = IV_data_log_diff_esp) +
+  # Courbe de gen_tot (divisée par 1000)
+  geom_line(aes(x = observation_date, y = gen_tot / 1000), color = "blue") +
+  
+  # Courbe de spot_price (axe secondaire)
+  geom_line(aes(x = observation_date, y = spot_price), color = "red") +
+  
+  labs(
+    title = "Price and Quantity on the Electricity Market in Spain",
+    x = "Date",
+    y = "Generation (GW)"
+  ) +
+  
+  scale_y_continuous(
+    name = "Generation (GW)",
+    sec.axis = sec_axis(~., name = "Spot Price (EUR/MWh)")
+  ) +
+  
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title.y.left = element_text(color = "blue"),
+    axis.title.y.right = element_text(color = "red")
+  )
+
+
+my_plot_adj_margin 
+
+
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("plot_adj_margin.png", plot = my_plot_adj_margin , width = 12, height = 6, dpi = 300)
+
+
+
+
+
+
+
+
+
+
 
 

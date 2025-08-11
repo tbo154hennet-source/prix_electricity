@@ -179,12 +179,19 @@ final_indispo_tot_wide_fr <- final_indispo_tot_wide_fr %>%
 #        filter(publication_status == "Planned"))
 
 
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr")
+
+write_parquet(final_indispo_tot_wide_fr, "final_indispo_tot_wide_fr.parquet")
+final_indispo_tot_wide_fr <- read_parquet("final_indispo_tot_wide_fr.parquet")
+
+
+
 load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/day_ahead_prices/fr"
 setwd(load_path_data)
 # Lister tous les fichiers dans le dossier avec l'extension .parquet
 parquet_files <- list.files(pattern = "\\.parquet$")
 # Lire tous les fichiers parquet et les fusionner dans un seul dataframe
-
+colnames_target <- c( "price", "datetime")
 # Lecture + renommage dans lapply
 day_ahead_prices <- parquet_files %>%
   lapply(function(file) {
@@ -232,6 +239,53 @@ price_indispo_merge_fr  <- price_indispo_merge_fr %>%
   left_join(renewable_forecasts_fr, by=c('datetime' = '__index_level_0__'))
 
 
+
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+temperature_openmeteo_data <- read_parquet("temperature_openmeteo_data_fr.parquet")
+colnames(temperature_openmeteo_data)
+
+#question sou-jacente
+#quelle est la temporalité d'ajustement au froid
+
+mean_temperatures_hour <- temperature_openmeteo_data %>% 
+  mutate(week = week(date),
+         hour = hour(date)) %>%
+  group_by(week, hour) %>% 
+  summarise(
+    mean_temp = mean(as.numeric(temperature_2m), na.rm = TRUE),
+    .groups = "drop"
+  )
+
+cold_months <- c(1, 2, 11, 12)
+hot_months <- c(6, 7, 8, 9)
+
+temperature_openmeteo_data_test <- temperature_openmeteo_data %>%
+  mutate(
+    week = week(date),
+    hour = hour(date),
+    month = month(date),
+    year = year(date),
+    day_month = format(date, "%d-%m")
+  ) %>%
+  # Join hourly means
+  left_join(mean_temperatures_hour, by = c("week", "hour")) %>%
+  rename(hourly_mean_temp = mean_temp
+  ) %>%
+  mutate(
+    cold_excess_instrument = -ifelse(month %in% cold_months, 
+                                     temperature_2m - hourly_mean_temp, 0),
+    heat_excess_instrument = ifelse(month %in% hot_months, 
+                                    temperature_2m - hourly_mean_temp, 0)
+    
+  )
+
+
+
+price_indispo_merge_fr <- price_indispo_merge_fr %>%
+  left_join(temperature_openmeteo_data_test %>% 
+              dplyr::select(-year, -month), by=c('datetime' = 'date'))
+
+
 #on rajoute le spot gas price
 library(readxl)
 gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
@@ -256,18 +310,61 @@ setwd(save_path_data)
 write_parquet(price_indispo_merge_fr_ahead, "price_indispo_merge_fr.parquet")
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/cross_border_flows")
 
-cross_border_flows <- read_parquet("fr_esp_cross_border_flows.parquet")
-colnames(cross_border_flows)
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+
+weighted_mean <- function(x, w) {
+  sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
+}
+
+price_merge_CBF <- read_parquet("price_merge_CBF_max.parquet")
+
+# Suppose que ton dataframe s'appelle df
+
+# Colonnes sortantes depuis FR (vers un autre pays)
+cols_sortant <- grep("^NTC_FR_", names(price_merge_CBF), value = TRUE)
+
+# Colonnes entrantes vers FR : se terminent par _FR, incluent NTC et NTYC
+cols_entrant <- grep("^NTC_.+_FR$", names(price_merge_CBF), value = TRUE)
+
+# Créer deux nouvelles colonnes avec les totaux
+price_merge_CBF$NTC_FR_sortant <- rowSums(price_merge_CBF[, cols_sortant], na.rm = TRUE)
+price_merge_CBF$NTC_FR_entrant <- rowSums(price_merge_CBF[, cols_entrant], na.rm = TRUE)
+
+colnames(price_merge_CBF)
+crossborder_data <- price_merge_CBF %>% 
+  filter(gen_tot_fr > 0 & gen_tot_esp > 0) %>%
+  summarise(NTC_ES_FR = NTC_ES_FR,
+            NTC_FR_ES = NTC_FR_ES,
+            
+            renewable_day_ahead_forecast_ex_es = renewable_day_ahead_forecast_pt +
+              renewable_day_ahead_forecast_fr,
+            cbf_es = CBF_ES_pred,
+            NTC_FR_sortant = NTC_FR_sortant,
+            NTC_FR_entrant = NTC_FR_entrant,
+            renewable_day_ahead_forecast_ex_fr = renewable_day_ahead_forecast_esp+
+              renewable_day_ahead_forecast_it_nord+
+              renewable_day_ahead_forecast_de+
+              renewable_day_ahead_forecast_be+
+              renewable_day_ahead_forecast_ch+
+              renewable_day_ahead_forecast_gb,
+            cbf_fr = CBF_FR_pred,
+            datetime = datetime
+  ) %>%
+  arrange(datetime) %>% 
+  ungroup()
 
 
-price_indispo_merge_fr_NTC <- merge(price_indispo_merge_fr_ahead, cross_border_flows %>% 
-                                       dplyr::select(NTC_ESP_FR,NTC_FR_ESP, time), 
-                                     by.x ="datetime", by.y ="time")
+price_indispo_merge_fr_NTC <- merge(price_indispo_merge_fr_ahead, crossborder_data %>% 
+                                       dplyr::select( NTC_FR_sortant, NTC_FR_entrant,
+                                                      NTC_FR_ES, NTC_ES_FR,
+                                                     renewable_day_ahead_forecast_ex_fr, cbf_fr,
+                                                     datetime), 
+                                     by ="datetime")
+
+
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_fr_NTC, "price_indispo_merge_fr_NTC.parquet")
-
 
 

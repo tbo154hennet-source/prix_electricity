@@ -9,7 +9,7 @@ Sys.setenv(lang = "en_US")
 
 save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-IV_data <- read_parquet('IV_data_fr2.parquet') 
+IV_data <- read_parquet('IV_data_fr.parquet') 
 
 #prix dépasse un petit peu
 #vérifie la dernière observation
@@ -104,7 +104,7 @@ non_log_col_var <- c("cold_excess_instrument" ,"heat_excess_instrument",
 
 #attention pour abs shock and relative shock possible valeurs négatives
 
-# Apply log transformation to all columns not in non_log_diff_var
+# Apply log transformation to all columns not in non_diff_var
 IV_data_log <- seasonally_adjusted_df
 #IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] <- 
 # log(IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] +1)
@@ -136,9 +136,31 @@ IV_data_log <- IV_data_log %>%
   ) %>%
   arrange(datetime)
 getwd()
-write.csv(detrended_data, "DATASET_sa_detrended.csv")
+#write.csv(detrended_data, "DATASET_sa_detrended.csv")
 write_parquet(IV_data_log, 'IV_data_fr_log.parquet')
 #petit plot pour voir l'effet associé
+
+
+
+IV_data_diff <- seasonally_adjusted_df
+#IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] <- 
+# log(IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] +1)
+cols_to_transform <- setdiff(periodicity_test_col, non_log_col_var)
+
+# 1. Calculate log transformation and store with suffix "_log"
+for (col in cols_to_transform) {
+  numeric_col <- as.numeric(IV_data_log[[col]])  # Ensure numeric
+  #detrended_col <- detrend(numeric_col)          # Detrend
+  IV_data_diff[[paste0(col, "_diff")]] <- numeric_col  - lag(numeric_col)
+}
+
+IV_data_diff[1,] <- 0
+write_parquet(IV_data_diff, 'IV_data_fr_diff.parquet')
+
+
+
+
+
 
 colnames(IV_data)
 par(mar = c(2, 2, 2, 2))
@@ -156,7 +178,7 @@ ggplot(IV_data, aes(x = datetime)) +
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y =IV_data$wind_forecast , color = "Original")) +
   geom_line(aes(y = seasonally_adjusted_df$wind_forecast, color = "S ADj")) +
-  geom_line(aes(x = datetime, y = detrended_data$wind_forecast, color = "Detrended"))+
+  #geom_line(aes(x = datetime, y = detrended_data$wind_forecast, color = "Detrended"))+
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red", "S ADj" = "green")) +
@@ -165,7 +187,7 @@ ggplot(IV_data, aes(x = datetime)) +
 
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y = log(IV_data$spot_price) -mean(log(IV_data$spot_price)) , color = "Original")) +
-  geom_line(aes(y = IV_data_log$spot_price_log, color = "Detrended")) +
+  #geom_line(aes(y = IV_data_log$spot_price_log, color = "Detrended")) +
   geom_line(aes(y = PC1_supply , color = "Gas instrument"))+
   labs(title = "Log Spot price - Original and Detrended",
        x = "Date", y = "Index") +

@@ -282,7 +282,7 @@ temperature_openmeteo_data_test <- temperature_openmeteo_data %>%
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
   left_join(temperature_openmeteo_data_test %>% 
-              select(-year, -month), by=c('datetime' = 'date'))
+              dplyr::select(-year, -month), by=c('datetime' = 'date'))
 
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
@@ -291,7 +291,7 @@ colnames(wind_solar_openmeteo_data )
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
   left_join(wind_solar_openmeteo_data %>% 
-              select(-year, -month), by=c('datetime' = 'date'))
+              dplyr::select(-year, -month), by=c('datetime' = 'date'))
 
 #add day ahead generation
 

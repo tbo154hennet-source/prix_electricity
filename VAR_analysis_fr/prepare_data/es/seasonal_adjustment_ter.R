@@ -162,6 +162,41 @@ write_parquet(IV_data_log, 'IV_data_esp_log.parquet')
 
 #write_parquet(IV_data_log, 'IV_data_esp_log_detrended.parquet')
 
+IV_data_log_diff <- seasonally_adjusted_df
+#IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] <- 
+# log(IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] +1)
+cols_to_transform <- setdiff(periodicity_test_col, non_log_col_var)
+
+# 1. Calculate log transformation and store with suffix "_log"
+for (col in cols_to_transform) {
+  numeric_col <- as.numeric(IV_data_log[[col]])  # Ensure numeric
+  #detrended_col <- detrend(numeric_col)          # Detrend
+  IV_data_log_diff[[paste0(col, "_log_diff")]] <- log(numeric_col + 1) - log(lag(numeric_col) + 1)
+}
+
+IV_data_log_diff[1,paste0(cols_to_transform, "_log_diff")] <- 0
+write_parquet(IV_data_log_diff, 'IV_data_esp_log_diff.parquet')
+
+
+
+IV_data_diff <- seasonally_adjusted_df
+#IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] <- 
+# log(IV_data_log[setdiff(names(IV_data_log), non_log_col_var)] +1)
+cols_to_transform <- setdiff(periodicity_test_col, non_log_col_var)
+
+# 1. Calculate log transformation and store with suffix "_log"
+for (col in cols_to_transform) {
+  numeric_col <- as.numeric(IV_data_log[[col]])  # Ensure numeric
+  #detrended_col <- detrend(numeric_col)          # Detrend
+  IV_data_diff[[paste0(col, "_diff")]] <- numeric_col - lag(numeric_col)
+}
+
+IV_data_diff[1,paste0(cols_to_transform, "_diff")] <- 0
+write_parquet(IV_data_diff, 'IV_data_esp_diff.parquet')
+getwd()
+rm(IV_data_esp_diff)
+gc()  # force le garbage collection
+
 
 
 #petit plot pour voir l'effet associé

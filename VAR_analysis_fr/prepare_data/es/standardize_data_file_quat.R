@@ -3,8 +3,9 @@ setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data/esp")
 
 my_files <- list.files()
 
-my_files <-  my_files[grep("\\.xls$|\\.xlsx$", my_files)]
+my_files_xls <-  my_files[grep("\\.xls$$", my_files)]
 
+my_files_xlsx <-  my_files[grep("\\.xlsx$", my_files)]
 
 # Create a data frame with specified column names
 dates <- data.frame(serie = character(),
@@ -14,7 +15,7 @@ dates <- data.frame(serie = character(),
 
 VAR_series <- NULL
 
-for (file in my_files){
+for (file in my_files_xls){
   print(file)
   # Split the file name by underscore
   split_file <-  strsplit(file, split = "[_.]")
@@ -24,7 +25,6 @@ for (file in my_files){
   name <- paste(split_parts, collapse = " ")
   # Concatenate the split parts with automatic line breaks
   title_text <- paste(strwrap(name, width = 30), collapse = "\n")
-  
   excel_file <- read_excel(file, skip=10)
   
   excel_file$observation_date <- as.Date(excel_file$observation_date)
@@ -43,6 +43,37 @@ for (file in my_files){
 
 }
 
+for (file in my_files_xlsx){
+  #file <- my_files_xlsx[1]
+  print(file)
+  # Split the file name by underscore
+  split_file <-  strsplit(file, split = "[_.]")
+  # Extract the parts (strsplit returns a list)
+  split_parts <- unlist(split_file)
+  split_parts <- split_parts[3:length(split_parts)-1]
+  name <- paste(split_parts, collapse = " ")
+  # Concatenate the split parts with automatic line breaks
+  title_text <- paste(strwrap(name, width = 30), collapse = "\n")
+  excel_file <- read_excel(file, sheet = "Monthly")
+  
+  excel_file$observation_date <- as.Date(excel_file$observation_date)
+  # print(class(excel_file %>% head(1)))
+  # print(colnames(excel_file %>% head(1)))
+  
+  start_date <- excel_file %>% head(1) %>% dplyr::select(observation_date)
+  end_date <- excel_file %>% tail(1) %>% dplyr::select(observation_date)
+  dates <<- rbind(dates, c(file, start_date[[1]], end_date[[1]]))
+  
+  if(is.null(VAR_series)){
+    VAR_series <- excel_file
+  }else{
+    VAR_series <- merge( VAR_series ,excel_file, by= 'observation_date')
+  }
+  
+}
+
+
+colnames(VAR_series)
 VAR_series <- VAR_series %>% 
   mutate(year = year(observation_date),
          month = month(observation_date))%>% 
@@ -52,14 +83,41 @@ VAR_series <- VAR_series %>%
          E_Index = ENRGY0ESM086NEST,
          UnE = LRHUTTTTESM156S,
          Bond_rate = IR3TIB01ESM156N,
-         Spot_gas =PNGASEUUSDM
+         Spot_gas =PNGASEUUSDM,
+         HICP = CP0000ESM086NEST,
+         CPElec = CP0451ESM086NEST
   )
-
+VAR_series$Spot_gas
 colnames(VAR_series)
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
+
+
+#adjust for iberian exception gas cap
+
+iberian_cap <- data.frame(
+  Month = c("2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11",
+            "2022-12", "2023-01", "2023-02", "2023-03",
+            "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", 
+            "2023-10", "2023-11", "2023-12"),
+  Cap_EUR_MWh = c(40, 40, 40, 40, 40, 40,
+                  45, 50, 55, 60,
+                  55, 56.1, 57.2, 58.3, 59.4, 60.5,
+                  61.6, 62.7, 63.8)
+) %>% 
+  mutate(date = as.Date(paste0(Month, "-01")),
+        year = as.character(year(date)),
+         month = month(date))
+
+
+price_indispo_merge <- price_indispo_merge %>% 
+  left_join(iberian_cap, by = c("year", "month")) %>%
+  fill(spot_gas, .direction = "up")%>% # Backfill (bfill) 
+  fill(spot_gas, .direction = "down") %>%    # Backfill (bfill)%>%
+  mutate(spot_gas_capped = ifelse(spot_gas < Cap_EUR_MWh | is.na(Cap_EUR_MWh), spot_gas, Cap_EUR_MWh)) 
+
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -101,12 +159,18 @@ monthly_energy_data <- price_indispo_merge %>%
     # NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
     gen_tot = mean(gen_tot, na.rm = TRUE),
     gen_tot_da = mean(gen_tot_da, na.rm = TRUE),
+    spot_gas_capped = mean(spot_gas_capped, na.rm = TRUE),
+    spot_gas= mean(spot_gas, na.rm = TRUE),
     datetime = first(datetime)
   ) %>%
   arrange(datetime) %>% 
   ungroup()
 
 
+
+# View(monthly_energy_data %>%
+#        dplyr::select(datetime, spot_gas, spot_gas_capped))
+# 
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 

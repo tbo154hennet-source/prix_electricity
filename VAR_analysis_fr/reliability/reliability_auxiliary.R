@@ -1,4 +1,10 @@
 
+
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+setwd(source_path)
+source("weak_instrument_test.R")
+
+
 reliability_comparing <- function(vars,p, proxies, irhor, headers_proxies){
   
   p = 4     
@@ -16,7 +22,7 @@ reliability_comparing <- function(vars,p, proxies, irhor, headers_proxies){
   #my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
   matrix_12 <- rbind( diag(k) , zero_matrix)
   
-  vl = vars::VAR(x, p, type = "none")
+  vl <- vars::VAR(x, p, type = "none")
   coef =coef(vl)
   bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
   res = residuals(vl)
@@ -265,20 +271,34 @@ get_table <- function(my_IV_data, headers_var, headers_proxies ,p , title){
 }
 
 
-run_iv_analysis <- function(my_IV_data, headers_var, headers_proxies, 
-                            p = 4, irhor = 20, k = 2, dependent = "spot_price_log") {
+run_iv_analysis <- function(my_IV_data, headers_var, headers_proxies,
+                            start_time = c(2015, 1), end_time = c(2023, 12),
+                            p = 4, irhor = 20, k = 2, dependent = "spot_price_log",
+                            headers_controls = NULL) {
   
   vars<- ts(my_IV_data[, c(headers_var)], frequency=12)
   proxies <- ts(my_IV_data[, c(headers_proxies)], frequency=12)
   
-  x <- ts(vars, start = c(2015, 1), end = c(2023, 12), frequency = 12)
+  x <- ts(vars, start = start_time, end = end_time, frequency = 12)
   y <- vars[-1:-p, ]
   T <- nrow(y)
   n <- ncol(y)
   l <- ncol(proxies)
   
   # VAR estimation
-  vl <- vars::VAR(x, p, type = "none")
+  controls <- if (is.null(headers_controls)) {
+    NULL
+  } else {
+    ts(my_IV_data[, headers_controls], frequency = 12)
+  }
+  
+  vl <- if (is.null(controls)) {
+    vars::VAR(x, p, type = "none")
+  } else {
+    vars::VAR(x, p, type = "none", exogen = controls)
+  }
+  
+  
   coef <- coef(vl)
   bet <- do.call(cbind, lapply(1:n, function(i) coef[[i]][, 1]))
   res <- residuals(vl)
@@ -299,15 +319,24 @@ run_iv_analysis <- function(my_IV_data, headers_var, headers_proxies,
     model <- lm(as.formula(formula_str), data = data)
     fstat <- as.numeric(summary(model)$fstatistic[1])
     
+    result_qty <- gweakivtest(y = res[, (k+1)], Y = res[,1], X = res[, (k+2):n], Z = Z)
+    result_IPI <- gweakivtest(y = res[, (k+2)], Y = res[,1], X =res[, c((k+1),(k+3))], Z = Z)
+    result_HICP <- gweakivtest(y = res[, (k+3)], Y = res[,1], X =res[, c((k+1),(k+2))], Z = Z)
+    
     return(list(
       fstat = fstat,
-      m_summary = model
+      m_summary = model,
+      result_qty = result_qty,
+      result_IPI = result_IPI,
+      result_HICP = result_HICP
     ))
     
   }else{
     X <- res[, 1:k]
     Y <- res[, (k+1):n]
     
+    # dim(PZ)
+    # dim(X)
     # TSLS estimates
     b21ib11_TSLS <- ginv(t(X) %*% PZ %*% X) %*% t(X) %*% PZ %*% Y
     b21ib11 <- t(b21ib11_TSLS)
@@ -339,14 +368,22 @@ run_iv_analysis <- function(my_IV_data, headers_var, headers_proxies,
     lambda_min <- min(Re(eigen(matrix_C)$values[1:k]))
     cragg_donald_stat <- nrow(Z) * lambda_min
     
+    #standard f-stat
     
     data <- data.frame(cbind(res[,1:k], Z))
     colnames(data) <- c( paste0('res_',headers_var[1:2]) ,headers_proxies)
+    #if (sub(".*_", "", headers_var[1]) == "diff")){
     
-    formula_price <- as.formula(paste('res_spot_price_log', "~",
+    # Trouve la variable contenant "price"
+    dep_var_price <- headers_var[grepl("price", headers_var)][1]  # prend la première si plusieurs
+    
+    formula_price <- as.formula(paste(paste0('res_',dep_var_price), "~",
                                       paste(headers_proxies, collapse = "+")))
+    
+    dep_var_demand <- headers_var[grepl("gen", headers_var)][1]  # prend la première si plusieurs
+    
     # Construct the formula
-    formula_demand <- as.formula(paste('res_gen_tot_log', "~",
+    formula_demand <- as.formula(paste(paste0('res_',dep_var_demand), "~",
                                        paste(headers_proxies, collapse = "+")))
     
     m_price <- lm( formula_price, data = data)
@@ -357,13 +394,28 @@ run_iv_analysis <- function(my_IV_data, headers_var, headers_proxies,
     m_demand <- lm(formula_demand, data = data)
     fstat_gen <-as.numeric(summary(m_demand)$fstat[1])
     
+    
+    #effective f stat 
+    #Lewis  Mertens (2024)
+    
+
+    result_IPI <- gweakivtest(y = res[, (k+1)], Y = X, X = res[, (k+2)], Z = Z)
+    
+    
+    result_HICP <- gweakivtest(y = res[, (k+2)], Y = X, X =res[, (k+1)], Z = Z)
+    
+    
+    
+    
     return(list(
       reliability_measure = reliability_measure,
       cragg_donald_stat = cragg_donald_stat,
       fstat_price = fstat_price,
       m_price_summary = m_price,
       fstat_gen = fstat_gen,
-      m_demand_summary = m_demand
+      m_demand_summary = m_demand,
+      result_HICP = result_HICP,
+      result_IPI = result_IPI
     ))
     
     

@@ -11,7 +11,7 @@ library(ggplot2)
 setwd("C:\\Users\\DBT3KD\\Desktop\\Etude_macro_elec\\prix_electricite_gitlab\\day_ahead\\daily_temp\\outputs")
 
 # Charger les données
-full_pop <- as.data.table(read_parquet("temperature_pop.parquet"))
+full_pop <- as.data.table(read_parquet("temperature_pop_fr.parquet"))
 
 # Échantillonner 100 000 lignes aléatoirement
 sample_pop <- full_pop[sample(.N, 100000)]
@@ -50,7 +50,7 @@ temperature_openmeteo_data_monthly <- temperature_openmeteo_data[, .(
 
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
-write_parquet(temperature_openmeteo_data, "temperature_openmeteo_data.parquet")
+write_parquet(temperature_openmeteo_data, "temperature_openmeteo_data_fr.parquet")
 
 # Conversion en numérique
 # temperature_openmeteo_data_monthly[, temperature_2m := as.numeric(temperature_2m)]
