@@ -7,7 +7,7 @@ library(ggplot2)
 
 Sys.setenv(lang = "en_US")
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 actual_ENTSOE_indispo <- read_parquet('uneffective_indispo.parquet') %>% 
@@ -242,7 +242,7 @@ long_format <- function(row){
 
 result_hours <- apply(non_duplicated_indispo, 1, long_format)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 write_parquet(long_format_indispo, 'long_format_indispo_theoretical.parquet')
@@ -265,7 +265,7 @@ final_publi_ENTSOE_indispo <- long_format_indispo %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_publi_ENTSOE_indispo, 'final_publi_ENTSOE_indispo_theoretical.parquet')
 
@@ -309,7 +309,7 @@ long_format_nuclear <- function(row){
 
 result_hours <- apply(non_duplicated_indispo_nuclear, 1, long_format_nuclear)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 write_parquet(long_format_indispo_nuclear, 'long_format_nuclear_indispo_theoretical.parquet')
@@ -323,7 +323,7 @@ final_publi_nuclear_ENTSOE_indispo <- long_format_indispo_nuclear %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_publi_nuclear_ENTSOE_indispo, 'final_publi_nuclear_ENTSOE_indispo_theoretical.parquet')
 

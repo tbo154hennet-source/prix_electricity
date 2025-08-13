@@ -5,7 +5,7 @@ library(stats)
 library(ggplot2)
 library(lubridate)
 
-save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/data_structuring'
+save_path_entsoe <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/data_structuring'
 setwd(save_path_entsoe)
 source("auxiliary_file_ter.R")
 

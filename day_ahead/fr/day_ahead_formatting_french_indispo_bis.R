@@ -5,13 +5,13 @@ library(stats)
 library(ggplot2)
 library(lubridate)
 
-save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/data_structuring'
+save_path_entsoe <- 'Z:/prix_electricite_gitlab/Intra_day_micro/data_structuring'
 setwd(save_path_entsoe)
 source("auxiliary_file_ter.R")
 
 
 
-save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+save_path_fr <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 
 
@@ -151,7 +151,7 @@ publi_bout_indispo_ENTSOE_data_fr <- publi_bout_indispo_ENTSOE_data_fr %>%
   mutate(publication_status = ifelse(businesstype== "Planned maintenance", "Planned", publication_status))
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/fr"
 setwd(save_path_data)
 write_parquet(res, "save_pub_status_fr.parquet")
 write_parquet(publi_bout_indispo_ENTSOE_data_fr, "save_indispo_with_pub_status_fr.parquet")

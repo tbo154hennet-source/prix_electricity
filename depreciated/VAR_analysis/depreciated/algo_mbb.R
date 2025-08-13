@@ -1,7 +1,7 @@
 
 library(arrow)
 
-path = 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/python_bootstrap_matrix'  # Remplacez par votre chemin
+path = 'Z:/prix_electricite_gitlab/VAR_analysis/python_bootstrap_matrix'  # Remplacez par votre chemin
 setwd(path)
 mbb_bootstrap_indices <- read_parquet("X_bootstrapped.parquet")
 

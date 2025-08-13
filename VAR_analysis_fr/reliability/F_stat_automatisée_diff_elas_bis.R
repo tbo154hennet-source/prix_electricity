@@ -1,9 +1,9 @@
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("reliability_auxiliary_elas.R")
 
-# source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr'
+# source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr'
 # setwd(source_path)
 # source("auxiliary_control.R")
 
@@ -19,7 +19,7 @@ library(gtable)
 library(gt)
 #my_IV_data <- IV_data_log_diff_esp
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 
@@ -143,7 +143,7 @@ headers_proxies_fr = c(
   "renewable_day_ahead_forecast_fr_log_diff"
 )
 
-dim(my_IV_data)
+#dim(my_IV_data)
 #IV_data_log_diff_esp$predicted_unavailabilities_log_diff
 #headers_proxies = headers_proxies_esp
 
@@ -158,7 +158,8 @@ print(summary(result_esp$m_price_summary))
 print(summary(result_esp$m_demand_summary))
 
 
-
+headers_proxies_supply <- c("delta_s_total_diff")
+headers_proxies_demand <- c("delta_d_total_diff")
 headers_proxies_supply_demand = c(
   "delta_s_total_diff",
   "delta_d_total_diff"
@@ -185,18 +186,18 @@ headers_var_spot_first <- c("spot_price_log_diff",
                               "IPI_log_diff",
                               "HICP_log_diff")
 
-result_esp_sd_price_supply <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
-                                       headers_var_spot_first, headers_proxies = headers_proxies_supply, p =12, 
-                                       dependent = "spot_price_log_diff", k = 1)
-result_esp_sd_price_supply$fstat
-print(summary(result_esp_sd_price_supply$m_summary))
-result_esp_sd_price_supply$result_gen_tot_log_diff$gmin_generalized
-result_esp_sd_price_supply$result_IPI$gmin_generalized
-result_esp_sd_price_supply$result_HICP$gmin_generalized
-
-result_esp_sd_price_supply$result_gen_tot_log_diff$stock_yogo_test_statistic
-result_esp_sd_price_supply$result_IPI$stock_yogo_test_statistic
-result_esp_sd_price_supply$result_HICP$stock_yogo_test_statistic
+# result_esp_sd_price_supply <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
+#                                        headers_var_spot_first, headers_proxies = headers_proxies_supply, p =12, 
+#                                        dependent = "spot_price_log_diff", k = 1)
+# result_esp_sd_price_supply$fstat
+# print(summary(result_esp_sd_price_supply$m_summary))
+# result_esp_sd_price_supply$result_gen_tot_log_diff$gmin_generalized
+# result_esp_sd_price_supply$result_IPI$gmin_generalized
+# result_esp_sd_price_supply$result_HICP$gmin_generalized
+# 
+# result_esp_sd_price_supply$result_gen_tot_log_diff$stock_yogo_test_statistic
+# result_esp_sd_price_supply$result_IPI$stock_yogo_test_statistic
+# result_esp_sd_price_supply$result_HICP$stock_yogo_test_statistic
 
 
 
@@ -216,7 +217,7 @@ result_esp_sd_price_supply$result_HICP$stock_yogo_test_statistic
 
 
 
-
+headers_var_gen_first <- headers_var
 result_esp_sd_gen_supply <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
                                        headers_var_gen_first, headers_proxies = headers_proxies_supply, p =12, 
                                        dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
@@ -283,7 +284,7 @@ ggplot(data = IV_data_log_diff_esp)+
 
 dim(IV_data_log_diff_esp)
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_fr <-  read_parquet('IV_data_fr_log_diff_elas.parquet')
 

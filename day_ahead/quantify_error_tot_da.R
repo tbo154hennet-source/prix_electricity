@@ -1,6 +1,6 @@
 
 library(stringr)
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 price_merge_CBF_max <- read_parquet("final_price_merge_CBF_tot.parquet")
 
@@ -250,8 +250,8 @@ for (flow in net_flow_col) {
   #   filter(datetime == "2015-07-05 12:00:00"))
 
   # 
-  pred <- price_merge_CBF_max[[flow]]
-  obs <- price_merge_CBF_max[[paste0(flow, "_pred_sat")]]
+  obs <- price_merge_CBF_max[[flow]]
+  pred  <- price_merge_CBF_max[[paste0(flow, "_pred_sat")]]
   
   # Compute R² manually
   r2_sat <- 1 - sum((obs - pred)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
@@ -273,7 +273,7 @@ price_merge_CBF_max <- price_merge_CBF_max %>%
          CBF_ES_pred_sat = rowSums(dplyr::select(., starts_with("NET_FLOW_ES") & ends_with("pred_sat"))),
          CBF_FR_pred_sat = rowSums(dplyr::select(., starts_with("NET_FLOW_FR")& ends_with("pred_sat"))),
          )
-  
+
 View(price_merge_CBF_max %>%
          dplyr::select(datetime, CBF_ES, CBF_ES_pred, CBF_ES_pred_sat) %>% 
        filter(CBF_ES_pred!= CBF_ES_pred_sat) )
@@ -318,7 +318,7 @@ cat("R² Linear model (saturated):", round(r2lin_cap_sat, 4), "\n")
 colnames(price_merge_CBF_max)
 getwd()
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF_max$year <- as.numeric(as.character(price_merge_CBF_max$year))
 price_merge_CBF_max$month <- as.numeric(as.character(price_merge_CBF_max$month))
 price_merge_CBF_max$creneau <- as.numeric(as.character(price_merge_CBF_max$creneau))
@@ -328,7 +328,7 @@ write_parquet(price_merge_CBF_max,
               "price_merge_CBF_max.parquet")
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF_max <- read_parquet("price_merge_CBF_max.parquet")
 #plot the series at the monthly level
 #show how well I predict net cross border flows

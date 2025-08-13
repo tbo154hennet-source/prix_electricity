@@ -7,7 +7,7 @@ library(ggplot2)
 
 Sys.setenv(lang = "en_US")
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 actual_ENTSOE_indispo <- read_parquet('actual_ENTSOE_indispo.parquet') %>% 
@@ -262,7 +262,7 @@ long_format_indispo <- bind_rows(result_list)
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 write_parquet(long_format_indispo, 'long_format_indispo.parquet')
@@ -295,7 +295,7 @@ final_publi_ENTSOE_indispo <- long_format_indispo %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_publi_ENTSOE_indispo, 'final_publi_ENTSOE_indispo.parquet')
 
@@ -328,7 +328,7 @@ result_list <- lapply(seq_len(nrow(non_duplicated_indispo_nuclear)), function(i)
 # Conversion finale en dataframe
 long_format_indispo_nuclear <- bind_rows(result_list)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 write_parquet(long_format_indispo_nuclear, 'long_format_nuclear_indispo.parquet')
@@ -342,7 +342,7 @@ final_publi_nuclear_ENTSOE_indispo <- long_format_indispo_nuclear %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_publi_nuclear_ENTSOE_indispo, 'final_publi_nuclear_ENTSOE_indispo.parquet')
 

@@ -132,7 +132,7 @@ gt_table <- iv_results_df_plot_table_wide %>%
     title = "Instrument Heterogeneity of Supply and Demand Elasticities"
   )
 
-save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table,

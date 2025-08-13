@@ -1,10 +1,10 @@
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("auxiliary_control.R")
 source("bootstrap_auxiliary_control.R")
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
 IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')
@@ -100,7 +100,7 @@ for (name in list_of_samples) {
   sample_matrices_GK_control[[name]] <- gamma_estimate_control_GK[[paste0("boot_", name)]]
 }
 
-save_mat_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/sample_matrices'
+save_mat_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output/sample_matrices'
 setwd(save_mat_path)
 saveRDS(sample_matrices_GK_control, "sample_matrices_GK_control.rds")
 # Save bootstrapped samples
@@ -154,7 +154,7 @@ weak_instruments_pointwise_GK[hori, i,"lower","lambda_01"]
 weak_instruments_bondferroni_GK <- weak_bootstrap_result$weak_lambda_bounds_bonferroni
 #weak_instruments_bondferroni_GK <- aperm(weak_instruments_bondferroni_GK, perm = c(1, 2, 4, 3))
 
-save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/plot_irfs'
+save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output/plot_irfs'
 setwd(save_rds_path)
 saveRDS(weak_instruments_pointwise_GK, "weak_instruments_pointwise_GK_control.rds")
 saveRDS(weak_instruments_bondferroni_GK, "weak_instruments_bondferroni_GK_control.rds")

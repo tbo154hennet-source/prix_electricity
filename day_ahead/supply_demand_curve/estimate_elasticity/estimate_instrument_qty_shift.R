@@ -32,7 +32,7 @@ names_instruments <- c("renewable_day_ahead_forecast",
                        "heat_excess_demand",
                        "Published.Predicted.Unavailable.Capacity")
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
 price_indispo_merge <- price_indispo_merge %>%

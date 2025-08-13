@@ -69,7 +69,7 @@ wind_solar_data_monthly <- wind_solar_data[, .(
 ), by = .(year, month)]
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(wind_solar_data, "wind_solar_data.parquet")
 wind_solar_data <- read_parquet("wind_solar_data.parquet")
 #difference is 
@@ -78,7 +78,7 @@ wind_solar_data <- read_parquet("wind_solar_data.parquet")
 #wind speed and sun exposition better for potential
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
 colnames(price_indispo_merge_esp)

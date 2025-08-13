@@ -1,15 +1,15 @@
 library(MASS)
 
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/reliability'
 setwd(source_path)
 source("reliability_auxiliary.R")
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("auxiliary_control.R")
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
 #colnames(IV_data_log_esp)

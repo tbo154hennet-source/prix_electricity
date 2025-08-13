@@ -6,17 +6,17 @@ library(ggplot2)
 library(lubridate)
 library(lmtest)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 non_duplicated_indispo <- read_parquet('non_duplicated_indispo.parquet')
 non_duplicated_indispo <- unique(non_duplicated_indispo)
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format")
 long_format_indispo <- read_parquet('long_format_indispo.parquet') 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 first_stage_data <- read_parquet('first_stage_data.parquet') 
 
@@ -139,7 +139,7 @@ summary(trigger_model_predicted)
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 non_duplicated_nuclear_indispo <- read_parquet('non_duplicated_indispo.parquet') %>% 
@@ -149,11 +149,11 @@ non_duplicated_nuclear_indispo <- read_parquet('non_duplicated_indispo.parquet')
 
 non_duplicated_nuclear_indispo <- unique(non_duplicated_nuclear_indispo)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format")
 
 long_format_nuclear_indispo <- read_parquet('long_format_nuclear_indispo.parquet') 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 first_stage_data <- read_parquet('first_stage_data.parquet') 
 

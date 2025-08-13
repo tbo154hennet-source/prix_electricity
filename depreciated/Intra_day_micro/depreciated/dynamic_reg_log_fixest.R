@@ -6,7 +6,7 @@ library(ggplot2)
 decalage = 0
 table_coefficients_predicted_full <- NULL
 
-save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 price_diff_data <- read_parquet('price_diff_data.parquet')
 
@@ -140,7 +140,7 @@ dynamic_regression_estimation_log <- function(decalage, publi_indispo){
   return(temp_df_all)
 }
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE")
 tot_publi_OMIE_indispo <- read_parquet( 'tot_publi_OMIE_indispo.parquet')
 
 
@@ -176,7 +176,7 @@ ggplot(data = table_coefficients_predicted_full,
 
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE")
 tot_publi_OMIE_all_indispo <- read_parquet( 'tot_publi_OMIE_all_indispo.parquet')
 
 results_list <- lapply(-2:2, function(d) {
@@ -214,7 +214,7 @@ ggplot(data = table_coefficients_predicted_all,
 
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE")
 tot_publi_OMIE_indispo_without_auction <- read_parquet( 'tot_publi_OMIE_without_auction_time.parquet')
 
 results_list <- lapply(-2:2, function(d) {

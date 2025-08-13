@@ -90,7 +90,7 @@ prediction_data <- merge(generation_by_fuel, generation_per_plant,
 #Get plants for which I can match unavailabilities
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 
@@ -216,7 +216,7 @@ for (centrale in active_centrales) {
   
 }
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs")
 saveRDS(models, 'rf_models_xgb_final.rds')
 saveRDS(models_conservative, 'rf_models_xgb_final_without_pred_prod.rds')
 
@@ -330,7 +330,7 @@ for (centrale in active_centrales){
 
 
 getwd()
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'xgb_predictions_data_OMIE.parquet')
 #rf_predictions_data <- read_parquet( 'xgb_predictions_data_OMIE.parquet')
@@ -393,7 +393,7 @@ ggplot()+
 
 getwd()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(all_rf_indispo, 'all_rf_indispo_OMIE.parquet')
 
@@ -429,7 +429,7 @@ final_uneffective_rf <- long_format_indispo_uneffective_rf %>%
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_entsoe_output)
 getwd()
 write_parquet(final_real_indispo_rf, 'final_real_indispo_rf_OMIE.parquet')

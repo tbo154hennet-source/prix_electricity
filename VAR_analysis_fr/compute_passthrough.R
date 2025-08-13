@@ -1,4 +1,4 @@
-save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path)
 
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp.rds")

@@ -53,7 +53,7 @@ strong_instruments_lambda_index_GK <- aperm(strong_instruments_lambda_index_GK, 
 #cat("Dimensions of strong_instruments_lambda_MBB:", dim(strong_instruments_lambda_MBB), "\n")
 #cat("Dimensions of strong_instruments_lambda_GK:", dim(strong_instruments_lambda_GK), "\n")
 
-save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/plot_irfs'
+save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output/plot_irfs'
 setwd(save_rds_path)
 saveRDS(strong_instruments_lambda_index_MBB, "strong_instruments_lambda_index_MBB.rds")
 saveRDS(strong_instruments_lambda_index_GK, "strong_instruments_lambda_index_GK.rds")

@@ -6,7 +6,7 @@ library(lubridate)
 
 Sys.setenv(lang = "en_US")
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
 setwd(save_path_entsoe_output)
 
 actual_ENTSOE_indispo <- read_parquet('theoretical_ENTSOE_indispo.parquet') %>% 

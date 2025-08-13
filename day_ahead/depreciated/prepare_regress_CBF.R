@@ -4,12 +4,12 @@ library(tidyr)
 
 #regarder quelles sont les dates perdues dans le merge
 #données 2024
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp.parquet")
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/fr"
 setwd(save_path_data)
 price_indispo_merge_fr <- read_parquet("price_indispo_merge_fr.parquet")
 
@@ -54,7 +54,7 @@ price_merge_CBF %>%
 
 
 getwd()
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 write_parquet(price_merge_CBF, "price_merge_CBF.parquet")
 
@@ -66,7 +66,7 @@ neighbours_esp <- c("FR", "PT")
 
 # 
 # 
-# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+# setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 # price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")%>% 
 #   
 #   

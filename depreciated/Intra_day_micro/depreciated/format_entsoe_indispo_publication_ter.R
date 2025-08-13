@@ -5,7 +5,7 @@ library(stats)
 library(ggplot2)
 library(lubridate)
 
-save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/data_structuring'
+save_path_entsoe <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/data_structuring'
 setwd(save_path_entsoe)
 source("auxiliary_file_ter.R")
 
@@ -43,11 +43,11 @@ test <- apply(row, 1, pub_auction_window)
 test <- apply(unexpected_indispo_ENTSOE_data, 1, pub_auction_window)
 
 getwd()
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
+setwd("Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
 write_parquet(result_df, "result_df.parquet")
 # Convert the result to a data frame
 #result_df_bis <- data.frame(t(result_df))
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
+setwd("Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs")
 result_df <- read_parquet("result_df.parquet") %>% 
   arrange(electricity_delivery_date)
 
@@ -82,7 +82,7 @@ actual_ENTSOE_indispo <- actual_ENTSOE_indispo %>%
 actual_ENTSOE_indispo <- actual_ENTSOE_indispo %>% 
   filter(duration >= 1)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(actual_ENTSOE_indispo, 'actual_ENTSOE_indispo.parquet')
 

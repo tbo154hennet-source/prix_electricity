@@ -15,7 +15,7 @@ run_script <- function(file) {
 }
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring")
+setwd("Z:/prix_electricite_gitlab/Data_structuring")
 
 # Step 1: Run the first script
 run_script("read_IIP_plant_data.R")

@@ -1,9 +1,9 @@
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("reliability_auxiliary.R")
 
-# source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr'
+# source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr'
 # setwd(source_path)
 # source("auxiliary_control.R")
 
@@ -19,7 +19,7 @@ library(gtable)
 library(gt)
 #my_IV_data <- IV_data_log_diff_esp
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 
@@ -248,7 +248,7 @@ ggplot(data = IV_data_log_diff_esp)+
 
 dim(IV_data_log_diff_esp)
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_fr <-  read_parquet('IV_data_fr_log_diff_elas.parquet')
 

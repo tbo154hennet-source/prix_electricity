@@ -100,5 +100,5 @@ for (file in files_ending_with_1){
 
 curve_shift_data <- rbindlist(result_list, use.names = TRUE, fill = TRUE)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
 write_parquet(curve_shift_data, 'curve_shift_data_all.parquet')

@@ -1,9 +1,9 @@
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("reliability_auxiliary_elas.R")
 
-# source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr'
+# source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr'
 # setwd(source_path)
 # source("auxiliary_control.R")
 
@@ -19,7 +19,7 @@ library(gtable)
 library(gt)
 #my_IV_data <- IV_data_log_diff_esp
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 
@@ -87,6 +87,21 @@ headers_var_spot_first = c("spot_price_log_diff",
                 "HICP_log_diff"
 )
 
+headers_var_gen_first = c("spot_price_log_diff",
+                           "gen_tot_log_diff",
+                           "IPI_log_diff",
+                           # "ECB_rate_log_diff",
+                           # "E_Index_log_diff",
+                           # "Exp_pi_log_diff",
+                           # "UnE_log_diff" ,
+                           "HICP_log_diff"
+)
+
+headers_var_spot_first_mp <- c(headers_var_spot_first,
+                                          "ffr_diff")
+headers_var_gen_first_mp <- c(headers_var_gen_first,
+                                          "ffr_diff")
+
 colnames(IV_data_log_diff_esp)
 
 
@@ -96,8 +111,8 @@ headers_proxies_supply <- c("delta_s_total_diff")
 #IV_data_log_diff_esp$predicted_unavailabilities_log_diff
 
 result_esp <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
-                                              headers_var_spot_first, headers_proxies = headers_proxies_supply, p =12, 
-                                              dependent = "spot_price_log_diff", k = 1, cov_type = "NW")
+                                              headers_var_gen_first, headers_proxies = headers_proxies_supply, p =12, 
+                                              dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
 result_esp$fstat
 print(summary(result_esp$m_summary))
 # result_fr$result_gen_tot_log_diff$gmin_generalized
@@ -106,32 +121,28 @@ result_esp$result_HICP$gmin_generalized
 
 
 
-headers_controls <- c("avg_spot_price_log_diff")
+#headers_controls <- c("avg_spot_price_log_diff")
 
-headers_var_spot_first_spot_first_mp <- c("spot_price_log_diff",
-                               "gen_tot_log_diff",
-                              "IPI_log_diff",
-                              "HICP_log_diff",
-                              "ffr_diff")
+
 #adding gas control (and mp policy)
 
 
 
-result_esp_mp_gas <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
-                              headers_var_spot_first_mp, headers_proxies = headers_proxies_supply, p =12, 
-                              dependent = "spot_price_log_diff", k = 1, cov_type = "NW", headers_controls = headers_controls)
+result_esp_mp <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
+                              headers_var_gen_first_mp, headers_proxies = headers_proxies_supply, p =12, 
+                              dependent = "gen_tot_log_diff", k = 1, cov_type = "NW") #, headers_controls = headers_controls)
 # Access outputs
-result_esp_mp_gas$fstat
-print(summary(result_esp_mp_gas$m_summary))
+result_esp_mp$fstat
+print(summary(result_esp_mp$m_summary))
 # result_fr$result_gen_tot_log_diff$gmin_generalized
 # result_fr$result_IPI$gmin_generalized
-result_esp_mp_gas$result_HICP$gmin_generalized
+result_esp_mp$result_HICP$gmin_generalized
 
 
 
 
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_fr <-  read_parquet('IV_data_fr_log_diff_elas.parquet')
 
@@ -188,7 +199,7 @@ result_fr$result_HICP$gmin_generalized
 
 headers_controls <- c("avg_spot_price_log_diff")
 
-headers_var_spot_first_spot_first_mp <- c("spot_price_log_diff",
+headers_var_spot_first_mp <- c("spot_price_log_diff",
                                           "gen_tot_log_diff",
                                           "IPI_log_diff",
                                           "HICP_log_diff",
@@ -197,15 +208,15 @@ headers_var_spot_first_spot_first_mp <- c("spot_price_log_diff",
 
 
 
-result_fr_mp_gas <- run_iv_analysis(my_IV_data = IV_data_log_diff_fr, 
-                                     headers_var_spot_first_mp, headers_proxies = headers_proxies_supply, p =12, 
-                                     dependent = "spot_price_log_diff", k = 1, cov_type = "NW", headers_controls = headers_controls)
+result_fr_mp <- run_iv_analysis(my_IV_data = IV_data_log_diff_fr, 
+                                    headers_var_spot_first_mp, headers_proxies = headers_proxies_supply, p =12, 
+                                     dependent = "spot_price_log_diff", k = 1, cov_type = "NW") #, headers_controls = headers_controls)
 # Access outputs
-result_fr_mp_gas$fstat
-print(summary(result_fr_mp_gas$m_summary))
+result_fr_mp$fstat
+print(summary(result_fr_mp$m_summary))
 # result_fr_sd_price_supply$result_gen_tot_log_diff$gmin_generalized
 # result_fr_sd_price_supply$result_IPI$gmin_generalized
-result_fr_mp_gas$result_HICP$gmin_generalized
+result_fr_mp$result_HICP$gmin_generalized
 
 
 
@@ -217,21 +228,27 @@ library(gt)
 summary_table <- tibble::tibble(
   Specification = c(
     "ESP", 
-    "ESP (gas + MP)",
+    "ESP (with MP)",
     "FR",
-    "FR (gas + MP)"
+    "FR (with MP)"
   ),
   `F-stat (Price)` = c(
     round(result_esp$fstat, 2),
-    round(result_esp_mp_gas$fstat, 2),
+    round(result_esp_mp$fstat, 2),
     round(result_fr$fstat, 2),
-    round(result_fr_mp_gas$fstat, 2)
+    round(result_fr_mp$fstat, 2)
   ),
   `LW (HICP)` = c(
     round(result_esp$result_HICP$gmin_generalized, 2),
-    round(result_esp_mp_gas$result_HICP$gmin_generalized, 2),
+    round(result_esp_mp$result_HICP$gmin_generalized, 2),
     round(result_fr$result_HICP$gmin_generalized, 2),
-    round(result_fr_mp_gas$result_HICP$gmin_generalized, 2)
+    round(result_fr_mp$result_HICP$gmin_generalized, 2)
+  ),
+  `LW (IPI)` = c(
+    round(result_esp$result_IPI$gmin_generalized, 2),
+    round(result_esp_mp$result_IPI$gmin_generalized, 2),
+    round(result_fr$result_IPI$gmin_generalized, 2),
+    round(result_fr_mp$result_IPI$gmin_generalized, 2)
   )
 )
 
@@ -245,7 +262,7 @@ gt_table <- summary_table %>%
 
 # Save if needed
 
-save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table ,
@@ -256,89 +273,89 @@ gtsave(
 
 
 
-
-result_esp_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
-                              headers_var_gen_first, headers_proxies = headers_proxies_supply, p =12, 
-                              dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
-
-
-
-headers_var_gen_first_spot_first_mp <- c("gen_tot_log_diff",
-                                         "spot_price_log_diff",
-                                          "IPI_log_diff",
-                                          "HICP_log_diff",
-                                          "ffr_diff")
-#adding gas control (and mp policy)
-
-
-
-result_esp_mp_gas_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
-                                     headers_var_gen_first_mp, headers_proxies = headers_proxies_supply, p =12, 
-                                     dependent = "gen_tot_log_diff", k = 1, cov_type = "NW", headers_controls = headers_controls)
-
-
-
-result_fr_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_fr, 
-                             headers_var_gen_first, headers_proxies = headers_proxies_supply, p =12, 
-                             dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
-
-
-result_fr_mp_gas_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_fr, 
-                                    headers_var_gen_first_mp, headers_proxies = headers_proxies_supply, p =12, 
-                                    dependent = "gen_tot_log_diff", k = 1, cov_type = "NW", headers_controls = headers_controls)
-
-
-
-
-# Fill in your actual results
-summary_table_complete <- tibble::tibble(
-  Specification = c(
-    "ESP", 
-    "ESP (gas + MP)",
-    "FR",
-    "FR (gas + MP)"
-  ),
-  `F-stat Price` = c(
-    round(result_esp$fstat, 2),
-    round(result_esp_mp_gas$fstat, 2),
-    round(result_fr$fstat, 2),
-    round(result_fr_mp_gas$fstat, 2)
-  ),
-  `LW Price (HICP)` = c(
-    round(result_esp$result_HICP$gmin_generalized, 2),
-    round(result_esp_mp_gas$result_HICP$gmin_generalized, 2),
-    round(result_fr$result_HICP$gmin_generalized, 2),
-    round(result_fr_mp_gas$result_HICP$gmin_generalized, 2)
-  ),
-  `F-stat Qty` = c(
-    round(result_esp_gen$fstat, 2),
-    round(result_esp_mp_gas_gen$fstat, 2),
-    round(result_fr_gen$fstat, 2),
-    round(result_fr_mp_gas_gen$fstat, 2)
-  ),
-  `LW Qty (HICP)` = c(
-    round(result_esp_gen$result_HICP$gmin_generalized, 2),
-    round(result_esp_mp_gas_gen$result_HICP$gmin_generalized, 2),
-    round(result_fr_gen$result_HICP$gmin_generalized, 2),
-    round(result_fr_mp_gas_gen$result_HICP$gmin_generalized, 2)
-  )
-)
-
-# Generate the table
-gt_table <- summary_table_complete %>%
-  gt() %>%
-  tab_header(title = md("**IV Relevance Diagnostics**")) %>%
-  fmt_missing(columns = everything(), missing_text = "-") %>%
-  tab_options(row_group.as_column = FALSE)%>%
-  tab_source_note(md("*LW = Lewis and Mertens (2024)*"))
-
-# Save if needed
-
-save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
-setwd(save_latex_path)
-gtsave(
-  gt_table ,
-  filename = "iv_relevance_compare_complete.tex"
-)
+# 
+# result_esp_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
+#                               headers_var_gen_first, headers_proxies = headers_proxies_supply, p =12, 
+#                               dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
+# 
+# 
+# 
+# headers_var_gen_first_spot_first_mp <- c("gen_tot_log_diff",
+#                                          "spot_price_log_diff",
+#                                           "IPI_log_diff",
+#                                           "HICP_log_diff",
+#                                           "ffr_diff")
+# #adding gas control (and mp policy)
+# 
+# 
+# 
+# result_esp_mp_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
+#                                      headers_var_gen_first_mp, headers_proxies = headers_proxies_supply, p =12, 
+#                                      dependent = "gen_tot_log_diff", k = 1, cov_type = "NW") #, headers_controls = headers_controls)
+# 
+# 
+# 
+# result_fr_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_fr, 
+#                              headers_var_gen_first, headers_proxies = headers_proxies_supply, p =12, 
+#                              dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
+# 
+# 
+# result_fr_mp_gen <- run_iv_analysis(my_IV_data = IV_data_log_diff_fr, 
+#                                     headers_var_gen_first_mp, headers_proxies = headers_proxies_supply, p =12, 
+#                                     dependent = "gen_tot_log_diff", k = 1, cov_type = "NW") #, headers_controls = headers_controls)
+# 
+# 
+# 
+# 
+# # Fill in your actual results
+# summary_table_complete <- tibble::tibble(
+#   Specification = c(
+#     "ESP", 
+#     "ESP (gas + MP)",
+#     "FR",
+#     "FR (gas + MP)"
+#   ),
+#   `F-stat Price` = c(
+#     round(result_esp$fstat, 2),
+#     round(result_esp_mp$fstat, 2),
+#     round(result_fr$fstat, 2),
+#     round(result_fr_mp$fstat, 2)
+#   ),
+#   `LW Price (HICP)` = c(
+#     round(result_esp$result_HICP$gmin_generalized, 2),
+#     round(result_esp_mp$result_HICP$gmin_generalized, 2),
+#     round(result_fr$result_HICP$gmin_generalized, 2),
+#     round(result_fr_mp$result_HICP$gmin_generalized, 2)
+#   ),
+#   `F-stat Qty` = c(
+#     round(result_esp_gen$fstat, 2),
+#     round(result_esp_mp_gen$fstat, 2),
+#     round(result_fr_gen$fstat, 2),
+#     round(result_fr_mp_gen$fstat, 2)
+#   ),
+#   `LW Qty (HICP)` = c(
+#     round(result_esp_gen$result_HICP$gmin_generalized, 2),
+#     round(result_esp_mp_gen$result_HICP$gmin_generalized, 2),
+#     round(result_fr_gen$result_HICP$gmin_generalized, 2),
+#     round(result_fr_mp_gen$result_HICP$gmin_generalized, 2)
+#   )
+# )
+# 
+# # Generate the table
+# gt_table <- summary_table_complete %>%
+#   gt() %>%
+#   tab_header(title = md("**IV Relevance Diagnostics**")) %>%
+#   fmt_missing(columns = everything(), missing_text = "-") %>%
+#   tab_options(row_group.as_column = FALSE)%>%
+#   tab_source_note(md("*LW = Lewis and Mertens (2024)*"))
+# 
+# # Save if needed
+# 
+# save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+# setwd(save_latex_path)
+# gtsave(
+#   gt_table ,
+#   filename = "iv_relevance_compare_complete.tex"
+# )
 
 

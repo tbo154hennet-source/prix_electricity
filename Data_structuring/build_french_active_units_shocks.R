@@ -72,7 +72,7 @@ generation_per_unit$`__index_level_0__` <-
 View(data.frame(generation_per_unit$`__index_level_0__`))
 min(generation_per_unit$`__index_level_0__`, tzone = "UTC")
 max(generation_per_unit$`__index_level_0__`, tzone = "UTC", na.rm=TRUE)
-save_path_fr <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output"
+save_path_fr <- "Z:/prix_electricite_gitlab/Data_structuring/output"
 setwd(save_path_fr)
 
 write_parquet(generation_per_unit, 'generation_per_unit_format.parquet')
@@ -96,7 +96,7 @@ View(my_exact_names %>% arrange(output1) %>% distinct())
 # le format indispo heure par heure,
 # ou je n'ai pas encore tout aggrege en sommant les indispos
 # utiliser read_IPP_plant_suite
-save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+save_path_fr <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet")
 

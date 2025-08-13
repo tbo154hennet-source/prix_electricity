@@ -49,7 +49,7 @@ temperature_openmeteo_data_monthly <- temperature_openmeteo_data[, .(
 ), by = .(year, month)]
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(temperature_openmeteo_data, "temperature_openmeteo_data_fr.parquet")
 
 # Conversion en numérique
@@ -109,7 +109,7 @@ temperature_openmeteo_plant_data[, `:=`(
   month = month(date)
 )]
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(temperature_openmeteo_plant_data, "temperature_openmeteo_plant_data.parquet")
 
 
@@ -193,7 +193,7 @@ temperature_openmeteo_data_tot <- merge(temperature_openmeteo_data_tot,
 )
 #View(temperature_openmeteo_data_tot[1:100,])
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(temperature_openmeteo_data_tot, "temperature_opendata_tot.parquet")
 
 

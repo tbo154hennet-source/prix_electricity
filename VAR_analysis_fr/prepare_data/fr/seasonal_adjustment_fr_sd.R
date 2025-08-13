@@ -7,9 +7,13 @@ library(pracma)
 library(arrow)
 Sys.setenv(lang = "en_US")
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data <- read_parquet('IV_data_fr_elas.parquet') 
+
+#normalize prices with price index
+IV_data <- IV_data %>%
+  mutate(across(contains("spot"), ~ . / HICP*100 ))
 
 #colnames(IV_data)
 # dim(IV_data)
@@ -95,7 +99,7 @@ for (var in colnames(IV_data)) {
 
 getwd()
 seasonally_adjusted_df <- as.data.frame(adjusted_data)
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
+setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 
 

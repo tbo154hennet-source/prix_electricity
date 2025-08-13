@@ -485,7 +485,7 @@ final_active_unplanned_IIP_indispo <- final_active_unplanned_IIP_indispo %>%
 pure_indispo_data <- final_active_unplanned_IIP_indispo  %>% 
   filter(auction_before!=auction_after)
 
-save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo'
+save_path <- 'Z:/prix_electricite_gitlab/Data_structuring/structured_output_indispo'
 
 setwd(save_path)
 write_parquet(pure_indispo_data, 'pure_indispo_data.parquet')

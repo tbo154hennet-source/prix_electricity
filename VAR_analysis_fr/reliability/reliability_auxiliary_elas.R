@@ -1,6 +1,6 @@
 
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("weak_instrument_test.R")
 
@@ -463,7 +463,7 @@ get_table_compare <- function(headers_var,IV_data_log_esp, IV_data_log_fr,
   # Rassembler les données dans un tableau unique
   summary_table <- tibble::tibble(
     Pays = c("France", "France", "France", "Espagne", "Espagne", "Espagne"),
-    Modèle = c("Prix (k=1)", "Demande (k=1)", "Joint (k=2)",
+    Modele = c("Prix (k=1)", "Demande (k=1)", "Joint (k=2)",
                "Prix (k=1)", "Demande (k=1)", "Joint (k=2)"),
     `F-statistic` = c(round(result_price_fr$fstat,2), round(result_gen_fr$fstat,2), 
                       paste(round(result_fr$fstat_price,2), round(result_fr$fstat_gen,2)),
@@ -484,7 +484,7 @@ get_table_compare <- function(headers_var,IV_data_log_esp, IV_data_log_fr,
       title = md("**IV Relevance**")
     ) %>%
     cols_label(
-      Modèle = "Modèle",
+      Modele = "Modele",
       `F-statistic` = "F-stat",
       `Cragg-Donald` = "Cragg-Donald",
       `Mertens and Ravn (2013)` = "Mertens and Ravn (2013)"

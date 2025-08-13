@@ -8,7 +8,7 @@ load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/renewable_f
 setwd(load_path_data)
 Intraday_wind_solar_forecast <- read_parquet('Intraday_wind_solar_forecast.parquet')
 
-save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+save_path_esp <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
 setwd(save_path_esp)
 generation_by_fuel <- read_parquet('generation_by_fuel_format.parquet')
 

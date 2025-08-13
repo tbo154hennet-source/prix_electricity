@@ -1,5 +1,5 @@
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
 setwd(save_path_entsoe_output)
 
 non_duplicated_nuclear_indispo <- read_parquet('non_duplicated_indispo.parquet') %>% 
@@ -9,11 +9,11 @@ non_duplicated_nuclear_indispo <- read_parquet('non_duplicated_indispo.parquet')
 
 non_duplicated_nuclear_indispo <- unique(non_duplicated_nuclear_indispo)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format")
+setwd("Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format")
 
 long_format_nuclear_indispo <- read_parquet('long_format_nuclear_indispo.parquet') 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
 setwd(save_path_entsoe_output)
 first_stage_data <- read_parquet('first_stage_data.parquet') 
 

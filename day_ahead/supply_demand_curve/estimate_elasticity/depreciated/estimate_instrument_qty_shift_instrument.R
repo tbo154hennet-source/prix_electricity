@@ -3,7 +3,7 @@ library(stargazer)
 library(knitr)
 library(gt)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_delta <- read_parquet("price_indispo_merge_delta.parquet")
 
 
@@ -179,7 +179,7 @@ gt_table <- df_plot_table_wide %>%
     title = "Price Elasticity of Demand"
   )
 
-save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table,

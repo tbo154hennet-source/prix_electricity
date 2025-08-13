@@ -6,7 +6,7 @@ library(ggplot2)
 library(lubridate)
 library(purrr)
 
-save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/data_structuring'
+save_path_entsoe <- 'Z:/prix_electricite_gitlab/Intra_day_micro/data_structuring'
 setwd(save_path_entsoe)
 source("auxiliary_file_sixt.R")
 
@@ -50,10 +50,10 @@ result_list <- future_map(seq_len(total_rows), function(i) {
 result_df <- bind_rows(unlist(result_list, recursive = FALSE))
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs")
 write_parquet(result_df, "result_df_theoretical_all_OMIE.parquet")
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs")
 result_df <- read_parquet("result_df_theoretical_all_OMIE.parquet")
 
 colnames(result_df)
@@ -80,7 +80,7 @@ actual_ENTSOE_indispo <- actual_ENTSOE_indispo %>%
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(actual_ENTSOE_indispo, 'actual_OMIE_indispo_theoretical_all.parquet')
 

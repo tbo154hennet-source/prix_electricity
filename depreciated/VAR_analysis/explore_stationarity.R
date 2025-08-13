@@ -6,7 +6,7 @@ library(arrow)
 library(lubridate)
 library(estimatr)
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 detrended_data <- read.csv("DATASET_sa_detrended.csv")
 IV_data_log <- read_parquet('low_freq_data_log.parquet')

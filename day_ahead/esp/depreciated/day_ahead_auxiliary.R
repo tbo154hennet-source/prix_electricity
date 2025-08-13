@@ -149,7 +149,7 @@ nrow(bout_indispo_ENTSOE_data)
 publi_bout_indispo_ENTSOE_data <- publi_bout_indispo_ENTSOE_data %>% 
   mutate(publication_status = ifelse(businesstype== "Planned maintenance", "Planned", publication_status))
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(res, "save_pub_status.parquet")
 write_parquet(publi_bout_indispo_ENTSOE_data, "save_indispo_with_pub_status_esp.parquet")

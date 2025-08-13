@@ -1,5 +1,5 @@
 
-save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+save_path_esp <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
 setwd(save_path_esp)
 final_indispo <- read_parquet('final_indispo.parquet')
 updated_final_indispo <- read_parquet('updated_final_indispo.parquet')

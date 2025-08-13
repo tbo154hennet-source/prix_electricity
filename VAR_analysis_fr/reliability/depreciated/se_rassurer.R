@@ -1,6 +1,6 @@
 
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data_fr <- read_parquet('IV_data_fr2.parquet') 
 
@@ -33,7 +33,7 @@ log_diff_model <- lm(data = gas_elec_data, log_diff_spot ~
 summary(log_diff_model)
 
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data_es <- read_parquet('IV_data_esp.parquet') 
 

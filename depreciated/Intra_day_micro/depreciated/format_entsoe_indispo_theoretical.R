@@ -5,7 +5,7 @@ library(stats)
 library(ggplot2)
 library(lubridate)
 
-save_path_entsoe <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE'
+save_path_entsoe <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE'
 setwd(save_path_entsoe)
 source("auxiliary_file_ter.R")
 
@@ -102,7 +102,7 @@ all_indispo_ENTSOE_data <- all_indispo_ENTSOE_data %>%
 all_indispo_ENTSOE_data <- all_indispo_ENTSOE_data %>% 
   filter(duration >= 1)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
 setwd(save_path_entsoe_output)
 
 write_parquet(all_indispo_ENTSOE_data, 'theoretical_ENTSOE_indispo.parquet')

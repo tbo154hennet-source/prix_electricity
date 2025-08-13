@@ -8,7 +8,7 @@ library(ggplot2)
 Sys.setenv(lang = "en_US")
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 dismissed_theoretical_auction_ENTSOE_indispo <-  read_parquet('dismissed_theoretical_auction_ENTSOE_indispo.parquet')
 
@@ -68,7 +68,7 @@ result_list <- lapply(seq_len(nrow(dismissed_theoretical_auction_ENTSOE_indispo)
 dismissed_uneffective_indispo <- do.call(bind_rows, result_list)
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 write_parquet(dismissed_uneffective_indispo, 'dismissed_uneffective_indispo.parquet')
@@ -135,7 +135,7 @@ result_list <- lapply(seq_len(nrow(dismissed_uneffective_indispo)), function(i) 
 # Conversion finale en dataframe
 long_format_indispo <- bind_rows(result_list)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 write_parquet(long_format_indispo, 'long_format_indispo_dismissed_uneffective.parquet')
@@ -149,7 +149,7 @@ final_publi_ENTSOE_indispo <- long_format_indispo %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_publi_ENTSOE_indispo, 'final_uneffective_ENTSOE_dismissed_indispo.parquet')
 
@@ -180,7 +180,7 @@ result_list <- lapply(seq_len(nrow(dismissed_uneffective_indispo_nuclear)), func
 # Conversion finale en dataframe
 long_format_indispo_nuclear <- bind_rows(result_list)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 write_parquet(long_format_indispo_nuclear, 'long_format_indispo_dismissed_uneffective_nuclear.parquet')
@@ -194,7 +194,7 @@ final_uneffective_nuclear_ENTSOE_indispo <- long_format_indispo_nuclear %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_uneffective_nuclear_ENTSOE_indispo, 'final_uneffective_nuclear_ENTSOE_indispo.parquet')
 

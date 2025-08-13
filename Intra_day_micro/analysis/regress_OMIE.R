@@ -6,7 +6,7 @@ library(lubridate)
 library(tidyr)
 library(tidyverse)
 
-save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 list.files()
 
@@ -91,7 +91,7 @@ getwd()
 write_parquet(tot_publi_OMIE_indispo, 'tot_publi_OMIE_indispo.parquet')
 #tot_publi_OMIE_indispo <- read_parquet('tot_publi_OMIE_indispo.parquet')
 
-# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+# setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 # final_indispo_tot_wide_esp_da <- read_parquet("final_indispo_tot_wide_esp.parquet")%>%
 #   mutate(creneau = as.character(hour(datetime_slot) + 1),
 #          electricity_delivery_date = as.character(as.Date(datetime_slot)),
@@ -173,7 +173,7 @@ price_diff_data[, c("auction_before", "auction_after")] %>%
   arrange(desc(n))
 
 
-save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 write_parquet(price_diff_data, 'price_diff_data.parquet')
 # test <- price_diff_data %>% 
@@ -203,7 +203,7 @@ renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
 
 #add temperature  and other weather conditions
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
 colnames(temperature_openmeteo_data)
 
@@ -227,7 +227,7 @@ first_stage_data  <-
 
 getwd()
 
-save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 write_parquet(first_stage_data, 'first_stage_data_OMIE.parquet')
 

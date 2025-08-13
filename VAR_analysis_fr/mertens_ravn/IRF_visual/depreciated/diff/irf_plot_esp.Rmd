@@ -1,0 +1,287 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(ggplot2)
+library(latex2exp)
+library(cowplot)
+library(gridExtra)
+```
+
+Take care of the legend
+
+```{r}
+# Exemple simulé si tu n’as pas défini `simul_data`
+set.seed(123)
+simul_data <- data.frame(
+  x = rnorm(100),
+  y = rnorm(100),
+  `Confidence.Bands` = rep(c("90%", "68%"), each = 50),
+  `Identification` = rep(c("Cholesky", "IV"), 50)
+)
+
+# Définir le mapping manuel pour les types de traits
+linetype <- c("Cholesky" = "dashed", "IV" = "solid")
+
+# Plot avec légende uniquement
+plot_legend <- ggplot(data = simul_data, aes(x = x)) +
+  geom_histogram(aes(fill = `Confidence.Bands`), bins = 30, alpha = 0.6) +
+  geom_line(aes(y = y, linetype = `Identification`)) +
+  scale_fill_manual(
+    values = c("90%" = "blue", "68%" = "lightblue"),
+    drop = FALSE
+  ) +
+  scale_linetype_manual(
+    values = linetype,
+    name = "Identification",
+    drop = FALSE
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  )
+
+# Extraire la légende personnalisée
+#custom_legend <- cowplot::get_legend(plot_legend)
+custom_legend <- get_plot_component(plot_legend, "guide-box", return_all = TRUE)[[3]]
+
+#custom_legend[[3]]
+
+```
+
+
+
+
+```{r}
+#solution <-gen_benchmark
+
+plot_irf_from_gen_benchmark <- function(solution, irf_cholesky,
+                                        variable_names = NULL, shock="price" ) {
+  if (shock == "price"){
+   shock_label = "$P_{elec}$ shock IRF"
+  }else if (shock == "gen"){
+    shock_label = "$Q_{elec}$ shock IRF"
+  }else{
+    return("Invalid shock type. Please use 'price' or 'quantity'.")
+  }
+  index <- grep(shock, solution$headers_var)
+  lambda_name <- sprintf("lambda_0%d", index)
+  
+  lambda_0 <- solution$lambda_0
+  #lambda_0 <- solution$median_50
+  #lambda_0_chol <-irf_cholesky$irf
+  lambda_0_chol <- irf_cholesky
+  irhor <- dim(lambda_0_chol[[1]])[1]
+  lambda_0_chol <- array(unlist(lambda_0_chol), dim = c(irhor, length(lambda_0_chol), length(lambda_0_chol)))
+
+  #dim(lambda_0_median)
+  band_68 <- solution$bandwith_68
+  band_90 <- solution$bandwith_90
+  
+  n <- dim(lambda_0)[2]  # number of variables
+  irhor <- dim(lambda_0)[1]
+  
+  # Default names if none are supplied
+  if (is.null(variable_names)) {
+    variable_names <- paste0("Var ", 1:n)
+  }
+  
+  plot_irf <- function(i=1) {
+    #trick I just put 0.5 twice
+    #main_IV <- lambda_0[, i, "lower", lambda_name]
+    main_IV <- lambda_0[, i, index]
+    main_chol <- lambda_0_chol[,i,index]
+    #Normalize IRF
+    main_chol <- as.numeric(main_chol/lambda_0_chol[1,index,index])
+ 
+    #dim(lambda_0_median)
+    time_horizon <- 1:irhor
+    
+    lower_68 <- band_68[, i, "lower", lambda_name]
+    upper_68 <- band_68[, i, "upper", lambda_name]
+    lower_90 <- band_90[, i, "lower", lambda_name]
+    upper_90 <- band_90[, i, "upper", lambda_name]
+    
+    ggplot() +
+      geom_ribbon(aes(x = time_horizon, ymin = lower_90, ymax = upper_90), fill = "blue", alpha = 0.4) +
+      geom_ribbon(aes(x = time_horizon, ymin = lower_68, ymax = upper_68), fill = "lightblue", alpha = 0.6) +
+      geom_line(aes(x = time_horizon, y = main_chol), color = "darkblue", linetype = 'dashed') +
+      geom_line(aes(x = time_horizon, y = main_IV), color = "darkblue", linetype = "solid") +
+      geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
+      labs(
+        title = TeX(variable_names[i]),
+        x = "Time",
+        y = "Unit Points"
+      ) +
+      theme_minimal()
+  }
+  
+  # Generate plots
+  plots_list <- lapply(1:n, plot_irf)
+  grid_plots <- do.call("grid.arrange", c(plots_list, nrow = 2))
+  
+  legend_plot <- plot_grid(grid_plots, custom_legend , ncol = 1, rel_heights = c(1, 0.1))
+
+  # Title and final composition
+  title <- ggdraw() + draw_label(TeX(shock_label), fontface = 'bold', x = 0.5, hjust = 0.5)
+  final_plot <- plot_grid(title, legend_plot, ncol = 1, rel_heights = c(0.1, 1))
+  
+  return(final_plot)
+}
+
+```
+
+
+
+
+# For Spain
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/irf'
+setwd(save_rds_path)
+irf_cholesky_esp <- readRDS("irf_cholesky_esp_diff.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/benchmark'
+setwd(save_rds_path)
+gen_benchmark_esp <- readRDS( "gen_benchmark_esp.rds")
+
+```
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_espom_gen_benchmark(
+  solution = gen_benchmark_esp,
+  irf_cholesky = irf_cholesky_esp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+
+```{r}
+#Plot the IRFs
+irf_gen_shock_esp <- plot_irf_espom_gen_benchmark(
+  gen_benchmark_esp,
+  irf_cholesky = irf_cholesky_esp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+setwd(save_plot_path)
+
+# Assume your ggplot object is called 'p'
+ggsave("qty_shock_spain.png", plot = irf_gen_shock_esp, width = 8, height = 6, dpi = 300)
+ggsave("price_shock_spain.png", plot = irf_price_shock_esp, width = 8, height = 6, dpi = 300)
+
+```
+
+
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/irf'
+setwd(save_rds_path)
+irf_cholesky_esp <- readRDS("irf_cholesky_esp_gas_diff.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/benchmark'
+setwd(save_rds_path)
+gen_benchmark_esp <- readRDS( "gen_benchmark_esp_gas.rds")
+
+```
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_espom_gen_benchmark(
+  solution = gen_benchmark_esp,
+  irf_cholesky = irf_cholesky_esp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+```{r}
+#Plot the IRFs
+irf_gen_shock_esp <- plot_irf_espom_gen_benchmark(
+  gen_benchmark_esp,
+  irf_cholesky = irf_cholesky_esp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+
+
+```{r}
+# getwd()
+# save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+# setwd(save_plot_path)
+# # Assume your ggplot object is called 'p'
+# ggsave("qty_shock_spain.png", plot = irf_gen_shock_esp, width = 8, height = 6, dpi = 300)
+# ggsave("price_shock_spain.png", plot = irf_price_shock_esp, width = 8, height = 6, dpi = 300)
+
+```
+
+
+```{r}
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/irf'
+setwd(save_rds_path)
+irf_cholesky_esp <- readRDS("irf_cholesky_esp_mp_gas_diff.rds")
+
+
+
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/benchmark'
+setwd(save_rds_path)
+gen_benchmark_esp <- readRDS( "gen_benchmark_esp_gas_mp.rds")
+
+```
+
+
+```{r}
+#Plot the IRFs
+irf_price_shock_esp <- plot_irf_espom_gen_benchmark(
+  solution = gen_benchmark_esp,
+  irf_cholesky = irf_cholesky_esp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  shock = "price"
+)
+irf_price_shock_esp
+```
+
+```{r}
+#Plot the IRFs
+irf_gen_shock_esp <- plot_irf_espom_gen_benchmark(
+  gen_benchmark_esp,
+  irf_cholesky = irf_cholesky_esp,
+  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  shock = "gen"
+)
+irf_gen_shock_esp
+```
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+setwd(save_plot_path)
+
+# Assume your ggplot object is called 'p'
+ggsave("qty_shock_spain_mp_gas.png", plot = irf_gen_shock_esp, width = 8, height = 6, dpi = 300)
+ggsave("price_shock_spain_mp_gas.png", plot = irf_price_shock_esp, width = 8, height = 6, dpi = 300)
+
+```
+

@@ -1,6 +1,6 @@
 library(ggplot2)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
 curve_shift_data <- read_parquet( 'curve_shift_data_supply.parquet')
 setDT(curve_shift_data)
 
@@ -28,12 +28,12 @@ colnames(reconstruct_full_curve_shift)
 max(reconstruct_full_curve_shift$DATE)
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <-read_parquet("reconstruct_full_curve_shift_supply_unmatched.parquet")
 
 
 # Lire le fichier .parquet et convertir en data.table
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp.parquet") %>% as.data.table()

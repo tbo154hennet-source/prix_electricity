@@ -1,8 +1,8 @@
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("reliability_auxiliary_elas.R")
 
-# source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr'
+# source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr'
 # setwd(source_path)
 # source("auxiliary_control.R")
 
@@ -18,7 +18,7 @@ library(gtable)
 library(gt)
 #my_IV_data <- IV_data_log_diff_esp
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 
@@ -166,44 +166,29 @@ headers_proxies_supply_demand = c(
 
 result_esp_sd <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, headers_var, headers_proxies_supply_demand, p = 12,
                                  dependent = "", k = 2, cov_type = "NW")
-# Access outputs
-print(result_esp_sd$reliability_measure)
-print(result_esp_sd$cragg_donald_stat)
-print(result_esp_sd$fstat_price)
-print(result_esp_sd$fstat_gen)
-print(summary(result_esp_sd$m_price_summary))
-print(summary(result_esp_sd$m_demand_summary))
-
-
-result_esp_sd$result_HICP$gmin_generalized
-
 
 
 
 result_esp_sd_price_supply <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
                                               headers_var_spot_first, headers_proxies = headers_proxies_supply, p =12, 
                                               dependent = "spot_price_log_diff", k = 1, cov_type = "NW")
-result_esp_sd_price_supply$fstat
-print(summary(result_esp_sd_price_supply$m_summary))
-# result_esp_sd_price_supply$result_gen_tot_log_diff$gmin_generalized
-# result_esp_sd_price_supply$result_IPI$gmin_generalized
-result_esp_sd_price_supply$result_HICP$gmin_generalized
 
-# result_esp_sd_price_supply$result_gen_tot_log_diff$stock_yogo_test_statistic
-# result_esp_sd_price_supply$result_IPI$stock_yogo_test_statistic
-# result_esp_sd_price_supply$result_HICP$stock_yogo_test_statistic
+
+result_esp_sd_gen_supply <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
+                                            headers_var_gen_first, headers_proxies = headers_proxies_supply, p =12, 
+                                            dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
 
 
 
-result_esp_sd_demand_qty <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp,
-                                     headers_var, headers_proxies_demand, p = 12,
+result_esp_sd_price_demand <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp,
+                                              headers_var_spot_first, headers_proxies_demand, p = 12,
+                                              dependent = "spot_price_log_diff", k = 1, cov_type = "NW")
+
+
+result_esp_sd_gen_demand <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp,
+                                            headers_var_gen_first, headers_proxies_demand, p = 12,
                                      dependent = "gen_tot_log_diff", k = 1, cov_type = "NW")
-result_esp_sd_demand_qty$fstat
-# result_esp_sd_qty$result_qty$gmin_generalized
-# result_esp_sd_qty$result_IPI$gmin_generalized
-result_esp_sd_demand_qty$result_HICP$gmin_generalized
-result_esp_sd_demand_qty$fstat
-print(summary(result_esp_sd_demand_qty$m_summary))
+
 
 
 
@@ -221,33 +206,52 @@ summary_table <- tibble::tibble(
     "All instruments", 
     "Supply & Demand shocks (joint)",
     "Supply → price",
+    # "Supply → quantity",
+    # "Demand → price",
     "Demand → quantity"
   ),
   `F-stat (Price)` = c(
     round(result_esp$fstat_price, 2),
     round(result_esp_sd$fstat_price, 2),
     round(result_esp_sd_price_supply$fstat, 2),
+    # "-",
+    # round(result_esp_sd_price_demand$fstat, 2),
     "-"
   ),
   `F-stat (Qty)` = c(
     round(result_esp$fstat_gen, 2),
     round(result_esp_sd$fstat_gen, 2),
     "-",
-    round(result_esp_sd_demand_qty$fstat, 2)
+    # round(result_esp_sd_gen_supply$fstat, 2),
+    # "-",
+    round(result_esp_sd_gen_demand$fstat, 2)
   ),
   `MR` = c(
     paste(round(result_esp$reliability_measure[1:2], 2), collapse = ", "),
     paste(round(result_esp_sd$reliability_measure[1:2], 2), collapse = ", "),
     "-",
+    # "-",
+    # "-",
     "-"
   ),
   `LW (HICP)` = c(
     round(result_esp$result_HICP$gmin_generalized, 2),
     round(result_esp_sd$result_HICP$gmin_generalized, 2),
-    round(result_esp_sd_price_supply$result_HICP$gmin_generalized, 2),
-    round(result_esp_sd_demand_qty$result_HICP$gmin_generalized, 2)
-  )
+    round(result_esp_sd_price_supply$result_HICP_log_diff$gmin_generalized, 2),
+    # round(result_esp_sd_gen_supply$result_HICP_log_diff$gmin_generalized, 2),
+    # round(result_esp_sd_price_demand$result_HICP_log_diff$gmin_generalized, 2),
+    round(result_esp_sd_gen_demand$result_HICP_log_diff$gmin_generalized, 2)
+  ),
+  `LW (IPI)` = c(
+    round(result_esp$result_IPI$gmin_generalized, 2),
+    round(result_esp_sd$result_IPI$gmin_generalized, 2),
+    round(result_esp_sd_price_supply$result_IPI_log_diff$gmin_generalized, 2),
+    # round(result_esp_sd_gen_supply$result_IPI_log_diff$gmin_generalized, 2),
+    # round(result_esp_sd_price_demand$result_IPI_log_diff$gmin_generalized, 2),
+    round(result_esp_sd_gen_demand$result_IPI_log_diff$gmin_generalized, 2)
+  ),
 )
+
 
 # Generate the table
 gt_table <- summary_table %>%
@@ -259,11 +263,11 @@ gt_table <- summary_table %>%
 
 # Save if needed
 
-save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table ,
-  filename = "iv_relevance_spain_HICP.tex"
+  filename = "iv_relevance_spain_tot.tex"
 )
 
 

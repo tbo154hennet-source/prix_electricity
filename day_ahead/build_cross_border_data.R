@@ -240,12 +240,12 @@ write_parquet(cross_border_flows, "all_cross_border_flows.parquet")
 # pour l'estimation en niveau,
 #on rajoute le spot gas price
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp.parquet")
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/fr"
 setwd(save_path_data)
 price_indispo_merge_fr <- read_parquet("price_indispo_merge_fr.parquet")
 
@@ -318,7 +318,7 @@ colnames(cross_border_flows)
 price_merge_CBF_tot <- merge(price_merge_CBF, cross_border_flows, 
                          by.x ="datetime", by.y ="time")
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 my_ntc_data_wider <- read_parquet( "NTC_tot_data.parquet")
 colnames(my_ntc_data_wider) <- c("start_date", paste0("NTC_", colnames(my_ntc_data_wider)[-1]))
 colnames(my_ntc_data_wider)
@@ -327,7 +327,7 @@ price_merge_CBF_tot <- merge(price_merge_CBF_tot, my_ntc_data_wider,
                              by.x ="datetime", by.y ="start_date")
 
 getwd()
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 write_parquet(price_merge_CBF_tot, "price_merge_CBF_tot.parquet")
 

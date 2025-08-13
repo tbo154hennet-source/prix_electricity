@@ -1,0 +1,83 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
+setwd(save_rds_path_hd)
+structural_shocks_IV_log_diff <- read_parquet( "structural_shocks_IV_log_diff.parquet" )
+structural_shocks_IV_double <- read_parquet( "structural_shocks_IV_supply_demand.parquet" )
+
+structural_shocks_IV_spot <- read_parquet("structural_shocks_IV_spot.parquet" )
+structural_shocks_IV_gen <- read_parquet("structural_shocks_IV_gen.parquet")
+structural_shocks_IV_chol <- read_parquet("structural_shocks_chol.parquet")
+
+data_IV <- as.data.frame(t(rbind(
+  unname(as.matrix(structural_shocks_IV_double)),
+  unname(as.matrix(t(structural_shocks_IV_chol[,1:2]))),
+  unname(as.matrix(structural_shocks_IV_gen)),
+  unname(as.matrix(structural_shocks_IV_spot)),
+  unname(as.matrix(structural_shocks_IV_log_diff))
+)))
+
+colnames(data_IV) <- c( "demand_double", "supply_double",
+                        "demand_chol", "supply_chol",
+                        "demand_1var", "supply_1var",
+                        "demand_mr", "supply_mr")
+dates_formatted <- as.yearmon(time(x))
+dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
+
+data_IV %>% 
+  cor()
+
+```
+
+
+
+
+
+```{r}
+my_stru_shock <- ggplot()+
+  # geom_line(aes(x = dates_formatted, y = data_IV$demand_double_bis/10, color = "Demand", linetype = "Double"))+
+  # geom_line(aes(x = dates_formatted, y = data_IV$supply_double_bis, color = "Supply", linetype = "Double")) +
+  geom_line(aes(x = dates_formatted, y = data_IV$demand_double/10, color = "Demand"))+
+  geom_line(aes(x = dates_formatted, y = data_IV$supply_double, color = "Supply")) +
+  theme_minimal()+
+  scale_y_continuous(
+    name = "Demand Shock",
+    sec.axis = sec_axis(~ . * 10, name = "Supply Shock")
+  ) +
+  labs(title = "Structural Shocks from IV Analysis",
+       x = "Date",
+       y = "Shock Value")
+
+my_stru_shock 
+```
+
+
+
+
+
+```{r}
+data_plot <- cbind(data_IV, dates_formatted) #as.data.frame(dates_formatted)[(p+1):length(dates_formatted),])
+colnames(data_plot) <- c( colnames(data_IV), "date")
+
+my_stru_shock <- ggplot(data = data_plot, aes(x= date))+
+  geom_line(aes(y = supply_chol/10, color = "Chol")) +
+  geom_line(aes(y = supply_mr, color = "MR")) +
+  geom_line(aes(y = supply_1var, color = "SD")) +
+  geom_line(aes(y = supply_double*10, color = "Joint SD")) +
+  theme_minimal()+
+  # scale_y_continuous(
+  #   name = "Demand Shock",
+  #   sec.axis = sec_axis(~ . * 10, name = "Supply Shock")
+  # ) +
+  labs(title = "Structural Shocks from IV Analysis",
+       x = "Date",
+       y = "Shock Value")
+
+my_stru_shock 
+```
+

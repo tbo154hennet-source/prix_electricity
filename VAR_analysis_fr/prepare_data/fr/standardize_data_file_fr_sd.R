@@ -108,7 +108,7 @@ instruments <- c("renewable_day_ahead_forecast",
                  "heat_excess_instrument",
                  "Published.Predicted.Unavailable.Capacity")
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/fr")
 price_indispo_merge <- read_parquet("price_indispo_merge_delta_supply_demand_fr.parquet")
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast"
@@ -205,7 +205,7 @@ monthly_energy_data <- price_indispo_merge %>%
   ungroup()
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -247,7 +247,7 @@ monthly_crossborder_data <- price_merge_CBF %>%
   ungroup()
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/fr"
 setwd(save_path_data)
 price_indispo_merge_weather <- read_parquet( "price_indispo_merge_fr.parquet")
 
@@ -277,7 +277,7 @@ monthly_weather_data <- price_indispo_merge_weather %>%
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/macro_data')
 gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
-# save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+# save_path_fr <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 # setwd(save_path_fr)
 # temperature_data <- read.csv("temperature_instrument.csv") %>% 
 #   dplyr::select(month, year, T_avg, deviation,
@@ -312,7 +312,7 @@ IV_data <- merge(IV_data, monthly_weather_data %>%
   arrange(datetime)
 
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 write_parquet(IV_data, 'IV_data_fr_elas.parquet')
 

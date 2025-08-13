@@ -395,7 +395,7 @@ renew_plot
 
 
 ```{r}
-save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
+save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("renewable_description.png", plot = renew_plot, width = 8, height = 6, dpi = 300)

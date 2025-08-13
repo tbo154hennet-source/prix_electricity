@@ -3,7 +3,7 @@ library(tidyr)
 #build a specification with single change during the day and fixed effect by lant
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 all_rf_indispo <- read_parquet( 'all_rf_indispo_OMIE.parquet')
 
@@ -13,7 +13,7 @@ all_rf_indispo <- read_parquet( 'all_rf_indispo_OMIE.parquet')
 # que je peux clusterisé par plant (garde tout de même mon asymptote)
 
 
-save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 price_diff_data <- read_parquet('price_diff_data.parquet')
 
@@ -23,7 +23,7 @@ setwd(save_path_data)
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
 
 #add temperature  and other weather conditions
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
 
 

@@ -4,7 +4,7 @@
 
 
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 first_stage_data <- read_parquet('first_stage_data.parquet') 
 

@@ -1,8 +1,8 @@
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("reliability_auxiliary.R")
 
-source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_control.R")
 
@@ -41,21 +41,21 @@ headers_proxies = c(
   #"predicted_unavailabilities_log"
 )
 getwd()
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 IV_data_log_esp <-  read_parquet('IV_data_esp_log.parquet')
 
-save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_fr <-  read_parquet('IV_data_fr_log.parquet')
 
 
-save_reliable_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/reliability"
+save_reliable_path <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/reliability"
 setwd(save_reliable_path)
 get_table(IV_data_log_esp, headers_var, headers_proxies ,p ,  "reliability_table_levels_es_with_ex_renewable.png")
 
 
-save_reliable_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output_fr/reliability"
+save_reliable_path <- "Z:/prix_electricite_gitlab/VAR_analysis/VAR_output_fr/reliability"
 setwd(save_reliable_path)
 get_table(IV_data_log_fr, headers_var, headers_proxies ,p ,  "reliability_table_levels_fr.png")
 

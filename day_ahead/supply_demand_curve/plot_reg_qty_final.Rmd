@@ -342,7 +342,7 @@ demand_indispo
 ```
 
 ```{r}
-save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/supply_demand_curve'
+save_plot_path <- 'Z:/Overleaf_elec/images/supply_demand_curve'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

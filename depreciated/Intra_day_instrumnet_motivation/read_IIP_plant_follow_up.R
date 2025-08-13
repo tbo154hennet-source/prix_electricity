@@ -6,7 +6,7 @@ library(lubridate)
 
 Sys.setenv(lang = "en_US")
 
-save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
+save_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 
 setwd(save_path)
 pure_indispo_data <- read_parquet('pure_indispo_data.parquet')

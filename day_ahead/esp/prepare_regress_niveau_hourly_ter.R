@@ -4,7 +4,7 @@ library(tidyr)
 library(arrow)
 library(lubridate)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb_esp.parquet') %>% 
   distinct() %>% 
@@ -15,7 +15,7 @@ rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb_esp.parquet') %
 
 colnames(rf_predictions_data_esp)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 filtered_indispo_esp <- read_parquet("filtered_indispo_esp_OMIE.parquet") %>% 
   arrange(datetime_slot)
 colnames(filtered_indispo_esp)
@@ -25,7 +25,7 @@ filtered_indispo_esp <- filtered_indispo_esp%>%
   filter(datetime_slot != end_datetime)
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 
 publi_all_matched_indispo <- read_parquet("day_ahead_indispo_formatted.parquet")
@@ -165,7 +165,7 @@ final_indispo_tot_wide_esp <- final_indispo_tot_wide_esp %>%
   )
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 
 #write_parquet(final_indispo_tot_wide_esp, "final_indispo_tot_wide_esp.parquet")
 final_indispo_tot_wide_esp <- read_parquet("final_indispo_tot_wide_esp.parquet")
@@ -227,7 +227,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 
 #add temperature  and other weather conditions
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
 colnames(temperature_openmeteo_data)
 
@@ -285,7 +285,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
               dplyr::select(-year, -month), by=c('datetime' = 'date'))
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 wind_solar_openmeteo_data <- read_parquet("wind_solar_data.parquet")
 colnames(wind_solar_openmeteo_data )
 
@@ -338,12 +338,12 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 nrow(price_indispo_merge_esp)
 price_indispo_merge_esp <- price_indispo_merge_esp %>% distinct()
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_esp, "price_indispo_merge_esp.parquet")
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -384,7 +384,7 @@ price_indispo_merge_esp_NTC <- merge(price_indispo_merge_esp, crossborder_data %
                                      by ="datetime")
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_esp_NTC, "price_indispo_merge_esp_NTC.parquet")
 

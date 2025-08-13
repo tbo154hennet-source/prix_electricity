@@ -1,6 +1,6 @@
 library(ggplot2)
 
-save_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output"
+save_path <- "Z:/prix_electricite_gitlab/Data_structuring/output"
 setwd(save_path)
 
 my_generation_data <- read_parquet('generation_data.parquet')

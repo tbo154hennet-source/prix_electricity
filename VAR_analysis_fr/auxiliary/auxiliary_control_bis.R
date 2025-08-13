@@ -23,6 +23,7 @@ first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas 
   # proxies <- proxies_boot
   # x <- xnew
   # y <- ynew
+  n <- dim(x)[2]
   
   # Fit the VAR model
   vl <- if (is.null(controls)) {
@@ -31,8 +32,9 @@ first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas 
     vars::VAR(x, p, type = "none", exogen = controls)
   }
   
-  k  = ncol(proxies)
-  n = ncol(y)
+  #k  = ncol(proxies)
+  #n = ncol(y)
+
   coef = coef(vl)
   bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
   res = residuals(vl)

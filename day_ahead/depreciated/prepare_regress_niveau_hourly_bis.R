@@ -4,11 +4,11 @@ library(tidyr)
 #je veux séparer le nucléaire et le reste
 #je veux éventuellement predicted et limiting measure
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 long_final_indispo <- read_parquet( "long_final_indispo.parquet")
 setDT(long_final_indispo)
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 rf_predictions_data <- read_parquet('rf_predictions_data.parquet')
 
@@ -255,7 +255,7 @@ gas_prices <- read_excel("gas.xlsx") %>%
 price_indispo_merge <- price_indispo_merge %>%
   left_join(gas_prices, by=c('delivery_date' = 'time'))
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs"
 setwd(save_path_data)
 write_parquet(price_indispo_merge, "price_indispo_merge_esp_bis.parquet")
 

@@ -103,7 +103,7 @@ nrow(all_matched_indispo)
 #   mutate(publication_status = ifelse(businesstype== "Planned maintenance", "Planned", publication_status))
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 #write_parquet(res, "save_pub_status.parquet")
 write_parquet(publi_all_matched_indispo, "day_ahead_indispo_formatted.parquet")
@@ -220,5 +220,5 @@ filtered_indispo <- expanded_indispo[expanded_indispo$production_resource_name %
 filtered_indispo <- filtered_indispo[, unique(names(filtered_indispo)), with = FALSE]
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 write_parquet(filtered_indispo , "filtered_indispo_esp_OMIE.parquet")
