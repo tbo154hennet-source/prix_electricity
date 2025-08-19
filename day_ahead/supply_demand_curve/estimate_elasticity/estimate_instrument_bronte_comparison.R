@@ -154,8 +154,8 @@ controls_clean <- controls_vars[!grepl("^as\\.factor\\(", controls_vars)]
 
 price_indispo_merge_bronte_clean <- price_indispo_merge_bronte %>%
   rename(renewable_day_ahead_forecast = day_ahead_forecast) %>% 
-  dplyr::select(all_of(c(controls_delta, controls_clean, "year", "gen_tot", "price",
-                         "month", "weekday", "creneau", "wind_speed_100m", "Fore_Wind"))) %>%       # sélectionne les colonnes dans col_names
+  dplyr::select(all_of(c(controls_delta, controls_clean, "year", "gen_tot", "price", "spot_gas",
+                         "month", "weekday", "creneau", "wind_speed_100m", "Fore_Wind", "intraday_Wind", "Wind Onshore"))) %>%       # sélectionne les colonnes dans col_names
   filter(complete.cases(.) )   %>% 
   filter(price >= 0)
 
@@ -165,8 +165,19 @@ price_indispo_merge_bronte_clean <- price_indispo_merge_bronte %>%
 # sapply(price_indispo_merge_bronte_clean[, colnames(price_indispo_merge_bronte_clean)], function(x) sum(is.infinite(x)))
 
 price_indispo_merge_bronte_clean %>% 
-  select(wind_speed_100m, delta_s_wind_speed_100m, Fore_Wind, delta_s_Fore_Wind) %>%
+  mutate(update_wind = (intraday_Wind -Fore_Wind) ) %>% 
+  select(wind_speed_100m, delta_s_wind_speed_100m,
+         Fore_Wind, delta_s_Fore_Wind, intraday_Wind,
+         update_wind
+         ) %>%
   cor( use = "pairwise.complete.obs")
+
+getwd()
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+write_parquet(price_indispo_merge_bronte_clean, "price_indispo_merge_bronte_clean.parquet")
+
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+price_indispo_merge_bronte_clean <- read_parquet( "price_indispo_merge_bronte_clean.parquet")
 
 
 # Build the formula as a string
@@ -295,6 +306,9 @@ gt_table <- df_wind_plot_table_wide %>%
     title = "Elasticities of Supply"
   )
 
+
+
+
 save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
@@ -302,6 +316,14 @@ gtsave(
   filename = "elasticity_table_wind.tex"
 )
 
+# Read the file
+tex_lines <- readLines("elasticity_table_wind.tex")
 
+# Keep only lines between \begin{tabular} and \end{tabular*}
+tabular_lines <- tex_lines[grep("\\\\begin\\{tabular", tex_lines):
+                             grep("\\\\end\\{tabular\\*\\}", tex_lines)]
+
+# Write to a new file
+writeLines(tabular_lines, "elasticity_table_wind.tex")
 
 

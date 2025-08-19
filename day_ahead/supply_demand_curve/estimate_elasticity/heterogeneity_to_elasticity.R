@@ -1,10 +1,24 @@
 
 
+
+
+cor_matrix <- price_indispo_merge_delta_clean %>%
+  select(all_of(c(cols_supply, cols_demand))) %>%
+  cor(use = "pairwise.complete.obs")
+
+#difficile de faire de l'hétérogéneité
+#parce que mes supply et demand shock sont issus d'une décomposition
+#donc presque parfaitement colinéaires
+#la variation vient de la somme de ces chocs
+
+
+
 # Construire les noms de colonnes
 cols_supply<- paste0("delta_s_", instruments)
 cols_demand<- paste0("delta_d_", instruments)
 
-estimate_iv_sd <- function(instr, controls = controls_vars, data, mode = "demand") {
+estimate_iv_sd <- function(instr, controls = controls_vars, 
+                           data, mode = "demand") {
   if (mode == "demand") {
     dep_var <- "log(price)"
     endog_var <- "log(gen_tot)"
@@ -14,24 +28,26 @@ estimate_iv_sd <- function(instr, controls = controls_vars, data, mode = "demand
   } else {
     stop("mode must be either 'demand' or 'supply'")
   }
-  
+  controls <- setdiff(controls, instr)
   # Build IV formula
   iv_formula <- as.formula(paste(
     paste(dep_var, "~", paste(c(endog_var, controls), collapse = " + ")),
     paste(paste(c(instr, controls), collapse = " + ")),
     sep = " | "
   ))
+  print(iv_formula)
   
   model <- ivreg(iv_formula, data = data)
   return(model)
 }
+
 
 # Build the result list for both modes
 # Build the result list with names
 results_list_demand <- setNames(
   lapply(cols_demand, function(instr) {
     estimate_iv_sd(instr = instr, 
-                   controls = c(controls_vars),
+                   controls = c(controls_vars, cols_supply, cols_demand),
                    data = price_indispo_merge_delta_clean, mode = "demand")
   }),
   nm = cols_demand
@@ -41,7 +57,7 @@ results_list_demand <- setNames(
 results_list_supply <- setNames(
   lapply(cols_supply, function(instr) {
     estimate_iv_sd(instr = instr, 
-                   controls = c(controls_vars),
+                   controls = c(controls_vars, cols_supply, cols_demand),
                    data = price_indispo_merge_delta_clean, mode = "supply")
   }),
   nm = cols_supply
@@ -126,11 +142,15 @@ iv_results_df_plot_table_wide <- iv_results_df %>%
 
 iv_results_df_plot_table_wide
 
+iv_save2 <- iv_results_df_plot_table_wide
+iv_save <- iv_results_df_plot_table_wide
+
 gt_table <- iv_results_df_plot_table_wide %>%
   gt() %>%
   tab_header(
     title = "Instrument Heterogeneity of Supply and Demand Elasticities"
   )
+gt_table
 
 save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)

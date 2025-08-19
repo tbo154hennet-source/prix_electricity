@@ -248,7 +248,7 @@ save_plot_path <- 'Z:/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
-ggsave("price_shock_spain_1var.png", plot = irf_price_shock_esp, width = 10, height = 6, dpi = 300)
+ggsave("supply_shock_spain_1var.png", plot = irf_price_shock_esp, width = 10, height = 6, dpi = 300)
 
 ```
 

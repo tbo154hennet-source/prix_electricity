@@ -35,6 +35,7 @@ capacity_fields <- c(colnames_with_capacity,
                      "renewable_day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables")
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
+save_path_data <- "Z:/prix_electricite_gitlab"
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
@@ -59,7 +60,7 @@ price_indispo_merge_delta$delta_d_total <- rowSums(price_indispo_merge_delta[, c
 col_names <- c("weekday" , "creneau", names_instruments, "price", "datetime", "delivery_date", "spot_gas",
                colnames_with_capacity, "gen_tot_da","gen_tot_da_conso" , "gen_tot_da_net" ,
                "temperature_supply","precipitation_supply", "relative_humidity_supply" ,
-               "intraday_forecast"  ,"unpredicted_renewables", "gen_tot"    ,                               
+               "intraday_forecast"  ,"unpredicted_renewables", "gen_tot"    ,                           
                "wind_solar_tot","price" ,"year"   ,"month" , "price_diff" ,   "log_price_diff"  )
 
 price_indispo_merge_delta_clean <- price_indispo_merge_delta %>%
@@ -225,6 +226,10 @@ df_clean <- df_tot %>%
     )
   )
 
+getwd()
+write.csv(df_clean, "df_clean_da.csv")
+
+
 # Passer en format large : lignes = Type, colonnes = Instrument
 df_plot_table_wide <- df_clean %>%
   dplyr::select(Type, Instrument, Elasticity_CI) %>%
@@ -251,4 +256,15 @@ gtsave(
   gt_table,
   filename = "elasticity_table.tex"
 )
+# Read the file
+tex_lines <- readLines("elasticity_table.tex")
+
+# Keep only lines between \begin{tabular} and \end{tabular*}
+tabular_lines <- tex_lines[grep("\\\\begin\\{tabular", tex_lines):
+                             grep("\\\\end\\{tabular\\*\\}", tex_lines)]
+
+getwd()
+# Write to a new file
+writeLines(tabular_lines, "elasticity_table.tex")
+
 

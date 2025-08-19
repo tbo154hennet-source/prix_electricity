@@ -401,7 +401,7 @@ write_parquet(all_rf_indispo, 'all_rf_indispo_OMIE.parquet')
 final_real_indispo_rf <- long_format_indispo_rf %>% 
   distinct(production_resource_psr_name,
            electricity_delivery_date, auction_before,
-           auction_after, .keep_all = TRUE) %>% 
+           auction_after, creneau, .keep_all = TRUE) %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(predicted_real_unavailability = sum(as.numeric(predicted_real_unavailability))) %>%
@@ -410,7 +410,7 @@ final_real_indispo_rf <- long_format_indispo_rf %>%
 final_not_publi_rf <- long_format_indispo_non_published_rf %>% 
   distinct(production_resource_psr_name,
            electricity_delivery_date, auction_before,
-           auction_after, .keep_all = TRUE) %>% 
+           auction_after, creneau, .keep_all = TRUE) %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(predicted_real_unavailability = sum(as.numeric(predicted_real_unavailability))) %>%
@@ -420,7 +420,7 @@ final_not_publi_rf <- long_format_indispo_non_published_rf %>%
 final_uneffective_rf <- long_format_indispo_uneffective_rf %>% 
   distinct(production_resource_psr_name,
            electricity_delivery_date, auction_before,
-           auction_after, .keep_all = TRUE) %>% 
+           auction_after, creneau, .keep_all = TRUE) %>% 
   group_by(electricity_delivery_date, auction_before,
            auction_after, creneau) %>% 
   summarise(predicted_real_unavailability = sum(as.numeric(predicted_real_unavailability))) %>%

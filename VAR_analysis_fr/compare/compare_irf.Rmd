@@ -224,7 +224,7 @@ setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
 #ggsave("qty_shock_spain_mp.png", plot = irf_gen_shock_esp, width = 10, height = 6, dpi = 300)
-ggsave("demand_shock_spain_irf_compare.png", plot = irf_price_shock_esp, width = 10, height = 6, dpi = 300)
+ggsave("supply_shock_spain_irf_compare.png", plot = irf_price_shock_esp, width = 10, height = 6, dpi = 300)
 ggsave("demand_shock_spain_irf_compare.png", plot = irf_gen_shock_esp, width = 10, height = 6, dpi = 300)
 
 ```

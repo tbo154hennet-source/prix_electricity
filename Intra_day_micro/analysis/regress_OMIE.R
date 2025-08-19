@@ -176,6 +176,7 @@ price_diff_data[, c("auction_before", "auction_after")] %>%
 save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 write_parquet(price_diff_data, 'price_diff_data.parquet')
+price_diff_data <- read_parquet('price_diff_data.parquet')
 # test <- price_diff_data %>% 
 #   filter(auction_before == 0 & auction_after ==7)
 # 
@@ -197,6 +198,7 @@ colnames(first_stage_data)
 
 #getting outages share
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
+save_path_data <- "Z:/prix_electricite_gitlab"
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')

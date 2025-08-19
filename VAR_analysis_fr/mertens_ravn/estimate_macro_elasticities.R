@@ -2,9 +2,35 @@
 library(AER)
 
 #elasticity at the monthly level
-colnames(IV_data_log_diff_esp)
-colnames(IV_data_log_diff_fr)
+#colnames(IV_data_log_diff_esp)
+#colnames(IV_data_log_diff_fr)
 
+#wind_forecast
+
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+setwd(save_var_path)
+IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
+
+# correct for the Iberian exception
+colnames(IV_data_log_diff_esp)
+IV_data_log_diff_esp$observation_date <- as.Date(IV_data_log_diff_esp$observation_date)
+IV_data_log_diff_esp <- IV_data_log_diff_esp %>%
+  mutate(
+    PC1_supply = ifelse(observation_date >= as.Date("2022-06-01") & observation_date <= as.Date("2023-05-31"),
+                        0, PC1_supply),
+    PC1_supply = ifelse(observation_date == as.Date("2022-06-01"), -0.5, PC1_supply)
+  ) %>% 
+  rename(
+    cold_excess_instrument = cold_excess_supply,
+    heat_excess_instrument = heat_excess_supply,
+    temp_excess_instrument = temp_excess_supply
+  )
+IV_data_log_diff_esp <- IV_data_log_diff_esp %>% 
+  mutate(
+    diff_cbf = (cbf_es - lag(as.numeric(cbf_es)))/1000,
+    ffr_diff = ffr - lag(as.numeric(ffr))
+  )%>%
+  fill(ffr_diff, diff_cbf, .direction = "up")
 
 
 
@@ -170,6 +196,8 @@ df_clean <- df_tot %>%
     )
   )
 
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+write.csv(df_clean, "df_clean_macro.csv")
 # Passer en format large : lignes = Type, colonnes = Instrument
 df_plot_table_wide <- df_clean %>%
   dplyr::select(Type, Instrument, Elasticity_CI) %>%
@@ -196,5 +224,5 @@ save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table,
-  filename = "elasticity_table.tex"
+  filename = "macro_elasticity_table.tex"
 )
