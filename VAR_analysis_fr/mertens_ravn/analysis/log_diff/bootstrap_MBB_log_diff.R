@@ -301,8 +301,7 @@ setwd(save_rds_path)
 saveRDS(gen_benchmark_fr, "gen_benchmark_fr.rds")
 
 
-gen_benchmark_esp$lambda_0
-gen_benchmark_fr$lambda_0
+gen_benchmark_esp$theta_0
 
 
 

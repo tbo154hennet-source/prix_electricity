@@ -102,7 +102,7 @@ Bonte_formula_str <- as.formula(paste(
   sep = " | "
 ))
 m_Bonte <- ivreg(Bonte_formula_str , data = IV_data_log_diff_esp)
-
+summary(m_Bonte)
 
 # Create LaTeX code with regression results
 reg_table_renwables_bis <- stargazer(
@@ -226,3 +226,32 @@ gtsave(
   gt_table,
   filename = "macro_elasticity_table.tex"
 )
+
+
+
+
+
+# on fai la même chose pour la France avec le wind instrument
+
+Bonte_formula_str_fr <- as.formula(paste(
+  paste("log(gen_tot+1)", "~",  paste(c("log(spot_price+1)", "Spot_gas" , "as.factor(year)"), collapse = " + ")),
+  paste(paste(c("wind_forecast",  "Spot_gas", "as.factor(year)" ), collapse = " + ")),
+  sep = " | "
+))
+
+m_Bonte_fr <- ivreg(Bonte_formula_str_fr , data = IV_data_log_diff_fr[-1,]
+                      )
+
+summary(m_Bonte_fr)
+
+
+
+
+
+
+
+
+
+
+
+

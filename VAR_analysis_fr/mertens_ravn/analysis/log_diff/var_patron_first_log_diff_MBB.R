@@ -130,7 +130,7 @@ print(lag_selection_bis$selection)
 lag_selection_ter <- VARselect(x, lag.max = 12, type = "const")
 print(lag_selection_ter$selection)
 
-estimate_log_diff <- first_var_estimation(x,y,p, proxies, irhor, elas = -0.16)
+estimate_log_diff <- first_var_estimation(x,y,p, proxies, irhor, elas = -0.3)
 theta_0_log_diff <- estimate_log_diff$theta_0
 gamma_log_diff <- estimate_log_diff$gamma
 phi_log_diff <- estimate_log_diff$phi
@@ -155,6 +155,6 @@ lambda_0_log_diff <- get_lambda_0(C, theta_0_log_diff)
 cumulative_response <- apply(lambda_0_log_diff , c(2, 3), function(x) cumsum(x))
 
 #one year cumulative pass-through
-passthrough_esp <- cumulative_response[12, 4, 2]/ cumulative_response[12, 2, 2] # 0.0055844890
+passthrough_esp <- cumulative_response[12, 4, 2]# 0.0055844890
 print(passthrough_esp)
 

@@ -19,47 +19,28 @@ IV_data_log_diff_fr <- IV_data_log_diff_fr %>%
     PC1_supply = ifelse(observation_date == as.Date("2022-06-01"), -0.5, PC1_supply)
   ) 
 
+
 IV_data_log_diff_fr <- IV_data_log_diff_fr %>% 
+  # rename(delta_s_cold_excess = delta_s_cold_excess_instrument,
+  #        delta_d_cold_excess = delta_d_cold_excess_instrument,
+  #        delta_s_heat_excess = delta_s_heat_excess_instrument,
+  #        delta_d_heat_excess = delta_d_heat_excess_instrument) %>% 
   mutate(
     diff_cbf = (cbf_es - lag(as.numeric(cbf_es)))/1000,
     ffr_diff = ffr - lag(as.numeric(ffr)),
-    delta_s_renewable_day_ahead_forecast_diff = (delta_s_renewable_day_ahead_forecast - lag(as.numeric(delta_s_renewable_day_ahead_forecast)))/1000,
-    delta_d_renewable_day_ahead_forecast_diff = (delta_d_renewable_day_ahead_forecast - lag(as.numeric(delta_d_renewable_day_ahead_forecast)))/1000,
-    delta_s_cold_excess_diff = (delta_s_cold_excess - lag(as.numeric(delta_s_cold_excess)))/1000,
-    delta_d_cold_excess_diff = (delta_d_cold_excess  - lag(as.numeric(delta_d_cold_excess )))/1000,
-    delta_s_heat_excess_diff = (delta_s_heat_excess - lag(as.numeric(delta_s_heat_excess)))/1000,
-    delta_d_heat_excess_diff = (delta_d_heat_excess - lag(as.numeric(delta_d_heat_excess)))/1000,
-    delta_s_Published.Predicted.Unavailable.Capacity_diff = (delta_s_Published.Predicted.Unavailable.Capacity - lag(as.numeric(delta_s_Published.Predicted.Unavailable.Capacity)))/1000,
-    delta_d_Published.Predicted.Unavailable.Capacity_diff = (delta_d_Published.Predicted.Unavailable.Capacity - lag(as.numeric(delta_d_Published.Predicted.Unavailable.Capacity)))/1000,
-    delta_s_cbf_es_diff = (delta_s_cbf_es - lag(as.numeric(delta_s_cbf_es)))/1000,
-    delta_d_cbf_es_diff = (delta_d_cbf_es - lag(as.numeric(delta_d_cbf_es)))/1000,
     diff_cbf = if_else(is.na(diff_cbf), 0, diff_cbf),
     ffr_diff = if_else(is.na(ffr_diff), 0, ffr_diff),
-    
-    delta_s_renewable_day_ahead_forecast_diff = if_else(is.na(delta_s_renewable_day_ahead_forecast_diff), 0, delta_s_renewable_day_ahead_forecast_diff),
-    delta_d_renewable_day_ahead_forecast_diff = if_else(is.na(delta_d_renewable_day_ahead_forecast_diff), 0, delta_d_renewable_day_ahead_forecast_diff),
-    delta_s_cold_excess_diff = if_else(is.na(delta_s_cold_excess_diff), 0, delta_s_cold_excess_diff),
-    delta_d_cold_excess_diff = if_else(is.na(delta_d_cold_excess_diff), 0, delta_d_cold_excess_diff),
-    delta_s_heat_excess_diff = if_else(is.na(delta_s_heat_excess_diff), 0, delta_s_heat_excess_diff),
-    delta_d_heat_excess_diff = if_else(is.na(delta_d_heat_excess_diff), 0, delta_d_heat_excess_diff),
-    delta_s_Published.Predicted.Unavailable.Capacity_diff = if_else(is.na(delta_s_Published.Predicted.Unavailable.Capacity_diff), 0, delta_s_Published.Predicted.Unavailable.Capacity_diff),
-    delta_d_Published.Predicted.Unavailable.Capacity_diff = if_else(is.na(delta_d_Published.Predicted.Unavailable.Capacity_diff), 0, delta_d_Published.Predicted.Unavailable.Capacity_diff),
-    delta_s_cbf_es_diff = if_else(is.na(delta_s_cbf_es_diff), 0, delta_s_cbf_es_diff),
-    delta_d_cbf_es_diff = if_else(is.na(delta_d_cbf_es_diff), 0, delta_d_cbf_es_diff),
-    
-    
-    delta_s_total_diff = delta_s_renewable_day_ahead_forecast_diff  + delta_s_cold_excess_diff+
-      delta_s_heat_excess_diff + delta_s_Published.Predicted.Unavailable.Capacity_diff,
-    delta_d_total_diff = delta_d_renewable_day_ahead_forecast_diff  + delta_d_cold_excess_diff+
-      delta_d_heat_excess_diff + delta_d_Published.Predicted.Unavailable.Capacity_diff,
+    delta_s_total_diff = (delta_s_total - lag(as.numeric(delta_s_total)))/1000,
+    delta_d_total_diff= (delta_d_total - lag(as.numeric(delta_d_total)))/1000,
     delta_s_total_diff = if_else(is.na(delta_s_total_diff), 0, delta_s_total_diff),
     delta_d_total_diff = if_else(is.na(delta_d_total_diff), 0, delta_d_total_diff),
-  )%>%
-  rename(
-    cold_excess_instrument = cold_excess_supply,
-    heat_excess_instrument = heat_excess_supply,
-    temp_excess_instrument = temp_excess_supply
   )
+# %>%
+#   rename(
+#     cold_excess_instrument = cold_excess_supply,
+#     heat_excess_instrument = heat_excess_supply,
+#     temp_excess_instrument = temp_excess_supply
+#   )
 
 
 
@@ -111,14 +92,14 @@ T = nrow(y)
 #variables dans VAR
 n <- ncol(y)
 #nbre de variables instrumentees
-k <-2
+k <-1
 #nbre d'instruments
 l <- ncol(proxies)
 # Create a 3x2 matrix of zeros
-zero_matrix <- matrix(0, nrow = (n-k), ncol = 2)
-#my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
-
-matrix_12 <- rbind( diag(k) , zero_matrix)
+# zero_matrix <- matrix(0, nrow = (n-k), ncol = 2)
+# #my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
+# 
+# matrix_12 <- rbind( diag(k) , zero_matrix)
 
 #controls = ts(IV_data_log_diff_fr[, headers_controls_fr], frequency = 12)
 #nbre de variables dans la VAR

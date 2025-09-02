@@ -226,8 +226,8 @@ ggplot(IV_data, aes(x = datetime)) +
 
 
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y =IV_data$IPI , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$IPI, color = "Detrended")) +
+  geom_line(aes(y =IV_data$spot_price , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$spot_price, color = "Detrended")) +
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +

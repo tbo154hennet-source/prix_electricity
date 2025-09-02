@@ -16,7 +16,7 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
     mutate(#estimate = ifelse(variable == "global_tilted_irradiance", estimate*10, estimate)
            pretty_variable = case_when(
       variable == "renewable_day_ahead_forecast" ~ "Renewable Day-ahead Forecast (MWh)",
-      variable == "global_tilted_irradiance" ~ "Irradiance (W/m2)",
+      variable == "global_tilted_irradiance" ~ "Solar Irradiance (W/m2)",
       variable == "wind_speed_100m" ~ "Wind Speed (m/s)",
       variable == "unpredicted_renewables" ~ "Unpredicted Renewables (MWh)",
       variable == "intraday_update_renewables" ~ "Intraday Update Renewables (MWh)",
@@ -26,11 +26,11 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
       variable == "cold_excess_demand" ~ "Excess Cold (°C)",
       variable == "heat_excess_demand" ~ "Excess Heat (°C)",
        variable == "Published.Unavailable.Capacity" ~ "Plant Unavailability (MWh)",
-      variable == "Published.Unavailable.Nuclear.Capacity" ~ "Nuclear Plant Unavailability (MWh)",
-      variable == "Published.Predicted.Unavailable.Capacity" ~ "Predicted Plant Unavailability (MWh)",
-      variable == "Unpublished.Unavailable.Capacity" ~ "Placebo Plant Unavailability (MWh)",
-      variable == "Unpublished.Unavailable.Nuclear.Capacity" ~ "Placebo Nuclear Plant Unavailability (MWh)",
-      variable == "Unpublished.Predicted.Unavailable.Capacity" ~ "Placebo Predicted Plant Unavailability (MWh)",
+      variable == "Published.Unavailable.Nuclear.Capacity" ~ "Nuclear Unavailability (MWh)",
+      variable == "Published.Predicted.Unavailable.Capacity" ~ "Effective Unavailability (MWh)",
+      variable == "Unpublished.Unavailable.Capacity" ~ "Placebo Unavailability (MWh)",
+      variable == "Unpublished.Unavailable.Nuclear.Capacity" ~ "Placebo Nuclear Unavailability (MWh)",
+      variable == "Unpublished.Predicted.Unavailable.Capacity" ~ "Placebo Effective Unavailability (MWh)",
       TRUE ~ variable  # fallback
     ),
     )
@@ -43,14 +43,14 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
   # Définir les couleurs pour chaque pretty_variable
   custom_colors <- c(
     "Plant Unavailability (MWh)" = "deeppink"	, # Blue
-    "Placebo Plant Unavailability (MWh)" = "pink",           # Transparent Blue (unpublished)
-    "Nuclear Plant Unavailability (MWh)" = "darkgrey",       # Orange	
-    "Placebo Nuclear Plant Unavailability (MWh)" = "lightgrey",   # Transparent Orange
-    "Predicted Plant Unavailability (MWh)" = "darkgoldenrod",  
-    "Placebo Predicted Plant Unavailability (MWh)" = "lightgoldenrod", # Transparent Green
+    "Placebo Unavailability (MWh)" = "pink",           # Transparent Blue (unpublished)
+    "Nuclear Unavailability (MWh)" = "darkgrey",       # Orange	
+    "Placebo Nuclear Unavailability (MWh)" = "lightgrey",   # Transparent Orange
+    "Effective Unavailability (MWh)" = "darkgoldenrod",  
+    "Placebo Effective Unavailability (MWh)" = "lightgoldenrod", # Transparent Green
     "CBF (MWh)" = "purple",                                # Red
         # Purple
-    "Irradiance (W/m2)" = "gold",                     # Brown
+    "Solar Irradiance (W/m2)" = "gold",                     # Brown
     "Wind Speed (m/s)" = "#e377c2",                         # Pink
     "Unpredicted Renewables (MWh)" = "lightgreen",
     "Renewable Day-ahead Forecast (MWh)" = "green",   # Gray
@@ -112,7 +112,14 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
       color = "Variable",
       fill = "Variable"
     ) +
-    theme_minimal()
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
 
 
   if (matched == "matched"){
@@ -181,7 +188,7 @@ sum_up_factors <- c(
   "cold_excess_supply", "heat_excess_supply"
 )
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge<- read_parquet( "price_indispo_merge_esp_NTC.parquet") %>%
   fill(spot_gas, .direction = "up") %>% 

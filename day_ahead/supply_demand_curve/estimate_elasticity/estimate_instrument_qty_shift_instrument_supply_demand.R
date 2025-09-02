@@ -78,15 +78,11 @@ controls_vars <- c("spot_gas",
 extended_controls <- c(controls_vars, "unpredicted_renewables",  "intraday_update_renewables" )
 
 
-ols_formula_d <- as.formula(paste(
-  paste("log(price)", "~",  paste(c("log(gen_tot)", controls_vars), collapse = " + "))))  
 
-m_ols_d <- ivreg(ols_formula_d , data = price_indispo_merge_delta_clean)
-
-ols_formula_s <- as.formula(paste(
+ols_formula <- as.formula(paste(
   paste("log(gen_tot)", "~",  paste(c("log(price)", controls_vars), collapse = " + "))))  
 
-m_ols_s <- ivreg(ols_formula_s , data = price_indispo_merge_delta_clean)
+m_ols <- ivreg(ols_formula , data = price_indispo_merge_delta_clean)
 
 # Combine exogenous regressors and instruments
 exog_instr_s <- "delta_s_total"
@@ -103,7 +99,7 @@ iv_formula_supply_str <- as.formula(paste(
 
 #iv_formula
 iv_formula_demand_str <- as.formula(paste(
-  paste("log(price)", "~",  paste(c("log(gen_tot)",exog_instr_s, controls_vars), collapse = " + ")),
+  paste("log(gen_tot)", "~",  paste(c( "log(price)",exog_instr_s, controls_vars), collapse = " + ")),
   paste(paste(c(exog_instr_d, exog_instr_s, controls_vars), collapse = " + ")),
   sep = " | "
 ))
@@ -136,9 +132,8 @@ m_Bonte <- ivreg(Bonte_formula_str , data = price_indispo_merge_delta_clean)
 
 # Create LaTeX code with regression results
 reg_table <- stargazer(
-  m_ols_d,
+  m_ols,
   m_iv_d,
-  m_ols_s,
   m_iv_s,# m_iv_int,
   m_Bonte ,
   #m_renew_plant, 
@@ -164,56 +159,58 @@ extract_coef_se <- function(model, variable = "log(gen_tot)") {
 }
 
 
-coef_se_ols_d <- extract_coef_se(m_ols_d, "log(gen_tot)")
-coef_se_iv_d    <- extract_coef_se(m_iv_d, "log(gen_tot)")
-coef_se_ols_s <- extract_coef_se(m_ols_s, "log(price)")
+coef_se_ols <- extract_coef_se(m_ols, "log(price)")
+coef_se_iv_d    <- extract_coef_se(m_iv_d, "log(price)")
 coef_se_iv_s    <- extract_coef_se(m_iv_s, "log(price)")
 coef_se_Bonte_all    <- extract_coef_se(m_Bonte, "log(price)" )
 
 
 
 df <- data.frame(
-  Model = c("OLS Supply", "IV Supply", "OLS Demand", 'IV Demand', 'Bonte et al (2015) Demand'),
-  Estimate = c(coef_se_ols_d["est"], coef_se_iv_d["est"],
-               coef_se_ols_s["est"],coef_se_iv_s["est"], coef_se_Bonte_all["est"]),
-  StdError = c(coef_se_ols_d["se"], coef_se_iv_d["se"],
-               coef_se_ols_s["se"],coef_se_iv_s["se"], coef_se_Bonte_all["se"]
+  Model = c("OLS", "IV Supply", 'IV Demand', 'Bonte et al (2015) Demand'),
+  Estimate = c(coef_se_ols["est"], coef_se_iv_d["est"],
+               coef_se_iv_s["est"], coef_se_Bonte_all["est"]),
+  StdError = c(coef_se_ols["se"], coef_se_iv_d["se"],
+               coef_se_iv_s["se"], coef_se_Bonte_all["se"]
   )
 )
 
 
 # Compute elasticity and SE using delta method
-df$Elasticity <- 1 / df$Estimate
-df$Elasticity_SE <- df$StdError / (df$Estimate^2)
-
+df$Elasticity <- df$Estimate
+df$Elasticity_SE <- #df$StdError #/ (df$Estimate^2)
+paste0(
+    round(df$Estimate, 3), " (", round(df$StdError, 3), ")"
+  )
 # Format string with SE in parentheses
 
 #élasticité de l’offre
-df$Elasticity_Demand <- paste0(
-  round(df$Elasticity, 3), " (", round(df$Elasticity_SE, 3), ")"
-)
-#élasticité prix de la demande
-df$Elasticity_Supply <- paste0(
-  round(df$Estimate, 3), " (", round(df$StdError, 3), ")"
-)
-
-
-#reate a named vector with the elasticity (SE) strings
-df_tot <- rbind(df %>% filter(Model == "OLS Supply"  |Model == "IV Supply")%>%
-                  dplyr::select(Model, Elasticity_Demand)%>%
-                  rename(Elasticity_CI = Elasticity_Demand),
-                df %>%
-                  filter(Model == "OLS Demand" |
-                           Model == 'IV Demand' |Model ==  'Bonte et al (2015) Demand'
-                  )%>%
-                  dplyr::select(Model, Elasticity_Supply) %>%
-                  rename(Elasticity_CI = Elasticity_Supply))
+# df$Elasticity_Demand <- paste0(
+#   round(df$Elasticity, 3), " (", round(df$Elasticity_SE, 3), ")"
+# )
+# #élasticité prix de la demande
+# df$Elasticity_Supply <- paste0(
+#   round(df$Estimate, 3), " (", round(df$StdError, 3), ")"
+# )
+# 
+# 
+# #reate a named vector with the elasticity (SE) strings
+# df_tot <- rbind(df %>% filter(Model == "OLS Supply"  |Model == "IV Supply")%>%
+#                   dplyr::select(Model, Elasticity_Demand)%>%
+#                   rename(Elasticity_CI = Elasticity_Demand),
+#                 df %>%
+#                   filter(Model == "OLS Demand" |
+#                            Model == 'IV Demand' |Model ==  'Bonte et al (2015) Demand'
+#                   )%>%
+#                   dplyr::select(Model, Elasticity_Supply) %>%
+#                   rename(Elasticity_CI = Elasticity_Supply))
 
 # df_tot <- df%>%
 #           dplyr::select(Model, Elasticity_Demand) %>% 
 #           rename(Elasticity_CI = Elasticity_Demand)
 
-df_clean <- df_tot %>%
+
+df_clean <- df%>%
   mutate(
     Instrument = case_when(
       grepl("OLS", Model) ~ "OLS",
@@ -225,17 +222,31 @@ df_clean <- df_tot %>%
       grepl("Demand", Model) ~ "Demand"
     )
   )
+#d�doubler la ligne OLS
+
+df_new <- df_clean %>%
+  # S�parer la ligne OLS en deux copies
+  filter(Model == "OLS") %>%
+  mutate(Type = "Supply") %>%
+  bind_rows(
+    df_clean %>% filter(Model == "OLS") %>% mutate(Type = "Demand")
+  ) %>%
+  # Ajouter les autres lignes non-OLS
+  bind_rows(
+    df_clean %>% filter(Model != "OLS")
+  )
+
 
 getwd()
 write.csv(df_clean, "df_clean_da.csv")
 
 
 # Passer en format large : lignes = Type, colonnes = Instrument
-df_plot_table_wide <- df_clean %>%
-  dplyr::select(Type, Instrument, Elasticity_CI) %>%
-  complete(Type, Instrument, fill = list(Elasticity_CI = "-")) %>% 
+df_plot_table_wide <- df_new %>%
+  dplyr::select(Type, Instrument, Elasticity_SE) %>%
+  complete(Type, Instrument, fill = list(Elasticity_SE = "-")) %>% 
   mutate(Instrument = factor(Instrument, levels = c("OLS", "Bonte et al (2015)", "IV"))) %>%
-  pivot_wider(names_from = Instrument, values_from = Elasticity_CI)
+  pivot_wider(names_from = Instrument, values_from = Elasticity_SE)
 
 
 
@@ -249,7 +260,7 @@ gt_table <- df_plot_table_wide %>%
   tab_header(
     title = "Elasticities of Supply and Demand"
   )
-
+gt_table
 save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
@@ -257,14 +268,14 @@ gtsave(
   filename = "elasticity_table.tex"
 )
 # Read the file
-tex_lines <- readLines("elasticity_table.tex")
-
-# Keep only lines between \begin{tabular} and \end{tabular*}
-tabular_lines <- tex_lines[grep("\\\\begin\\{tabular", tex_lines):
-                             grep("\\\\end\\{tabular\\*\\}", tex_lines)]
-
-getwd()
-# Write to a new file
-writeLines(tabular_lines, "elasticity_table.tex")
+# tex_lines <- readLines("elasticity_table.tex")
+# 
+# # Keep only lines between \begin{tabular} and \end{tabular*}
+# tabular_lines <- tex_lines[grep("\\\\begin\\{tabular", tex_lines):
+#                              grep("\\\\end\\{tabular\\*\\}", tex_lines)]
+# 
+# getwd()
+# # Write to a new file
+# writeLines(tabular_lines, "elasticity_table.tex")
 
 

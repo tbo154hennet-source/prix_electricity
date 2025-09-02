@@ -7,12 +7,23 @@ output: html_notebook
 
 ```{r}
 library(slider)
-save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
+save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 historical_decomp_iv_tibo <- readRDS( "hd_iv_4v_fr.rds")
+#historical_decomp_iv_tibo <- historical_decomp_iv_tibo[, , c(2, 1)]
 hd_cholesky <- readRDS( "hd_chol_4v_fr.rds")
-#historical_decomp_extended <- readRDS( "hd_chol_gas.rds")
 
+
+mean_vector <- colMeans(vars, na.rm = TRUE)
+vars_demeaned <- sweep(vars, 2, mean_vector, "-")
+vars_reconstructed <- sweep(vars_demeaned, 2, mean_vector, "+")
+vars<- ts(IV_data_log_diff_fr[, c(headers_var_gen_first)], frequency=12)
+
+x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
+#vl = vars::VAR(x, p, type = "none", exogen = controls)
+vl = vars::VAR(x, p, type = "none")#, exogen = controls)
+#historical_decomp_extended <- readRDS( "hd_chol_gas_fr.rds")
+res = residuals(vl)
 ```
 
 # Historical Decomposition
@@ -25,13 +36,13 @@ str(dates_formatted)
 colors_shock <- rev(c("purple", "yellow",  "blue", "red", "green"))
 names <- c("$Q_{elec}$" ,"$P_{elec}$", "IPI",  "$HICP$", "Trend")
 
-theta_0 <- matrix(rnorm(10, 0, 1), ncol=2, nrow= length(colors_shock))
+theta_0 <- matrix(rnorm(10, 0, 1), ncol=2, nrow= 5)
 irf_response_test <- as.data.frame(theta_0)
 irf_response_test$shock <- rep(names, length.out = length(theta_0[,1]))
 irf_response_test$shock <- factor(irf_response_test$shock, levels = names)
 # fake plot just to construct the correct legend
 dates_formatted <- as.yearmon(time(x))
-dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
+#dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
 # Format to shorter labels (e.g., "May 15", "Jun 15", ...)
 
 
@@ -69,17 +80,16 @@ plot_hd_meaned <- function(series){
                              cols = -c(time, index),  names_to = "category",
                             values_to = "value")
   
-  if (length(colnames(decomp_tot_data)[-1]) == length(colors_shock)){
-    trend_data <- long_data %>%
+  
+  trend_data <- long_data %>%
   filter(category == "$HICP$") %>%
   mutate(
-    category = "Trend",
-    value = index *mean_vector[series]
+    category = "trend",
+    value = index * mean_vector[series]
   )
 
 # Combiner avec les autres catégories
   long_data <- bind_rows(long_data, trend_data)
-  }
   
   # S'assurer que 'category' a l'ordre des niveaux correspondant à 'colors_shock'
   #long_data$category <- factor(long_data$category, levels = names)
@@ -103,18 +113,17 @@ plot_hd_meaned <- function(series){
   #y_diff <- vars_demeaned[5:nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
   y_diff <- vars[(p+1):nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
 
-   data <- data.frame(
+  data <- data.frame(
     x = as.Date(dates_formatted),
-    ytrend = c(1:T)*mean_vector[series],
-    #ytest = apply(historical_decomp_matrix[,series ,], 1, sum) 
-    ytest = apply(historical_decomp_matrix[,series ,], 1, sum) , # Add mean vector to the test series,
-     y_hat = cumsum(y_diff) + c(1:T)*mean_vector[series]
+    y = cumsum(y_diff),
+    #ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) 
+    ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) #, # Add mean vector to the test series,
+    #ytrend = + c(1:T)*mean_vector[series]
 
   )
   
   my_plot <- my_plot + 
-    geom_line(data, mapping = aes(x = x, y = ytest), linetype = "dashed") +
-    geom_line(data, mapping = aes(x = x, y = y_hat), linetype = "dashed", color='darkred') # Add dashed line+
+    geom_line(data, mapping = aes(x = x, y = y), linetype = "dashed")  # Add dashed line+
     #geom_line(data, mapping = aes(x = x, y = ytest), linetype = "dashed", color='grey') +
     #geom_line(data, mapping = aes(x = x, y = ytrend), linetype = "dashed", color='darkred') 
   return(my_plot)
@@ -126,7 +135,7 @@ plot_hd_demeaned <- function(series){
   
   
   decomp_tot_data <- data.frame(
-    time= as.Date(dates_formatted),
+    time= as.Date(dates_formatted[(p+1):length(dates_formatted)]),
     historical_decomp_matrix[,series,])
   # Plot the decomposition
   colnames(decomp_tot_data)[-1] <- names
@@ -151,7 +160,7 @@ plot_hd_demeaned <- function(series){
 
   # Tracer des barres empilées avec ggplot2
   my_plot <- ggplot()+
-    geom_bar(data= long_data, aes(x = time, y = value, fill = category),
+    geom_bar(data= long_data  %>% filter(time < as.Date("2023-01-01")), aes(x = time, y = value, fill = category),
              stat = "identity", position = "stack", alpha = alpha_chosen) +  # Barres empilées
     scale_fill_manual(
       values = rev(colors_shock),#[(length(colors_shock)-(dim(decomp_tot_data)[2]-1)+1):length(colors_shock)],
@@ -159,24 +168,23 @@ plot_hd_demeaned <- function(series){
     #scale_fill_manual(values = c("blue", "red", "green"), labels = c("Supply", "Demand", "Other")) +
     theme_minimal()
   
-  # comparison <- lag(as.vector(vars_demeaned[(p+1):96,series]), 20)
+  # comparison <- lag(as.vector(vars_demeaned[5:96,series]), 20)
   # comparison[1:20] <- rep(vars_demeaned[4,series], 10)
   
-  #y_diff <- vars_demeaned[(p+1):nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
+  #y_diff <- vars_demeaned[5:nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
   y_diff <- vars[(p+1):nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
-
   data <- data.frame(
-    x = as.Date(dates_formatted),
-    ytrend = c(1:T)*mean_vector[series],
-    #ytest = apply(historical_decomp_matrix[,series ,], 1, sum) 
-    ytest = apply(historical_decomp_matrix[,series ,], 1, sum) , # Add mean vector to the test series,
-     y_hat = cumsum(y_diff) + c(1:T)*mean_vector[series]
+    x = as.Date(dates_formatted[(p+1):length(dates_formatted)]),
+    y = cumsum(y_diff),
+    #ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) 
+    ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) #, # Add mean vector to the test series,
+    # ytrend = + c(1:T)*mean_vector[series]
 
   )
   
   my_plot <- my_plot + 
     #geom_line(data, mapping = aes(x = x, y = y), linetype = "dashed")  # Add dashed line+
-    geom_line(data, mapping = aes(x = x, y = ytest), linetype = "dashed", color='grey')
+    geom_line(data[1:(nrow(data)-p),], mapping = aes(x = x, y = ytest), linetype = "dashed", color='grey')
     #geom_line(data, mapping = aes(x = x, y = ytrend), linetype = "dashed", color='darkred') 
   return(my_plot)
 }
@@ -187,9 +195,8 @@ plot_hd_inflation_glissante_12 <- function(series){
   
   
   decomp_tot_data <- data.frame(
-    time= as.Date(dates_formatted),
+    time= as.Date(dates_formatted[(p+1):length(dates_formatted)]),
     historical_decomp_matrix[,series,])
-
   # Plot the decomposition
   colnames(decomp_tot_data)[-1] <- names
   decomp_tot_data <- decomp_tot_data %>%
@@ -226,7 +233,7 @@ plot_hd_inflation_glissante_12 <- function(series){
 
   # Tracer des barres empilées avec ggplot2
   my_plot <- ggplot()+
-    geom_bar(data= long_data, aes(x = time, y =rolling_avg, fill = category),
+    geom_bar(data= long_data %>% filter(time < as.Date("2023-01-01")), aes(x = time, y =rolling_avg, fill = category),
              stat = "identity", position = "stack", alpha = alpha_chosen) +  # Barres empilées
     scale_fill_manual(
       values = rev(colors_shock)[(length(colors_shock)-(dim(decomp_tot_data)[2]-1)+1):length(colors_shock)],
@@ -234,35 +241,124 @@ plot_hd_inflation_glissante_12 <- function(series){
     #scale_fill_manual(values = c("blue", "red", "green"), labels = c("Supply", "Demand", "Other")) +
     theme_minimal()
   
-  # comparison <- lag(as.vector(vars_demeaned[(p+1):96,series]), 20)
+  # comparison <- lag(as.vector(vars_demeaned[5:96,series]), 20)
   # comparison[1:20] <- rep(vars_demeaned[4,series], 10)
   
-  #y_diff <- vars_demeaned[(p+1):nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
+  #y_diff <- vars_demeaned[5:nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
   y_diff <- vars[(p+1):nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
 
   data <- data.frame(
-    x = as.Date(dates_formatted),
+    x = as.Date(dates_formatted[(p+1):length(dates_formatted)]),
     y = cumsum(y_diff),
-    #ytest = apply(historical_decomp_matrix[,series ,], 1, sum) 
-    ytest = apply(historical_decomp_matrix[,series ,], 1, sum) + mean_vector[series]
+    #ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) 
+    ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) + mean_vector[series]
     #ytrend = + c(1:T)*mean_vector[series]
     )%>%  # assure-toi d'avoir une variable temporelle (ex: `time`)
     mutate(rolling_avg_contrib = slide_dbl(ytest, sum, .before = 11, .complete = TRUE))
   
-  my_plot <- my_plot + 
+  my_plot <- my_plot
     #geom_line(data, mapping = aes(x = x, y = y), linetype = "dashed")  # Add dashed line+
-    geom_line(data, mapping = aes(x = x, y = rolling_avg_contrib), linetype = "dashed", color='grey')
+    #geom_line(data[(p+1):(nrow(data)-p),], mapping = aes(x = x, y = rolling_avg_contrib), linetype = "dashed", color='grey')
     #geom_line(data, mapping = aes(x = x, y = ytrend), linetype = "dashed", color='darkred') 
   return(my_plot)
 }
 
 
+plot_hd_inflation_glissante_12_compare <- function(series){
+  
+  
+  decomp_tot_data <- data.frame(
+    time= as.Date(dates_formatted[(p+1):length(dates_formatted)]),
+    historical_decomp_matrix1[,series,])
+  # Plot the decomposition
+  colnames(decomp_tot_data)[-1] <- names
+  decomp_tot_data <- decomp_tot_data %>%
+    mutate(index = row_number())
+  # Reshaper les données en format long pour ggplot2
+  long_data_chol <- pivot_longer(decomp_tot_data, 
+                            cols = -c(time, index),  names_to = "category",
+                            values_to = "value")
+  
+  # Exemple : calcul de la moyenne glissante sur les 12 dernières valeurs
+  long_data_chol <- long_data_chol %>%
+    group_by(category) %>%
+    arrange(category, time) %>%  # assure-toi d'avoir une variable temporelle (ex: `time`)
+    mutate(rolling_avg = slide_dbl(value, sum, .before = 11, .complete = TRUE),
+           Method = "Cholesky") %>% 
+    filter(category == "$Q_{elec}$" | category == "$P_{elec}$")
+  
+  
+  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'rev(colors_shock)'
+  #long_data$category <- factor(long_data$category, levels = names)
+  long_data_chol$category <- factor(long_data_chol$category, levels = rev(names))
+  
+  
+  
+  decomp_tot_data <- data.frame(
+    time=as.Date(dates_formatted[(p+1):length(dates_formatted)]),
+    historical_decomp_matrix2[,series,])
+  # Plot the decomposition
+  colnames(decomp_tot_data)[-1] <- names
+  decomp_tot_data <- decomp_tot_data %>%
+    mutate(index = row_number())
+  # Reshaper les données en format long pour ggplot2
+  long_data_iv <- pivot_longer(decomp_tot_data, 
+                            cols = -c(time, index),  names_to = "category",
+                            values_to = "value")
 
+  
+  # Exemple : calcul de la moyenne glissante sur les 12 dernières valeurs
+  long_data_iv <- long_data_iv %>%
+    group_by(category) %>%
+    arrange(category, time) %>%  # assure-toi d'avoir une variable temporelle (ex: `time`)
+    mutate(rolling_avg = slide_dbl(value, sum, .before = 11, .complete = TRUE),
+           Method = "IV")%>% 
+    filter(category == "$Q_{elec}$" | category == "$P_{elec}$") 
+  
+  
+  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'rev(colors_shock)'
+  #long_data$category <- factor(long_data$category, levels = names)
+  long_data_iv$category <- factor(long_data_iv$category, levels = rev(names))
+  
+  
+  
+  # 2. Plot separately but still trigger alpha legend
+  ne_hd_compare <- ggplot() +
+    # Cholesky layer (alpha = 1)
+    geom_bar(data = long_data_chol%>% filter(time < as.Date("2023-01-01")), aes(x = time, y = rolling_avg, fill = category, alpha = Method),
+             stat = "identity", position = "stack") +
+    
+    # IV layer (alpha = 0.4)
+    geom_bar(data = long_data_iv%>% filter(time < as.Date("2023-01-01")), aes(x = time, y = rolling_avg, fill = category, alpha = Method),
+             stat = "identity", position = "stack") +
+    
+    # 3. Manual alpha scale
+    scale_alpha_manual(
+      values = c("Cholesky" = 0.4, "IV" = 1),
+      name = "Identification"
+    ) +
+    
+    # 4. Manual fill scale with LaTeX labels
+    scale_fill_manual(
+      values = c( "red", "green"),
+      labels = c( expression(P[elec]), expression(Q[elec])),
+      name = "Shock"
+    ) +
+    
+    guides(
+      alpha = guide_legend(order = 1),
+      fill = guide_legend(order = 2)
+    )+
+    labs(title = "Comparing HD for HICP",
+         x = "Time",
+         y = "Contribution") 
+  return(ne_hd_compare)
+}
 ```
 
 
 ```{r}
-colors_shock <- rev(c("yellow",  "blue", "red", "green"))
+colors_shock <- rev(c("purple", "yellow",  "blue", "red", "green"))
 zero_errors <- matrix(0, nrow = dim(res)[1], ncol = dim(res)[2])
 
 reconstruct_derive_without_errors_ter <- iterate_var_ter(x=x,
@@ -284,7 +380,6 @@ ne_hd
 
 
 
-
 ```{r}
 
 colors_shock <- rev(c("purple", "yellow",  "blue", "red", "green"))
@@ -294,9 +389,9 @@ ne_hd_12 <- plot_hd_inflation_glissante_12(series = n_serie)+
     labs(title=TeX(paste("Historical Decomposition of HICP")) ,
          x="Time", y="Contribution")
 #calcul inflation glissante sur 12 mois à partir de HICP
-inflation_12m = slide_dbl(IV_data_log_diff_esp$HICP_log_diff, sum, .before = 11, .complete = TRUE)
+inflation_12m = slide_dbl(IV_data_log_diff_fr$HICP_log_diff, sum, .before = 11, .complete = TRUE)
 ne_hd_12 <- ne_hd_12 +
-    geom_line(aes(x = as.Date(dates_formatted), y = inflation_12m[(p+1):length(inflation_12m)]), color = "black", linetype = "dashed") +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)]), color = "black", linetype = "dashed") +
     labs(title=TeX(paste("Historical Decomposition of HICP with 12-month Inflation")) ,
          x="Time", y="Contribution")
 
@@ -332,200 +427,62 @@ print(final_plot_with_title)
 # IV partial Identification
 
 
+Attention, ici les deux tableaux historical_decomp_iv_tibo[,,1] et historical_decomp_iv_tibo[,,2] ne s'additionnent pas pas selon l'identification des chocs de prix et de demande respectivement avec mon instrument de supply, de demand
+
+
+supply_shock_legend
+
 ```{r}
-colors_shock <- rev(c( "yellow",  "blue", "red", "green"))
-historical_decomp_matrix <- historical_decomp_iv_tibo
+colors_shock <- rev(c( "red", "green"))
+historical_decomp_matrix <-  historical_decomp_iv_tibo
 n_serie = 4
-ne_hd_iv <- plot_hd_demeaned(series = n_serie)+
+ne_iv <- plot_hd_demeaned(series = n_serie)+
     labs(title=TeX(paste("Historical Decomposition of HICP")) ,
          x="Time", y="Contribution")
-ne_hd_iv 
+
+ne_iv
+
 ```
 
 
 
+
+
 ```{r}
-colors_shock <- rev(c("yellow",  "blue", "red", "green"))
-historical_decomp_matrix <- historical_decomp_iv_tibo
+colors_shock <- rev(c( "red", "green"))
+historical_decomp_matrix <-  historical_decomp_iv_tibo
 n_serie = 4
-ne_hd_iv <- plot_hd_inflation_glissante_12(series = n_serie)+
+ne_iv_12 <- plot_hd_inflation_glissante_12(series = n_serie)+
     labs(title=TeX(paste("Historical Decomposition of HICP")) ,
          x="Time", y="Contribution")
-ne_hd_iv 
+#calcul inflation glissante sur 12 mois à partir de HICP
+inflation_12m = slide_dbl(IV_data_log_diff_fr$HICP_log_diff, sum, .before = 11, .complete = TRUE)
+ne_iv_12 <- ne_iv_12 +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(inflation_12m)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)]), color = "black", linetype = "dashed") +
+    labs(title=TeX(paste("Historical Decomposition of HICP with 12-month Inflation")) ,
+         x="Time", y="Contribution")
+
+ne_iv_12
+
 ```
 
 
 
 ```{r}
-n <-4
-# Apply the function to the sequence 3:10
-results <- lapply(c(1:n) , plot_hd_inflation_glissante_12)
 
-#enlever la légende
-results <- lapply(results, function(p) p + theme(legend.position = "none"))
-
-# Arrange the plots in a grid
-plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
-
-# Combine the grid with the legend
-final_plot <- plot_grid(plots_grid, custom_legend, ncol = 1, rel_heights = c(1, 0.1))
-
-title <- ggdraw() + 
-  draw_label(TeX('Historical Decomposition'), fontface = 'bold', x = 0.5, hjust = 0.5)
-
-# Combine the title and the final plot with legend
-final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
-
-# Display the final plot
-print(final_plot_with_title)
-```
-
-
-
-```{r}
-alpha_chosen = 1
+historical_decomp_matrix1 <-  hd_cholesky
+historical_decomp_matrix2 <- historical_decomp_iv_tibo
 n_serie = 4
+ne_hd_compare_12 <- plot_hd_inflation_glissante_12_compare(series = n_serie)
 
-historical_decomp_matrix <- hd_cholesky[,,]
-#ne_hd_compare <- plot_hd(series = n_serie)
-alpha_chosen = 0.4
-
-df_chol <- ggplot_build(plot_hd_demeaned(series = n_serie))$data[[1]]  %>%
-  filter(fill == "green" | fill == "red") %>%
-  mutate(
-    Method = "Cholesky",
-    fill = case_when(
-      fill == "green"  ~ "$Q_{elec}$",
-      fill == "red" ~ "$P_{elec}$",
-      TRUE ~ NA_character_
-    )
-  )%>%
-  filter(!is.na(fill))
-
-historical_decomp_matrix <- historical_decomp_iv_tibo
-
-data1 <- ggplot_build(plot_hd_demeaned(series = n_serie))$data 
-
-df1 <- data1[[1]] %>% 
-  mutate(
-    Method = "IV",
-    fill = case_when(
-      fill == "green"  ~ "$Q_{elec}$",
-      fill == "red" ~ "$P_{elec}$",
-      TRUE ~ NA_character_  # or another fallback label
-    )
-  )%>%
-  filter(!is.na(fill)) 
-
-
-# 2. Plot separately but still trigger alpha legend
-ne_hd_compare <- ggplot() +
-  # Cholesky layer (alpha = 1)
-  geom_bar(data = df_chol, aes(x = as.Date(x), y = y, fill = fill, alpha = Method),
-           stat = "identity", position = "stack") +
-  
-  # IV layer (alpha = 0.4)
-  geom_bar(data = df1, aes(x = as.Date(x), y = y, fill = fill, alpha = Method),
-           stat = "identity", position = "stack") +
-
-  # 3. Manual alpha scale
-  scale_alpha_manual(
-    values = c("Cholesky" = 1, "IV" = 0.4),
-    name = "Identification"
-  ) +
-
-  # 4. Manual fill scale with LaTeX labels
-  scale_fill_manual(
-    values = c( "red", "green"),
-    labels = c( expression(P[elec]), expression(Q[elec])),
-    name = "Shock"
-  ) +
-
-  guides(
-    alpha = guide_legend(order = 1),
-    fill = guide_legend(order = 2)
-  )+
-  labs(title = "Comparing HD for HICP",
-       x = "Time",
-       y = "Contribution") 
-ne_hd_compare
-```
-
-
-```{r}
-alpha_chosen = 1
-n_serie = 4
-
-historical_decomp_matrix <- hd_cholesky[,,]
-#ne_hd_compare <- plot_hd(series = n_serie)
-alpha_chosen = 0.4
-
-df_chol <- ggplot_build(plot_hd_inflation_glissante_12(series = n_serie))$data[[1]]  %>%
-  filter(fill == "green" | fill == "red") %>%
-  mutate(
-    Method = "Cholesky",
-    fill = case_when(
-      fill == "green"  ~ "$Q_{elec}$",
-      fill == "red" ~ "$P_{elec}$",
-      TRUE ~ NA_character_
-    )
-  )%>%
-  filter(!is.na(fill))
-
-historical_decomp_matrix <- historical_decomp_iv_tibo
-
-data1 <- ggplot_build(plot_hd_inflation_glissante_12(series = n_serie))$data 
-
-df1 <- data1[[1]] %>% 
-  mutate(
-    Method = "IV",
-    fill = case_when(
-      fill == "green"  ~ "$Q_{elec}$",
-      fill == "red" ~ "$P_{elec}$",
-      TRUE ~ NA_character_  # or another fallback label
-    )
-  )%>%
-  filter(!is.na(fill)) 
-
-
-# 2. Plot separately but still trigger alpha legend
-ne_hd_compare_12 <- ggplot() +
-  # Cholesky layer (alpha = 1)
-  geom_bar(data = df_chol, aes(x = as.Date(x), y = y, fill = fill, alpha = Method),
-           stat = "identity", position = "stack") +
-  
-  # IV layer (alpha = 0.4)
-  geom_bar(data = df1, aes(x = as.Date(x), y = y, fill = fill, alpha = Method),
-           stat = "identity", position = "stack") +
-
-  # 3. Manual alpha scale
-  scale_alpha_manual(
-    values = c("Cholesky" = 1, "IV" = 0.4),
-    name = "Identification"
-  ) +
-
-  # 4. Manual fill scale with LaTeX labels
-  scale_fill_manual(
-    values = c( "red", "green"),
-    labels = c( expression(P[elec]), expression(Q[elec])),
-    name = "Shock"
-  ) +
-
-  guides(
-    alpha = guide_legend(order = 1),
-    fill = guide_legend(order = 2)
-  )+
-  labs(title = "Comparing HD for HICP",
-       x = "Time",
-       y = "Contribution") 
-
-inflation_12m = slide_dbl(IV_data_log_diff_esp$HICP_log_diff, sum, .before = 11, .complete = TRUE)
+inflation_12m = slide_dbl(IV_data_log_diff_fr$HICP_log_diff, sum, .before = 11, .complete = TRUE)
 ne_hd_compare_12 <- ne_hd_compare_12 +
-    geom_line(aes(x = as.Date(dates_formatted), y = inflation_12m[(p+1):length(inflation_12m)]), color = "black", linetype = "dashed") +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(inflation_12m)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)]), color = "black", linetype = "dashed") +
     labs(title=TeX(paste("Historical Decomposition of HICP with 12-month Inflation")) ,
          x="Time", y="Contribution")
 ne_hd_compare_12
 ```
+
 
 
 ```{r}
@@ -533,11 +490,11 @@ save_plot_path <- 'Z:/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 #ggsave("ne_hd_4v.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
-ggsave("ne_hd_demeaned_4v_fr.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
+ggsave("ne_hd_demeaned_4v.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
 #ggsave("ne_hd_iv_4v.png", plot = ne_hd_iv, width = 8, height = 6, dpi = 300)
-ggsave("ne_hd_12_4v_fr.png", plot = ne_hd_12, width = 8, height = 6, dpi = 300)
-ggsave("ne_hd_compare_4v_fr.png", plot = ne_hd_compare, width = 8, height = 6, dpi = 300)
-ggsave("ne_hd_compare_12_4v_fr.png", plot = ne_hd_compare_12, width = 8, height = 6, dpi = 300)
+ggsave("ne_hd_12_4v.png", plot = ne_hd_12, width = 8, height = 6, dpi = 300)
+ggsave("ne_hd_compare_4v.png", plot = ne_hd_compare, width = 8, height = 6, dpi = 300)
+ggsave("ne_hd_compare_12_4v.png", plot = ne_hd_compare_12, width = 8, height = 6, dpi = 300)
 
 ```
 
@@ -547,8 +504,8 @@ Describing the summation Error
 series = 4
 data <- data.frame(
   x = dates_formatted,
-  y = vars_demeaned[(p+1):nrow(vars_demeaned),series],
-  ytest = apply(historical_decomp_matrix[,series ,], 1, sum)
+  y = vars_demeaned[5:nrow(vars_demeaned),series],
+  ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum)
 )
 
 

@@ -12,6 +12,9 @@ library(grid)
 library(gridExtra)
 library(cowplot)
 
+
+
+
 first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas = 0) {
   # x: endogenous variables
   # y: dependent variables
@@ -43,7 +46,14 @@ first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas 
   Sigma_eta <- cov(res) 
   
   #suivre identification simplifiee de olea and al
-  gamma <- t( t(proxies[c(-1:-p),]) %*% res)
+  #gamma <- t( t(proxies[c(-1:-p),]) %*% res)
+  gamma <- tryCatch({
+    t( t(proxies[c(-1:-p),]) %*% res)
+  }, error = function(e) {
+    proxies_cut <- window(proxies, start = time(proxies)[p+1])
+    return(t( t(proxies_cut) %*% res))  # ou matrix(NA, nrow=..., ncol=...)
+  })
+  
   Sigma_a <- gamma %*%  ginv(t(gamma) %*% ginv(Sigma_eta) %*% gamma) %*% t(gamma)
   if (k ==1){
     
@@ -84,6 +94,76 @@ first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas 
   
 }
 
+
+first_var_estimation_double <- function(x, y, p, proxies, irhor, controls = NULL, elas = 0) {
+  # x: endogenous variables
+  # y: dependent variables
+  # p: lag order
+  # proxies: instruments or proxies
+  # irhor: impulse response horizon (unused here, but kept for potential future use)
+  # controls: optional exogenous variables
+  
+  # proxies <- proxies_boot
+  # x <- xnew
+  # y <- ynew
+  n <- dim(x)[2]
+  
+  # Fit the VAR model
+  vl <- if (is.null(controls)) {
+    vars::VAR(x, p, type = "none")
+  } else {
+    vars::VAR(x, p, type = "none", exogen = controls)
+  }
+  
+  #k  = ncol(proxies)
+  #n = ncol(y)
+  
+  coef = coef(vl)
+  bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
+  res = residuals(vl)
+  
+  T = nrow(y)
+  Sigma_eta <- cov(res) 
+  
+  #suivre identification simplifiee de olea and al
+  gamma <- t( t(proxies[c(-1:-p),]) %*% res)
+  Sigma_a <- gamma %*%  ginv(t(gamma) %*% ginv(Sigma_eta) %*% gamma) %*% t(gamma)
+  if (k ==1){
+    
+    #calculate sigma_aa
+    
+    
+    theta_0 <-  Sigma_a[1,]/ Sigma_a[1,1]
+    
+    phi <-  ginv(theta_0)%*% gamma
+  }
+  
+  if(k>=2){
+    #calculate sigma_aa
+    zero_matrix <- matrix(0, nrow = (n-k), ncol = 2)
+    #my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
+    matrix_12 <- rbind( diag(k) , zero_matrix)
+    
+    
+    theta_01 <- gamma  %*% ginv(t(matrix_12) %*% gamma ) %*% c(1,elas)
+    
+    matrix_12_bis <- rbind( diag(2) , zero_matrix)
+    matrix_12_bis[,1] <-  ginv(Sigma_eta) %*% theta_01
+    
+    theta_02 <- gamma  %*% ginv( t(matrix_12_bis)  %*% gamma ) %*% c(0, 1)
+    
+    
+    theta_0 <- cbind(theta_01, theta_02)
+    
+    
+    
+    phi <- matrix(c(1,0, -theta_0[1,2][[1]], 1), nrow = 2, ncol = 2) %*% t(matrix_12)  %*% gamma
+  }
+  
+  return(list(theta_0= theta_0,  gamma=  gamma,
+              phi = phi, coef = coef(vl)))
+  
+}
 
 # standard bootstrapping as presented by LÃ¼tkepohl, Helmut
 # Fonction pour itÃ©rer le modÃ¨le VAR
@@ -402,4 +482,32 @@ iterate_var_ter <- function(x, initial_obs, errors, var_model, controls =NULL){
 }
 
 
-
+rebuild_coef_list <- function(vl, coef_sim) {
+  # Nombre d'équations
+  n_eq <- length(coef(vl))  
+  
+  # Longueurs de chaque équation
+  eq_lengths <- sapply(coef(vl), function(x) nrow(x))
+  
+  # Noms des coefficients dans chaque équation
+  coef_names <- lapply(coef(vl), rownames)
+  n_eq <- length(coef(vl))
+  eq_lengths <- sapply(coef(vl), nrow)
+  
+  coef_list <- vector("list", n_eq)
+  names(coef_list) <- names(coef(vl))
+  
+  start <- 1
+  for(i in 1:n_eq) {
+    n_coef <- eq_lengths[i]
+    # extraire les coefficients correspondants
+    vec <- coef_sim[start:(start + n_coef - 1)]
+    # remettre sous forme data.frame comme coef(vl)[[i]]
+    coef_list[[i]] <- data.frame(
+      Estimate = vec,
+      row.names = rownames(coef(vl)[[i]])
+    )
+    start <- start + n_coef
+  }
+  return(coef_list)
+}

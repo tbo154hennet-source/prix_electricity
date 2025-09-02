@@ -118,10 +118,10 @@ headers_var_gen_first_mp = c(
 
 
 
-proxies <- ts(IV_data_log_diff_esp[, c(headers_proxies_supply_demand)], frequency=12)
+proxies <- ts(IV_data_log_diff_esp[, c(headers_proxies_supply)], frequency=12)
 proxies[is.na(proxies)] <- 0
 
-vars<- ts(IV_data_log_diff_esp[, c(headers_var_spot_first)], frequency=12)
+vars<- ts(IV_data_log_diff_esp[, c(headers_var_spot_first_mp)], frequency=12)
 
 p = 12
 irhor = 20
@@ -131,9 +131,9 @@ T = nrow(y)
 #variables dans VAR
 n <- ncol(y)
 #nbre de variables instrumentees
-k <-1
+k <- 1
 #nbre d'instruments
-# l <- ncol(proxies)
+l <- ncol(proxies)
 # # Create a 3x2 matrix of zeros
 # zero_matrix <- matrix(0, nrow = (n-k), ncol = 2)
 # #my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
@@ -171,6 +171,6 @@ lambda_0_log_diff <- get_lambda_0(C, theta_0_log_diff)
 cumulative_response <- apply(lambda_0_log_diff , c(2, 3), function(x) cumsum(x))
 
 #one year cumulative pass-through
-passthrough_esp <- cumulative_response[12, 4, 1]/ cumulative_response[12, 1, 1] # 0.0055844890
+passthrough_esp <- cumulative_response[12, 4, 1] # 0.0055844890
 print(passthrough_esp)
 

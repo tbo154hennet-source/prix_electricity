@@ -93,6 +93,7 @@ setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge <- read_parquet("price_indispo_merge_delta_supply_demand.parquet")
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
+save_path_data <-"Z:/prix_electricite_gitlab"
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')

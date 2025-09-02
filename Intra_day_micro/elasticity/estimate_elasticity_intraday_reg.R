@@ -135,7 +135,7 @@ df_wind_id$Elasticity_CI <- paste0(
 
 
 df_wind_id <- df_wind_id %>%
-  select(Model,Elasticity_CI ) %>% 
+  dplyr::select(Model,Elasticity_CI ) %>% 
   mutate(
     Instrument = case_when(
       grepl("OLS", Model) ~ "OLS",
@@ -192,9 +192,17 @@ plot_supply_elas <- ggplot(df_plot, aes(x = Type, y = Elasticity, color = Instru
     #title = "Time Evolution of Supply Elasticities"
   ) +
   theme_minimal() +
-  scale_color_manual(values = c("OLS" = "blue", "IV" = "red"))
+  scale_color_manual(values = c("OLS" = "blue", "IV" = "red"))+
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 16, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 16)    # taille des ticks y
+  )
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "Z:/Overleaf_elec/images/intra_day"
 setwd(save_latex_path)
 
 # Save the plot as a PDF (or PNG)

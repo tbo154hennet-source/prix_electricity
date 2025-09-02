@@ -21,7 +21,7 @@ then there are separate prices.
 
 
 ```{r}
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")
 
 price_merge_CBF <-price_merge_CBF %>% 
@@ -57,7 +57,7 @@ price_merge_CBF$weekday <- weekdays(price_merge_CBF$delivery_date)
 plot_example <- price_merge_CBF %>% 
   filter(delivery_date == "2019-01-02" | delivery_date =="2019-01-03")
 
-ggplot(data = plot_example, aes(x = datetime))+
+plot_NTC_fr_esp <-  ggplot(data = plot_example, aes(x = datetime))+
   geom_line(aes(y = price_fr*20, color = "FR"))+
   geom_line(aes(y = price_esp*20, color = "ES"))+
   geom_line(aes(y = NTC_ESP_FR, color = "ES -> FR"), linetype ="dashed")+
@@ -69,11 +69,29 @@ ggplot(data = plot_example, aes(x = datetime))+
     name = "NTC & Exchanges",
     sec.axis = sec_axis(~ . / 20, name = "Price (€/MWh)") # Ajuste l'échelle inverse
   ) +
-  
-  theme_minimal()
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
 
-  
+plot_NTC_fr_esp
 ```
+
+
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/cross_border'
+setwd(save_plot_path)
+ggsave("plot_price_comovements_fr_esp.png", plot = plot_NTC_fr_esp, width = 14 , height = 6, dpi = 300)
+
+
+```
+
+
 
 Faire apparaître le seuil de saturation
 

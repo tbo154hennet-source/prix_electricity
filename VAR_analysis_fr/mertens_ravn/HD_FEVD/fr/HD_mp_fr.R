@@ -3,14 +3,14 @@ library(gt)
 #For France
 
 
-p = 12    
+p = 12     
 irhor = 40
 
 
-  
+
 proxies <- ts(IV_data_log_diff_fr[, c(headers_proxies_fr)], frequency=12)
 proxies[is.na(proxies)] <- 0
-vars<- ts(IV_data_log_diff_fr[, c(headers_var_gen_first)], frequency=12)
+vars<- ts(IV_data_log_diff_fr[, c(headers_var_gen_first_mp)], frequency=12)
 
 x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
 y =vars[-1:-p, ]
@@ -30,7 +30,7 @@ matrix_12 <- rbind( diag(k) , zero_matrix)
 
 controls <- NULL
 
-estimate_log_diff <- first_var_estimation(x,y,p, proxies, irhor)
+estimate_log_diff <- first_var_estimation(x,y,p, proxies, irhor, elas = -0.16)
 theta_0 <- estimate_log_diff$theta_0
 gamma <- estimate_log_diff$gamma
 phi <- estimate_log_diff$phi
@@ -120,7 +120,7 @@ for (j in c(1:n)){
 
 #je voudrais bien montrer que l'inflation augmente tendanciellement
 
-headers_var_gen_first
+headers_var_gen_first_mp
 headers_index <- c("gen_tot",    "spot_price", "IPI" ,       "HICP")
 drift <- as.numeric(IV_data_log_diff_fr[1, c(headers_index)])
 result <- sweep(apply(vars, c(2), function(x) cumsum(x)), 2, drift, "+")
@@ -162,14 +162,22 @@ colnames(data_IV) <- c( "quantity", "price")
 dates_formatted <- as.yearmon(time(x))
 dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
 ggplot()+
-  geom_line(aes(x = dates_formatted, y = data_IV$price, color = "price"))+
-  geom_line(aes(x = dates_formatted, y = data_IV$quantity, color = "quantity")) +
+  geom_line(aes(x = dates_formatted, y = data_IV$quantity, color = "quantity"))+
+  geom_line(aes(x = dates_formatted, y = data_IV$price, color = "price")) +
   theme_minimal()
 
 summary_stats <- data.frame(
   mean = colMeans(data_IV, na.rm = TRUE),
   sd = apply(data_IV, 2, sd, na.rm = TRUE)
 )
+data_IV %>% 
+  cor()
+
+save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
+setwd(save_rds_path_hd)
+list.files()
+write_parquet(as.data.frame(structural_shocks_IV), "structural_shocks_IV_log_diff_mp_fr.parquet" )
+write_parquet(as.data.frame(structural_shocks), "structural_shocks_chol_mp_fr.parquet" )
 
 
 # Eigenvalue decomposition
@@ -243,159 +251,8 @@ apply(historical_decomp_iv_tibo, c(2,3), function(x) cumsum(x))
 
 save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
 setwd(save_rds_path_hd)
-saveRDS(historical_decomp_iv_tibo, "hd_iv_4v_fr.rds")
-saveRDS(hd_cholesky, "hd_chol_4v_fr.rds")
-
-
-
-
-
-# hd_pelec <- plot_hd(historical_decomp_iv_tibo, series = 1)
-# print(hd_pelec)
-
-
-
-
-zero_errors <- matrix(0, nrow = dim(res)[1], ncol = dim(res)[2])
-
-reconstruct_derive_without_errors_ter <- iterate_var_ter(x=x,
-                                                         initial_obs = x[1:p, ],
-                                                         errors = zero_errors,
-                                                         var_model = vl
-)
-
-# Suppose:
-# hd_array: array of dim (T, n_var, n_shocks) -> historical decomposition
-# var_idx: index of the variable (e.g., 2 for "spot_price")
-# shock_idx: index of the shock of interest
-
-# Example: get contribution of electricity price shocks to inflation
-
-
-compute_contributions <- function(start_date, end_date, 
-                                  dates_formatted, 
-                                  IV_data_log_diff_fr, 
-                                  hd_cholesky, 
-                                  historical_decomp_iv_tibo, 
-                                  series = 4) {
-  
-  # Generate the date sequence and convert to yearmon
-  desired_period <- seq(as.Date(start_date), as.Date(end_date), by = "month")
-  desired_period_yearmon <- as.yearmon(desired_period)
-  
-  # Get matching indices
-  matching_indices <- which(dates_formatted %in% desired_period_yearmon)
-  
-  # Total inflation during the period
-  cumulative_inflation <- sum(IV_data_log_diff_fr$HICP_log_diff[p +matching_indices])
-  
-  #cumulative_elec_price <- sum(IV_data_log_diff_fr$spot_price_log_diff[matching_indices])
-  
-  # Cholesky contributions
-  contrib_price <- sum(hd_cholesky[, series, 2][matching_indices]) / cumulative_inflation
-  contrib_gen   <- sum(hd_cholesky[, series, 1][matching_indices]) / cumulative_inflation
-  
-
-  
-  # price_data <- hd_cholesky_index[, series, 2][matching_indices]
-  # # qty_data <- hd_cholesky_index[, series, 1][matching_indices]
-  # diff_contrib_price <- price_data[length(price_data)] -  
-  #   price_data[1]
-  # sum(diff(price_data))
-
-  # methode 2
-  # inflation_data <- (log(IV_data_log_diff_fr[(p+1):nrow(IV_data_log_diff_fr), "HICP"] ))[[1]][matching_indices]
-  # cumulative_inflation <- inflation_data[length(matching_indices)] - inflation_data[1]
-  # 
-  
-  
-  # IV contributions
-  contrib_price_iv <- sum(historical_decomp_iv_tibo[, series, 2][matching_indices]) / cumulative_inflation
-  contrib_gen_iv   <- sum(historical_decomp_iv_tibo[, series, 1][matching_indices]) / cumulative_inflation
-  
-  
-  
-  # Return a tidy data frame (long format)
-  tibble::tibble(
-    Identification = rep(c("Cholesky", "IV"), each = 2),
-    Contribution_Type = rep(c("$P_{elec}$", "$Q_{elec}$"), times = 2),
-    Contribution = 100 * c(contrib_price, contrib_gen, contrib_price_iv, contrib_gen_iv)
-  )
-}
-
-
-# Compute contributions for 2021 Q3 to 2022 Q4
-contribution_data <- compute_contributions(
-  start_date = "2021-07-01",
-  end_date = "2022-12-01",
-  dates_formatted = dates_formatted,
-  IV_data_log_diff_fr = IV_data_log_diff_fr,
-  hd_cholesky = hd_cholesky,
-  historical_decomp_iv_tibo = historical_decomp_iv_tibo,
-  series = 4
-)
-
-contribution_table_wide <- contribution_data %>%
-  tidyr::pivot_wider(
-    names_from = Contribution_Type,
-    values_from = Contribution
-  )
-
-#what is my study period ?
-
-
-contribution_data_2 <- compute_contributions(
-  start_date = "2021-01-01",
-  end_date = "2022-07-01",
-  dates_formatted = dates_formatted,
-  IV_data_log_diff_fr = IV_data_log_diff_fr,
-  hd_cholesky = hd_cholesky,
-  historical_decomp_iv_tibo = historical_decomp_iv_tibo,
-  series = 4
-)
-
-contribution_table_wide_2 <- contribution_data_2 %>%
-  tidyr::pivot_wider(
-    names_from = Contribution_Type,
-    values_from = Contribution
-  )
-
-
-contribution_data_3 <- compute_contributions(
-  start_date = "2021-01-01",
-  end_date = "2022-12-01",
-  dates_formatted = dates_formatted,
-  IV_data_log_diff_fr = IV_data_log_diff_fr,
-  hd_cholesky = hd_cholesky,
-  historical_decomp_iv_tibo = historical_decomp_iv_tibo,
-  series = 4
-)
-
-contribution_table_wide_3 <- contribution_data_3 %>%
-  tidyr::pivot_wider(
-    names_from = Contribution_Type,
-    values_from = Contribution
-  )
-
-
-
-gt_table <- contribution_table_wide %>%
-  gt::gt() %>%
-  gt::tab_header(
-    title = gt::md("**Cumulative Contribution to Inflation**"),
-    subtitle = gt::md("from 2021 Q3 to 2022 Q4 (in %)")
-  ) %>%
-  gt::cols_label(
-    Identification = "Identification",
-    `$P_{elec}$` = gt::md("$P_{elec}$"),
-    `$Q_{elec}$` = gt::md("$Q_{elec}$")
-  ) %>%
-  gt::fmt_number(
-    columns = c(`$P_{elec}$`, `$Q_{elec}$`),
-    decimals = 2
-  )
-
-gt_table
+saveRDS(historical_decomp_iv_tibo, "hd_iv_mp_fr.rds")
+saveRDS(hd_cholesky, "hd_chol_mp_fr.rds")
 
 
 

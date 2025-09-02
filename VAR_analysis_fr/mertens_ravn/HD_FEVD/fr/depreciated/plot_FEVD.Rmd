@@ -1,0 +1,142 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+# Forecast Error Variance Decomposition
+
+
+```{r}
+library(ggplot2)
+
+str(dates_formatted)
+colors_shock <- c("blue", "red", "green", "yellow", "purple")
+names <- c("$Q_{elec}$" ,"$P_{elec}$", 'ECB rate', "IPI",  "$NE Index$")
+
+theta_0 <- matrix(rnorm(10, 0, 1), ncol=2, nrow= 5)
+irf_response_test <- as.data.frame(theta_0)
+irf_response_test$shock <- rep(names, length.out = length(theta_0[,1]))
+irf_response_test$shock <- factor(irf_response_test$shock, levels = rev(names))
+# fake plot just to construct the correct legend
+dates_formatted <- as.yearmon(time(x))
+dates_formatted <- dates_formatted[5:length(dates_formatted)]
+# Format to shorter labels (e.g., "May 15", "Jun 15", ...)
+
+
+plot_legend <- ggplot(data =irf_response_test, aes(x=V1, fill = shock))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+  values = rev(colors_shock),
+  labels = TeX(rev(names)))
+# Légende personnalisée (à ajuster selon vos besoins)
+custom_legend <- cowplot::get_legend(plot_legend)
+plot_legend
+```
+
+
+
+```{r}
+plot_fevd <- function(series){
+  
+  decomp_tot_data <- data.frame(
+    time= c(1:irhor),
+    fevd_data[,series,])
+  # Plot the decomposition
+  colnames(decomp_tot_data)[-1] <- names
+  
+  # Reshaper les données en format long pour ggplot2
+  long_data <- pivot_longer(decomp_tot_data, 
+                            cols = -time, names_to = "category",
+                            values_to = "value")
+  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'colors_shock'
+  # Modifier l'ordre des niveaux du facteur category
+  long_data$category <- factor(long_data$category, levels = rev(names))
+  
+  # Tracer des barres empilées avec ggplot2
+  my_plot <- ggplot()+
+    geom_bar(data= long_data, aes(x = time, y = value, fill = category),
+             stat = "identity", position = "stack") +  # Barres empilées
+    scale_fill_manual(
+      values = rev(colors_shock),
+      labels = TeX(rev(names)))+
+    #scale_fill_manual(values = c("blue", "red", "green"), labels = c("Supply", "Demand", "Other")) +
+    labs(#title=TeX(paste("Historical Decomposition of",names[[series]])) ,
+      x="Time", y=TeX(names[series]))
+  
+  return(my_plot)
+}
+
+n_serie = 5
+fevd_data <- fevd
+ne_fevd <- plot_fevd(series = n_serie)+
+    labs(title=TeX(paste("Forecast Error Variance Decomposition of",names[[n_serie]])) ,
+         x="Time", y="Contribution")
+ne_fevd
+
+
+```
+
+
+
+```{r}
+
+# Apply the function to the sequence 3:10
+results <- lapply(c(1:n) , plot_fevd)
+#enlever la légende
+results <- lapply(results, function(p) p + theme(legend.position = "none"))
+
+# Arrange the plots in a grid
+plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
+
+# Combine the grid with the legend
+final_plot <- plot_grid(plots_grid, custom_legend, ncol = 1, rel_heights = c(1, 0.1))
+
+title <- ggdraw() + 
+  draw_label(TeX('Forecast Error Variance Decomposition'), fontface = 'bold', x = 0.5, hjust = 0.5)
+
+# Combine the title and the final plot with legend
+final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+# Display the final plot
+print(final_plot_with_title)
+```
+
+
+```{r}
+n_serie = 5
+fevd_data <- fevd_iv
+ne_fevd <- plot_fevd(series = n_serie)+
+    labs(title=TeX(paste("Forecast Error Variance Decomposition of",names[[n_serie]])) ,
+         x="Time", y="Contribution")
+ne_fevd
+
+```
+
+
+
+```{r}
+# Apply the function to the sequence 3:10
+results <- lapply(c(1:n) , plot_fevd)
+#enlever la légende
+results <- lapply(results, function(p) p + theme(legend.position = "none"))
+
+# Arrange the plots in a grid
+plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
+
+# Combine the grid with the legend
+final_plot <- plot_grid(plots_grid, custom_legend, ncol = 1, rel_heights = c(1, 0.1))
+
+title <- ggdraw() + 
+  draw_label(TeX('Forecast Error Variance Decomposition'), fontface = 'bold', x = 0.5, hjust = 0.5)
+
+# Combine the title and the final plot with legend
+final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+# Display the final plot
+print(final_plot_with_title)
+```
+
+

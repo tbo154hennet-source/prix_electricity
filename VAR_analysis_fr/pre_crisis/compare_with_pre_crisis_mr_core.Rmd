@@ -1,0 +1,178 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(latex2exp)
+library(abind)
+library(stringr)
+
+```
+
+
+```{r}
+
+#irf_list <- list_irfs
+compare_irf <- function(irf_list, variable_names, shock = "price") {
+  n_irf <- dim(irf_list[[1]])[2]
+  names(irf_list)
+  if (shock == "price"){
+   shock_label = "$P_{elec}$ shock IRF"
+  }else if (shock == "gen"){
+    shock_label = "$Q_{elec}$ shock IRF"
+  }else{
+    return("Invalid shock type. Please use 'price' or 'quantity'.")
+  }
+
+  #solution <-gen_benchmark
+  plot_irf <- function(i=1) {
+    #i=3
+    #trick I just put 0.5 twice
+    #main_IV <- lambda_0[, i, "lower"]
+    # Combine all IRFs into one data frame
+    #irf_list[[4]][1:20, i, 1]
+    time_horizon <- c(1:20)
+    
+    df_all <- lapply(seq_along(irf_list), function(j) {
+        data.frame(
+          time = time_horizon,
+          value = irf_list[[j]][1:20, i, 2],
+          model = names(irf_list)[j]
+        )
+      }) %>% bind_rows() %>%
+        mutate(
+          period = if_else(str_detect(model, "Pre"), "Pre", "Full"),
+          country = str_remove(model, " Pre")
+        )
+    
+    ggplot(df_all, aes(x = time, y = value, color = country, linetype = period)) +
+      geom_line() +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+      labs(
+        title = TeX(variable_names[i]),
+        x = "Time",
+        y = "Unit Points"
+      ) +
+      scale_color_manual(
+    values = c("ESP" ="blue" ,   "FR"="red"),
+    drop = FALSE
+  ) +
+  scale_linetype_manual(
+    values = c("Pre" = "dashed" ,     "Full"= "solid"),
+    name = "Period",
+    drop = FALSE
+  ) +
+      guides(color = "none", linetype = "none")+
+      theme_minimal()
+  
+  }
+
+  # Generate plots
+  plots_list <- lapply(1:n_irf, plot_irf)
+  grid_plots <- do.call("grid.arrange", c(plots_list, nrow = 2))
+  
+  legend_plot <- plot_grid(grid_plots, custom_legend , ncol = 1, rel_heights = c(1, 0.1))
+  return(legend_plot)
+  
+}
+#plot_irf(i=1)
+```
+
+
+
+
+
+Take care of the legend
+
+```{r}
+# Exemple simulé si tu n’as pas défini `simul_data`
+set.seed(123)
+simul_data <- data.frame(
+  x = rnorm(100),
+  y = rnorm(100),
+  colored = rep(names(list_irfs_compare), each = 50),
+  Period = rep(c("Pre-crisis", "With-crisis"), 50)
+)
+
+# Définir le mapping manuel pour les types de traits
+#linetype <- c("Cholesky" = "dashed", "IV" = "solid")
+
+# Plot avec légende uniquement
+# Plot avec légende uniquement
+plot_legend <- ggplot(data = simul_data, aes(x = x)) +
+  geom_line(aes(y = y, color = colored, linetype = Period))+#, bins = 30, alpha = 0.6) +
+  #geom_line(aes(y = y , linetype = Period)) +
+  scale_color_manual(
+    values = c("ESP" ="blue" ,   "FR"="red" #,      
+               ),
+    drop = FALSE
+  ) +
+  scale_linetype_manual(
+    values = c("Pre-crisis" = "dashed" ,     "With-crisis"= "solid"),
+    name = "Period",
+    drop = FALSE
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  )
+  
+
+# Extraire la légende personnalisée
+#custom_legend <- cowplot::get_legend(plot_legend)
+#custom_legend <- get_plot_component(plot_legend, "guide-box", return_all = TRUE)[[3]]
+custom_legend <- get_legend(plot_legend)
+#custom_legend[[3]]
+
+```
+
+
+```{r}
+save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+setwd(save_rds_path)
+list_irfs_compare_core <- list( readRDS("gen_benchmark_esp_mr_core.rds")$lambda_0,
+                           readRDS("gen_benchmark_esp_pre_crisis_mr_core.rds")$lambda_0,
+                           readRDS("gen_benchmark_fr_mr_core.rds")$lambda_0 , 
+                           readRDS("gen_benchmark_fr_pre_crisis_mr_core.rds")$lambda_0)
+
+# Step 1: Put into a list with names
+names(list_irfs_compare_core) <- c("ESP" ,   "ESP Pre" ,  
+                      "FR"  ,     "FR Pre")
+
+
+#Plot the IRFs
+irf_price_shock_compare <- compare_irf(
+  
+  irf_list = list_irfs_compare_core,
+  variable_names = c( '$Q_{elec}$', '$P_{elec}$',  "IPI", '$HICP$', 'ECB rate'),
+  shock = "price"
+)
+irf_price_shock_compare
+```
+
+
+
+```{r}
+save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+setwd(save_rds_path)
+list_irfs_compare_core <- list( readRDS("gen_benchmark_esp_mp_mr_core.rds")$lambda_0,
+                           readRDS("gen_benchmark_esp_mp_pre_crisis_mr_core.rds")$lambda_0,
+                           readRDS("gen_benchmark_fr_mp_mr_core.rds")$lambda_0 , 
+                           readRDS("gen_benchmark_fr_mp_pre_crisis_mr_core.rds")$lambda_0)
+
+# Step 1: Put into a list with names
+names(list_irfs_compare_core) <- c("ESP" ,   "ESP Pre" ,  
+                      "FR"  ,     "FR Pre")
+
+
+#Plot the IRFs
+irf_price_shock_compare <- compare_irf(
+  
+  irf_list = list_irfs_compare_core,
+  variable_names = c( '$Q_{elec}$', '$P_{elec}$',  "IPI", '$HICP$', 'ECB rate'),
+  shock = "price"
+)
+irf_price_shock_compare
+```

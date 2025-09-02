@@ -112,6 +112,128 @@ gamma_bootstrap_mbb_alternative <- function(x,nboot, vars, BlockSize, theta_0, p
 
 
 
+gamma_bootstrap_mbb_alternative_bis <- function(x,nboot, vars, BlockSize, theta_0, proxies, controls=NULL, elas = 0,
+                                                start_ts = c(2015,1), end_ts =c(2023,12)
+){
+  #nboot <-100
+  #BlockSize <- 15
+  # Create an empty list to hold the elements
+  n = ncol(vars)
+  theta_0<- as.matrix(theta_0)
+  k <- ncol(theta_0)
+  T_bis <- nrow(x) -p
+  boot_gamma <- array(NA, dim = c(n, l, nboot))
+  boot_psi <- array(NA, dim = c(n, l, nboot))
+  boot_ncvg_theta_0 <- array(NA, dim = c(n, k, nboot))
+  boot_ncvg_lambda_01 <- array(NA, dim = c(irhor, n, nboot))
+  boot_ncvg_lambda_02 <- array(NA, dim = c(irhor, n, nboot))
+  boot_inv <- array(NA, dim = c(n*irhor,n , nboot))
+  
+  
+  nBlock <- ceiling((T_bis) / BlockSize)
+  vl <- if (is.null(controls)) {
+    vars::VAR(x, p, type = "none")
+  } else {
+    vars::VAR(x, p, type = "none", exogen = controls)
+  }
+  res = residuals(vl)
+  for (irep in 1:nboot) {
+    #irep=1
+    # Preallocate resampled matrices
+    X_bt <- matrix(NA, nrow = T_bis, ncol = n)
+    Z_bt <- matrix(NA, nrow = T_bis, ncol = l)
+    
+    # Step 1: Pre-sample block endpoints
+    block_indices <- c()  # to collect row indices
+    while (length(block_indices) < T_bis) {
+      endpoint <- sample(BlockSize:T_bis, size = 1)
+      start_idx <- endpoint - BlockSize + 1
+      this_block <- start_idx:endpoint
+      block_indices <- c(block_indices, this_block)
+    }
+    
+    # Step 2: Trim to T_bis
+    block_indices <- block_indices[1:T_bis]
+    
+    # Step 3: Resample both res and proxies using same indices
+    X_bt <- res[block_indices, , drop = FALSE]
+    Z_bt <- as.data.frame(proxies)[block_indices, , drop = FALSE]
+    
+    
+    # Fit VAR to bootstrapped data
+    boot_df <- as.data.frame(X_bt)
+    colnames(boot_df) <- paste0("V", 1:n)
+    
+    varbsnew <- iterate_var_ter(x, vars[1:p,], X_bt, vl, controls)
+    
+    xnew =ts(varbsnew , start= start_ts , end=end_ts, frequency=12)
+    ynew = varbsnew[-1:-p, ]
+    
+    vnew <- if (is.null(controls)) {
+      vars::VAR(xnew, p, type = "none")
+    } else {
+      vars::VAR(xnew, p, type = "none", exogen = controls)
+    }
+    # 
+    #partie pour l'estimation de C_k(A)
+    ALnew <- do.call(cbind, lapply(coef(vnew), function(df) df[, 1]))
+    Marep_new <- MARep(t(ALnew), p, irhor)
+    boot_inv[,,irep] <- Marep_new
+    
+    if (ncol(Z_bt) ==1) {
+      proxies_boot <- tryCatch({
+        if ("ts" %in% class(proxies)) {
+          head_part <- window(proxies, end = time(proxies)[p])
+        } else {
+          head_part <- proxies[seq_len(p), , drop = FALSE]
+        }
+        
+        head_mat <- as.matrix(head_part)
+        Z_mat    <- as.matrix(Z_bt)
+        
+        rbind(head_mat, Z_mat)
+        
+      }, error = function(e) {
+        message("Erreur dans la construction de proxies_boot : ", e$message)
+        return(NULL)
+      })
+      
+      
+    }else{
+      proxies_boot <- rbind(proxies[1:p,],Z_bt)
+    }
+    
+    
+    
+    #partie pour estimer theta_0
+    estimatenew <- first_var_estimation(xnew, ynew,
+                                        p, proxies_boot , irhor, controls, elas)
+    # estimatenew <- first_var_estimation(xnew, ynew,
+    #                                     p, proxies , irhor)
+    boot_gamma[,,irep] <- estimatenew$gamma
+    boot_psi[,,irep] <- sqrt(T) * (estimatenew$gamma - theta_0 %*% estimatenew$phi)
+    phi_hat <- estimatenew$phi
+    boot_ncvg_theta_0[,,irep] <- estimatenew$theta_0
+    # on notera que pour des instruments très faibles l'intervalle va exploser
+    # en effet phi tend vers 0 comme son determinant
+    
+    boot_ncvg_lambda_01[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0)[,,1]
+    if (k >=2){
+      boot_ncvg_lambda_02[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0)[,,2] 
+    }
+    
+    
+    if (irep %% 50 == 0) cat("Replication", irep, "\n")
+    
+  }
+  return(list(boot_gamma= boot_gamma, boot_psi =boot_psi ,
+              boot_ncvg_theta_0 = boot_ncvg_theta_0,
+              boot_ncvg_lambda_01 = boot_ncvg_lambda_01,
+              boot_ncvg_lambda_02 = boot_ncvg_lambda_02,
+              boot_inv= boot_inv)) #, boot_reliability = boot_reliability))
+}
+
+
 eval_composantes_V0 <- function(i, hori, sample_matrices){
   #i=2
   e_i <- rep(0, n)
@@ -379,4 +501,111 @@ bootstrap_weak_instrument <- function(gamma, c_0, phi_c0, alpha, ngrid = 100, sa
               weak_lambda_bounds_bonferroni = weak_lambda_bounds_bonferroni))
 }
 
+
+
+# gamma_bootstrap_mbb_alternative_var_res <- function(x,nboot, vars, BlockSize, theta_0, proxies, controls=NULL, elas = 0){
+#   #nboot <-100
+#   #BlockSize <- 15
+#   # Create an empty list to hold the elements
+#   n = ncol(vars)
+#   theta_0<- as.matrix(theta_0)
+#   k <- ncol(theta_0)
+#   T_bis <- nrow(vars) - p
+#   boot_gamma <- array(NA, dim = c(n, l, nboot))
+#   boot_psi <- array(NA, dim = c(n, l, nboot))
+#   boot_ncvg_theta_0 <- array(NA, dim = c(n, k, nboot))
+#   boot_ncvg_lambda_01 <- array(NA, dim = c(irhor, n, nboot))
+#   boot_ncvg_lambda_02 <- array(NA, dim = c(irhor, n, nboot))
+#   boot_inv <- array(NA, dim = c(n*irhor,n , nboot))
+#   boot_vl_coef <-
+#   boot_res <-
+#   
+#   nBlock <- ceiling((T_bis) / BlockSize)
+#   vl <- if (is.null(controls)) {
+#     vars::VAR(x, p, type = "none")
+#   } else {
+#     vars::VAR(x, p, type = "none", exogen = controls)
+#   }
+#   res = residuals(vl)
+#   for (irep in 1:nboot) {
+#     #irep=1
+#     # Preallocate resampled matrices
+#     X_bt <- matrix(NA, nrow = T_bis, ncol = n)
+#     Z_bt <- matrix(NA, nrow = T_bis, ncol = l)
+#     
+#     # Step 1: Pre-sample block endpoints
+#     block_indices <- c()  # to collect row indices
+#     while (length(block_indices) < T_bis) {
+#       endpoint <- sample(BlockSize:T_bis, size = 1)
+#       start_idx <- endpoint - BlockSize + 1
+#       this_block <- start_idx:endpoint
+#       block_indices <- c(block_indices, this_block)
+#     }
+#     
+#     # Step 2: Trim to T_bis
+#     block_indices <- block_indices[1:T_bis]
+#     
+#     # Step 3: Resample both res and proxies using same indices
+#     X_bt <- res[block_indices, , drop = FALSE]
+#     Z_bt <- proxies[block_indices, , drop = FALSE]
+#     
+#     
+#     # Fit VAR to bootstrapped data
+#     boot_df <- as.data.frame(X_bt)
+#     colnames(boot_df) <- paste0("V", 1:n)
+#     
+#     varbsnew <- iterate_var_ter(x, vars[1:p,], X_bt, vl, controls)
+#     
+#     xnew =ts(varbsnew , start=c(2015,1), end=c(2023,12), frequency=12)
+#     ynew = varbsnew[-1:-p, ]
+#     
+#     vnew <- if (is.null(controls)) {
+#       vars::VAR(xnew, p, type = "none")
+#     } else {
+#       vars::VAR(xnew, p, type = "none", exogen = controls)
+#     }
+#     # 
+#     #partie pour l'estimation de C_k(A)
+#     ALnew <- do.call(cbind, lapply(coef(vnew), function(df) df[, 1]))
+#     Marep_new <- MARep(t(ALnew), p, irhor)
+#     boot_inv[,,irep] <- Marep_new
+#     
+#     if (ncol(Z_bt) ==1) {
+#       proxies_boot <- rbind(matrix(proxies[1:p,]),Z_bt)
+#     }else{
+#       proxies_boot <- rbind(proxies[1:p,],Z_bt)
+#     }
+#     
+#     
+#     
+#     #partie pour estimer theta_0
+#     estimatenew <- first_var_estimation(xnew, ynew,
+#                                         p, proxies_boot , irhor, controls, elas)
+#     # estimatenew <- first_var_estimation(xnew, ynew,
+#     #                                     p, proxies , irhor)
+#     boot_res[,,irep] <- X_bt
+#     boot_vl_coef[,,irep] <- estimatenew$gamma
+#     
+#     boot_gamma[,,irep] <- estimatenew$gamma
+#     boot_psi[,,irep] <- sqrt(T) * (estimatenew$gamma - theta_0 %*% estimatenew$phi)
+#     phi_hat <- estimatenew$phi
+#     boot_ncvg_theta_0[,,irep] <- estimatenew$theta_0
+#     # on notera que pour des instruments très faibles l'intervalle va exploser
+#     # en effet phi tend vers 0 comme son determinant
+#     
+#     boot_ncvg_lambda_01[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0)[,,1]
+#     if (k >=2){
+#       boot_ncvg_lambda_02[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0)[,,2] 
+#     }
+#     
+#     
+#     if (irep %% 50 == 0) cat("Replication", irep, "\n")
+#     
+#   }
+#   return(list(boot_gamma= boot_gamma, boot_psi =boot_psi ,
+#               boot_ncvg_theta_0 = boot_ncvg_theta_0,
+#               boot_ncvg_lambda_01 = boot_ncvg_lambda_01,
+#               boot_ncvg_lambda_02 = boot_ncvg_lambda_02,
+#               boot_inv= boot_inv)) #, boot_reliability = boot_reliability))
+# }
 

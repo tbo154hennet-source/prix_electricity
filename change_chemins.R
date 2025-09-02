@@ -41,3 +41,27 @@ for (f in files) {
   writeLines(content, f)
 }
 
+
+source_path <- "Z:/Overleaf_elec/images/latex_tables"
+setwd(source_path)
+
+# Lister tous les fichiers .tex
+tex_files <- list.files(pattern = "\\.tex$")
+
+for (file in tex_files) {
+  tex_lines <- readLines(file)
+  
+  # Vérifier si le fichier contient un tabular
+  begin_idx <- grep("\\\\begin\\{tabular", tex_lines)
+  end_idx   <- grep("\\\\end\\{tabular\\*?\\}", tex_lines)
+  
+  if (length(begin_idx) > 0 & length(end_idx) > 0) {
+    # Retenir seulement les lignes entre begin et end tabular
+    tabular_lines <- tex_lines[begin_idx:end_idx]
+    
+    # Réécrire dans le même fichier (ou changer le nom si tu veux garder l'original)
+    writeLines(tabular_lines, file)
+  }
+}
+
+

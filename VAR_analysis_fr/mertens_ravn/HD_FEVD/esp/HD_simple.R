@@ -10,7 +10,7 @@ irhor = 40
   
 proxies <- ts(IV_data_log_diff_esp[, c(headers_proxies_esp)], frequency=12)
 proxies[is.na(proxies)] <- 0
-vars<- ts(IV_data_log_diff_esp[, c(headers_var_gen_first_mp)], frequency=12)
+vars<- ts(IV_data_log_diff_esp[, c(headers_var_gen_first)], frequency=12)
 
 x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
 y =vars[-1:-p, ]
@@ -120,7 +120,7 @@ for (j in c(1:n)){
 
 #je voudrais bien montrer que l'inflation augmente tendanciellement
 
-headers_var_gen_first_mp
+headers_var_gen_first
 headers_index <- c("gen_tot",    "spot_price", "IPI" ,       "HICP")
 drift <- as.numeric(IV_data_log_diff_esp[1, c(headers_index)])
 result <- sweep(apply(vars, c(2), function(x) cumsum(x)), 2, drift, "+")

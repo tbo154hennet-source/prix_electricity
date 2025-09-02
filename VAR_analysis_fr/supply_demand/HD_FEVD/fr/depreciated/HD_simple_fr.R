@@ -1,26 +1,14 @@
 
-series = 4
+library(gt)
 #For France
-headers_var_gen_first_mp <- c(
-  "gen_tot_log_diff",
-  "avg_spot_price_log_diff",
-  "IPI_log_diff",
-  "HICP_log_diff",
-  "ffr_log_diff"
-)
 
-headers_var_gen_first <- c(
-  "gen_tot_log_diff",
-  "avg_spot_price_log_diff",
-  "IPI_log_diff",
-  "HICP_log_diff"
-)
 
-p = 4     
+p = 12    
 irhor = 40
 
 
-proxies <- ts(IV_data_log_diff_fr[, c(headers_proxies)], frequency=12)
+  
+proxies <- ts(IV_data_log_diff_fr[, c(headers_proxies_fr)], frequency=12)
 proxies[is.na(proxies)] <- 0
 vars<- ts(IV_data_log_diff_fr[, c(headers_var_gen_first)], frequency=12)
 
@@ -73,10 +61,10 @@ bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
 res = residuals(vl)
 Sigma_eta = cov(res)
 
-irf_cholesky <- irf(vl, impulse = colnames(x), rfronse = colnames(x),
+irf_cholesky <- irf(vl, impulse = colnames(x), response = colnames(x),
                     n.ahead = (irhor - 1), ortho = TRUE, boot = TRUE)
 
-# Apply cumsum columnwise for each shock-rfronse matrix
+# Apply cumsum columnwise for each shock-response matrix
 cum_irfs_all <- lapply(irf_cholesky$irf, function(mat) apply(mat, 2, cumsum))
 
 #plot(irf_cholesky)
@@ -98,9 +86,7 @@ structural_shocks <-   res %*%  solve(P)
 n_obs <- nrow(res)
 n_vars <- ncol(res)
 hd_cholesky <-array(NA, dim = c(n_obs,  n_vars, n_vars))
-y_hat <-array(NA, dim = c(n_obs,   n_vars))
-
-
+hd_cholesky_index <-array(NA, dim = c(n_obs,  n_vars, n_vars))
 
 
 #j is the variable of interest
@@ -108,21 +94,24 @@ for (j in c(1:n)){
   for (shock in c(1:n)){
     for (t in c(1:T)){
       contribution <-0
+      contribution_index <-0
       for (hori in c(1:irhor)){
         # ne doit pas dépasser l'horizon pour lequel on calcule
         # restriction pour les premiers chocs où l'on a pas les 20 précédents
         #pn prend juste ceux qui sont disponibles
         shock_horizon = max(0,t-hori+1)
-        contrib_hori <- cum_irfs_all[[shock]][hori,j]*structural_shocks[shock_horizon,shock] 
+        contrib_hori <- irf_cholesky$irf[[shock]][hori,j]*structural_shocks[shock_horizon,shock] 
+        contrib_hori_index <- cum_irfs_all[[shock]][hori,j]*structural_shocks[shock_horizon,shock] 
         # contrib_hori <- irf_model$irf[[shock]][hori,j]*
         #   structural_shocks[shock_horizon,shock]
         # 
         if (!length(as.numeric(contrib_hori))==0){
           contribution <- contribution + contrib_hori
-          
+          contribution_index <- contribution_index + contrib_hori_index
         }
       }
       hd_cholesky[t,j, shock ] <- contribution
+      hd_cholesky_index[t,j, shock ] <- contribution_index
     }
     #y_hat[t, j] <- sum(hd_cholesky[t, j, ]) + hd_controls[t, j]
   }
@@ -158,8 +147,9 @@ D <- solve(Sigma_theta)  %*% t(theta_0) %*%  Sigma_a %*% theta_0 %*% solve(Sigma
 #almost diagonal matrix
 
 right_term <- t(gamma) %*% ginv(Sigma_eta) %*% t(res)
-left_matrix <- t(phi) %*% solve(D)
+D_inv <- try(solve(D), silent = TRUE); if (inherits(D_inv, "try-error")) D_inv <- ginv(D)
 
+left_matrix <- t(phi) %*% D_inv
 # with this strategy the system is undertemined,
 #I impose additional assumptions
 
@@ -168,13 +158,19 @@ structural_shocks_IV <- solve(t(left_matrix) %*% left_matrix) %*% t(left_matrix)
 
 #Plot the shocks
 data_IV <- as.data.frame(t(structural_shocks_IV))
-colnames(data_IV) <- c("price", "quantity")
+colnames(data_IV) <- c( "quantity", "price")
 dates_formatted <- as.yearmon(time(x))
-dates_formatted <- dates_formatted[5:length(dates_formatted)]
+dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
 ggplot()+
   geom_line(aes(x = dates_formatted, y = data_IV$price, color = "price"))+
   geom_line(aes(x = dates_formatted, y = data_IV$quantity, color = "quantity")) +
   theme_minimal()
+
+summary_stats <- data.frame(
+  mean = colMeans(data_IV, na.rm = TRUE),
+  sd = apply(data_IV, 2, sd, na.rm = TRUE)
+)
+
 
 # Eigenvalue decomposition
 # eig <- eigen(Sigma_a)
@@ -260,93 +256,147 @@ saveRDS(hd_cholesky, "hd_chol_4v_fr.rds")
 
 
 
+zero_errors <- matrix(0, nrow = dim(res)[1], ncol = dim(res)[2])
 
-#On se demande à quel point il ne faut pas ajuster les structural shocks IV en renormalisant
-#on regarde des summary stat
+reconstruct_derive_without_errors_ter <- iterate_var_ter(x=x,
+                                                         initial_obs = x[1:p, ],
+                                                         errors = zero_errors,
+                                                         var_model = vl
+)
 
 # Suppose:
 # hd_array: array of dim (T, n_var, n_shocks) -> historical decomposition
 # var_idx: index of the variable (e.g., 2 for "spot_price")
 # shock_idx: index of the shock of interest
-dim(hd_cholesky)
+
 # Example: get contribution of electricity price shocks to inflation
 
-desired_period <- seq(as.Date("2021-07-01"), as.Date("2022-12-01"), by = "month")
-# Convert to yearmon
-desired_period_yearmon <- as.yearmon(desired_period)
 
-# Get indices of matching dates
-matching_indices <- which(dates_formatted %in% desired_period_yearmon)
+compute_contributions <- function(start_date, end_date, 
+                                  dates_formatted, 
+                                  IV_data_log_diff_fr, 
+                                  hd_cholesky, 
+                                  historical_decomp_iv_tibo, 
+                                  series = 4) {
+  
+  # Generate the date sequence and convert to yearmon
+  desired_period <- seq(as.Date(start_date), as.Date(end_date), by = "month")
+  desired_period_yearmon <- as.yearmon(desired_period)
+  
+  # Get matching indices
+  matching_indices <- which(dates_formatted %in% desired_period_yearmon)
+  
+  # Total inflation during the period
+  cumulative_inflation <- sum(IV_data_log_diff_fr$HICP_log_diff[p +matching_indices])
+  
+  #cumulative_elec_price <- sum(IV_data_log_diff_fr$spot_price_log_diff[matching_indices])
+  
+  # Cholesky contributions
+  contrib_price <- sum(hd_cholesky[, series, 2][matching_indices]) / cumulative_inflation
+  contrib_gen   <- sum(hd_cholesky[, series, 1][matching_indices]) / cumulative_inflation
+  
 
-inflation_contrib_from_price <- hd_cholesky[,series,2]
-cumulative_contrib_period_price <- sum(inflation_contrib_from_price[matching_indices])
+  
+  # price_data <- hd_cholesky_index[, series, 2][matching_indices]
+  # # qty_data <- hd_cholesky_index[, series, 1][matching_indices]
+  # diff_contrib_price <- price_data[length(price_data)] -  
+  #   price_data[1]
+  # sum(diff(price_data))
 
-inflation_contrib_from_gen <- hd_cholesky[,series,1]
-cumulative_contrib_period_gen <- sum(inflation_contrib_from_gen[matching_indices])
-
-y_log_diff <- vars[5:nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
-cumulative_inflation <- cumsum(y_log_diff)[matching_indices]
-delta_inflation <- sum(cumulative_inflation)
-
-
-contrib_price <- cumulative_contrib_period_price/delta_inflation
-contrib_gen <- cumulative_contrib_period_gen/delta_inflation
-
-
-historical_decomp_iv_tibo_bis <- apply(historical_decomp_iv_tibo, c(2,3), function(x) cumsum(x))
-inflation_contrib_from_price_iv <- historical_decomp_iv_tibo_bis[,series,2]
-cumulative_contrib_period_price_iv <- sum(inflation_contrib_from_price_iv[matching_indices])
-
-inflation_contrib_from_gen_iv <- historical_decomp_iv_tibo_bis[,series,1]
-cumulative_contrib_period_gen_iv <- sum(inflation_contrib_from_gen_iv[matching_indices])
-
-contrib_price_iv <- cumulative_contrib_period_price_iv/delta_inflation
-contrib_gen_iv <- cumulative_contrib_period_gen_iv /delta_inflation
-
-
-
-
-# Create the original wide table first
-library(tidyr)
-
-contribution_table <- data.frame(
-  Identification = rep(c("Cholesky", "IV"), each = 2),
-  Contribution_Type = rep(c("$P_{elec}$", "$Q_{elec}$"), times = 2),
-  Contribution = c(
-    100*contrib_price,
-    100*contrib_gen,
-    100*contrib_price_iv,
-    100*contrib_gen_iv
+  # methode 2
+  # inflation_data <- (log(IV_data_log_diff_fr[(p+1):nrow(IV_data_log_diff_fr), "HICP"] ))[[1]][matching_indices]
+  # cumulative_inflation <- inflation_data[length(matching_indices)] - inflation_data[1]
+  # 
+  
+  
+  # IV contributions
+  contrib_price_iv <- sum(historical_decomp_iv_tibo[, series, 2][matching_indices]) / cumulative_inflation
+  contrib_gen_iv   <- sum(historical_decomp_iv_tibo[, series, 1][matching_indices]) / cumulative_inflation
+  
+  
+  
+  # Return a tidy data frame (long format)
+  tibble::tibble(
+    Identification = rep(c("Cholesky", "IV"), each = 2),
+    Contribution_Type = rep(c("$P_{elec}$", "$Q_{elec}$"), times = 2),
+    Contribution = 100 * c(contrib_price, contrib_gen, contrib_price_iv, contrib_gen_iv)
   )
+}
+
+
+# Compute contributions for 2021 Q3 to 2022 Q4
+contribution_data <- compute_contributions(
+  start_date = "2021-07-01",
+  end_date = "2022-12-01",
+  dates_formatted = dates_formatted,
+  IV_data_log_diff_fr = IV_data_log_diff_fr,
+  hd_cholesky = hd_cholesky,
+  historical_decomp_iv_tibo = historical_decomp_iv_tibo,
+  series = 4
 )
 
-# Pivot to wide format
-contribution_table_wide <- pivot_wider(
-  contribution_table,
-  names_from = Contribution_Type,
-  values_from = Contribution
+contribution_table_wide <- contribution_data %>%
+  tidyr::pivot_wider(
+    names_from = Contribution_Type,
+    values_from = Contribution
+  )
+
+#what is my study period ?
+
+
+contribution_data_2 <- compute_contributions(
+  start_date = "2021-01-01",
+  end_date = "2022-07-01",
+  dates_formatted = dates_formatted,
+  IV_data_log_diff_fr = IV_data_log_diff_fr,
+  hd_cholesky = hd_cholesky,
+  historical_decomp_iv_tibo = historical_decomp_iv_tibo,
+  series = 4
 )
 
+contribution_table_wide_2 <- contribution_data_2 %>%
+  tidyr::pivot_wider(
+    names_from = Contribution_Type,
+    values_from = Contribution
+  )
 
-# Generate the gt table
+
+contribution_data_3 <- compute_contributions(
+  start_date = "2021-01-01",
+  end_date = "2022-12-01",
+  dates_formatted = dates_formatted,
+  IV_data_log_diff_fr = IV_data_log_diff_fr,
+  hd_cholesky = hd_cholesky,
+  historical_decomp_iv_tibo = historical_decomp_iv_tibo,
+  series = 4
+)
+
+contribution_table_wide_3 <- contribution_data_3 %>%
+  tidyr::pivot_wider(
+    names_from = Contribution_Type,
+    values_from = Contribution
+  )
+
+
+
 gt_table <- contribution_table_wide %>%
-  gt() %>%
-  tab_header(
-    title = md("**Cumulative Contribution to Inflation**"),
-    subtitle = md("from 2021 Q3 to 2022 Q4 (in %)")
+  gt::gt() %>%
+  gt::tab_header(
+    title = gt::md("**Cumulative Contribution to Inflation**"),
+    subtitle = gt::md("from 2021 Q3 to 2022 Q4 (in %)")
   ) %>%
-  cols_label(
+  gt::cols_label(
     Identification = "Identification",
-    `$P_{elec}$` = md("$P_{elec}$"),
-    `$Q_{elec}$` = md("$Q_{elec}$")
+    `$P_{elec}$` = gt::md("$P_{elec}$"),
+    `$Q_{elec}$` = gt::md("$Q_{elec}$")
   ) %>%
-  fmt_number(
+  gt::fmt_number(
     columns = c(`$P_{elec}$`, `$Q_{elec}$`),
     decimals = 2
   )
 
-# Print the table
 gt_table
+
 
 
 

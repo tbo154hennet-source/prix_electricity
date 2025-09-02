@@ -1,0 +1,218 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Load Data
+
+```{r}
+library(slider)
+save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
+setwd(save_rds_path_hd)
+historical_decomp_iv_tibo <- readRDS( "hd_iv_4v_double_bis_fr.rds")
+#historical_decomp_iv_tibo <- historical_decomp_iv_tibo[, , c(2, 1)]
+hd_cholesky <- readRDS( "hd_chol_4v_fr.rds")
+
+
+mean_vector <- colMeans(vars, na.rm = TRUE)
+vars_demeaned <- sweep(vars, 2, mean_vector, "-")
+vars_reconstructed <- sweep(vars_demeaned, 2, mean_vector, "+")
+vars<- ts(IV_data_log_diff_fr[, c(headers_var_gen_first_mp)], frequency=12)
+
+x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
+#vl = vars::VAR(x, p, type = "none", exogen = controls)
+vl = vars::VAR(x, p, type = "none")#, exogen = controls)
+#historical_decomp_extended <- readRDS( "hd_chol_gas_fr.rds")
+
+```
+
+# Historical Decomposition
+
+```{r}
+library(ggplot2)
+dates_formatted <- as.yearmon(time(x))
+dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
+str(dates_formatted)
+colors_shock <- rev(c("purple", "yellow",  "blue", "red", "green"))
+names <- c("$Q_{elec}$" , "$P_{elec}$","IPI",  "$HICP$", "Trend")
+
+theta_0 <- matrix(rnorm(10, 0, 1), ncol=2, nrow= length(colors_shock))
+irf_response_test <- as.data.frame(theta_0)
+irf_response_test$shock <- rep(names, length.out = length(theta_0[,1]))
+irf_response_test$shock <- factor(irf_response_test$shock, levels = names)
+# fake plot just to construct the correct legend
+dates_formatted <- as.yearmon(time(x))
+#dates_formatted <- dates_formatted[(p+1):(length(dates_formatted)-p)]
+# Format to shorter labels (e.g., "May 15", "Jun 15", ...)
+
+
+plot_legend <- ggplot(data =irf_response_test, aes(x=V1, fill = shock))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+  values = colors_shock,
+  labels = TeX(names))
+# Légende personnalisée (à ajuster selon vos besoins)
+custom_legend <- cowplot::get_legend(plot_legend)
+
+```
+
+La différence qui existe entre ma série et la série reconstruite
+correspond à l'approximation de la limite des horizons.
+Lorsque pour une Cholesky, on calcule de plus en plus d'horizons,
+la différence entre les deux courbes se réduit
+En plus, il y avait la dérive intuitée par Giovanni.
+
+
+
+
+
+# IV partial Identification
+
+
+```{r}
+colors_shock <- rev(c(  "red", "green"))
+historical_decomp_matrix <- historical_decomp_iv_tibo
+n_serie = 4
+ne_hd_iv <- plot_hd_demeaned(series = n_serie)+
+    labs(title=TeX(paste("Historical Decomposition of HICP")) ,
+         x="Time", y="Contribution")
+ne_hd_iv 
+```
+
+
+
+```{r}
+colors_shock <- rev(c(  "red", "green" ))
+historical_decomp_matrix <- historical_decomp_iv_tibo
+n_serie = 4
+ne_hd_iv <- plot_hd_inflation_glissante_12(series = n_serie)+
+    labs(title=TeX(paste("Historical Decomposition of HICP")) ,
+         x="Time", y="Contribution")
+inflation_12m = slide_dbl(IV_data_log_diff_fr$HICP_log_diff, sum, .before = 11, .complete = TRUE)
+ne_hd_iv <- ne_hd_iv +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(inflation_12m)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)]), color = "black", linetype = "dashed") +
+    labs(#title=TeX(paste("Historical Decomposition of HICP with 12-month Inflation")) ,
+         x="Time", y="Contribution")
+
+ne_hd_iv
+```
+
+
+
+```{r}
+n <-4
+# Apply the function to the sequence 3:10
+results <- lapply(c(1:n) , plot_hd_inflation_glissante_12)
+
+#enlever la légende
+results <- lapply(results, function(p) p + theme(legend.position = "none"))
+
+# Arrange the plots in a grid
+plots_grid <- do.call("grid.arrange", c(results, nrow = 2))
+
+# Combine the grid with the legend
+final_plot <- plot_grid(plots_grid, custom_legend, ncol = 1, rel_heights = c(1, 0.1))
+
+title <- ggdraw() + 
+  draw_label(TeX('Historical Decomposition'), fontface = 'bold', x = 0.5, hjust = 0.5)
+
+# Combine the title and the final plot with legend
+final_plot_with_title <- plot_grid(title, final_plot, ncol = 1, rel_heights = c(0.1, 1))
+
+# Display the final plot
+print(final_plot_with_title)
+```
+
+
+
+```{r}
+
+historical_decomp_matrix1 <- hd_cholesky
+historical_decomp_matrix2 <- historical_decomp_iv_tibo
+n_serie = 4
+ne_hd_compare_12 <- plot_hd_inflation_glissante_12_compare(series = n_serie)
+
+inflation_12m = slide_dbl(IV_data_log_diff_fr$HICP_log_diff, sum, .before = 11, .complete = TRUE)
+ne_hd_compare_12 <- ne_hd_compare_12 +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = inflation_12m[(p+1):(length(dates_formatted)-p)], color = "Inflation"), linetype = "dashed") +
+  geom_line(aes(x = as.Date(dates_formatted), y = IV_data_log_diff_fr$spot_price/1000, color = "$P_{elec}$"), linetype = "dashed") +
+    labs(#title=TeX(paste("Historical Decomposition of HICP with 12-month Inflation")) ,
+         x="Time", y="Contribution")+
+  scale_y_continuous(
+    name = "Contribution",
+    sec.axis = sec_axis(
+      ~ . * 1000,  # Remultiplier pour retrouver l'échelle du prix spot
+      name = expression(paste("Price (€) "))
+    )
+  )+
+  scale_color_manual(
+    name = "Legend",
+    values = c(
+      "Inflation" = "black",
+      "$P_{elec}$" = "grey"
+      ),
+    labels = TeX(c( "Inflation","$P_{elec}$" ))
+  ) 
+ne_hd_compare_12
+```
+
+
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+#ggsave("ne_hd_4v.png", plot = ne_hd, width = 10, height = 6, dpi = 300)
+ggsave("ne_hd_12_iv.png", plot = ne_hd_iv, width = 10, height = 6, dpi = 300)
+#ggsave("ne_hd_iv_4v.png", plot = ne_hd_iv, width = 10, height = 6, dpi = 300)
+ggsave("ne_hd_12_compare.png", plot = ne_hd_compare_12, width = 10, height = 6, dpi = 300)
+
+
+```
+
+Describing the summation Error
+
+```{r}
+series = 4
+data <- data.frame(
+  x = dates_formatted,
+  y = vars_demeaned[5:nrow(vars_demeaned),series],
+  ytest = apply(historical_decomp_matrix[,series ,], 1, sum)
+)
+
+
+ggplot(data, aes(x = x)) +
+  geom_line(aes(y = y, color = "Actual")) +
+  geom_line(aes(y = ytest, color = "Decomposition")) +
+  geom_line(aes(y = y- ytest, color = "Error")) +
+  scale_color_manual(values = c("Actual" = "blue", 
+                                "Decomposition" = "red",
+                                "Error"="black")) +
+  theme_minimal() +
+  labs(title = paste("Decomposition of", series, "using historical data"),
+       x = "Date",
+       y = "Value") +
+  theme(legend.position = "top")
+```
+
+Montrer le terme de dérive lorsqu'on fait tourner la VAR sans erreurs
+
+
+```{r}
+
+
+ggplot() +
+  geom_line(mapping= aes(x= dates_formatted, 
+                         y = reconstruct_derive_without_errors_ter[,series][c(-1:-p)], color = "Derive"))+
+  geom_line(data=data, mapping=aes(x = x, y = y - ytest, color = "Error")) +
+  scale_color_manual(values = c("Derive" = "blue", 
+                                "Decomposition" = "red",
+                                "Error"="black")) +
+  theme_minimal() +
+  labs(title = paste("Decomposition of", series, "using historical data"),
+       x = "Date",
+       y = "Value") +
+  theme(legend.position = "top")
+```
+

@@ -17,7 +17,7 @@ library(latex2exp)
 
 
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")%>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
@@ -26,7 +26,7 @@ price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")%>%
          Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity
 )
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF <- read_parquet("price_merge_CBF.parquet")
 
 ```
@@ -108,20 +108,20 @@ unavail_plot
 
 ```{r}
 
-save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 rf_predictions_data <- read_parquet( 'rf_predictions_data_xgb_esp.parquet')
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE.parquet")
 
 # 
-# save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+# save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 # setwd(save_path_data)
 # publi_bout_indispo <- read_parquet( "save_indispo_with_pub_status_esp.parquet") %>% 
 #   distinct()
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 #write_parquet(res, "save_pub_status.parquet")
 publi_all_matched_indispo <- read_parquet( "day_ahead_indispo_formatted.parquet")
@@ -194,6 +194,8 @@ plot1 <- ggplot() +
            stat = "identity", position = "dodge") +
 theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
         axis.text.x = element_blank(),
+      axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.y  = element_text(size = 12), 
         legend.position = "none")  # Désactiver les ticks de l'axe des x
 
 
@@ -202,13 +204,20 @@ theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
 #   
 # Deuxième graphique: Nombre d'indisponibilités (n_indispo)
 plot2 <- ggplot() +
- geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type), alpha=0.4) +
-  geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type), 
+ geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Effective unavailability")) +
+  geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Declared unavailability"), 
            stat = "identity", position = "dodge") +
   labs( y = "Event count", fill = "Fuel type") +
-  theme(axis.text.x = element_text(angle = 30, hjust =1),
-        axis.title.x = element_blank())
-
+  theme(
+    #legend.key.size = unit(1.5, "cm") , 
+        legend.text = element_text(size = 15),
+        axis.text.x = element_text(size = 14, angle = 30, hjust =1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.y  = element_text(size = 12) )+
+  scale_alpha_manual(name = "Unavailability", 
+                     values = c("Declared unavailability" = 1, 
+                                "Effective unavailability" = 0.4)) 
 custom_legend <- cowplot::get_legend(plot2)
 
 plot2 <-plot2 +
@@ -222,13 +231,25 @@ plot2 <-plot2 +
 combined_plot <- plot1 / plot2 #+ draw_plot(custom_legend, x = 0.8, y = 0.5, width = 0.2, height = 0.5)
 # Combine the grid with the legend
 final_plot <- plot_grid(combined_plot, custom_legend ,
-                        ncol = 2, rel_heights = c(1, 0.1))
+                        ncol = 2, rel_heights = c(2, 0.1))
 
 
 
 # Afficher le graphique combiné
 final_plot
 ```
+
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("day_ahead_indispo_predicted.png", plot = final_plot, width = 8, height = 6, dpi = 300)
+
+
+```
+
+
 
 ```{r}
 
@@ -388,7 +409,15 @@ renew_plot <- ggplot(data = dayahead_price_indispo_data %>%
       "Solar" = "#7570b3"
     )
   ) +
-  theme_minimal()
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
 
 renew_plot
 ```
@@ -398,7 +427,7 @@ renew_plot
 save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
-ggsave("renewable_description.png", plot = renew_plot, width = 8, height = 6, dpi = 300)
+ggsave("renewable_description.png", plot = renew_plot, width = 12, height = 6, dpi = 300)
 
 
 ```

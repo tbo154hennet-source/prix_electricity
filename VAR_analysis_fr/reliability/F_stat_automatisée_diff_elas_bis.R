@@ -244,6 +244,36 @@ result_esp_sd_qty$result_HICP$gmin_generalized
 result_esp_sd_qty$fstat
 print(summary(result_esp_sd_qty$m_summary))
 
+
+
+result_esp_sd_price_wind <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, 
+                                              headers_var_spot_first, headers_proxies = c("wind_forecast_log_diff"), p =12, 
+                                              dependent = "spot_price_log_diff", k = 1, cov_type = "NW")
+result_esp_sd_price_wind$fstat
+print(summary(result_esp_sd_price_wind$m_summary))
+result_esp_sd_price_wind$result_gen_tot_log_diff$gmin_generalized
+result_esp_sd_price_wind$result_IPI$gmin_generalized
+result_esp_sd_price_wind$result_HICP$gmin_generalized
+
+result_esp_sd_price_wind$result_gen_tot_log_diff$stock_yogo_test_statistic
+result_esp_sd_price_wind$result_IPI$stock_yogo_test_statistic
+result_esp_sd_price_wind$result_HICP$stock_yogo_test_statistic
+
+
+
+result_esp_sd_price_supply_pre <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp %>% 
+                                                filter(observation_date <= as.Date("2022-01-01")), 
+                                                start_time = c(2015, 1),
+                                                end_time = c(2022, 1),
+                                              headers_var_spot_first, headers_proxies = headers_proxies_supply, p =12, 
+                                              dependent = "spot_price_log_diff", k = 1, cov_type = "NW")
+result_esp_sd_price_supply_pre$fstat
+print(summary(result_esp_sd_price_supply_pre$m_summary))
+result_esp_sd_price_supply_pre$result_gen_tot_log_diff$gmin_generalized
+result_esp_sd_price_supply_pre$result_IPI$gmin_generalized
+result_esp_sd_price_supply_pre$result_HICP$gmin_generalized
+
+
 # result_esp_sd_qty <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp,
 #                                      headers_var, headers_proxies_supply, p = 12,
 #                                      dependent = "gen_tot_log_diff", k = 1)

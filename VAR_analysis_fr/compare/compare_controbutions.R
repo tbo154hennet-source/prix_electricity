@@ -1,17 +1,11 @@
 
 
-zero_errors <- matrix(0, nrow = dim(res)[1], ncol = dim(res)[2])
 
-reconstruct_derive_without_errors_ter <- iterate_var_ter(x=x,
-                                                         initial_obs = x[1:p, ],
-                                                         errors = zero_errors,
-                                                         var_model = vl
-)
 save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
 setwd(save_rds_path_hd)
 historical_decomp_iv_mr <-  readRDS("hd_iv_4v.rds")
 hd_cholesky <-   readRDS( "hd_chol_4v.rds")
-historical_decomp_iv_double <- readRDS( "hd_iv_4v_double_bis.rds")
+historical_decomp_iv_double <- readRDS( "hd_iv_4v_double.rds")
 
 
 
@@ -20,6 +14,8 @@ setwd(save_rds_path_hd)
 historical_decomp_iv_1var <-  readRDS( "hd_iv_4v.rds")
 
 
+#historical_decomp_iv_tibo <- historical_decomp_iv_tibo[, , c(2, 1)]
+hd_cholesky <- readRDS( "hd_chol_4v.rds")
 # Suppose:
 # hd_array: array of dim (T, n_var, n_shocks) -> historical decomposition
 # var_idx: index of the variable (e.g., 2 for "spot_price")
@@ -27,6 +23,8 @@ historical_decomp_iv_1var <-  readRDS( "hd_iv_4v.rds")
 
 # Example: get contribution of electricity price shocks to inflation
 
+dates_formatted <- as.yearmon(time(x))
+dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
 
 compute_contributions <- function(start_date, end_date, 
                                   dates_formatted, 
@@ -60,18 +58,25 @@ compute_contributions <- function(start_date, end_date,
   contrib_demand_iv_double   <- sum(historical_decomp_iv_double[, series, 1][matching_indices]) / cumulative_inflation
   contrib_supply_iv_double <- sum(historical_decomp_iv_double[, series, 2][matching_indices]) / cumulative_inflation
   
-  
+
   # Return a tidy data frame (long format)
   tibble::tibble(
     Identification = rep(c("Cholesky", "IV MR", "IV SD", "Joint IV SD"), each = 2),
     Contribution_Type = rep(c("Demand", "Supply"), times = 4),
-    Contribution = 100 * c(
+    `Contribution (pp)` = 100 * cumulative_inflation * c(
+      contrib_demand_chol,  contrib_supply_chol,
+      contrib_demand_mr,    contrib_supply_mr,
+      contrib_demand_iv_1var, contrib_supply_iv_1var,
+      contrib_demand_iv_double, contrib_supply_iv_double
+    ),
+    `Contribution (%)` = 100 * c(
       contrib_demand_chol,  contrib_supply_chol,
       contrib_demand_mr,    contrib_supply_mr,
       contrib_demand_iv_1var, contrib_supply_iv_1var,
       contrib_demand_iv_double, contrib_supply_iv_double
     )
   )
+  
   
   
 }
@@ -92,30 +97,87 @@ contribution_data_HICP <- compute_contributions(
 contribution_table_wide_HICP <- contribution_data_HICP %>%
   tidyr::pivot_wider(
     names_from = Contribution_Type,
-    values_from = Contribution
+    values_from = c(`Contribution (pp)`, `Contribution (%)`)
   )
 
 
-
-gt_table_HICP <- contribution_table_wide_HICP %>%
+contribution_table_clean <- contribution_table_wide_HICP %>%
+  filter(Identification != "Joint IV SD") %>% 
+  dplyr::rename(
+    `Demand (pp)` = `Contribution (pp)_Demand`,
+    `Supply (pp)` = `Contribution (pp)_Supply`,
+    `Demand (%)`  = `Contribution (%)_Demand`,
+    `Supply (%)`  = `Contribution (%)_Supply`
+    # ajouter `Supply (%)` si elle existe dans tes donn?es
+  )
+gt_table_HICP <- contribution_table_clean %>%
   gt::gt() %>%
   gt::tab_header(
     title = gt::md("**Cumulative Contribution to Inflation**"),
-    subtitle = gt::md("from 2021 Q3 to 2022 Q4 (in %)")
+    subtitle = gt::md("from 2021 Q3 to 2022 Q4")
   ) %>%
   gt::cols_label(
     Identification = "Identification",
-    # `$P_{elec}$` = gt::md("$P_{elec}$"),
-    # `$Q_{elec}$` = gt::md("$Q_{elec}$")
-    Supply = gt::md("Supply"),
-    Demand = gt::md("Demand")
+    `Demand (pp)`  = "Demand (pp)",
+    `Supply (pp)`  = "Supply (pp)",
+    `Demand (%)`   = "Demand (%)"
+    # idem pour Supply (%) si tu l'as
   ) %>%
   gt::fmt_number(
-    columns = c(Supply, Demand),
+    columns = c(`Demand (pp)`, `Supply (pp)`, `Demand (%)`),
     decimals = 2
   )
 
+
 gt_table_HICP
+
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+setwd(save_latex_path)
+gtsave(
+  gt_table_HICP,
+  filename = "cumulative_contributions.tex"
+)
+
+
+
+gt_table_HICP_supply <- contribution_table_clean%>%
+  dplyr::select(Identification, `Supply (pp)`, `Supply (%)`) %>%
+  gt::gt() %>%
+  gt::tab_header(
+    title = gt::md("**Cumulative Contribution to Inflation**"),
+    subtitle = gt::md("from 2021 Q3 to 2022 Q4")
+  ) %>%
+  # Only keep Supply columns
+  gt::cols_label(
+    Identification = "Identification",
+    `Supply (pp)`  = "Supply (pp)",
+    `Supply (%)`   = "Supply (%)"
+  ) %>%
+  # Format only the remaining numeric columns
+  gt::fmt_number(
+    columns = c(`Supply (pp)`, `Supply (%)`),
+    decimals = 2
+  )
+
+# Display the table
+gt_table_HICP_supply
+
+# Save to LaTeX
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+setwd(save_latex_path)
+gtsave(
+  gt_table_HICP_supply,
+  filename = "cumulative_contributions_supply.tex"
+)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -135,31 +197,38 @@ contribution_data_IPI <- compute_contributions(
 contribution_table_wide_IPI <- contribution_data_IPI %>%
   tidyr::pivot_wider(
     names_from = Contribution_Type,
-    values_from = Contribution
+    values_from = c(`Contribution (pp)`, `Contribution (%)`)
   )
 
 
-
-gt_table_IPI  <- contribution_table_wide_IPI %>%
+contribution_table_clean_IPI <- contribution_table_wide_IPI %>%
+  dplyr::rename(
+    `Demand (pp)` = `Contribution (pp)_Demand`,
+    `Supply (pp)` = `Contribution (pp)_Supply`,
+    `Demand (%)`  = `Contribution (%)_Demand`,
+    `Supply (%)`  = `Contribution (%)_Supply`
+    # ajouter `Supply (%)` si elle existe dans tes donn?es
+  )
+gt_table_IPI<- contribution_table_clean_IPI %>%
   gt::gt() %>%
   gt::tab_header(
-    title = gt::md("**Cumulative Contribution to Industrial Production**"),
-    subtitle = gt::md("from 2021 Q3 to 2022 Q4 (in %)")
+    title = gt::md("**Cumulative Contribution to Inflation**"),
+    subtitle = gt::md("from 2021 Q3 to 2022 Q4")
   ) %>%
   gt::cols_label(
     Identification = "Identification",
-    # `$P_{elec}$` = gt::md("$P_{elec}$"),
-    # `$Q_{elec}$` = gt::md("$Q_{elec}$")
-    Supply = gt::md("Supply"),
-    Demand = gt::md("Demand")
+    `Demand (pp)`  = "Demand (pp)",
+    `Supply (pp)`  = "Supply (pp)",
+    `Demand (%)`   = "Demand (%)"
+    # idem pour Supply (%) si tu l'as
   ) %>%
   gt::fmt_number(
-    columns = c(Supply, Demand),
+    columns = c(`Demand (pp)`, `Supply (pp)`, `Demand (%)`),
     decimals = 2
   )
 
-gt_table_IPI 
 
+gt_table_IPI
 
 
 # Renommer colonnes pour éviter conflit
@@ -202,12 +271,6 @@ gt_table_side_by_side <- contribution_table_side_by_side %>%
 gt_table_side_by_side
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
-setwd(save_latex_path)
-gtsave(
-  gt_table,
-  filename = "cumulative_contributions.tex"
-)
 
 
 

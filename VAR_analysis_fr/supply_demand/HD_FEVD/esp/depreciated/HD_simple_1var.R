@@ -12,8 +12,8 @@ irhor = 40
 vars<- ts(IV_data_log_diff_esp[, c(headers_var_gen_first_mp)], frequency=12)
 n_vars <- ncol(vars)
 library(latex2exp)
-colors_shock <- c( "yellow",  "blue", "red", "green", "purple")
-names <- c("$Q_{elec}$" ,"$P_{elec}$", "IPI",  "$HICP$", "ECB rate")
+colors_shock <- c(  "purple", "yellow",  "blue", "green", "red")
+names <- c("$Q_{elec}$" , "$P_{elec}$",  "IPI",  "$HICP$", "ECB rate")
 #custom legend part
 vars_demeaned <- as.data.frame(apply(vars, 2, function(x) x - mean(x)))
 x = ts(vars_demeaned  , start=c(2015,1), end=c(2023,12), frequency=12)
