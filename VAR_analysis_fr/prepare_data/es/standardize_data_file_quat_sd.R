@@ -90,32 +90,44 @@ VAR_series <- VAR_series %>%
 
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-price_indispo_merge <- read_parquet("price_indispo_merge_delta_supply_demand.parquet")
+price_indispo_merge <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet")
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
-save_path_data <-"Z:/prix_electricite_gitlab"
-setwd(save_path_data)
 
-renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
-col_com <- intersect(colnames(renewable_forecasts), colnames(price_indispo_merge))
+# Orthogonaliser delta_s_total par rapport ? delta_d_total
+price_indispo_merge$delta_s_orth <- resid(
+  lm(delta_s_total ~ delta_d_total, data = price_indispo_merge)
+)
 
-# price_indispo_merge_bronte <- left_join(price_indispo_merge_delta, renewable_forecasts %>% select(-col_com),
-#                                     by = c("datetime" = "__index_level_0__"))
-price_indispo_merge <- merge(price_indispo_merge, renewable_forecasts %>% dplyr::select(-col_com),
-                                   by.x = "datetime" , by.y= "__index_level_0__")
-# Calculer la somme ligne par ligne des colonnes sélectionnées
+# Orthogonaliser delta_d_total par rapport ? delta_s_total
+price_indispo_merge$delta_d_orth <- resid(
+  lm(delta_d_total ~ delta_s_total, data = price_indispo_merge)
+)
 
-colnames(price_indispo_merge)
 
-instruments <- c("cold_excess" , "heat_excess" ,"Published.Predicted.Unavailable.Capacity"
-                ,"cbf_es", "renewable_day_ahead_forecast")
-# Construire les noms de colonnes
-cols_supply<- paste0("delta_s_", instruments)
-cols_demand<- paste0("delta_d_", instruments)
-
-# Calculer la somme ligne par ligne des colonnes sélectionnées
-price_indispo_merge$delta_s_total <- rowSums(price_indispo_merge[, cols_supply], na.rm = TRUE)
-price_indispo_merge$delta_d_total <- rowSums(price_indispo_merge[, cols_demand], na.rm = TRUE)
+# save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
+# save_path_data <-"Z:/prix_electricite_gitlab"
+# setwd(save_path_data)
+# 
+# renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
+# col_com <- intersect(colnames(renewable_forecasts), colnames(price_indispo_merge))
+# 
+# # price_indispo_merge_bronte <- left_join(price_indispo_merge_delta, renewable_forecasts %>% select(-col_com),
+# #                                     by = c("datetime" = "__index_level_0__"))
+# price_indispo_merge <- merge(price_indispo_merge, renewable_forecasts %>% dplyr::select(-col_com),
+#                                    by.x = "datetime" , by.y= "__index_level_0__")
+# # Calculer la somme ligne par ligne des colonnes sélectionnées
+# 
+# colnames(price_indispo_merge)
+# 
+# instruments <- c("cold_excess" , "heat_excess" ,"Published.Predicted.Unavailable.Capacity"
+#                 ,"cbf_es", "renewable_day_ahead_forecast")
+# # Construire les noms de colonnes
+# cols_supply<- paste0("delta_s_", instruments)
+# cols_demand<- paste0("delta_d_", instruments)
+# 
+# # Calculer la somme ligne par ligne des colonnes sélectionnées
+# price_indispo_merge$delta_s_total <- rowSums(price_indispo_merge[, cols_supply], na.rm = TRUE)
+# price_indispo_merge$delta_d_total <- rowSums(price_indispo_merge[, cols_demand], na.rm = TRUE)
 
 #adjust for iberian exception gas cap
 
@@ -185,8 +197,12 @@ monthly_energy_data <- price_indispo_merge %>%
     spot_gas= mean(spot_gas, na.rm = TRUE),
     delta_s_total = weighted_mean(delta_s_total, gen_tot),
     delta_d_total = weighted_mean(delta_d_total, gen_tot),
-    delta_s_renewable_day_ahead_forecast = weighted_mean(delta_s_renewable_day_ahead_forecast, gen_tot),
-    delta_d_renewable_day_ahead_forecast = weighted_mean(delta_d_renewable_day_ahead_forecast, gen_tot),
+    delta_s_Fore_Wind = weighted_mean(delta_s_Fore_Wind, gen_tot),
+    delta_s_Fore_Solar= weighted_mean(delta_s_Fore_Solar, gen_tot),
+    delta_d_Fore_Wind = weighted_mean(delta_d_Fore_Wind, gen_tot),
+    delta_d_Fore_Solar= weighted_mean(delta_d_Fore_Solar, gen_tot),
+    delta_s_renewable_day_ahead_forecast = weighted_mean(delta_s_Fore_Wind + delta_s_Fore_Solar, gen_tot),
+    delta_d_renewable_day_ahead_forecast = weighted_mean(delta_d_Fore_Wind + delta_d_Fore_Solar, gen_tot),
     delta_s_cold_excess = weighted_mean(delta_s_cold_excess, gen_tot),
     delta_d_cold_excess = weighted_mean(delta_d_cold_excess, gen_tot),
     delta_s_heat_excess = weighted_mean(delta_s_heat_excess, gen_tot),
@@ -195,6 +211,8 @@ monthly_energy_data <- price_indispo_merge %>%
     delta_d_Published.Predicted.Unavailable.Capacity = weighted_mean(delta_d_Published.Predicted.Unavailable.Capacity, gen_tot),
     delta_s_cbf_es = weighted_mean(delta_s_cbf_es, gen_tot),
     delta_d_cbf_es = weighted_mean(delta_d_cbf_es, gen_tot),
+    delta_s_orth= weighted_mean(delta_s_orth, gen_tot),
+    delta_d_orth= weighted_mean(delta_d_orth, gen_tot),
     datetime = first(datetime)
   ) %>%
   arrange(datetime) %>% 
@@ -303,7 +321,7 @@ IV_data <- merge(IV_data, monthly_weather_data %>%
 
 save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-write_parquet(IV_data, 'IV_data_esp_elas.parquet')
+write_parquet(IV_data, 'IV_data_esp_elas_exo.parquet')
 
 colnames(IV_data)
 

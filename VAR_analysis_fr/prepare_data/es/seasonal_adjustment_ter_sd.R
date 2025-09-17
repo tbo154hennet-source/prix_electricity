@@ -10,7 +10,7 @@ Sys.setenv(lang = "en_US")
 
 save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
-IV_data <- read_parquet('IV_data_esp_elas.parquet') 
+IV_data <- read_parquet('IV_data_esp_elas_exo.parquet') 
 
 #normalize prices with price index
 IV_data <- IV_data %>%
@@ -122,7 +122,10 @@ non_log_diff_var <- c("month", "year", "datetime", "last_Date", "last_Trading.da
                       "cold_excess_demand" , "heat_excess_demand", "cold_excess_supply",                
                        "heat_excess_supply" , "heat_excess_mismatch" ,"cold_excess_mismatch" ,             
                        "temp_excess_demand" , "temp_excess_supply" ,"temp_excess_mismatch",
-                      "PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand", "cbf_es")
+                      "PC1_supply","PC1_demand", "gas_shock_supply", "gas_shock_demand", "cbf_es",
+                      
+                      periodicity_test_col[grepl("delta_", periodicity_test_col)]
+                      )
 
 non_log_col_var <- c(non_log_diff_var)
 
@@ -187,7 +190,7 @@ for (col in cols_to_transform) {
 }
 
 IV_data_log_diff[1,paste0(cols_to_transform, "_log_diff")] <- 0
-write_parquet(IV_data_log_diff, 'IV_data_esp_log_diff_elas.parquet')
+write_parquet(IV_data_log_diff, 'IV_data_esp_log_diff_elas_exo.parquet')
 
 
 

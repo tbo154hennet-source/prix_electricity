@@ -64,12 +64,32 @@ matched_demand_curve <- plot_data %>%
   mutate(cum_energy = cumsum(as.numeric(ENERGY)))
 
 # Tracer les courbes
-ggplot() +
+plot_supply_demand_curve <- ggplot() +
   geom_line(data = supply_curve, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Theoretical")) +
   geom_line(data = demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Theoretical")) +
   geom_line(data = matched_supply_curve, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Matched")) +
   geom_line(data = matched_demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Matched")) +
-  theme_minimal()
+  labs(x= "Quantity", y = "Price")
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
+plot_supply_demand_curve
+```
+
+
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/supply_demand_curve'
+setwd(save_plot_path)
+
+# Assume your ggplot object is called 'p'
+ggsave("supply_demand_curve_plot.png", plot = plot_supply_demand_curve , width = 12, height = 6, dpi = 300)
 
 ```
 

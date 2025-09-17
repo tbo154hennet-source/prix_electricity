@@ -141,6 +141,33 @@ controls_delta <- c(
 
 # Build the formula as a string
 # Build the formula as a string
+# Orthogonaliser delta_d_Fore_Wind par rapport à delta_d_wind_speed_100m
+# Créer la variable directement avec NA quand il manque des valeurs
+
+# Orthogonaliser delta_s_Fore_Wind par rapport à delta_d_Fore_Wind
+mod_s <- lm(delta_s_wind_speed_100m ~ delta_d_wind_speed_100m, 
+            data = price_indispo_merge_bronte, na.action = na.exclude)
+
+price_indispo_merge_bronte$delta_s_wind_speed_100m_ortho <- resid(mod_s)
+
+# Orthogonaliser delta_d_wind_speed_100m par rapport à delta_s_wind_speed_100m
+mod_d <- lm(delta_d_wind_speed_100m ~ delta_s_wind_speed_100m, 
+            data = price_indispo_merge_bronte, na.action = na.exclude)
+
+price_indispo_merge_bronte$delta_d_wind_speed_100m_ortho <- resid(mod_d)
+
+
+mod_s <- lm(delta_s_Fore_Wind ~ delta_d_Fore_Wind, 
+            data = price_indispo_merge_bronte, na.action = na.exclude)
+
+price_indispo_merge_bronte$delta_s_Fore_Wind_ortho <- resid(mod_s)
+
+# Orthogonaliser delta_d_Fore_Wind par rapport à delta_s_Fore_Wind
+mod_d <- lm(delta_d_Fore_Wind ~ delta_s_Fore_Wind, 
+            data = price_indispo_merge_bronte, na.action = na.exclude)
+
+price_indispo_merge_bronte$delta_d_Fore_Wind_ortho <- resid(mod_d)
+
 
 price_indispo_merge_bronte$year <- year(price_indispo_merge_bronte$delivery_date)
 price_indispo_merge_bronte$month <- month(price_indispo_merge_bronte$delivery_date)
@@ -151,13 +178,19 @@ price_indispo_merge_bronte$creneau <- hour(price_indispo_merge_bronte$datetime)
 controls_clean <- controls_vars[!grepl("^as\\.factor\\(", controls_vars)]
 
 #colSums(is.na(price_indispo_merge_bronte[, controls_clean])) #check if there are NA in the instruments
+extended_controls <- c( "cold_excess_supply"  , "heat_excess_supply","global_tilted_irradiance",
+                       "temperature_supply"  , "precipitation_supply" ,    "relative_humidity_supply",
+                       "Published.Unavailable.Capacity" , "Published.Predicted.Unavailable.Capacity", "cbf_es"
+)
 
 price_indispo_merge_bronte_clean <- price_indispo_merge_bronte %>%
   rename(renewable_day_ahead_forecast = day_ahead_forecast) %>% 
-  dplyr::select(all_of(c(controls_delta, controls_clean, "year", "gen_tot", "price", "spot_gas",
+  dplyr::select(all_of(c(controls_delta, controls_clean, extended_controls, "year", "gen_tot", "price", "spot_gas",
                          "month", "weekday", "creneau", "wind_speed_100m", "Fore_Wind", "intraday_Wind", "Wind Onshore"))) %>%       # sÃ©lectionne les colonnes dans col_names
   filter(complete.cases(.) )   %>% 
   filter(price >= 0)
+colnames(price_indispo_merge_bronte)
+
 
 #iv_formula
 
@@ -178,6 +211,8 @@ write_parquet(price_indispo_merge_bronte_clean, "price_indispo_merge_bronte_clea
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_bronte_clean <- read_parquet( "price_indispo_merge_bronte_clean.parquet")
+
+
 
 
 # Build the formula as a string
@@ -306,7 +341,7 @@ gt_table <- df_wind_plot_table_wide %>%
     title = "Elasticities of Supply"
   )
 
-
+gt_table
 
 
 save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"

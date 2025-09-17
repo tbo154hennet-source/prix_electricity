@@ -1,13 +1,14 @@
 library(vars)
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
-source("auxiliary_control.R")
-source("bootstrap_auxiliary_control_bis.R")
+list.files()
+source("auxiliary_control_bis.R")
+source("bootstrap_auxiliary_control_ter.R")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
-
-IV_data_log <- read_parquet('low_freq_data_log.parquet')
+list.files()
+IV_data_log <- read_parquet('IV_data_esp_log.parquet')
 
 colnames(IV_data_log)
 my_plot <- ggplot(data = IV_data_log) +
@@ -48,20 +49,20 @@ colnames(IV_data_log)
 library(systemfit)
 
 # Define the equations
-demand <- gen_tot_log ~ spot_price_log + T_avg_log
-supply <- gen_tot_log ~ spot_price_log + gas_supply_shock
+demand <- gen_tot_log ~ spot_price_log + temperature_supply
+supply <- gen_tot_log ~ spot_price_log + gas_shock_supply
 
 # Combine into a system
 system <- list(demand = demand, supply = supply)
 
 # Fit the system
-fit <- systemfit(system, data = IV_data_log, method = "2SLS", inst = ~ T_avg_log + gas_supply_shock)
+fit <- systemfit(system, data = IV_data_log, method = "2SLS", inst = ~ temperature_supply+ gas_shock_supply)
 
 summary(fit)
 
 
 # First-stage regression for price
-first_stage_manual <- lm( spot_price_log ~  T_avg_log + gas_supply_shock, data = IV_data_log)
+first_stage_manual <- lm( spot_price_log ~  temperature_supply + gas_shock_supply, data = IV_data_log)
 
 # Get the F-statistic
 summary(first_stage_manual)$fstatistic

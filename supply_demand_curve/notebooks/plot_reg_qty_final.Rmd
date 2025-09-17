@@ -3,6 +3,9 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r}
+library(ggplot2)
+```
 
 
 ```{r}
@@ -21,6 +24,8 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
       variable == "unpredicted_renewables" ~ "Unpredicted Renewables (MWh)",
       variable == "intraday_update_renewables" ~ "Intraday Update Renewables (MWh)",
       variable == "cbf_es" ~ "CBF (MWh)",
+      variable == "Fore_Wind" ~ "Wind Day-ahead Forecast (MWh)",
+      variable == "Fore_Solar" ~ "Solar Day-ahead Forecast (MWh)",
       variable == "cold_excess_supply" ~ "Excess Cold (°C)",
       variable == "heat_excess_supply" ~ "Excess Heat (°C)",
       variable == "cold_excess_demand" ~ "Excess Cold (°C)",
@@ -51,6 +56,8 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
     "CBF (MWh)" = "purple",                                # Red
         # Purple
     "Solar Irradiance (W/m2)" = "gold",                     # Brown
+    "Wind Day-ahead Forecast (MWh)" = "green",   # Gray
+    "Solar Day-ahead Forecast (MWh)" = "gold",   # Gray
     "Wind Speed (m/s)" = "#e377c2",                         # Pink
     "Unpredicted Renewables (MWh)" = "lightgreen",
     "Renewable Day-ahead Forecast (MWh)" = "green",   # Gray
@@ -258,7 +265,6 @@ demand_sum_up <-plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data,
    variables = sum_up_factor_demand,
    type = "Demand", matched = "unmatched")
 demand_sum_up
-
 ```
 
 # Variations
@@ -347,6 +353,85 @@ demand_indispo <- plot_shift_with_hist_qty(coef_data = coef_demand_combined,
 
 demand_indispo 
 ```
+
+
+# Linear constrained Regression
+
+
+```{r}
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_control <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_exo.rds")
+coef_supply_unmatched_control <- rbindlist(coef_supply_unmatched_control)
+
+
+coef_demand_unmatched_control <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_exo.rds")
+coef_demand_unmatched_control <- rbindlist(coef_demand_unmatched_control)
+
+# names(coef_demand_unmatched_control)[names(coef_demand_unmatched_control) == "nw_se"] <- "std_error"
+# price_vec <- rep(price_grid_sparse, each = 14)
+# coef_demand_unmatched_control$price_test <- price_vec
+```
+
+
+```{r}
+sum_up_factors_bis <- c("Published.Unavailable.Nuclear.Capacity","Published.Unavailable.Capacity", 
+                        "Fore_Wind", "Fore_Solar",  "cbf_es" ,
+                        "cold_excess_supply","heat_excess_supply" )
+
+supply_sum_up <- plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_control, 
+   variables = sum_up_factors_bis ,
+   type = "Supply", matched = "unmatched")
+supply_sum_up
+```
+```{r}
+
+demand_sum_up <-plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_control, 
+   variables = sum_up_factors_bis ,
+   type = "Demand", matched = "unmatched")
+demand_sum_up
+```
+
+
+# With Orthogonalisation
+
+```{r}
+
+setwd("Z:/code_supply_demand")
+coef_supply_unmatched_control <- readRDS("reg_shift_result_qty_supply_unmatched_control.rds")
+coef_supply_unmatched_control <- rbindlist(coef_supply_unmatched_control)
+
+
+coef_demand_unmatched_control <- readRDS("reg_shift_result_qty_demand_unmatched_control.rds")
+coef_demand_unmatched_control <- rbindlist(coef_demand_unmatched_control)
+
+
+
+```
+
+
+```{r}
+sum_up_factors_bis <- c("Published.Unavailable.Nuclear.Capacity","Published.Unavailable.Capacity", 
+                        "renewable_day_ahead_forecast",  "cbf_es" ,
+                        "cold_excess_supply","heat_excess_supply" )
+
+supply_sum_up <- plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_control, 
+   variables = sum_up_factors_bis ,
+   type = "Supply", matched = "unmatched")
+supply_sum_up
+```
+
+
+
+```{r}
+sum_up_factors_bis <- c("Published.Unavailable.Nuclear.Capacity","Published.Unavailable.Capacity", 
+                        "renewable_day_ahead_forecast",  "cbf_es" ,
+                        "cold_excess_demand","heat_excess_demand" )
+demand_sum_up <-plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_control, 
+   variables = sum_up_factors_bis ,
+   type = "Demand", matched = "unmatched")
+demand_sum_up
+```
+
 
 ```{r}
 save_plot_path <- 'Z:/Overleaf_elec/images/supply_demand_curve'

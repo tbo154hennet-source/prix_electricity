@@ -1,6 +1,5 @@
 
 
-library(purrr)
 library(progress)
 library(progressr)
 library(data.table)
@@ -9,6 +8,7 @@ library(tidyr)
 library(arrow)
 library(lubridate)
 library(ggplot2)
+library(purrr)
 
 setwd("Z:/code_supply_demand")
 instruments <- c("renewable_day_ahead_forecast",
@@ -86,7 +86,6 @@ coef_demand_unmatched_predicted_indispo_data <- rbindlist(coef_demand_unmatched_
 #coef_demand_unmatched_data_ins <- coef_demand_unmatched_data[coef_demand_unmatched_data$variable %in% names_instruments,]
 
 
-
 linear_interpolate <- function(df, variable_name, target_price) {
   # Subset data for the variable
   sub_df <- df[df$variable == variable_name, ]
@@ -120,48 +119,8 @@ linear_interpolate <- function(df, variable_name, target_price) {
 
 
 
-row <- price_indispo_merge[1,]
+row <- price_indispo_merge[1000,]
 
-
-generate_quantity_variation <- function(row) {
-  
-  target_price <- as.numeric(row["price"])  # extraire le prix de la ligne
-  # instruments doit être défini globalement (vecteur de longueur 5)
-  # ex: instruments <- c("inst1", "inst2", "inst3", "inst4", "inst5")
-  
-  results <- data.frame(variable = instruments,
-                        supply_variation = NA_real_,
-                        demand_variation = NA_real_,
-                        delta_q = NA_real_)
-  
-  for (i in seq_along(instruments)) {
-    if (i == 2 | i == 3){
-      var_supply <- paste0(instruments[i], "_supply")
-      var_demand <- paste0(instruments[i], "_demand")
-    } else {
-      var_supply <- instruments[i]
-      var_demand <- instruments[i]
-    }
-    
-    if (var_supply %in% coef_supply_unmatched_predicted_indispo_data$variable) {
-      supply_var <- linear_interpolate(df= coef_supply_unmatched_predicted_indispo_data, 
-                                       variable_name=var_supply, target_price)*as.numeric(row[var_supply])
-    } else {
-      supply_var <- NA_real_
-    }
-    if (var_demand %in% coef_demand_unmatched_predicted_indispo_data$variable) {
-      demand_var <- linear_interpolate(coef_demand_unmatched_predicted_indispo_data, var_demand, target_price)*as.numeric(row[var_demand])
-    } else {
-      demand_var <- NA_real_
-    }
-    
-    results$supply_variation[i] <- supply_var
-    results$demand_variation[i] <- demand_var
-    results$delta_q[i] <- supply_var + demand_var
-  }
-  
-  return(results$delta_q) # vecteur de longueur 5
-}
 
 generate_quantity_variation_complete <- function(row) {
   
@@ -175,7 +134,7 @@ generate_quantity_variation_complete <- function(row) {
                         delta_q = NA_real_)
   #i =2
   for (i in seq_along(instruments)) {
-    if (i == 2 | i == 3){
+    if (i == 3 | i == 4){
       var_supply <- paste0(instruments[i], "_supply")
       var_demand <- paste0(instruments[i], "_demand")
     } else {
@@ -231,13 +190,17 @@ colnames(delta_q_matrix) <- c(paste0("delta_s_", instruments), paste0("delta_d_"
 
 # Ajouter au dataframe
 price_indispo_merge_delta <- bind_cols(price_indispo_merge, as.data.frame(delta_q_matrix))
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 write_parquet(price_indispo_merge_delta, "price_indispo_merge_delta_supply_demand.parquet")
 
 
 # Construire les noms de colonnes
-cols_to_sum <- paste0("delta_q_", instruments)
-
+cols_to_supply <- paste0("delta_s_", instruments)
+cols_to_demand<- paste0("delta_d_", instruments)
 # Calculer la somme ligne par ligne des colonnes sélectionnées
-price_indispo_merge_delta$delta_q_total <- rowSums(price_indispo_merge_delta[, cols_to_sum], na.rm = TRUE)
+price_indispo_merge_delta$delta_s_total <- rowSums(price_indispo_merge_delta[, cols_to_supply], na.rm = TRUE)
+price_indispo_merge_delta$delta_d_total <- rowSums(price_indispo_merge_delta[, cols_to_demand], na.rm = TRUE)
 
-
+price_indispo_merge_delta %>% 
+  dplyr::select(delta_s_total, delta_d_total) %>% 
+  cor(use = "complete.obs")

@@ -158,6 +158,7 @@ print(summary(result_esp$m_price_summary))
 print(summary(result_esp$m_demand_summary))
 
 
+
 headers_proxies_supply <- c("delta_s_total_diff")
 headers_proxies_demand <- c("delta_d_total_diff")
 headers_proxies_supply_demand = c(

@@ -7,7 +7,7 @@ source("bootstrap_auxiliary_control_ter.R")
 
 save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
-IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
+IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas_exo.parquet')
 
 # correct for the Iberian exception
 colnames(IV_data_log_diff_esp)
@@ -16,46 +16,23 @@ IV_data_log_diff_esp <- IV_data_log_diff_esp %>%
   mutate(
     PC1_supply = ifelse(observation_date >= as.Date("2022-06-01") & observation_date <= as.Date("2023-05-31"),
                         0, PC1_supply),
-    PC1_supply = ifelse(observation_date == as.Date("2022-06-01"), -0.5, PC1_supply)
+    PC1_supply = ifelse(observation_date == as.Date("2022-06-01"), -0.5, PC1_supply),
+    ffr_diff = ffr - lag(as.numeric(ffr)),
+    ffr_diff = if_else(is.na(ffr_diff), 0, ffr_diff)
   ) 
-
-
 
 IV_data_log_diff_esp <- IV_data_log_diff_esp %>% 
   mutate(
     diff_cbf = (cbf_es - lag(as.numeric(cbf_es)))/1000,
-    ffr_diff = ffr - lag(as.numeric(ffr)),
-    delta_s_renewable_day_ahead_forecast_diff = (delta_s_renewable_day_ahead_forecast - lag(as.numeric(delta_s_renewable_day_ahead_forecast)))/1000,
-    delta_d_renewable_day_ahead_forecast_diff = (delta_d_renewable_day_ahead_forecast - lag(as.numeric(delta_d_renewable_day_ahead_forecast)))/1000,
-    delta_s_cold_excess_diff = (delta_s_cold_excess - lag(as.numeric(delta_s_cold_excess)))/1000,
-    delta_d_cold_excess_diff = (delta_d_cold_excess  - lag(as.numeric(delta_d_cold_excess )))/1000,
-    delta_s_heat_excess_diff = (delta_s_heat_excess - lag(as.numeric(delta_s_heat_excess)))/1000,
-    delta_d_heat_excess_diff = (delta_d_heat_excess - lag(as.numeric(delta_d_heat_excess)))/1000,
-    delta_s_Published.Predicted.Unavailable.Capacity_diff = (delta_s_Published.Predicted.Unavailable.Capacity - lag(as.numeric(delta_s_Published.Predicted.Unavailable.Capacity)))/1000,
-    delta_d_Published.Predicted.Unavailable.Capacity_diff = (delta_d_Published.Predicted.Unavailable.Capacity - lag(as.numeric(delta_d_Published.Predicted.Unavailable.Capacity)))/1000,
-    delta_s_cbf_es_diff = (delta_s_cbf_es - lag(as.numeric(delta_s_cbf_es)))/1000,
-    delta_d_cbf_es_diff = (delta_d_cbf_es - lag(as.numeric(delta_d_cbf_es)))/1000,
-    diff_cbf = if_else(is.na(diff_cbf), 0, diff_cbf),
-    ffr_diff = if_else(is.na(ffr_diff), 0, ffr_diff),
-    
-    delta_s_renewable_day_ahead_forecast_diff = if_else(is.na(delta_s_renewable_day_ahead_forecast_diff), 0, delta_s_renewable_day_ahead_forecast_diff),
-    delta_d_renewable_day_ahead_forecast_diff = if_else(is.na(delta_d_renewable_day_ahead_forecast_diff), 0, delta_d_renewable_day_ahead_forecast_diff),
-    delta_s_cold_excess_diff = if_else(is.na(delta_s_cold_excess_diff), 0, delta_s_cold_excess_diff),
-    delta_d_cold_excess_diff = if_else(is.na(delta_d_cold_excess_diff), 0, delta_d_cold_excess_diff),
-    delta_s_heat_excess_diff = if_else(is.na(delta_s_heat_excess_diff), 0, delta_s_heat_excess_diff),
-    delta_d_heat_excess_diff = if_else(is.na(delta_d_heat_excess_diff), 0, delta_d_heat_excess_diff),
-    delta_s_Published.Predicted.Unavailable.Capacity_diff = if_else(is.na(delta_s_Published.Predicted.Unavailable.Capacity_diff), 0, delta_s_Published.Predicted.Unavailable.Capacity_diff),
-    delta_d_Published.Predicted.Unavailable.Capacity_diff = if_else(is.na(delta_d_Published.Predicted.Unavailable.Capacity_diff), 0, delta_d_Published.Predicted.Unavailable.Capacity_diff),
-    delta_s_cbf_es_diff = if_else(is.na(delta_s_cbf_es_diff), 0, delta_s_cbf_es_diff),
-    delta_d_cbf_es_diff = if_else(is.na(delta_d_cbf_es_diff), 0, delta_d_cbf_es_diff),
-    
-    
-    delta_s_total_diff = delta_s_renewable_day_ahead_forecast_diff  + delta_s_cold_excess_diff+
-      delta_s_heat_excess_diff + delta_s_Published.Predicted.Unavailable.Capacity_diff,
-    delta_d_total_diff = delta_d_renewable_day_ahead_forecast_diff  + delta_d_cold_excess_diff+
-      delta_d_heat_excess_diff + delta_d_Published.Predicted.Unavailable.Capacity_diff,
-    delta_s_total_diff = if_else(is.na(delta_s_total_diff), 0, delta_s_total_diff),
-    delta_d_total_diff = if_else(is.na(delta_d_total_diff), 0, delta_d_total_diff),
+    #ffr_diff = ffr - lag(as.numeric(ffr)),
+    delta_s_total_diff = delta_s_total - lag(as.numeric(delta_s_total))/1000,
+    delta_d_total_diff = delta_d_total - lag(as.numeric(delta_d_total))/1000,
+    delta_s_orth_diff = delta_s_orth - lag(as.numeric(delta_s_orth))/1000,
+    delta_d_orth_diff = delta_d_orth - lag(as.numeric(delta_d_orth))/1000,
+    delta_s_total_diff = if_else(is.na(delta_s_total_diff), mean(delta_s_total_diff, na.rm = TRUE), delta_s_total_diff),
+    delta_d_total_diff = if_else(is.na(delta_d_total_diff),  mean(delta_d_total_diff, na.rm = TRUE), delta_d_total_diff),
+    delta_s_orth_diff = if_else(is.na(delta_s_orth_diff),  mean(delta_s_orth_diff, na.rm = TRUE), delta_s_orth_diff),
+    delta_d_orth_diff = if_else(is.na(delta_d_orth_diff),  mean(delta_d_orth_diff, na.rm = TRUE), delta_d_total_diff),
   )%>%
   rename(
     cold_excess_instrument = cold_excess_supply,
@@ -64,20 +41,22 @@ IV_data_log_diff_esp <- IV_data_log_diff_esp %>%
   )
 
 
+#   
+# headers_proxies_supply = c(
+#   "delta_s_total_diff"#,
+#   #"delta_d_total_diff"
+# )
+# headers_proxies_demand = c(
+#   #"delta_s_total_diff"#,
+#   "delta_d_total_diff"
+# )
+# headers_proxies_supply_demand = c(
+#   "delta_s_total_diff",#,
+#   "delta_d_total_diff"
+# )
+headers_proxies_supply <- c("delta_s_orth_diff")
+headers_proxies_demand <- c("delta_d_orth_diff")
 
-  
-headers_proxies_supply = c(
-  "delta_s_total_diff"#,
-  #"delta_d_total_diff"
-)
-headers_proxies_demand = c(
-  #"delta_s_total_diff"#,
-  "delta_d_total_diff"
-)
-headers_proxies_supply_demand = c(
-  "delta_s_total_diff",#,
-  "delta_d_total_diff"
-)
 headers_var_spot_first <- c("spot_price_log_diff",
                             "gen_tot_log_diff",
                             "IPI_log_diff",
@@ -169,6 +148,7 @@ to_bis <- l*(p-1)
 
 lambda_0_log_diff <- get_lambda_0(C, theta_0_log_diff)
 cumulative_response <- apply(lambda_0_log_diff , c(2, 3), function(x) cumsum(x))
+#cumulative_response /cumulative_response[1,2,1]
 
 #one year cumulative pass-through
 passthrough_esp <- cumulative_response[12, 4, 1] # 0.0055844890
