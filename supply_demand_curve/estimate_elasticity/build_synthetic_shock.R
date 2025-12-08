@@ -9,7 +9,7 @@ instruments_tot <- c("Fore_Wind",
                  "cold_excess",
                  "heat_excess")
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 #coef_supply_unmatched_indispo <-  readRDS("reg_shift_result_qty_supply_unmatched_sparse_exo.rds")
 
 coef_supply_unmatched_indispo <-  readRDS("reg_shift_result_qty_supply_unmatched_sparse_exo_no_unavail.rds")

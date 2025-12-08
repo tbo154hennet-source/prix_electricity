@@ -229,7 +229,7 @@ price_indispo_merge <- price_indispo_merge %>%
 ```
 
 ```{r}
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse.rds")
 coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
 
@@ -275,7 +275,7 @@ demand_sum_up
 
 ```{r}
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_wind_sun_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_wind_sun_variation.rds")
 coef_supply_unmatched_data_wind_sun_variation <- rbindlist(coef_supply_unmatched_wind_sun_variation)
 
@@ -314,7 +314,7 @@ demand_wind_sun
 
 
 ```{r}
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_predicted_indispo_variation.rds")
 coef_supply_unmatched_predicted_indispo_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
 
@@ -359,7 +359,7 @@ demand_indispo
 
 
 ```{r}
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_control <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_exo.rds")
 coef_supply_unmatched_control <- rbindlist(coef_supply_unmatched_control)
 
@@ -396,7 +396,7 @@ demand_sum_up
 
 ```{r}
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_control <- readRDS("reg_shift_result_qty_supply_unmatched_control.rds")
 coef_supply_unmatched_control <- rbindlist(coef_supply_unmatched_control)
 

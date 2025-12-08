@@ -174,7 +174,7 @@ result_list <- Filter(Negate(is.null), result_list)
 curve_shift_data <- rbindlist(result_list, use.names = TRUE, fill = TRUE)
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 write_parquet(curve_shift_data, 'curve_shift_data_demand_qty_bis.parquet')
 
 setorder(curve_shift_data, DATE, Hour, OFFER_TYPE, MATCHED, PRICE)

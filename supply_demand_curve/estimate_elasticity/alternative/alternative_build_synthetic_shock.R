@@ -26,7 +26,7 @@ names_instruments <- c("renewable_day_ahead_forecast",
                        "Published.Unavailable.Capacity")
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_control <- readRDS("reg_shift_result_qty_supply_unmatched_control.rds")
 coef_supply_unmatched_control <- rbindlist(coef_supply_unmatched_control)
 unique(coef_supply_unmatched_control$variable)

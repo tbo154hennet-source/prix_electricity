@@ -15,11 +15,11 @@ library(sandwich)
 library(lmtest)
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_supply_unmatched <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_unmatched <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 
 
@@ -139,7 +139,7 @@ estimate_coeff_shift_qty_controled <- function(price_test, reconstruct_full_curv
 }
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
 setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
 
@@ -255,7 +255,7 @@ coef_demand_unmatched<- future_lapply(price_grid_sparse, function(g) {
 #   })
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_ortho_mat.rds")
 
 coef_supply_unmatched <- future_lapply(price_grid_sparse, function(g) {
@@ -268,7 +268,7 @@ coef_supply_unmatched <- future_lapply(price_grid_sparse, function(g) {
 })
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_ortho_mat.rds")
 
 

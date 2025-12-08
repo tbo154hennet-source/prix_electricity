@@ -8,6 +8,8 @@ library(tidyr)
 library(purrr)
 library(data.table)
 library(ggplot2)
+library(slider)
+library(fixest)
 # Données
 df <- tribble(
   ~Market, ~Announcement, ~Nuclear, ~Thermal, ~Predicted,
@@ -163,14 +165,10 @@ FR_data_cpi <- FR_data_cpi %>%
 
 US_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA'
 setwd(US_path)
-US_data <-read.csv( 'US_elec_data.csv')
-
-
-US_trend <- US_data %>% 
-  filter(sectorName == "all sectors") %>% 
-  group_by(year, month) %>% 
-  summarise( price = weighted.mean(price, sales)  )
-
+US_data <-read.csv( 'US_Elec_price_index.csv') %>% 
+  mutate(month = month(observation_date),
+         year = year(observation_date)) %>% 
+  filter(year >= 2015 & year <= 2023)
 #kwh per cent
 #vs Euro per MWh
 
@@ -180,14 +178,13 @@ us_eu_exchang_rate <- read_excel("USD_EU_exchange_rate.xlsx", skip = 10) %>%
          year = year(observation_date)) %>% 
   summarise(
     DEXUSEU = mean(DEXUSEU, na.rm = TRUE),
-    observation_date = first(observation_date),
+    #observation_date = first(observation_date),
     .by = c("year", "month")
   )
 
 #conversion
-US_trend <- merge(US_trend, us_eu_exchang_rate, by = c("year", "month")) %>% 
-  mutate(price = price * DEXUSEU *10) %>% 
-  filter(year >= 2015)
+US_trend <- merge(US_data, us_eu_exchang_rate, by = c("year", "month")) %>% 
+  mutate(price =  APU000072610*1000 )#* DEXUSEU ) 
 
 
 save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
@@ -199,14 +196,16 @@ IV_data <-read_parquet( 'IV_data_fr.parquet')%>%
 
 motivation_plot <- ggplot(data = IV_data) +
 
-  geom_line(aes(x = observation_date, y = CPElec,
+  geom_line(aes(x = observation_date, y = spot_price,
                 color = "FR",
                 linetype = "P[elec]")) +
   
   geom_line(data = US_trend , aes(x = as.Date(observation_date), y = price, color = "US", linetype = "P[elec]")) +
-  geom_line(data = FR_data_cpi, aes(x = observation_date, y = 100 +3* inflation_12m, color = "FR", linetype = "pi"))+
-  geom_line(data = US_data_cpi, aes(x = observation_date, y = 100 + 3*inflation_12m, color = "US", linetype = "pi"))+
-
+  # geom_line(data = FR_data_cpi, aes(x = observation_date, y = 100 +3* inflation_12m, color = "FR", linetype = "pi"))+
+  # geom_line(data = US_data_cpi, aes(x = observation_date, y = 100 + 3*inflation_12m, color = "US", linetype = "pi"))+
+  geom_line(data = FR_data_cpi, aes(x = observation_date, y = 20* inflation_12m, color = "FR", linetype = "pi"))+
+  geom_line(data = US_data_cpi, aes(x = observation_date, y = 20*inflation_12m, color = "US", linetype = "pi"))+
+  
   scale_color_manual(
     values = c("FR" = "red",
                "US" = "blue"
@@ -220,22 +219,84 @@ motivation_plot <- ggplot(data = IV_data) +
     name = "Indicator"
   ) +
   labs(
-    title = "Inflation and Electricity Price – France vs US",
     x = "Date",
     y = "Value"
   ) +
   scale_y_continuous(
     name = "Electricity Price",
-    sec.axis = sec_axis(~ (. - 100)/3, name = "Inflation (%)")  # On décale l’axe secondaire de 100 (car tu as fait 100 + inflation)
+    sec.axis = sec_axis(~ ./20, name = "Inflation (%)")  # On décale l’axe secondaire de 100 (car tu as fait 100 + inflation)
   ) +
-  theme_minimal()
-
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
 motivation_plot
 
 save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
-ggsave("trends_elec_inflation.png", plot = motivation_plot, width = 18, height = 6, dpi = 300)
+ggsave("trends_elec_inflation.png", plot = motivation_plot, width = 12, height = 6, dpi = 300)
+
+
+
+save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+setwd(save_var_path)
+IV_data_esp <-read_parquet( 'IV_data_esp.parquet')%>% 
+  mutate(HICP_log_diff = log(HICP) - log(lag(HICP, 1)),
+         inflation_12m = slide_dbl(HICP_log_diff, sum, .before = 11, .complete = TRUE))
+
+
+motivation_plot <- ggplot(data = IV_data) +
+
+  geom_line(aes(x = observation_date, y = spot_price,
+                color = "FR",
+                linetype = "P[elec]")) +
+  geom_line(data = IV_data_esp, aes(x = observation_date, y = spot_price,
+                color = "ESP",
+                linetype = "P[elec]")) +
+  # geom_line(data = FR_data_cpi, aes(x = observation_date, y = 100 +3* inflation_12m, color = "FR", linetype = "pi"))+
+  # geom_line(data = US_data_cpi, aes(x = observation_date, y = 100 + 3*inflation_12m, color = "US", linetype = "pi"))+
+  geom_line(data = IV_data, aes(x = observation_date, y = 100 +1000*inflation_12m, color = "FR", linetype = "pi"))+
+  geom_line(data = IV_data_esp, aes(x = observation_date, y = 100 +1000*inflation_12m, color = "ESP", linetype = "pi"))+
+  
+  scale_color_manual(
+    values = c("FR" = "red",
+               "ESP" = "blue"
+               ),
+    name = "Country"
+  ) +
+  scale_linetype_manual(
+    values = c("pi" ="dashed" , "P[elec]" = "solid"),
+    labels = c("pi" = expression(pi[CPI]), 
+               "P[elec]" = expression(P[elec])),
+    name = "Indicator"
+  ) +
+  labs(
+    x = "Date",
+    y = "Value"
+  ) +
+  scale_y_continuous(
+    name = "Electricity Spot Price",
+    sec.axis = sec_axis(~ (.-100)/10, name = "Inflation (%)")  # On décale l’axe secondaire de 100 (car tu as fait 100 + inflation)
+  ) +
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+motivation_plot
+
+save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("trends_elec_inflation_esp.png", plot = motivation_plot, width = 10, height = 6, dpi = 300)
 
 
 

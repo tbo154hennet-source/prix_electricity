@@ -214,7 +214,8 @@ price_indispo_merge_esp <- left_join(day_ahead_prices,
 #getting outages share
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
 setwd(save_path_data)
-
+save_path_data <- "Z:/prix_electricite_gitlab"
+setwd(save_path_data)
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
 colnames(renewable_forecasts)
 
@@ -343,6 +344,28 @@ setwd(save_path_data)
 write_parquet(price_indispo_merge_esp, "price_indispo_merge_esp.parquet")
 
 
+# Winsoriser au 95e centile
+p95 <- quantile(price_indispo_merge_esp$price, 0.95, na.rm = TRUE)
+
+price_indispo_merge_esp <- price_indispo_merge_esp %>%
+  mutate(price_wins = pmin(price, p95))
+
+# Créer l'histogramme
+price_histo <- ggplot(price_indispo_merge_esp %>% filter(year <= 2023), aes(x = price_wins)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(
+    title = "Distribution of Iberian Day-Ahead Market Prices (winsorised at 95%)",
+    x = "Price (euros/MWh)",
+    y = "Count"
+  ) +
+  theme_minimal()
+
+# Sauvegarder dans le dossier voulu
+ggsave(
+  filename = "Z:/Overleaf_elec/images/data_description/price_histo.png",
+  plot = price_histo,
+  width = 8, height = 5, dpi = 300
+)
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 weighted_mean <- function(x, w) {

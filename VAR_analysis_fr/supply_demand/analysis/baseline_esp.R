@@ -7,7 +7,7 @@ source("bootstrap_auxiliary_control_ter.R")
 
 save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
-IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas_exo.parquet')
+IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 
 # correct for the Iberian exception
 colnames(IV_data_log_diff_esp)
@@ -27,12 +27,12 @@ IV_data_log_diff_esp <- IV_data_log_diff_esp %>%
     #ffr_diff = ffr - lag(as.numeric(ffr)),
     delta_s_total_diff = delta_s_total - lag(as.numeric(delta_s_total))/1000,
     delta_d_total_diff = delta_d_total - lag(as.numeric(delta_d_total))/1000,
-    delta_s_orth_diff = delta_s_orth - lag(as.numeric(delta_s_orth))/1000,
-    delta_d_orth_diff = delta_d_orth - lag(as.numeric(delta_d_orth))/1000,
+    # delta_s_orth_diff = delta_s_orth - lag(as.numeric(delta_s_orth))/1000,
+    # delta_d_orth_diff = delta_d_orth - lag(as.numeric(delta_d_orth))/1000,
     delta_s_total_diff = if_else(is.na(delta_s_total_diff), mean(delta_s_total_diff, na.rm = TRUE), delta_s_total_diff),
     delta_d_total_diff = if_else(is.na(delta_d_total_diff),  mean(delta_d_total_diff, na.rm = TRUE), delta_d_total_diff),
-    delta_s_orth_diff = if_else(is.na(delta_s_orth_diff),  mean(delta_s_orth_diff, na.rm = TRUE), delta_s_orth_diff),
-    delta_d_orth_diff = if_else(is.na(delta_d_orth_diff),  mean(delta_d_orth_diff, na.rm = TRUE), delta_d_total_diff),
+    # delta_s_orth_diff = if_else(is.na(delta_s_orth_diff),  mean(delta_s_orth_diff, na.rm = TRUE), delta_s_orth_diff),
+    # delta_d_orth_diff = if_else(is.na(delta_d_orth_diff),  mean(delta_d_orth_diff, na.rm = TRUE), delta_d_total_diff),
   )%>%
   rename(
     cold_excess_instrument = cold_excess_supply,
@@ -42,10 +42,10 @@ IV_data_log_diff_esp <- IV_data_log_diff_esp %>%
 
 
 #   
-# headers_proxies_supply = c(
-#   "delta_s_total_diff"#,
-#   #"delta_d_total_diff"
-# )
+headers_proxies_supply = c(
+  "delta_s_total_diff"#,
+  #"delta_d_total_diff"
+)
 # headers_proxies_demand = c(
 #   #"delta_s_total_diff"#,
 #   "delta_d_total_diff"
@@ -54,8 +54,8 @@ IV_data_log_diff_esp <- IV_data_log_diff_esp %>%
 #   "delta_s_total_diff",#,
 #   "delta_d_total_diff"
 # )
-headers_proxies_supply <- c("delta_s_orth_diff")
-headers_proxies_demand <- c("delta_d_orth_diff")
+# headers_proxies_supply <- c("delta_s_orth_diff")
+# headers_proxies_demand <- c("delta_d_orth_diff")
 
 headers_var_spot_first <- c("spot_price_log_diff",
                             "gen_tot_log_diff",

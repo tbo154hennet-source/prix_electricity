@@ -42,7 +42,7 @@ reconstruct_stocked_curve <- function(type, matched){
 
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 # G?n?re toutes les combinaisons possibles
 combinations <- expand.grid(
   matched = c( "unmatched", "matched"),
@@ -74,7 +74,7 @@ for (i in 1:nrow(combinations)) {
 
 library(ggplot2)
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_supply <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift_demand <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 

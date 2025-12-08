@@ -24,13 +24,22 @@ custom_colors <- c(
 )
 
 # Tracer le camembert
-ggplot(market_data, aes(x = "", y = Volume_TWh, fill = Label)) +
+market_shares <- ggplot(market_data, aes(x = "", y = Volume_TWh, fill = Label)) +
   geom_bar(stat = "identity", width = 1) +
   coord_polar(theta = "y") +
   scale_fill_manual(values = custom_colors) +
   theme_void() +
-  labs(title = "Market shares of total traded electricity \n in Spain for 2023") +
   theme(
     legend.title = element_blank(),
     plot.title = element_text(hjust = 0.5)
+  )+
+  theme(legend.text = element_text(size = 15)    # taille du texte
+        
   )
+
+save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
+setwd(save_plot_path)
+ggsave("market_shares.png", plot = market_shares, width = 10 , height = 6, dpi = 300)
+
+
+

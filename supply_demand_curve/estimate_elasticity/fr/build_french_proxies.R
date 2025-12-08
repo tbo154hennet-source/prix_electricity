@@ -10,7 +10,7 @@ library(arrow)
 library(lubridate)
 library(ggplot2)
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 instruments <- c("renewable_day_ahead_forecast",
                  #"Published.Unavailable.Nuclear.Capacity"
                  "cbf_fr",
@@ -72,7 +72,7 @@ View(price_indispo_merge[, c(instruments, "datetime")])
 
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_predicted_indispo_variation.rds")
 coef_supply_unmatched_predicted_indispo_data <- rbindlist(coef_supply_unmatched_predicted_indispo) %>% 
   mutate(variable = ifelse(variable == "cold_excess_supply" , 

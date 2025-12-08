@@ -140,19 +140,19 @@ result_esp$result_HICP$gmin_generalized
 result_esp$result_IPI$gmin_generalized
 
 
-headers_proxies_supply <- c("delta_s_total_diff")
-headers_proxies_demand <- c("delta_d_total_diff")
-headers_proxies_supply_demand = c(
-  "delta_s_total_diff",
-  "delta_d_total_diff"
-)
-
-# headers_proxies_supply <- c("delta_s_orth_diff")
-# headers_proxies_demand <- c("delta_d_orth_diff")
+# headers_proxies_supply <- c("delta_s_total_diff")
+# headers_proxies_demand <- c("delta_d_total_diff")
 # headers_proxies_supply_demand = c(
-#   "delta_s_orth_diff",
-#   "delta_d_orth_diff"
+#   "delta_s_total_diff",
+#   "delta_d_total_diff"
 # )
+
+headers_proxies_supply <- c("delta_s_orth_diff")
+headers_proxies_demand <- c("delta_d_orth_diff")
+headers_proxies_supply_demand = c(
+  "delta_s_orth_diff",
+  "delta_d_orth_diff"
+)
 
 
 result_esp_sd <- run_iv_analysis(my_IV_data = IV_data_log_diff_esp, headers_var_gen_first , headers_proxies_supply_demand, p = 12,
@@ -225,7 +225,7 @@ extract_stats <- function(result, label, k = 1) {
   }
 }
 
-# --- petite fonction pour extraire les stats clés ---
+# --- petite fonction pour extraire les stats cl?s ---
 # extract_stats <- function(result, label) {
 #   tibble::tibble(
 #     Model = label,
@@ -299,10 +299,28 @@ spain_relevance <- stats_table %>%
     columns = c(Fstat, Gmin_IPI, Gmin_HICP),
     decimals = 2
   ) %>%
+  cols_label(
+    Fstat     = "F-stat",
+    Gmin_IPI  = "LW (IPI)",
+    Gmin_HICP = "LW (HICP)"
+  )%>% 
   tab_header(
     title = "Key IV Diagnostics (Spain)"
-  )
+  )%>%
+  tab_source_note(md("*LW = Lewis and Mertens (2024)*"))
 spain_relevance
+
+
+# Save if needed
+
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+setwd(save_latex_path)
+gtsave(
+  spain_relevance ,
+  filename = "iv_relevance_spain_tot.tex"
+)
+
+
 
 ggplot(data = IV_data_log_diff_esp)+
   geom_line(aes(x = observation_date, y = delta_s_total_diff, color = "Supply Instrument", linetype ="Baseline")) +
@@ -311,9 +329,6 @@ ggplot(data = IV_data_log_diff_esp)+
   geom_line(aes(x = observation_date, y = delta_d_orth_diff, color = "Demand Instrument", linetype ="Ortho")) +
   labs(title = "Supply and Demand Instruments Over Time",
        x = "Observation Date", y = "Instrument Value") 
-
-
-
 
 
 
@@ -440,12 +455,12 @@ iv_table <- summary_table %>%
 
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
-setwd(save_latex_path)
-gtsave(
-  spain_relevance,
-  filename = "relevance_spain_macro.tex"
-)
+# save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+# setwd(save_latex_path)
+# gtsave(
+#   spain_relevance,
+#   filename = "relevance_spain_macro.tex"
+# )
 
 
 save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"

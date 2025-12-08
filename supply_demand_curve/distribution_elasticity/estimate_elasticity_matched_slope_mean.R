@@ -1,4 +1,4 @@
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 
 # Convert to data.table if not already
@@ -28,6 +28,7 @@ reconstruct_full_curve_shift_qty_demand_matched_local_bis <- reconstruct_full_cu
   , .SD[order(abs(PRICE - price))][1:10], 
   by = .(DATE, Hour)
 ]
+
 
 
 
@@ -66,16 +67,20 @@ library(fixest)
 
 
 
-reconstruct_full_curve_shift_qty_supply_matched_local_bis$Hour_Date <- 
-  reconstruct_full_curve_shift_qty_supply_matched_local_bis$DATE + reconstruct_full_curve_shift_qty_supply_matched_local_bis$Hour
+reconstruct_full_curve_shift_qty_supply_matched_local_bis[, Hour_Date := as.POSIXct(DATE) + as.difftime(Hour, units = "hours")]
 
 local_supply_FE <- feols(log(QTY) ~ log(PRICE) | Hour_Date, 
                          data = reconstruct_full_curve_shift_qty_supply_matched_local_bis)
 
 
-reconstruct_full_curve_shift_qty_demand_matched_local_bis$Hour_Date <- 
-  reconstruct_full_curve_shift_qty_demand_matched_local_bis$DATE + reconstruct_full_curve_shift_qty_demand_matched_local_bis$Hour
+# reconstruct_full_curve_shift_qty_demand_matched_local_bis$Hour_Date <- 
+#   reconstruct_full_curve_shift_qty_demand_matched_local_bis$DATE + reconstruct_full_curve_shift_qty_demand_matched_local_bis$Hour
 
+
+reconstruct_full_curve_shift_qty_demand_matched_local_bis[, Hour_Date := as.POSIXct(DATE) + as.difftime(Hour, units = "hours")]
+
+
+#test <- reconstruct_full_curve_shift_qty_demand_matched_local_bis[0:10000,]
 # Global model with fixed effects
 local_demand_FE <- feols(log(QTY) ~ log(PRICE) | Hour_Date, 
                          data = reconstruct_full_curve_shift_qty_demand_matched_local_bis)
@@ -83,7 +88,8 @@ local_demand_FE <- feols(log(QTY) ~ log(PRICE) | Hour_Date,
 etable(local_supply_FE, local_demand_FE )
 
 
-
+local_slopes <- local_slopes_demand
+mean(local_slopes_supply$slope)
 describe_local_slopes <- function(local_slopes, slope_col = "slope", 
                                   se_col = "se_slope", intercept_col = "intercept",
                                   mean_col = "mean_log_price") {
@@ -91,8 +97,9 @@ describe_local_slopes <- function(local_slopes, slope_col = "slope",
   se_x <- local_slopes[[se_col]]
   intercept_x <- local_slopes[[intercept_col]]
   p_x <- local_slopes[[mean_col]]
-  
-  
+
+
+  eta <- cov(p_x, x * p_x, use = "complete.obs")/var(p_x)
   # Centrage
   p_x_centered <- p_x - mean(p_x, na.rm = TRUE)
   
@@ -155,15 +162,29 @@ describe_local_slopes <- function(local_slopes, slope_col = "slope",
 local_slopes_demand <- reconstruct_full_curve_shift_qty_demand_matched_local_bis[
   , {
     if (.N > 1) {
-      fit <- lm(log(QTY) ~ log(PRICE))
-      w <- PRICE^2
-      .(
-        slope = coef(fit)["log(PRICE)"],
-        se_slope = summary(fit)$coefficients["log(PRICE)", "Std. Error"], # SE
-        intercept = coef(fit)["(Intercept)"],
-        mean_log_price = mean(log(PRICE), na.rm = TRUE),
-        w_mean_log_price = weighted.mean(log(PRICE), w, na.rm = TRUE)  # moyenne pond?r?e
-      )
+      
+      res <- tryCatch({
+        fit <- lm(log(QTY) ~ log(PRICE+1))
+        w <- PRICE^2
+        coef_fit <- coef(fit)
+        .(
+          slope = coef(fit)["log(PRICE + 1)"],
+          se_slope = summary(fit)$coefficients["log(PRICE + 1)", "Std. Error"], # SE
+          intercept = coef(fit)["(Intercept)"],
+          mean_log_price = mean(log(PRICE), na.rm = TRUE),
+          w_mean_log_price = weighted.mean(log(PRICE), w, na.rm = TRUE)  # moyenne pond?r?e
+        )
+      }, error = function(e) {
+        .(
+          slope = NA_real_,
+          se_slope = NA_real_,
+          intercept = NA_real_,
+          mean_log_price = NA_real_,
+          w_mean_log_price = NA_real_
+        )
+      })
+      
+      res
     } else {
       .(
         slope = NA_real_,
@@ -177,8 +198,8 @@ local_slopes_demand <- reconstruct_full_curve_shift_qty_demand_matched_local_bis
   by = .(DATE, Hour)
 ]
 library(arrow)
-setwd("Z:/code_supply_demand")
-write_parquet(local_slopes_demand, "local_slopes_demand.parquet")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+write_parquet(local_slopes_demand, "local_slopes_demand_5.parquet")
 
 local_slopes_demand <-  read_parquet( "local_slopes_demand.parquet")
 
@@ -203,7 +224,6 @@ w_mean_demand <- my_demand$w_mean + my_demand$alpha
 
 
 
-
 #je suis en train de faire ma r?gression OLS
 #alors que je voudrais la pente locale
 
@@ -211,15 +231,29 @@ w_mean_demand <- my_demand$w_mean + my_demand$alpha
 local_slopes_supply <- reconstruct_full_curve_shift_qty_supply_matched_local_bis[
   , {
     if (.N > 1) {
-      fit <- lm(log(QTY) ~ log(PRICE+1))
-      w <- PRICE^2
-      .(
-        slope = coef(fit)["log(PRICE + 1)"],
-        se_slope = summary(fit)$coefficients["log(PRICE + 1)", "Std. Error"], # SE
-        intercept = coef(fit)["(Intercept)"],
-        mean_log_price = mean(log(PRICE+1), na.rm = TRUE),
-        w_mean_log_price = weighted.mean(log(PRICE+1), w, na.rm = TRUE)  # moyenne pond?r?e
-      )
+      
+      res <- tryCatch({
+        fit <- lm(log(QTY) ~ log(PRICE+1))
+        w <- PRICE^2
+        coef_fit <- coef(fit)
+        .(
+          slope = coef(fit)["log(PRICE + 1)"],
+          se_slope = summary(fit)$coefficients["log(PRICE + 1)", "Std. Error"], # SE
+          intercept = coef(fit)["(Intercept)"],
+          mean_log_price = mean(log(PRICE), na.rm = TRUE),
+          w_mean_log_price = weighted.mean(log(PRICE), w, na.rm = TRUE)  # moyenne pond?r?e
+        )
+      }, error = function(e) {
+        .(
+          slope = NA_real_,
+          se_slope = NA_real_,
+          intercept = NA_real_,
+          mean_log_price = NA_real_,
+          w_mean_log_price = NA_real_
+        )
+      })
+      
+      res
     } else {
       .(
         slope = NA_real_,
@@ -232,8 +266,9 @@ local_slopes_supply <- reconstruct_full_curve_shift_qty_supply_matched_local_bis
   },
   by = .(DATE, Hour)
 ]
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+write_parquet(local_slopes_supply, "local_slopes_supply_5.parquet")
 
-write_parquet(local_slopes_supply, "local_slopes_supply.parquet")
 local_slopes_supply <- read_parquet("local_slopes_supply.parquet")
 
 colnames(local_slopes_supply)
@@ -261,146 +296,119 @@ w_mean_supply <- my_supply$w_mean + my_supply$alpha
 #   local_slopes_supply$mean_log_price^2,  # poids = p^2
 #   na.rm = TRUE
 # )
-
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-df_clean <- read.csv( "df_clean_da.csv")
-
-
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-df_clean <- read.csv( "df_clean_da_seminar.csv")
-
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-df_clean_bis <- read.csv( "df_clean_da_seminar_no_unavail.csv")
-
-#df_clean <- read.csv( "df_clean_da.csv")
-
-df_clean_supply <- df_clean %>% 
-  filter(Model == "OLS" | grepl("Supply", Model))
-df_clean_demand <- df_clean %>% 
-  filter(Model == "OLS" | grepl("Demand", Model))
+my_demand$mean
+my_supply$mean
 
 
-# cr?er un y num?rique pour les instruments
-
-# Définir l'ordre personnalisé
-model_order <- c("OLS", "Bonte et al (2015)", "IV", "IV Ortho")
-
-df_clean_demand <- df_clean_demand %>%
-  mutate(Instrument = factor(Instrument, levels = model_order)) %>%  # transformer en facteur
-  arrange(Instrument) %>%                                       # trier selon le facteur
-  mutate(y_numeric = 1:n()) 
-#colnames(df_clean_demand)
-
-df_clean <- full_join(df_clean,
-                      df_clean_demand %>% 
-                        dplyr::select(Instrument, y_numeric),
-                      by = c("Instrument"))%>%
-  mutate(Type = ifelse(Instrument == "OLS", "OLS", Type),
-         # Instrument =ifelse(Instrument == "IV", "IV SD", Type),
-         # Instrument =ifelse(Instrument == "IV Ortho", "IV SD Orth", Type),
-         # 
-  )
-
-# position du label ? droite (juste au-dessus du max de l'histogramme)
-x_max <- max(local_slopes_supply$slope_w, na.rm = TRUE) - 0.5
+sigma = 0.5 # choc de prix de 5%
 
 
-# Plot avec trait vertical et texte
-my_elas <- ggplot() +
-  geom_histogram(
-    data = local_slopes_demand,
-    aes(x = slope_w, y = ..count../sum(..count..)*10, fill = "Demand"),  # <-- proportion
-    bins = 50,
-    color = "white",
-    alpha = 0.7
-  )+ 
-  geom_segment(
-    aes(x = w_mean_demand, xend = w_mean_demand, y = 0, yend = 5),  # yend = hauteur max souhait?e
-    linetype = "dashed",
-    color = "red",
-    size = 1
-  )+
-  # geom_vline(
-  #   xintercept = w_mean_demand,
-  #   linetype = "dashed",
-  #   color = "red",
-  #   size = 1
-  # ) +
-  annotate(
-    "text",
-    x = w_mean_demand - 0.2,
-    y = -0.5,
-    #y = max(table(cut(local_slopes_demand$slope_w, breaks = 50)))/sum(table(cut(local_slopes_demand$slope_w, breaks = 50))) - 0.02,  # proportion
-    label = paste0("w_mean = ", round(w_mean_demand, 3)),
-    color = "red",
-    vjust = -0.5,
-    hjust = 0,
-    size = 5   # augmente ou réduit la taille du texte
-  ) +
-  geom_histogram(
-    data = local_slopes_supply,
-    aes(x = slope_w, y = ..count../sum(..count..)*10, fill = "Supply"),  # <-- proportion
-    bins = 50,
-    color = "white",
-    alpha = 0.7
-  )+ 
-  geom_segment(
-    aes(x = w_mean_supply, xend = w_mean_supply, y = 0, yend = 5),  # yend = hauteur max souhait?e
-    linetype = "dashed",
-    color = "blue",
-    size = 1
-  )+
-  annotate(
-    "text",
-    x = w_mean_supply - 0.2,
-    y = -0.5,
-    #y = max(table(cut(local_slopes_supply$slope_w, breaks = 50)))/sum(table(cut(local_slopes_supply$slope_w, breaks = 50))) - 0.02,  # proportion
-    label = paste0("w_mean = ", round(w_mean_supply, 3)),
-    color = "blue",
-    vjust = -0.5,
-    hjust = 0,
-    size = 5   # augmente ou réduit la taille du texte
-  ) +
-  geom_point(data = df_clean, aes(x = Estimate, y = y_numeric, color = Type), size = 3) +
-  geom_errorbarh(data = df_clean, 
-                 aes(xmin = Estimate - StdError, xmax = Estimate + StdError, y = y_numeric, color = Type),
-                 height = 0.2) +
-  # labels instruments ? droite
-  geom_text(data = df_clean,
-            aes(x = x_max , y = y_numeric, label = Instrument),
-            hjust = 0, size = 5) +
-  labs(x = "Elasticity", y = "Proportion", color = "Type") +
-  theme(
-    #legend.key.size = unit(1.5, "cm") , 
-    legend.position = "bottom",   
-    legend.text = element_text(size = 15),
-    #axis.text.x = element_text(size = 14, angle = 30, hjust =1),
-    axis.title.x = element_blank(),
-    axis.title.y = element_text(size = 14),   # taille du titre axe y
-    axis.text.y  = element_text(size = 12),
-    axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_color_manual(
-    values = c(
-      "Demand" = "red",
-      "Supply" = "blue",
-      "OLS" = "grey"
-    )
-  ) +
-  scale_fill_manual(
-    values = c(
-      "Demand" = "red",
-      "Supply" = "blue",
-      "OLS" = "grey"
-    ),
-    guide = "none"  # supprime la l?gende pour le fill
-  )
 
 
-my_elas
+local_slopes_demand_pond <- reconstruct_full_curve_shift_qty_demand_matched_local[
+  , {
+    if (.N > 1) {
+      w <- exp(-0.5 * ((log(PRICE + 1) - log(price + 1)) / sigma)^2)
+      
+      res <- tryCatch({
+        fit <- lm(log(QTY) ~ log(PRICE + 1), weights = w)
+        
+        coef_fit <- coef(fit)
+        summ_fit <- summary(fit)$coefficients
+        
+        .(
+          slope = if ("log(PRICE + 1)" %in% names(coef_fit)) coef_fit["log(PRICE + 1)"] else NA_real_,
+          se_slope = if ("log(PRICE + 1)" %in% rownames(summ_fit)) summ_fit["log(PRICE + 1)", "Std. Error"] else NA_real_,
+          intercept = coef_fit["(Intercept)"],
+          mean_log_price = log(price + 1)
+          #w_mean_log_price = weighted.mean(log(PRICE + 1), w, na.rm = TRUE)
+        )
+      }, error = function(e) {
+        .(
+          slope = NA_real_,
+          se_slope = NA_real_,
+          intercept = NA_real_,
+          mean_log_price = NA_real_,
+          w_mean_log_price = NA_real_
+        )
+      })
+      
+      res
+    } else {
+      .(
+        slope = NA_real_,
+        se_slope = NA_real_,
+        intercept = NA_real_,
+        mean_log_price = NA_real_,
+        w_mean_log_price = NA_real_
+      )
+    }
+  },
+  by = .(DATE, Hour)
+]
 
-save_latex_path <- "Z:/Overleaf_elec/images/intra_day"
-setwd(save_latex_path)
-ggsave(my_elas,
-       filename = "elasticity_check.png" , width = 12, height = 6, dpi = 300)
+
+local_slopes_demand_pond <- local_slopes_demand_pond %>% 
+  distinct()
+
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+write_parquet(local_slopes_demand_pond, "local_slopes_demand_pond.parquet")
+
+rm(reconstruct_full_curve_shift_qty_demand_matched_local)
+gc()
+local_slopes_supply_pond <- reconstruct_full_curve_shift_qty_supply_matched_local[
+  , {
+    if (.N > 1) {
+      w <- exp(-0.5 * ((log(PRICE + 1) - log(price + 1)) / sigma)^2)
+      
+      res <- tryCatch({
+        fit <- lm(log(QTY) ~ log(PRICE + 1), weights = w)
+        
+        coef_fit <- coef(fit)
+        summ_fit <- summary(fit)$coefficients
+        
+        .(
+          slope = if ("log(PRICE + 1)" %in% names(coef_fit)) coef_fit["log(PRICE + 1)"] else NA_real_,
+          se_slope = if ("log(PRICE + 1)" %in% rownames(summ_fit)) summ_fit["log(PRICE + 1)", "Std. Error"] else NA_real_,
+          intercept = coef_fit["(Intercept)"],
+          mean_log_price = log(price + 1)#,
+          #w_mean_log_price = weighted.mean(log(PRICE + 1), w, na.rm = TRUE)
+        )
+      }, error = function(e) {
+        .(
+          slope = NA_real_,
+          se_slope = NA_real_,
+          intercept = NA_real_,
+          mean_log_price = NA_real_,
+          w_mean_log_price = NA_real_
+        )
+      })
+      
+      res
+    } else {
+      .(
+        slope = NA_real_,
+        se_slope = NA_real_,
+        intercept = NA_real_,
+        mean_log_price = NA_real_,
+        w_mean_log_price = NA_real_
+      )
+    }
+  },
+  by = .(DATE, Hour)
+]
+
+
+local_slopes_supply_pond <- local_slopes_supply_pond %>% 
+  distinct()
+
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+write_parquet(local_slopes_supply_pond, "local_slopes_supply_pond.parquet")
+
+
+
+
+# test_data <- reconstruct_full_curve_shift_qty_demand_matched_local_bis[DATE == "2019-12-21" & Hour ==23]
+
 # ggsave(my_elas,
 #        filename = "elasticity_check_intra_day.png" , width = 12, height = 6, dpi = 300)

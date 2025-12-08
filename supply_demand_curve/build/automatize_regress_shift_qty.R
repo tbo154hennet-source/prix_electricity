@@ -19,7 +19,7 @@ time_factors <- c("year", "month", "delivery_date", "creneau", "weekday", "datet
 # Lire le fichier .parquet et convertir en data.table
 # save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 # setwd(save_path_data)
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
 setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
 
@@ -201,7 +201,7 @@ price_grid <- seq(-200, 1000, length.out = 1001)
 dense_zone <- price_grid[price_grid >= -10 & price_grid <= 200]
 dense_points <- dense_zone[round(seq(1, length(dense_zone), length.out = 80))]
 
-# 2. Zone moins dense : hors de -10 à 200
+# 2. Zone moins dense : hors de -10 ? 200
 sparse_zone <- price_grid[price_grid < -10 | (price_grid > 200 & price_grid <500) ]
 sparse_points <- sparse_zone[round(seq(1, length(sparse_zone), length.out = 20))]
 
@@ -223,7 +223,7 @@ price_test <- price_grid_sparse[20]
 #     )
 #   })
 # })
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 
 # Ex?cution sans barre de progression
@@ -237,9 +237,9 @@ coef_supply_unmatched <- future_lapply(price_grid, function(g) {
 
 #setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
 #write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
-saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_bis.rds")
+saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched.rds")
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_matched.parquet')
 
 coef_supply_matched <- future_lapply(price_grid, function(g) {
@@ -259,7 +259,7 @@ demand_factors_excess <- c(general_factors,
                            "precipitation_demand","precipitation_mismatch",
                            "relative_humidity_demand","relative_humidity_mismatch"
 )
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 
 # Ex?cution sans barre de progression
@@ -274,7 +274,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched.rds")
 
 getwd()
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 
 # Ex?cution sans barre de progression

@@ -9,11 +9,11 @@ nw_se_Bonte_lag  <- NeweyWest(m_Bonte_lag , lag = 24, prewhite = FALSE, adjust =
 nw_coefs_Bonte_lag  <- coeftest(m_Bonte_lag , vcov. = nw_se_Bonte_lag)
 
 
-# Créer une liste de 12 lags
+# Cr?er une liste de 12 lags
 lag_instruments <- paste0("lag(Fore_Wind, ", 1:12, ")")
 
 Bonte_formula_str_lag_12 <- as.formula(paste(
-  # équation structurelle
+  # ?quation structurelle
   paste("log(gen_tot_da)", "~",  
         paste(c("log(price+1)", controls_Bonte, lag_instruments), collapse = " + ")),
   # instruments
@@ -23,7 +23,7 @@ Bonte_formula_str_lag_12 <- as.formula(paste(
 
 m_Bonte_lag_12  <- ivreg(Bonte_formula_str_lag_12  , data = price_indispo_merge_delta_clean)
 nw_se_Bonte_lag_12   <- NeweyWest(m_Bonte_lag_12  , lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_Bonte_lag_12   <- coeftest(m_Bonte_lag_12  , vcov. = nw_se_Bonte_lag)
+nw_coefs_Bonte_lag_12   <- coeftest(m_Bonte_lag_12  , vcov. = nw_se_Bonte_lag_12)
 
 
 
@@ -70,11 +70,11 @@ nw_se_demand_lag  <- NeweyWest(m_demand_lag , lag = 24, prewhite = FALSE, adjust
 nw_coefs_demand_lag  <- coeftest(m_demand_lag , vcov. = nw_se_demand_lag)
 
 
-# Créer une liste de 12 lags
+# Cr?er une liste de 12 lags
 lag_instruments <- c(paste0("lag(cold_excess_supply, ", 1:12, ")"), paste0("lag(heat_excess_supply, ", 1:12, ")"))
 
 demand_formula_str_lag_12 <- as.formula(paste(
-  # équation structurelle
+  # ?quation structurelle
   paste("log(gen_tot_da)", "~",  
         paste(c("log(price+1)", controls_demand, lag_instruments), collapse = " + ")),
   # instruments
@@ -84,7 +84,7 @@ demand_formula_str_lag_12 <- as.formula(paste(
 
 m_demand_lag_12  <- ivreg(demand_formula_str_lag_12  , data = price_indispo_merge_delta_clean)
 nw_se_demand_lag_12   <- NeweyWest(m_demand_lag_12  , lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_demand_lag_12   <- coeftest(m_demand_lag_12  , vcov. = nw_se_demand_lag)
+nw_coefs_demand_lag_12   <- coeftest(m_demand_lag_12  , vcov. = nw_se_demand_lag_12)
 
 
 
@@ -159,14 +159,14 @@ iv_formula_supply_lag12 <- as.formula(paste(
   # Structural equation
   paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars,lag_exog_d, lag_exog_s, exog_instr_d), collapse = " + ")),
   # Instrument set (lagged exog_instr_s instead of contemporaneous)
-  paste(paste(c( exog_instr_s, lag_exog_d, lag_exog_s, exog_instr_d,controls_vars), collapse = " + ")),
+  paste(paste(c( exog_instr_s, lag_exog_d, lag_exog_s, exog_instr_d, controls_vars), collapse = " + ")),
   sep = " | "
 ))
 
 
 m_iv_s_lag12 <- ivreg(iv_formula_supply_lag12, data = price_indispo_merge_delta_clean)
 nw_se_s_lag12 <- NeweyWest(m_iv_s_lag12, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_s_lag12 <- coeftest(m_iv_s_lag12, vcov. = nw_se_s_lag)
+nw_coefs_s_lag12 <- coeftest(m_iv_s_lag12, vcov. = nw_se_s_lag12)
 
 iv_formula_demand_lag12 <- as.formula(paste(
   # Structural equation
@@ -178,7 +178,7 @@ iv_formula_demand_lag12 <- as.formula(paste(
 
 m_iv_d_lag12 <- ivreg(iv_formula_demand_lag12, data = price_indispo_merge_delta_clean)
 nw_se_d_lag12 <- NeweyWest(m_iv_d_lag12, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_d_lag12 <- coeftest(m_iv_d_lag12, vcov. = nw_se_d_lag)
+nw_coefs_d_lag12 <- coeftest(m_iv_d_lag12, vcov. = nw_se_d_lag12)
 
 ## --- Supply baseline ---
 diag_iv_s <- summary(m_iv_s, diagnostics = TRUE)
@@ -278,14 +278,14 @@ m_iv_s_orth <- ivreg(iv_formula_supply_str_orth , data = price_indispo_merge_del
 m_iv_d_orth <- ivreg(iv_formula_demand_str_orth , data = price_indispo_merge_delta_clean)
 
 # --- Supply equation ---
-# Newey-West standard errors, lag = 24 (ou autre selon fréquence des données)
+# Newey-West standard errors, lag = 24 (ou autre selon fr?quence des donn?es)
 nw_se_s_orth <- NeweyWest(m_iv_s_orth, lag = 24, prewhite = FALSE, adjust = TRUE)
-# Extraire les résultats des coefficients avec SE NW
-nw_coefs_s_orth <- coeftest(m_iv_s_orth, vcov. = nw_se_s)
+# Extraire les r?sultats des coefficients avec SE NW
+nw_coefs_s_orth <- coeftest(m_iv_s_orth, vcov. = nw_se_s_orth)
 
 # --- Demand equation ---
 nw_se_d_orth <- NeweyWest(m_iv_d_orth, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_d_orth <- coeftest(m_iv_d_orth, vcov. = nw_se_d)
+nw_coefs_d_orth <- coeftest(m_iv_d_orth, vcov. = nw_se_d_orth)
 
 
 # Build lagged instrument
@@ -302,7 +302,7 @@ iv_formula_supply_lag_orth <- as.formula(paste(
 
 m_iv_s_lag_orth <- ivreg(iv_formula_supply_lag_orth, data = price_indispo_merge_delta_clean)
 nw_se_s_lag_orth <- NeweyWest(m_iv_s_lag_orth, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_s_lag_orth <- coeftest(m_iv_s_lag_orth, vcov. = nw_se_s_lag)
+nw_coefs_s_lag_orth <- coeftest(m_iv_s_lag_orth, vcov. = nw_se_s_lag_orth)
 
 
 
@@ -316,7 +316,7 @@ iv_formula_demand_lag_orth <- as.formula(paste(
 
 m_iv_d_lag_orth <- ivreg(iv_formula_demand_lag_orth, data = price_indispo_merge_delta_clean)
 nw_se_d_lag_orth <- NeweyWest(m_iv_d_lag_orth, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_d_lag_orth <- coeftest(m_iv_d_lag_orth, vcov. = nw_se_d_lag)
+nw_coefs_d_lag_orth <- coeftest(m_iv_d_lag_orth, vcov. = nw_se_d_lag_orth)
 
 
 lag_exog_s <- paste0("lag(", exog_instr_s, ", ", 1:12, ")")
@@ -334,7 +334,7 @@ iv_formula_supply_lag12_orth <- as.formula(paste(
 
 m_iv_s_lag12_orth <- ivreg(iv_formula_supply_lag12_orth, data = price_indispo_merge_delta_clean)
 nw_se_s_lag12_orth <- NeweyWest(m_iv_s_lag12_orth, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_s_lag12_orth <- coeftest(m_iv_s_lag12_orth, vcov. = nw_se_s_lag)
+nw_coefs_s_lag12_orth <- coeftest(m_iv_s_lag12_orth, vcov. = nw_se_s_lag12_orth)
 
 iv_formula_demand_lag12_orth <- as.formula(paste(
   # Structural equation
@@ -346,7 +346,7 @@ iv_formula_demand_lag12_orth <- as.formula(paste(
 
 m_iv_d_lag12_orth <- ivreg(iv_formula_demand_lag12_orth, data = price_indispo_merge_delta_clean)
 nw_se_d_lag12_orth <- NeweyWest(m_iv_d_lag12_orth, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_d_lag12_orth <- coeftest(m_iv_d_lag12_orth, vcov. = nw_se_d_lag)
+nw_coefs_d_lag12_orth <- coeftest(m_iv_d_lag12_orth, vcov. = nw_se_d_lag12_orth)
 
 ## --- Supply baseline ---
 diag_iv_s_orth <- summary(m_iv_s_orth, diagnostics = TRUE)
@@ -385,9 +385,9 @@ reg_table <- stargazer(
   column.labels = c("IV ", "IV Lag",   'IV Lag 12'),#,
   add.lines = list(
     c("First-stage F-stat",
-      round(fstat_iv_d, 2),             # IV demand
-      round(fstat_iv_d_lag, 2),             # IV supply
-      round(fstat_iv_d_lag_12, 2)                                # no F for Bonte
+      round(fstat_iv_d_orth, 2),             # IV demand
+      round(fstat_iv_d_lag_orth, 2),             # IV supply
+      round(fstat_iv_d_lag_12_orth, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
   keep = c("gen_tot_da", "price" )
@@ -396,18 +396,18 @@ reg_table <- stargazer(
 
 #Create LaTeX code with regression results
 reg_table <- stargazer(
-  m_iv_s ,
-  m_iv_s_lag ,
-  m_iv_s_lag12,
+  m_iv_s_orth ,
+  m_iv_s_lag_orth ,
+  m_iv_s_lag12_orth,
   #m_renew_plant,
   type = "text",
   title = "Regression Results",
   column.labels = c("IV ", "IV Lag",   'IV Lag 12'),#,
   add.lines = list(
     c("First-stage F-stat",
-      round(fstat_iv_s, 2),             # IV demand
-      round(fstat_iv_s_lag, 2),             # IV supply
-      round(fstat_iv_s_lag_12, 2)                                # no F for Bonte
+      round(fstat_iv_s_orth, 2),             # IV demand
+      round(fstat_iv_s_lag_orth, 2),             # IV supply
+      round(fstat_iv_s_lag_12_orth, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
   keep = c("gen_tot_da", "price" )
@@ -473,11 +473,13 @@ df_clean <- df%>%
       grepl("Demand", Model) ~ "Demand"
     )
   )
-#dédoubler la ligne OLS
+#d?doubler la ligne OLS
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 getwd()
-write.csv(df_clean, "df_clean_da_seminar.csv")
+write.csv(df_clean, "df_clean_da_seminar_no_unavail.csv")
+
+#write.csv(df_clean, "df_clean_da_seminar.csv")
 
 
 

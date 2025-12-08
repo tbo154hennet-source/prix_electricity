@@ -11,35 +11,37 @@ library(lmtest)
 
 instruments <- c("Fore_Wind",
                  "Fore_Solar",
+                 "Published.Predicted.Unavailable.Capacity",
                  #"renewable_day_ahead_forecast",
                  #"Published.Unavailable.Nuclear.Capacity"
                  "cbf_es",
                  "cold_excess",
-                 "heat_excess",
-                 "Published.Predicted.Unavailable.Capacity")
+                 "heat_excess"
+                 )
 instruments_supply <- c("Fore_Wind",
                         "Fore_Solar",
+                        "Published.Predicted.Unavailable.Capacity",
                         #"renewable_day_ahead_forecast",
                         #"Published.Unavailable.Nuclear.Capacity"
                        "cbf_es",
                         "cold_excess_supply",
-                        "heat_excess_supply",
-                        "Published.Predicted.Unavailable.Capacity")
+                        "heat_excess_supply"
+                       )
 names_instruments <- c(
                       "Fore_Wind",
                       "Fore_Solar",
+                      "Published.Predicted.Unavailable.Capacity",
                         #"renewable_day_ahead_forecast",
                        #"Published.Unavailable.Nuclear.Capacity",
                        "cbf_es",
                        "cold_excess_supply",
                        "cold_excess_demand",
                        "heat_excess_supply",
-                       "heat_excess_demand",
-                       "Published.Predicted.Unavailable.Capacity")
+                       "heat_excess_demand")
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet")
-#price_indispo_merge_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet")
+#price_indispo_merge_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo_no_unavail.parquet")
 
 
 # setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
@@ -83,7 +85,7 @@ cols_supply<- paste0("delta_s_", instruments)
 cols_demand<- paste0("delta_d_", instruments)
 
 #justification parce que fondamentalement supply shock
-#réinterpréter en demand shock dans nos données
+#r?interpr?ter en demand shock dans nos donn?es
 
 colnames(price_indispo_merge_delta)
 # Calculer la somme ligne par ligne des colonnes sÃ©lectionnÃ©es
@@ -112,12 +114,12 @@ controls_vars <- c("spot_gas",
 extended_controls <- c(controls_vars, "unpredicted_renewables",  "intraday_update_renewables" )
 
 
-# Orthogonaliser delta_s_total par rapport à delta_d_total
+# Orthogonaliser delta_s_total par rapport ? delta_d_total
 price_indispo_merge_delta_clean$delta_s_orth <- resid(
   lm(delta_s_total ~ delta_d_total, data = price_indispo_merge_delta_clean)
 )
 
-# Orthogonaliser delta_d_total par rapport à delta_s_total
+# Orthogonaliser delta_d_total par rapport ? delta_s_total
 price_indispo_merge_delta_clean$delta_d_orth <- resid(
   lm(delta_d_total ~ delta_s_total, data = price_indispo_merge_delta_clean)
 )
@@ -135,8 +137,8 @@ ols_formula <- as.formula(paste(
 m_ols <- ivreg(ols_formula , data = price_indispo_merge_delta_clean)
 
 nw_se_ols  <- NeweyWest(m_ols , lag = 24, prewhite = FALSE, adjust = TRUE)
-# Extraire les résultats des coefficients avec SE NW
-nw_coefs_ols  <- coeftest(m_ols , vcov. = nw_se_ols )
+# Extraire les r?sultats des coefficients avec SE NW
+nw_ols  <- coeftest(m_ols , vcov. = nw_se_ols )
 
 
 # Combine exogenous regressors and instruments
@@ -164,14 +166,14 @@ m_iv_s <- ivreg(iv_formula_supply_str , data = price_indispo_merge_delta_clean)
 m_iv_d <- ivreg(iv_formula_demand_str , data = price_indispo_merge_delta_clean)
 
 # --- Supply equation ---
-# Newey-West standard errors, lag = 24 (ou autre selon fréquence des données)
+# Newey-West standard errors, lag = 24 (ou autre selon fr?quence des donn?es)
 nw_se_s <- NeweyWest(m_iv_s, lag = 24, prewhite = FALSE, adjust = TRUE)
-# Extraire les résultats des coefficients avec SE NW
-nw_coefs_s <- coeftest(m_iv_s, vcov. = nw_se_s)
+# Extraire les r?sultats des coefficients avec SE NW
+nw_s <- coeftest(m_iv_s, vcov. = nw_se_s)
 
 # --- Demand equation ---
 nw_se_d <- NeweyWest(m_iv_d, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_d <- coeftest(m_iv_d, vcov. = nw_se_d)
+nw_d <- coeftest(m_iv_d, vcov. = nw_se_d)
 
 
 controls_Bonte <- c(
@@ -194,21 +196,21 @@ Bonte_formula_str <- as.formula(paste(
 ))
 m_Bonte <- ivreg(Bonte_formula_str , data = price_indispo_merge_delta_clean)
 nw_se_Bonte  <- NeweyWest(m_Bonte , lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_Bonte  <- coeftest(m_Bonte , vcov. = nw_se_Bonte)
+nw_Bonte  <- coeftest(m_Bonte , vcov. = nw_se_Bonte)
 
 
 controls_demand <- c(setdiff(controls_Bonte, "temperature_supply"), "Fore_Wind", "Fore_Solar")
 
 formula_demand_str <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
-  paste(paste(c("cold_excess_demand", "heat_excess_demand", controls_vars), collapse = " + ")),
+  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_demand), collapse = " + ")),
+  paste(paste(c("cold_excess_demand", "heat_excess_demand", controls_demand), collapse = " + ")),
   sep = " | "
 ))
 
 m_demand <- ivreg(formula_demand_str , data = price_indispo_merge_delta_clean)
 
 nw_se_demand  <- NeweyWest(m_demand , lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_demand  <- coeftest(m_demand , vcov. = nw_se_Bonte)
+nw_demand  <- coeftest(m_demand , vcov. = nw_se_Bonte)
 
 
 
@@ -224,47 +226,7 @@ fstat_iv_s <- diag_iv_s$diagnostics["Weak instruments", "statistic"]
 fstat_iv_bronte <- diag_iv_bronte$diagnostics["Weak instruments", "statistic"]
 fstat_iv_demand <- diag_iv_demand$diagnostics["Weak instruments", "statistic"]
 
-# Create LaTeX code with regression results
-# reg_table <- stargazer(
-#   m_ols,
-#   m_iv_d,
-#   m_iv_s,# m_iv_int,
-#   m_Bonte ,
-#   #m_renew_plant, 
-#   type = "text",
-#   title = "Regression Results",
-#   column.labels = c("OLS ", "IV Supply",   'IV Demand', 'Bonte'),#,
-#   add.lines = list(
-#     c("First-stage F-stat",
-#       "",                               # no F for OLS
-#       round(fstat_iv_d, 2),             # IV demand
-#       round(fstat_iv_s, 2),             # IV supply
-#       round(fstat_iv_bronte, 2)                                # no F for Bonte
-#     )),
-#   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-#   keep = c("gen_tot_da", "price" )
-# )
 
-reg_table <- stargazer(
-  nw_coefs_ols,
-  nw_coefs_d,
-  nw_coefs_demand, 
-  nw_coefs_s,# m_iv_int,
-  nw_coefs_Bonte ,
-  type = "text",
-  title = "Regression Results",
-  column.labels = c("OLS ", "IV Supply", 'Bonte Supply',   'IV Demand', 'Bonte Demand'),#,
-  add.lines = list(
-    c("First-stage F-stat",
-      "",                               # no F for OLS
-      round(fstat_iv_d, 2),
-      round(fstat_iv_demand, 2), # no F for Bonte,             # IV demand
-      round(fstat_iv_s, 2),             # IV supply
-      round(fstat_iv_bronte, 2)
-    )),
-  #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
-)
 #summary(m_iv_s, diagnostics = TRUE)$diagnostics
 
 
@@ -308,12 +270,12 @@ m_iv_s_ortho  <- ivreg(iv_formula_supply_str_ortho , data = price_indispo_merge_
 m_iv_d_ortho <- ivreg(iv_formula_demand_str_ortho , data = price_indispo_merge_delta_clean)
 
 nw_se_s_ortho <- NeweyWest(m_iv_s_ortho, lag = 24, prewhite = FALSE, adjust = TRUE)
-# Extraire les résultats des coefficients avec SE NW
-nw_coefs_s_ortho <- coeftest(m_iv_s_ortho, vcov. = nw_se_s_ortho)
+# Extraire les r?sultats des coefficients avec SE NW
+nw_s_ortho <- coeftest(m_iv_s_ortho, vcov. = nw_se_s_ortho)
 
 # --- Demand equation ---
 nw_se_d_ortho <- NeweyWest(m_iv_d_ortho, lag = 24, prewhite = FALSE, adjust = TRUE)
-nw_coefs_d_ortho <- coeftest(m_iv_d_ortho, vcov. = nw_se_d_ortho)
+nw_d_ortho <- coeftest(m_iv_d_ortho, vcov. = nw_se_d_ortho)
 
 # First-stage diagnostics
 diag_iv_d_ortho <- summary(m_iv_d_ortho, diagnostics = TRUE)
@@ -322,32 +284,55 @@ diag_iv_s_ortho <- summary(m_iv_s_ortho, diagnostics = TRUE)
 fstat_iv_d_ortho <- diag_iv_d_ortho$diagnostics["Weak instruments", "statistic"]
 fstat_iv_s_ortho <- diag_iv_s_ortho$diagnostics["Weak instruments", "statistic"]
 
-# Create LaTeX code with regression results
+
+
 reg_table <- stargazer(
-  nw_coefs_d,
-  nw_coefs_d_ortho,
-  nw_coefs_s,# m_iv_int,
-  nw_coefs_s_ortho ,
-  #m_renew_plant, 
+  nw_ols,
+  nw_d_ortho,
+  nw_demand, 
+  nw_s_ortho,# m_iv_int,
+  nw_Bonte ,
   type = "text",
   title = "Regression Results",
-  column.labels = c( "Supply", "Supply Ortho",  'Demand', 'Demand Ortho'),#,
-  # add.lines = list(
-  #   c("First-stage F-stat",
-  #     "",                               # no F for OLS
-  #     round(fstat_iv_d, 2),             # IV demand
-  #     round(fstat_iv_s, 2),             # IV supply
-  #     round(fstat_iv_bronte, 2)                                # no F for Bonte
-  #   )),
+  column.labels = c("OLS ", "IV Supply", 'Bonte Supply',   'IV Demand', 'Bonte Demand'),#,
   add.lines = list(
-    c("First-stage F-stat",                               # no F for OLS
-      round(fstat_iv_d, 2), 
-      round(fstat_iv_d_ortho, 2),# IV demand
+    c("First-stage F-stat",
+      "",                               # no F for OLS
+      round(fstat_iv_d, 2),
+      round(fstat_iv_demand, 2), # no F for Bonte,             # IV demand
       round(fstat_iv_s, 2),             # IV supply
-      round(fstat_iv_s_ortho, 2)                                # no F for Bonte
+      round(fstat_iv_bronte, 2)
     )),
+  #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
   keep = c("gen_tot_da", "price" )
 )
+
+# # Create LaTeX code with regression results
+# reg_table <- stargazer(
+#   nw_d,
+#   nw_d_ortho,
+#   nw_s,# m_iv_int,
+#   nw_s_ortho ,
+#   #m_renew_plant, 
+#   type = "text",
+#   title = "Regression Results",
+#   column.labels = c( "Supply", "Supply Ortho",  'Demand', 'Demand Ortho'),#,
+#   # add.lines = list(
+#   #   c("First-stage F-stat",
+#   #     "",                               # no F for OLS
+#   #     round(fstat_iv_d, 2),             # IV demand
+#   #     round(fstat_iv_s, 2),             # IV supply
+#   #     round(fstat_iv_bronte, 2)                                # no F for Bonte
+#   #   )),
+#   add.lines = list(
+#     c("First-stage F-stat",                               # no F for OLS
+#       round(fstat_iv_d, 2), 
+#       round(fstat_iv_d_ortho, 2),# IV demand
+#       round(fstat_iv_s, 2),             # IV supply
+#       round(fstat_iv_s_ortho, 2)                                # no F for Bonte
+#     )),
+#   keep = c("gen_tot_da", "price" )
+# )
 
 
 # Extract estimate and standard error for 'gen_tot_da' from each model
@@ -358,8 +343,8 @@ extract_coef_se <- function(model, variable = "log(gen_tot_da)") {
   return(c(est = est, se = se))
 }
 
-# Supposons que nw_coefs_Bonte est un objet coeftest
-# extraire estimate et SE pour une variable donnée
+# Supposons que nw_Bonte est un objet coeftest
+# extraire estimate et SE pour une variable donn?e
 extract_coef_se_coeftest <- function(coeftest_obj, variable) {
   est <- coeftest_obj[variable, "Estimate"]
   se  <- coeftest_obj[variable, "Std. Error"]
@@ -373,13 +358,13 @@ extract_coef_se_coeftest <- function(coeftest_obj, variable) {
 # coef_se_iv_s    <- extract_coef_se(m_iv_s, "log(price+1)")
 # coef_se_Bonte_all    <- extract_coef_se(m_Bonte, "log(price+1)" )
 
-coef_se_ols <- extract_coef_se_coeftest (nw_coefs_ols, "log(price + 1)")
-coef_se_iv_d    <- extract_coef_se_coeftest (nw_coefs_d, "log(price + 1)")
-coef_se_iv_s    <- extract_coef_se_coeftest (nw_coefs_s, "log(price + 1)")
-coef_se_Bonte_all    <- extract_coef_se_coeftest (nw_coefs_Bonte, "log(price + 1)" )
-coef_se_Bonte_demand    <- extract_coef_se_coeftest (nw_coefs_demand, "log(price + 1)" )
-coef_se_iv_s_ortho    <- extract_coef_se_coeftest(nw_coefs_s_ortho, "log(price + 1)")
-coef_se_iv_d_ortho    <- extract_coef_se_coeftest(nw_coefs_d_ortho, "log(price + 1)" )
+coef_se_ols <- extract_coef_se_coeftest (nw_ols, "log(price + 1)")
+coef_se_iv_d    <- extract_coef_se_coeftest (nw_d, "log(price + 1)")
+coef_se_iv_s    <- extract_coef_se_coeftest (nw_s, "log(price + 1)")
+coef_se_Bonte_all    <- extract_coef_se_coeftest (nw_Bonte, "log(price + 1)" )
+coef_se_Bonte_demand    <- extract_coef_se_coeftest (nw_demand, "log(price + 1)" )
+coef_se_iv_s_ortho    <- extract_coef_se_coeftest(nw_s_ortho, "log(price + 1)")
+coef_se_iv_d_ortho    <- extract_coef_se_coeftest(nw_d_ortho, "log(price + 1)" )
 
 
 
@@ -417,10 +402,10 @@ df_clean <- df%>%
       grepl("Demand", Model) ~ "Demand"
     )
   )
-#dédoubler la ligne OLS
+#d?doubler la ligne OLS
 
 df_new <- df_clean %>%
-  # Séparer la ligne OLS en deux copies
+  # S?parer la ligne OLS en deux copies
   filter(Model == "OLS") %>%
   mutate(Type = "Supply") %>%
   bind_rows(
@@ -499,56 +484,56 @@ cat("\nCoefficients contenant log(price+1) :\n")
 print(coefs_logprice)
 
 
-
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-price_indispo_merge_delta_tot <- read_parquet( "price_indispo_merge_delta_supply_demand_ortho.parquet")
-colnames(price_indispo_merge_delta_tot)
-
-price_indispo_merge_delta_tot_clean <- price_indispo_merge_delta_tot %>%
-  dplyr::select(-log_price_diff, -price_diff) %>%       # sÃ©lectionne les colonnes dans col_names
-  filter(complete.cases(.)) %>%       # garde seulement les lignes sans NA dans ces colonnes
-  distinct()          # garde seulement les lignes sans NA dans ces colonnes
-
-
-price_indispo_merge_delta_tot_clean %>% 
-  dplyr::select(delta_s_total, delta_d_total, delta_s_ortho_total,delta_d_ortho_total ) %>% 
-  cor(use = "complete.obs")
-
-exog_instr_s <- "delta_s_ortho_total"
-exog_instr_d <- "delta_d_ortho_total"
-
-
-#iv_formula
-iv_formula_supply_str_robust <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars, exog_instr_d ), collapse = " + ")),
-  paste(paste(c(exog_instr_s, exog_instr_d , controls_vars), collapse = " + ")),
-  sep = " | "
-))
-
-#iv_formula
-iv_formula_demand_str_robust <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c( "log(price+1)", controls_vars, exog_instr_s), collapse = " + ")),
-  paste(paste(c(exog_instr_d, exog_instr_s, controls_vars), collapse = " + ")),
-  sep = " | "
-))
-
-
-m_iv_s_robust <- ivreg(iv_formula_supply_str_robust , data = price_indispo_merge_delta_tot_clean)
-m_iv_d_robust <- ivreg(iv_formula_demand_str_robust , data = price_indispo_merge_delta_tot_clean)
-
-
-# Create LaTeX code with regression results
-reg_table <- stargazer(
-  #m_iv_d,
-  m_iv_d,
-  m_iv_d_robust,
-  #m_iv_s,
-  m_iv_s,
-  m_iv_s_robust,
-  type = "text",
-  title = "Regression Results",
-  column.labels = c("Demand Ortho", "Demand Robust",
-                    "Supply Ortho", "Supply Robust"),
-  keep = c("gen_tot_da", "price")
-)
-
+# 
+# setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+# price_indispo_merge_delta_tot <- read_parquet( "price_indispo_merge_delta_supply_demand_ortho.parquet")
+# colnames(price_indispo_merge_delta_tot)
+# 
+# price_indispo_merge_delta_tot_clean <- price_indispo_merge_delta_tot %>%
+#   dplyr::select(-log_price_diff, -price_diff) %>%       # sÃ©lectionne les colonnes dans col_names
+#   filter(complete.cases(.)) %>%       # garde seulement les lignes sans NA dans ces colonnes
+#   distinct()          # garde seulement les lignes sans NA dans ces colonnes
+# 
+# 
+# price_indispo_merge_delta_tot_clean %>% 
+#   dplyr::select(delta_s_total, delta_d_total, delta_s_ortho_total,delta_d_ortho_total ) %>% 
+#   cor(use = "complete.obs")
+# 
+# exog_instr_s <- "delta_s_ortho_total"
+# exog_instr_d <- "delta_d_ortho_total"
+# 
+# 
+# #iv_formula
+# iv_formula_supply_str_robust <- as.formula(paste(
+#   paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars, exog_instr_d ), collapse = " + ")),
+#   paste(paste(c(exog_instr_s, exog_instr_d , controls_vars), collapse = " + ")),
+#   sep = " | "
+# ))
+# 
+# #iv_formula
+# iv_formula_demand_str_robust <- as.formula(paste(
+#   paste("log(gen_tot_da)", "~",  paste(c( "log(price+1)", controls_vars, exog_instr_s), collapse = " + ")),
+#   paste(paste(c(exog_instr_d, exog_instr_s, controls_vars), collapse = " + ")),
+#   sep = " | "
+# ))
+# 
+# 
+# m_iv_s_robust <- ivreg(iv_formula_supply_str_robust , data = price_indispo_merge_delta_tot_clean)
+# m_iv_d_robust <- ivreg(iv_formula_demand_str_robust , data = price_indispo_merge_delta_tot_clean)
+# 
+# 
+# # Create LaTeX code with regression results
+# reg_table <- stargazer(
+#   #m_iv_d,
+#   m_iv_d,
+#   m_iv_d_robust,
+#   #m_iv_s,
+#   m_iv_s,
+#   m_iv_s_robust,
+#   type = "text",
+#   title = "Regression Results",
+#   column.labels = c("Demand Ortho", "Demand Robust",
+#                     "Supply Ortho", "Supply Robust"),
+#   keep = c("gen_tot_da", "price")
+# )
+# 

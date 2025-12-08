@@ -2,7 +2,7 @@
 #get a version with wind speed
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_fore_wind_sun <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_fore_wind_sun_variation.rds")
 coef_supply_unmatched_fore_wind_sun_data <- rbindlist(coef_supply_unmatched_fore_wind_sun)
 #coef_supply_unmatched_data_ins <- coef_supply_unmatched_data[coef_supply_unmatched_data$variable %in% names_instruments,]
@@ -141,16 +141,16 @@ controls_delta <- c(
 
 # Build the formula as a string
 # Build the formula as a string
-# Orthogonaliser delta_d_Fore_Wind par rapport à delta_d_wind_speed_100m
-# Créer la variable directement avec NA quand il manque des valeurs
+# Orthogonaliser delta_d_Fore_Wind par rapport ? delta_d_wind_speed_100m
+# Cr?er la variable directement avec NA quand il manque des valeurs
 
-# Orthogonaliser delta_s_Fore_Wind par rapport à delta_d_Fore_Wind
+# Orthogonaliser delta_s_Fore_Wind par rapport ? delta_d_Fore_Wind
 mod_s <- lm(delta_s_wind_speed_100m ~ delta_d_wind_speed_100m, 
             data = price_indispo_merge_bronte, na.action = na.exclude)
 
 price_indispo_merge_bronte$delta_s_wind_speed_100m_ortho <- resid(mod_s)
 
-# Orthogonaliser delta_d_wind_speed_100m par rapport à delta_s_wind_speed_100m
+# Orthogonaliser delta_d_wind_speed_100m par rapport ? delta_s_wind_speed_100m
 mod_d <- lm(delta_d_wind_speed_100m ~ delta_s_wind_speed_100m, 
             data = price_indispo_merge_bronte, na.action = na.exclude)
 
@@ -162,7 +162,7 @@ mod_s <- lm(delta_s_Fore_Wind ~ delta_d_Fore_Wind,
 
 price_indispo_merge_bronte$delta_s_Fore_Wind_ortho <- resid(mod_s)
 
-# Orthogonaliser delta_d_Fore_Wind par rapport à delta_s_Fore_Wind
+# Orthogonaliser delta_d_Fore_Wind par rapport ? delta_s_Fore_Wind
 mod_d <- lm(delta_d_Fore_Wind ~ delta_s_Fore_Wind, 
             data = price_indispo_merge_bronte, na.action = na.exclude)
 
@@ -217,7 +217,7 @@ price_indispo_merge_bronte_clean <- read_parquet( "price_indispo_merge_bronte_cl
 
 # Build the formula as a string
 ols_formula_str <- as.formula(
-  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
+  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_Bonte), collapse = " + ")),
 )
 
 
@@ -226,8 +226,8 @@ m_ols_c <- ivreg(ols_formula_str , data = price_indispo_merge_bronte_clean)
 
 # Build the formula as a string
 bronte_formula_str <- as.formula(paste(
-  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
-  paste(paste(c("wind_speed_100m", controls_vars), collapse = " + ")),
+  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_Bonte), collapse = " + ")),
+  paste(paste(c("wind_speed_100m", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
 
@@ -235,8 +235,8 @@ m_bronte_c <- ivreg(bronte_formula_str , data = price_indispo_merge_bronte_clean
 
 # Build the formula as a string
 bronte_formula_str_fore <- as.formula(paste(
-  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
-  paste(paste(c("Fore_Wind", controls_vars), collapse = " + ")),
+  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_Bonte), collapse = " + ")),
+  paste(paste(c("Fore_Wind", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
 
@@ -245,8 +245,8 @@ m_bronte_fore <- ivreg(bronte_formula_str_fore , data = price_indispo_merge_bron
 
 # Build the formula as a string
 iv_formula_str <- as.formula(paste(
-  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
-  paste(paste(c("delta_s_wind_speed_100m", controls_vars), collapse = " + ")),
+  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_Bonte), collapse = " + ")),
+  paste(paste(c("delta_s_wind_speed_100m", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
 
@@ -254,12 +254,25 @@ m_iv_c <- ivreg(iv_formula_str , data = price_indispo_merge_bronte_clean)
 
 # Build the formula as a string
 iv_formula_str_fore <- as.formula(paste(
-  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
-  paste(paste(c("delta_s_Fore_Wind", controls_vars), collapse = " + ")),
+  paste("log(gen_tot)", "~",  paste(c("log(price+1)", controls_Bonte), collapse = " + ")),
+  paste(paste(c("delta_s_Fore_Wind", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
 
 m_iv_fore <- ivreg(iv_formula_str_fore , data = price_indispo_merge_bronte_clean)
+
+
+# Compute first-stage diagnostics for each model
+diag_bronte_c     <- summary(m_bronte_c, diagnostics = TRUE)
+diag_bronte_fore  <- summary(m_bronte_fore, diagnostics = TRUE)
+diag_iv_c         <- summary(m_iv_c, diagnostics = TRUE)
+diag_iv_fore      <- summary(m_iv_fore, diagnostics = TRUE)
+
+# Extract weak instrument F-statistics
+fstat_bronte_c    <- diag_bronte_c$diagnostics["Weak instruments", "statistic"]
+fstat_bronte_fore <- diag_bronte_fore$diagnostics["Weak instruments", "statistic"]
+fstat_iv_c        <- diag_iv_c$diagnostics["Weak instruments", "statistic"]
+fstat_iv_fore     <- diag_iv_fore$diagnostics["Weak instruments", "statistic"]
 
 
 
@@ -276,6 +289,14 @@ reg_table_renwables_bis <- stargazer(
   title = "Regression Results",
   column.labels = c("OLS",  "Bonte Wind Speed", 'Bonte Windpower Forecast',
                     "IV Wind Speed", "IV Windpower Forecast"),#,
+  add.lines = list(
+    c("First-stage F-stat",
+      "",                               # no F for OLS
+      round(fstat_bronte_c , 2),
+      round(fstat_bronte_fore, 2), # no F for Bonte,             # IV demand
+      round(fstat_iv_c, 2),             # IV supply
+      round(fstat_iv_fore, 2)
+    )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
   keep = c("gen_tot", "price" )
 )

@@ -25,10 +25,10 @@ IV_data_esp_log_diff_counterfactual <- left_join(IV_data_log_diff_esp, counterfa
           se_pred_month = se_pred_month / HICP*100,
           counterfactual_spot_price = ifelse(observation_date <= as.Date("2022-05-01"), spot_price, counterfactual_spot_price),
           se_pred_month = ifelse(observation_date <= as.Date("2022-05-01"), 0, se_pred_month),
-          #remplace pour la pré-période non-prédite
+          #remplace pour la pr?-p?riode non-pr?dite
           #counterfactual_spot_price = ifelse(observation_date <= as.Date("2022-05-01"), spot_price , counterfactual_spot_price),
           counterfactual_spot_price_log_diff = log(counterfactual_spot_price + 1) - log(lag(counterfactual_spot_price) + 1),
-          #j'interprète la différence comme un choc pur de policy
+          #j'interpr?te la diff?rence comme un choc pur de policy
           policy_shock = counterfactual_spot_price_log_diff - spot_price_log_diff
           )
 
@@ -62,14 +62,14 @@ res = residuals(vl)
 save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 list.files()
-gen_benchmark_esp_supply_mp <- readRDS(  "gen_benchmark_esp_mp_supply.rds")
+gen_benchmark_esp_supply_mp <- readRDS(  "gen_benchmark_esp_mp_supply_save.rds")
 
 names(gen_benchmark_esp_supply_mp$sample_matrices)
 
 
 theta_0_log_diff <-  gen_benchmark_esp_supply_mp$theta_0
 
-#rejouer en propageant les résidus auxquels on ajoute le structural shock elec supply
+#rejouer en propageant les r?sidus auxquels on ajoute le structural shock elec supply
 policy_shock <- IV_data_esp_log_diff_counterfactual$policy_shock
 policy_shock[is.na(policy_shock)] <- 0
 # Matrice T x 4 remplie de 0
@@ -84,11 +84,11 @@ counterfactual_prediction <- iterate_var_ter(x= x, initial_obs = vars[1:p,],
 
 
 
-set.seed(123)  # pour reproductibilité
+set.seed(123)  # pour reproductibilit?
 IV_data_esp_log_diff_counterfactual$counterfactual_spot_price
-
-View(IV_data_esp_sim %>% 
-       dplyr::select(counterfactual_spot_price, counterfactual_spot_price_sim, spot_price, policy_shock_sim, year, month))
+# 
+# View(IV_data_esp_sim %>% 
+#        dplyr::select(counterfactual_spot_price, counterfactual_spot_price_sim, spot_price, policy_shock_sim, year, month))
 #a chaque fois il faut que je tire une trajectoire de policy shock
 boot_size = 1000
 policy_shock_samples <- vector("list", boot_size)
@@ -128,8 +128,8 @@ for (i in 1:boot_size) {
       )
     
     
-    # Coefficients estimés
-    #coef_hat <- coef(vl)  # liste : une entrée par équation, chaque entrée = dataframe des coeffs
+    # Coefficients estim?s
+    #coef_hat <- coef(vl)  # liste : une entr?e par ?quation, chaque entr?e = dataframe des coeffs
 
     
     # coef_sim <- coef_sample[i,]
@@ -144,8 +144,8 @@ for (i in 1:boot_size) {
     #   vl_sim$varresult[[eq]]$coefficients <- coef_new[[eq]]$Estimate
     # }
     
-    # Stocker le résultat
-    #rejouer en propageant les résidus auxquels on ajoute le structural shock elec supply
+    # Stocker le r?sultat
+    #rejouer en propageant les r?sidus auxquels on ajoute le structural shock elec supply
 
     policy_shock_sim <- IV_data_esp_sim$policy_shock_sim
     policy_shock_sim[is.na(policy_shock_sim)] <- 0
@@ -176,6 +176,10 @@ getwd()
 setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(boot_counterfactual_level_HICP, "boot_counterfactual_level_HICP.csv")
 write.csv(boot_counterfactual_HICP, "boot_counterfactual_HICP.csv")
+
+boot_counterfactual_level_HICP <- read.csv( "boot_counterfactual_level_HICP.csv")
+boot_counterfactual_HICP <- read.csv( "boot_counterfactual_HICP.csv")
+
 
 class(counterfactual_scenario_HICP)
 
@@ -364,4 +368,6 @@ df_plot_all%>% filter(grandeur == "inflation" & date == as.Date("2022-12-01")) %
   dplyr::select(date, value, lower_68, upper_68)
 0.08986621 - 0.05288838
 
-
+df_plot_all%>% filter(grandeur == "inflation" & date == as.Date("2023-06-01")) %>% 
+  dplyr::select(date, value, lower_68, upper_68)
+0.04255027 - 0.01589382

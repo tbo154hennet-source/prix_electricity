@@ -41,7 +41,7 @@ condensed_factors <-  c("renewable_day_ahead_forecast", "unpredicted_renewables"
                         
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -95,7 +95,7 @@ saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_nuc
 #variation using directly temperature
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -119,7 +119,7 @@ demand_factors_temp <- c(general_factors,
                          "cold_excess_mismatch", "heat_excess_mismatch"
 )
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -143,7 +143,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_tem
 #wind speed and solar variance variation
 #using day ahead forecast
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -174,7 +174,7 @@ coef_demand_unmatched <- future_lapply(price_grid_sparse, function(g) {
 saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_fore_wind_sun_variation.rds")
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -205,7 +205,7 @@ saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_for
 #wind speed and solar variance variation
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -236,7 +236,7 @@ coef_demand_unmatched <- future_lapply(price_grid_sparse, function(g) {
 saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_wind_sun_variation.rds")
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -273,7 +273,7 @@ saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_win
 #variation with predicted unavailabilities
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -304,7 +304,7 @@ coef_demand_unmatched <- future_lapply(price_grid_sparse, function(g) {
 saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_predicted_indispo_variation.rds")
 
 
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 

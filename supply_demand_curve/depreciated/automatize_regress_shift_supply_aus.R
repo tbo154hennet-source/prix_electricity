@@ -1,6 +1,6 @@
 
 #setwd("Z:/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
-setwd("Z:/code_supply_demand")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_supply_unmatched.parquet')
 
 # Liste des colonnes à sélectionner
