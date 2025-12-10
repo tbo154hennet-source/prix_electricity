@@ -3,10 +3,11 @@
 # petit tableau avec la valeur des coefficents respectifs pour la France et l'Allemagne
 
 #diff√©rence entre pr√©diction et effective
-
+library(readxl)
+library(arrow)
 library(sandwich)
 library(lmtest)
-
+library(purrr)
 #en espagne
 
 
@@ -49,11 +50,55 @@ gas_price_data <- gas_price_data %>%
   mutate(gas_price = as.numeric(paste0(price, ".", virgule)),
          time =as.Date(time)) %>% 
   dplyr::select(gas_price, time)
+#complete missing dates with backfill method
+# G√©n√©rer la s√©quence compl√®te de dates
+all_dates <- seq.Date(min(gas_price_data$time),
+                      max(gas_price_data$time),
+                      by = "day")
+
+gas_price_data_complete <- gas_price_data %>%
+  # Cr√©er toutes les dates
+  complete(time = all_dates) %>%
+  # Remplir les NA par la derni√®re valeur connue (backfill)
+  fill(gas_price, .direction = "up")
+
+
+setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals")
+carbon_price_data <- read_excel("D2E_carbone.xlsx") %>% 
+  rename(carbon_price = value) %>% 
+  mutate(time = as.Date(time))
+  
+  # read.csv("icap-euets-price-data-2015-01-01-2025-09-25.csv", skip =1) %>% 
+  # mutate(Date = as.Date(Date))
+
+#pour l'instant carbon price ne va que jusqu'en 2018
+#Une seule ann√©e de donn√©es puisque donn√©es micro Espagne commencent en 2018
+
+all_dates <- seq.Date(min(carbon_price_data$time),
+                      max(carbon_price_data$time),
+                      by = "day")
+
+carbon_price_data_complete <- carbon_price_data %>%
+  # Cr√©er toutes les dates
+  complete(time = all_dates) %>%
+  # Remplir les NA par la derni√®re valeur connue (backfill)
+  fill(carbon_price , .direction = "up")
+
+
 
 
 price_indispo_merge_esp <- merge(price_indispo_merge_esp,
-                                 gas_price_data,
+                                 gas_price_data_complete,
                                  by.x = "delivery_date", by.y ="time")
+
+class(price_indispo_merge_esp$delivery_date)
+class(carbon_price_data_complete$time)
+price_indispo_merge_esp <- merge(price_indispo_merge_esp,
+                                 carbon_price_data_complete %>%  
+                                   select(time, carbon_price),
+                                 by.x = "delivery_date", by.y ="time")
+#colnames(price_indispo_merge_esp)
+
 
 #Start date	June 15, 2022
 iberian_cap <- data.frame(
@@ -90,7 +135,7 @@ price_indispo_merge_esp_post_iberic <- price_indispo_merge_esp %>%
   filter(delivery_date >=  as.Date("2022-06-15" ))
 
 
-
+library(stargazer)
 
 formula_str <- "price ~  Published.Unavailable.Capacity + Unpublished.Unavailable.Capacity+
     #Uneffective.Unavailable.Capacity + 
@@ -102,11 +147,11 @@ formula_str <- "price ~  Published.Unavailable.Capacity + Unpublished.Unavailabl
      log(gen_tot) + unpredicted_renewables + intraday_update_renewables + 
     temperature_demand +
     precipitation_demand + 
-    relative_humidity_demand  +
+    relative_humidity_demand + carbon_price +
     year_factor + as.factor(month)+
     + as.factor(weekday) + as.factor(creneau)"
 
-equation <- as.formula(paste(formula_str, "+ gas_price"))
+equation <- as.formula(paste(formula_str, "+ gas_price "))
 equation_cap <- as.formula(paste(formula_str, "+ gas_price_capped"))
 
 m_esp_pre_cap <- lm(
@@ -433,7 +478,7 @@ for (col in missing_cols) {
   colnames(X_new)[ncol(X_new)] <- col
 }
 
-# RÈordonner les colonnes de X_new pour matcher l'ordre des coefficients
+# R?ordonner les colonnes de X_new pour matcher l'ordre des coefficients
 X_new <- X_new[, names(coef_pre)]
 
 # setdiff(names(coef_pre), colnames(X_new))
@@ -450,7 +495,7 @@ vcov_beta_post <- vcov(m_esp_post)
 # noms des coefficients
 missing_coef <- c("year_factor2023")
 # par ex. "as.factor(year)2023"
-# …tendre la matrice de variance-covariance de pre
+# ?tendre la matrice de variance-covariance de pre
 p <- length(names_pre)
 new_size <- p + length(missing_coef)
 
@@ -466,7 +511,7 @@ vcov_beta_pre_expanded[names_pre, names_pre] <- vcov_beta_pre
 vcov_beta_pre_expanded[missing_coef, missing_coef] <- vcov_beta_post[missing_coef, missing_coef]
 
 # (optionnel) copier aussi les covariances avec les autres variables si tu veux les prendre de post :
-# complÈter covariances avec les autres coefficients
+# compl?ter covariances avec les autres coefficients
 other_coefs <- setdiff(names_pre, missing_coef)
 
 names_factors_pre <- names(coef_pre[grep("year_factor", names(coef_pre))])[c(-5)]
@@ -486,7 +531,7 @@ se_fit <- sqrt(diag(X_new %*% vcov_beta_pre_expanded %*% t(X_new)))
 se_fit[is.na(se_fit)] <- 0
 
 
-# 6. RÈsiduelle sigma^2
+# 6. R?siduelle sigma^2
 sigma2 <- summary(m_esp_pre)$sigma^2
 
 #for missing se_fit fit just put zero
@@ -508,7 +553,7 @@ ci_upper <- yhat + tval * se_fit
 pi_lower <- yhat - tval * se_pred
 pi_upper <- yhat + tval * se_pred
 
-# 10. Stocker rÈsultats
+# 10. Stocker r?sultats
 pred_post_2022_2023 <- data.frame(
   predicted_price = yhat,
   se.fit = se_fit,
@@ -572,7 +617,7 @@ monthly_pred <- pred_post_2022_2023 %>%
     predicted_price = weighted_mean(predicted_price, gen_tot),
     gen_tot = mean(gen_tot),
     var_fit = weighted_mean(se.fit^2, gen_tot) / n(),       # variance de la moyenne
-    #var_pred = sum(se_pred^2) / n()^2,     # variance prÈdiction
+    #var_pred = sum(se_pred^2) / n()^2,     # variance pr?diction
     .groups = "drop"
   ) %>%
   mutate(
@@ -591,8 +636,8 @@ write_parquet(pred_post_2022_2023 %>%
                 dplyr::select(-c(lwr.CI, upr.CI)), "prediction_gas_price_counterfactual.parquet")
 write_parquet(monthly_pred , "prediction_gas_price_counterfactual_monthly.parquet")
 
-#on confirme les deux prÈdictions donnent la mÍme chose
-#j'ai bien rÈpliquÈ la fonction predict
+#on confirme les deux pr?dictions donnent la m?me chose
+#j'ai bien r?pliqu? la fonction predict
 
 save_var_path <- 'Z:/prix_electricite_gitlab/Data_Structuring/output'
 setwd(save_var_path)
