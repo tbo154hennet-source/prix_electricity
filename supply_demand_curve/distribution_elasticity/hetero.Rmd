@@ -1,0 +1,24 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+plot_hetero_by_month
+```
+
+```{r}
+plot_hetero_by_hour
+```
+
+
+```{r}
+plot_hetero_by_quantile
+```
+
+
+```{r}
+plot_hetero_by_quantile_season
+```
+

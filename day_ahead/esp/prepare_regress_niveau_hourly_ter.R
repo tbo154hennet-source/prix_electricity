@@ -229,27 +229,31 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 #add temperature  and other weather conditions
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
-temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
-colnames(temperature_openmeteo_data)
+tempall_data_data <- read_parquet( "tempall_data_data.parquet")
+
+colnames(tempall_data_data)
+# setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+# temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
+# colnames(temperature_openmeteo_data)
 
 #question sou-jacente
 #quelle est la temporalitÃ© d'ajustement au froid
 
-mean_temperatures_hour <- temperature_openmeteo_data %>% 
+mean_temperatures_hour <- tempall_data_data %>% 
   mutate(week = week(date),
          hour = hour(date)) %>%
   group_by(week, hour) %>% 
   summarise(
     mean_temp_demand = mean(as.numeric(temperature_demand), na.rm = TRUE),
-    mean_temp_supply = mean(as.numeric(temperature_supply), na.rm = TRUE),
-    mean_temp_nuclear = mean(as.numeric(temperature_2m_nuclear), na.rm = TRUE),
+    mean_temp_ss = mean(as.numeric(temperature_ss), na.rm = TRUE),
+    mean_temp_sth = mean(as.numeric(temperature_sth), na.rm = TRUE),
     .groups = "drop"
   )
 
 cold_months <- c(1, 2, 11, 12)
 hot_months <- c(6, 7, 8, 9)
 
-temperature_openmeteo_data_test <- temperature_openmeteo_data %>%
+temperature_openmeteo_data_test <- tempall_data_data %>%
   mutate(
     week = week(date),
     hour = hour(date),
@@ -260,22 +264,22 @@ temperature_openmeteo_data_test <- temperature_openmeteo_data %>%
   # Join hourly means
   left_join(mean_temperatures_hour, by = c("week", "hour")) %>%
   rename(hourly_mean_temp_demand = mean_temp_demand,
-         hourly_mean_temp_supply = mean_temp_supply,
-         hourly_mean_temp_nuclear = mean_temp_nuclear
+         hourly_mean_temp_ss = mean_temp_ss,
+         hourly_mean_temp_sth = mean_temp_sth
          ) %>%
   mutate(
-    cold_excess_supply = -ifelse(month %in% cold_months, 
-                                      temperature_supply - hourly_mean_temp_supply, 0),
-    heat_excess_supply = ifelse(month %in% hot_months, 
-                                     temperature_supply - hourly_mean_temp_supply, 0),
+    cold_excess_ss = -ifelse(month %in% cold_months, 
+                                      temperature_ss - hourly_mean_temp_ss, 0),
+    heat_excess_ss = ifelse(month %in% hot_months, 
+                                     temperature_ss - hourly_mean_temp_ss, 0),
     cold_excess_demand = -ifelse(month %in% cold_months, 
                                       temperature_demand - hourly_mean_temp_demand, 0),
     heat_excess_demand = ifelse(month %in% hot_months, 
-                                     temperature_demand - hourly_mean_temp_demand, 0),
-    cold_excess_nuclear = -ifelse(month %in% cold_months, 
-                                      temperature_2m_nuclear - hourly_mean_temp_nuclear, 0),
-    heat_excess_nuclear = ifelse(month %in% hot_months,
-                                     temperature_2m_nuclear - hourly_mean_temp_nuclear, 0)
+                                     temperature_demand - hourly_mean_temp_demand, 0), 
+    cold_excess_sth = -ifelse(month %in% cold_months, 
+                                 temperature_sth - hourly_mean_temp_sth, 0),
+    heat_excess_sth = ifelse(month %in% hot_months, 
+                                temperature_sth - hourly_mean_temp_sth, 0), 
     
   )
 
@@ -291,8 +295,7 @@ wind_solar_openmeteo_data <- read_parquet("wind_solar_data.parquet")
 colnames(wind_solar_openmeteo_data )
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
-  left_join(wind_solar_openmeteo_data %>% 
-              dplyr::select(-year, -month), by=c('datetime' = 'date'))
+  left_join(wind_solar_openmeteo_data , by=c('datetime' = 'date'))
 
 #add day ahead generation
 
@@ -350,7 +353,7 @@ p95 <- quantile(price_indispo_merge_esp$price, 0.95, na.rm = TRUE)
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
   mutate(price_wins = pmin(price, p95))
 
-# Créer l'histogramme
+# Cr?er l'histogramme
 price_histo <- ggplot(price_indispo_merge_esp %>% filter(year <= 2023), aes(x = price_wins)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(

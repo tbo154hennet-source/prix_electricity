@@ -1,5 +1,105 @@
 options(future.globals.maxSize = 5 * 1024^2 * 1024)  # 10 GiB
 
+
+################### NEW Temperature plots
+# Variables à transformer en facteurs
+factor_vars <- c("year","month", "creneau", "weekday")
+
+#factor_vars <- c("year_month", "creneau","weekday")
+
+general_factors <- c(
+  "Fore_Wind","intraday_update_wind", "unpredicted_wind",
+  "Fore_Solar", "unpredicted_sun","intraday_update_sun",
+  "spot_gas",
+  "Published.Predicted.Unavailable.Capacity",
+  "Unpublished.Predicted.Unavailable.Capacity",
+  "cbf_es"
+)
+
+general_factors_indispo <- c(
+  setdiff(general_factors, c("Published.Predicted.Unavailable.Capacity",
+                             "Unpublished.Predicted.Unavailable.Capacity")),
+  "Published.Unavailable.Capacity",
+  "Unpublished.Unavailable.Capacity",
+  "Published.Unavailable.Nuclear.Capacity",
+  "Unpublished.Unavailable.Nuclear.Capacity"
+)
+control_factors <- c("relative_humidity_2m_ss", "precipitation_ss",
+                     "relative_humidity_2m_demand", "precipitation_demand",
+                     "relative_humidity_2m_sth", "precipitation_sth"
+)
+
+temp_factors <- c( "cold_excess_ss", "heat_excess_ss","cold_excess_demand", 
+                   "heat_excess_demand")
+#"cold_excess_supply" %in% colnames(price_indispo_merge_esp)
+price_indispo_merge_esp <- price_indispo_merge_esp %>%
+  
+  # Renommer ss → supply
+  rename(
+    cold_excess_supply = cold_excess_ss,
+    heat_excess_supply = heat_excess_ss
+  ) %>%
+  
+  # Créer le mismatch froid
+  mutate(
+    cold_spatial_mismatch =
+      residuals(lm(cold_excess_demand ~ cold_excess_supply, data = .)),
+    
+    # Créer le mismatch chaud
+    heat_spatial_mismatch =
+      residuals(lm(heat_excess_demand ~ heat_excess_supply, data = .))
+  )
+
+my_factors_supply <- c(general_factors, control_factors, 
+                        c("cold_excess_supply", "heat_excess_supply",
+                          "cold_spatial_mismatch", "heat_spatial_mismatch") )
+my_factors_demand <- c(general_factors, control_factors, 
+                        c("cold_excess_demand", "heat_excess_demand") )
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
+reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
+
+# Ex?cution sans barre de progression
+coef_supply_unmatched <- future_lapply(price_grid_sparse, function(g) {
+  estimate_coeff_shift_qty(
+    price_test = g,
+    reconstruct_full_curve_shift = reconstruct_full_curve_shift,
+    factors = my_factors_supply
+  )
+})
+
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
+#write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
+saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_lv.rds")
+
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_matched.parquet')
+reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
+
+coef_supply_matched <- future_lapply(price_grid_sparse, function(g) {
+  estimate_coeff_shift_qty(
+    price_test = g,
+    reconstruct_full_curve_shift = reconstruct_full_curve_shift,
+    factors = my_factors_demand
+  )
+})
+saveRDS(coef_supply_matched, "reg_shift_result_qty_supply_matched_sparse_lv.rds")
+
+
+
+
+
+
+
+
+
+
+
+
+################ OLD STUFF
+
+
+
 setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]

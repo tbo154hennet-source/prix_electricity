@@ -7,8 +7,8 @@ library(stargazer)
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
-price_indispo_merge_esp_sd <-read_parquet("price_indispo_merge_esp_npc_no_cbf.parquet")
+
+price_indispo_merge_esp_sd <-read_parquet("price_indispo_merge_esp_npc.parquet")
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_esp_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet") 
 # Sélectionner toutes les colonnes contenant "fitted" et "supply"
@@ -30,17 +30,17 @@ cols_fitted_demand <- grep("indispo", cols_fitted_demand, invert = TRUE, value =
 
 
 price_indispo_merge_compare <- merge(price_indispo_merge_esp_sd %>% 
-                                       select(datetime,
+                                       dplyr::select(datetime,
                               cols_fitted_supply , cols_fitted_demand   ),
                                      price_indispo_merge_esp_delta %>% 
-                                       select(delta_s_total, delta_d_total, gen_tot, gen_tot_da, price, datetime)
+                                dplyr::select(delta_s_total, delta_d_total, gen_tot, gen_tot_da, price, datetime)
 ) %>% distinct(datetime, .keep_all = TRUE)
 
 
 
 View(
   price_indispo_merge_compare %>% 
-    select(c("datetime", "gen_tot", "price", "gen_tot_da",  
+    dplyr::select(c("datetime", "gen_tot", "price", "gen_tot_da",  
              "delta_s_total", "delta_d_total",
              cols_fitted_supply,
              cols_fitted_demand)))
@@ -48,11 +48,11 @@ View(
 
 
 price_indispo_merge_compare %>% 
-  select(c("delta_s_total",cols_fitted_supply)) %>% 
+  dplyr::select(c("delta_s_total",cols_fitted_supply)) %>% 
   cor(use = "complete.obs")
 
 price_indispo_merge_compare %>% 
-  select(c("delta_d_total",cols_fitted_demand)) %>% 
+  dplyr::select(c("delta_d_total",cols_fitted_demand)) %>% 
   cor(use = "complete.obs")
 
 

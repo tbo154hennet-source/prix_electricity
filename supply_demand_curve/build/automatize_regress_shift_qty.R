@@ -19,7 +19,8 @@ time_factors <- c("year", "month", "delivery_date", "creneau", "weekday", "datet
 # Lire le fichier .parquet et convertir en data.table
 # save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 # setwd(save_path_data)
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
 setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
 
@@ -52,14 +53,14 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 # price_indispo_merge_esp_subset <- price_indispo_merge_esp[, ..selected_cols]
 # price_indispo_merge_esp_subset[, Hour := creneau + 1]
 
-#add mismatch
-price_indispo_merge_esp <- price_indispo_merge_esp %>% 
-  mutate(cold_excess_mismatch = cold_excess_demand - cold_excess_supply,
-         heat_excess_mismatch = heat_excess_demand - heat_excess_supply,
-         precipitation_mismatch = precipitation_demand - precipitation_supply,
-         relative_humidity_mismatch = relative_humidity_demand - relative_humidity_supply,
-         temperature_mismatch = temperature_demand - temperature_supply
-         )
+#mismatch whatever rsidual in the rgression of one against the other
+# price_indispo_merge_esp <- price_indispo_merge_esp %>% 
+#   mutate(cold_excess_mismatch = cold_excess_demand - cold_excess_supply,
+#          heat_excess_mismatch = heat_excess_demand - heat_excess_supply,
+#          precipitation_mismatch = precipitation_demand - precipitation_supply,
+#          relative_humidity_mismatch = relative_humidity_demand - relative_humidity_supply,
+#          temperature_mismatch = temperature_demand - temperature_supply
+#          )
 
 
 colnames(price_indispo_merge_esp)

@@ -6,7 +6,8 @@ library(fixest)
 # Lire le fichier .parquet et convertir en data.table
 # save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 # setwd(save_path_data)
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
 setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
 
@@ -40,13 +41,13 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 # price_indispo_merge_esp_subset[, Hour := creneau + 1]
 
 #add mismatch
-price_indispo_merge_esp <- price_indispo_merge_esp %>% 
-  mutate(cold_excess_mismatch = cold_excess_demand - cold_excess_supply,
-         heat_excess_mismatch = heat_excess_demand - heat_excess_supply,
-         precipitation_mismatch = precipitation_demand - precipitation_supply,
-         relative_humidity_mismatch = relative_humidity_demand - relative_humidity_supply,
-         temperature_mismatch = temperature_demand - temperature_supply
-  )
+# price_indispo_merge_esp <- price_indispo_merge_esp %>% 
+#   mutate(cold_excess_mismatch = cold_excess_demand - cold_excess_supply,
+#          heat_excess_mismatch = heat_excess_demand - heat_excess_supply,
+#          precipitation_mismatch = precipitation_demand - precipitation_supply,
+#          relative_humidity_mismatch = relative_humidity_demand - relative_humidity_supply,
+#          temperature_mismatch = temperature_demand - temperature_supply
+#   )
 
 
 
@@ -110,14 +111,17 @@ general_factors_indispo <- c(
   "Published.Unavailable.Nuclear.Capacity",
   "Unpublished.Unavailable.Nuclear.Capacity"
 )
+control_facotrs <- c("relative_humidity_2m_ss", "precipitation_ss",
+                     "relative_humidity_2m_demand", "precipitation_demand",
+                     "relative_humidity_2m_sth", "precipitation_sth"
+                     )
+
+temp_factors <- c( "cold_excess_ss", "heat_excess_ss","cold_excess_demand", 
+          "heat_excess_demand","cold_excess_sth","heat_excess_sth")
 
 
-temp_factors <- c( "cold_excess_demand", "heat_excess_demand",
-              "precipitation_demand", "relative_humidity_demand",
-              "cold_excess_mismatch", "heat_excess_mismatch",
-              "precipitation_mismatch","relative_humidity_mismatch")
 factors <- c(general_factors,temp_factors)
-factors_indispo <- c(general_factors_indispo,temp_factors)
+factors_indispo <- c(general_factors_indispo, temp_factors)
 
 price_grid <- seq(-200, 1000, length.out = 1001)
 # Get every 10th value
@@ -145,7 +149,7 @@ price_indispo_merge_esp_npc <- price_indispo_merge_esp %>%
 instruments_tot <- c("Fore_Wind",
                      "Fore_Solar",
                      "Published.Predicted.Unavailable.Capacity",
-                     #"cbf_es",
+                     "cbf_es",
                      "cold_excess_demand",
                      "heat_excess_demand")
 
@@ -216,12 +220,13 @@ get_fitted_no_price <- function(data_price, data_reg, factors = NULL, instrument
   # Contribution Ã  la variance
   var_total <- var(fitted_vals)
   effects <- sweep(X_no_intercept, 2, coefs_no_intercept, `*`)
-  contrib <- apply(effects, 2, var) / var_total
+  contrib <- apply(effects, 2, var)
+  contrib_norm <- apply(effects, 2, var) / var_total
   
   # Retourner fitted + contributions
   out <- rep(NA_real_, nrow(data_price))
   out[complete_idx] <- fitted_vals
-  list(fitted = out, contrib = contrib, coef = coefs_no_price)
+  list(fitted = out, contrib = contrib, contrib_norm = contrib_norm, coef = coefs_no_price)
 }
 
 file_name <- files_to_load[1]
@@ -321,20 +326,25 @@ process_file <- function(file_name) {
 # results_1 <- lapply(files_to_load[1], process_file)
 # rbindlist(lapply(results_1, `[[`, "coef_table"), fill = TRUE)
 
-results <- lapply(files_to_load[c(1,3)], process_file)
+#results <- lapply(files_to_load[c(1,3)], process_file)
+
+results <- lapply(files_to_load[c(1,2,3,4)], process_file)
 
 contrib_table_tot <- rbindlist(lapply(results, `[[`, "contrib_table"), fill = TRUE)
 coef_table_tot    <- rbindlist(lapply(results, `[[`, "coef_table"), fill = TRUE)
 
-# si tu veux récupérer le dernier price_indispo_merge_esp_npc modifié
+# si tu veux r?cup?rer le dernier price_indispo_merge_esp_npc modifi?
 price_indispo_merge_esp_npc = results[[length(results)]]$price_indispo
 
 
-# price_indispo_merge_esp_npc %>%
-#   dplyr::select(fitted_select_supply_unmatched,fitted_select_supply_matched,
-#   fitted_select_demand_unmatched,fitted_select_demand_matched) %>%
-#   as.data.frame() %>%
-#   cor(use = "complete.obs")
+summary(price_indispo_merge_esp_npc$fit_demand_unmatched)
+summary(price_indispo_merge_esp_npc$fit_supply_unmatched)
+
+#For a given hour our supply and demand shocks are 1000 MW wide.
+#Supply shocks tend to be larger mainly because of wind and solar production
+
+
+
 
 # SÃ©lectionner toutes les colonnes contenant "fitted" et "supply"
 cols_fitted_supply <- grep("fit.*supply", names(price_indispo_merge_esp_npc), value = TRUE)
@@ -353,86 +363,19 @@ table_cor_demand <- price_indispo_merge_esp_npc[, ..cols_fitted_demand] %>%
   as.data.frame() %>%
   cor(use = "complete.obs")
 
+colnames(price_indispo_merge_esp_npc)
 
 # Construire le chemin complet
-file_out <- file.path(input_dir, "price_indispo_merge_esp_npc_no_cbf.parquet")
+file_out <- file.path(output_dir, "price_indispo_merge_esp_npc_all.parquet")
 
 #file_out <- file.path(input_dir, "price_indispo_merge_esp_npc_no_cbf_YM.parquet")
 
 # Sauvegarder
 write_parquet(price_indispo_merge_esp_npc, file_out)
-setwd(input_dir)
-write.csv(contrib_table_tot, "contrib_table_tot.csv")
-write.csv(coef_table_tot, "coef_table_tot.csv")
+setwd(output_dir)
 
+write.csv(coef_table_tot , "coef_table_tot_all.csv")
+write.csv(contrib_table_tot , "contrib_table_tot.csv")
 
-# library(data.table)
-# 
-# # Copier la table totale pour Ã©viter de modifier l'originale
-# dt <- copy(contrib_table_tot)
-# 
-# # Identifier les fixed effects
-# fe_pattern <- "month|creneau|weekday|year"
-# 
-# # Somme des contributions des FE par Name et Type
-# fe_summary <- dt[grep(fe_pattern, Variable), 
-#                  .(Contribution = sum(Contribution)), 
-#                  by = .(Name, Type)]
-# fe_summary[, Variable := "FE"]  # renommer la variable en "FE"
-# 
-# # Contributions des autres variables (non-FE)
-# other_vars <- dt[!grep(fe_pattern, Variable)]
-# 
-# # Ajouter les FE regroupÃ©s
-# contrib_table_tot_grouped <- rbind(fe_summary, other_vars, fill = TRUE)
-# 
-# # Pour les types "no_FE" qui n'ont pas de FE, ajouter Contribution = 0
-# # Identifier les combinaisons Name/Type qui n'ont pas de FE
-# missing_FE <- setdiff(unique(dt[, .(Name, Type)]), fe_summary[, .(Name, Type)])
-# if (nrow(missing_FE) > 0) {
-#   contrib_table_tot_grouped <- rbind(
-#     contrib_table_tot_grouped,
-#     data.table(Name = missing_FE$Name, Type = missing_FE$Type, Variable = "FE", Contribution = 0),
-#     fill = TRUE
-#   )
-# }
-# 
-# # Optionnel : trier
-# setorder(contrib_table_tot_grouped, Name, Type, -Contribution)
-# 
-# colnames(contrib_table_tot_grouped)
-# unique(contrib_table_tot_grouped %>% 
-#          select(Name, Type))
-
-ggplot(
-  contrib_table_tot %>% 
-    filter(Type == "No FE", Name == "supply_unmatched") %>% 
-    mutate(Contribution = Contribution / sum(Contribution)),
-  aes(x = reorder(Variable, -Contribution), y = Contribution, fill = Variable)
-) +
-  geom_bar(stat = "identity", show.legend = FALSE) +
-  labs(x = "Variable", y = "Variance Contribution (normalized)", title = "") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 20, hjust = 1))
-
-
-ggplot(contrib_table_tot %>% filter(Type == "FE" & Name == "supply_unmatched"), aes(x = reorder(Variable, -Contribution), y = Contribution, fill = Variable)) +
-  geom_bar(stat = "identity", show.legend = FALSE) +
-  labs(x = "Variable", y = "Variance Contribution", title = paste("")) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-ggplot(contrib_table_tot %>% filter(Type == "No FE" & Name == "demand_unmatched"), aes(x = reorder(Variable, -Contribution), y = Contribution, fill = Variable)) +
-  geom_bar(stat = "identity", show.legend = FALSE) +
-  labs(x = "Variable", y = "Variance Contribution", title = paste("")) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-ggplot(contrib_table_tot %>% filter(Type == "FE" & Name == "demand_unmatched"), aes(x = reorder(Variable, -Contribution), y = Contribution, fill = Variable)) +
-  geom_bar(stat = "identity", show.legend = FALSE) +
-  labs(x = "Variable", y = "Variance Contribution", title = paste("")) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 

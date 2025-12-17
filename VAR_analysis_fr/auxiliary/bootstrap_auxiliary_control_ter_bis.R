@@ -111,10 +111,10 @@ gamma_bootstrap_mbb_alternative_bis <- function(x,nboot, vars, BlockSize, theta_
     boot_ncvg_theta_0[,,irep] <- estimatenew$theta_0
     # on notera que pour des instruments très faibles l'intervalle va exploser
     # en effet phi tend vers 0 comme son determinant
-    
-    boot_ncvg_lambda_01[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0)[,,1]
+
+    boot_ncvg_lambda_01[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0, irhor = irhor)[,,1]
     if (k >=2){
-      boot_ncvg_lambda_02[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0)[,,2] 
+      boot_ncvg_lambda_02[,,irep]  <- get_lambda_0(Marep_new, estimatenew$theta_0, irhor = irhor)[,,2] 
     }
     
     

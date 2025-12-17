@@ -153,26 +153,26 @@ IV_data_log[is.na(IV_data_log)] <- 0
 
 colnames(IV_data_log)
 
-IV_data_log <- IV_data_log %>% 
-  mutate(
-    log_diff_gas = avg_spot_price_log - lag(as.numeric(avg_spot_price_log)),
-    log_diff_spot = spot_price_log - lag(as.numeric(spot_price_log)),
-    diff_cbf = cbf_es - lag(as.numeric(cbf_es)),
-    log_diff_renewable = renewable_day_ahead_forecast_esp_log - lag(as.numeric(renewable_day_ahead_forecast_esp_log)),
-    log_diff_ex_renewable = renewable_day_ahead_forecast_ex_es_log - lag(as.numeric(renewable_day_ahead_forecast_ex_es_log)),
-    log_diff_pred_unavail = predicted_unavailabilities_log - lag(as.numeric(predicted_unavailabilities_log)),
-    log_diff_temperature = temperature_supply_log - lag(as.numeric(temperature_supply_log)),
-    log_diff_precipitation = precipitation_supply_log - lag(as.numeric(precipitation_supply_log)),
-    log_diff_humidity = relative_humidity_supply_log - lag(as.numeric(relative_humidity_supply_log)),
-    # log_diff_wind = wind_speed_100m_log - lag(as.numeric(wind_speed_100m_log)),
-    # log_diff_solar = global_tilted_irradiance_log - lag(as.numeric(global_tilted_irradiance_log)),
+# IV_data_log <- IV_data_log %>% 
+#   mutate(
+#     log_diff_gas = avg_spot_price_log - lag(as.numeric(avg_spot_price_log)),
+#     log_diff_spot = spot_price_log - lag(as.numeric(spot_price_log)),
+#     diff_cbf = cbf_es - lag(as.numeric(cbf_es)),
+#     log_diff_renewable = renewable_day_ahead_forecast_esp_log - lag(as.numeric(renewable_day_ahead_forecast_esp_log)),
+#     log_diff_ex_renewable = renewable_day_ahead_forecast_ex_es_log - lag(as.numeric(renewable_day_ahead_forecast_ex_es_log)),
+#     log_diff_pred_unavail = predicted_unavailabilities_log - lag(as.numeric(predicted_unavailabilities_log)),
+#     log_diff_temperature = temperature_supply_log - lag(as.numeric(temperature_supply_log)),
+#     log_diff_precipitation = precipitation_supply_log - lag(as.numeric(precipitation_supply_log)),
+#     log_diff_humidity = relative_humidity_supply_log - lag(as.numeric(relative_humidity_supply_log)),
+#     # log_diff_wind = wind_speed_100m_log - lag(as.numeric(wind_speed_100m_log)),
+#     # log_diff_solar = global_tilted_irradiance_log - lag(as.numeric(global_tilted_irradiance_log)),
+# 
+#     ) %>%
+#   arrange(datetime)
 
-    ) %>%
-  arrange(datetime)
 
-getwd()
 #write.csv(detrended_data, "DATASET_sa_detrended.csv")
-#write_parquet(IV_data_log, 'IV_data_esp_log.parquet')
+write_parquet(IV_data_log, 'IV_data_esp_log_elas_sd.parquet')
 
 
 #write_parquet(IV_data_log, 'IV_data_esp_log_detrended.parquet')
@@ -190,7 +190,7 @@ for (col in cols_to_transform) {
 }
 
 IV_data_log_diff[1,paste0(cols_to_transform, "_log_diff")] <- 0
-write_parquet(IV_data_log_diff, 'IV_data_esp_log_diff_elas_exo.parquet')
+write_parquet(IV_data_log_diff, 'IV_data_esp_log_diff_elas_sd.parquet')
 
 
 
@@ -207,7 +207,7 @@ for (col in cols_to_transform) {
 }
 
 IV_data_diff[1,paste0(cols_to_transform, "_diff")] <- 0
-write_parquet(IV_data_diff, 'IV_data_esp_diff_elas.parquet')
+write_parquet(IV_data_diff, 'IV_data_esp_diff_elas_sd.parquet')
 getwd()
 rm(IV_data_esp_diff)
 gc()  # force le garbage collection
@@ -236,13 +236,12 @@ ggplot(IV_data, aes(x = datetime)) +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
-
-ggplot(IV_data_log, aes(x = datetime)) +
-  geom_line(aes(y =log_diff_renewable , color = "Renewable")) +
-  geom_line(aes(y = log_diff_wind, color = "Wind")) +
-  geom_line(aes(y = log_diff_solar, color = "Solar")) +
+ggplot(IV_data, aes(x = datetime)) +
+  geom_line(aes(y =IV_data$IPI , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$IPI, color = "Detrended")) +
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
+  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
 

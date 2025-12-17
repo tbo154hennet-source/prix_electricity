@@ -1,0 +1,217 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(latex2exp)
+library(cowplot)
+library(gridExtra)
+
+#Take care of the legend
+
+# Exemple simulé si tu n’as pas défini `simul_data`
+set.seed(123)
+simul_data <- data.frame(
+  x = rnorm(100),
+  y = rnorm(100),
+  `Confidence.Bands` = rep(c("90%", "68%"), each = 50)
+  ,
+  `Linetype` = rep(c("Main Estimate", "Bootstrap Median"), 50)
+)
+
+names <- c("Pelec", "Qelec", "IPI", "CPI", "Policy rate")
+# Définir le mapping manuel pour les types de traits
+linetype <- c("Bootstrap Median"= "dashed", "Main Estimate" = "solid")
+
+# Plot avec légende uniquement
+plot_legend <- ggplot(data = simul_data, aes(x = x)) +
+  geom_histogram(aes(fill = `Confidence.Bands`), bins = 30, alpha = 0.6) +
+  geom_line(aes(y = y, linetype = `Linetype`)) +
+  scale_fill_manual(
+    values = c("90%" = "blue", "68%" = "lightblue"),
+    drop = FALSE
+  ) +
+  scale_linetype_manual(
+    values = linetype,
+    name = "Linetype",
+    drop = FALSE
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  )
+
+# Extraire la légende personnalisée
+custom_legend <- cowplot::get_legend(plot_legend)
+#custom_legend <- get_plot_component(plot_legend, "guide-box", return_all = TRUE)[[3]]
+
+#custom_legend[[3]]
+#custom_legend
+```
+
+
+
+Supply ordonner en premier
+
+```{r}
+
+plot_irf <- function(i, shock, elas_key, results, lambda_0_log, irhor) {
+
+  IRF_50 <- results[[elas_key]]$IRF_50
+  IRF_68 <- results[[elas_key]]$IRF_68
+  IRF_90 <- results[[elas_key]]$IRF_90
+
+  main_IV <- results[[elas_key]]$lambda_0[, i, shock]
+
+  time_horizon <- 1:irhor
+
+  ggplot() +
+    geom_ribbon(aes(
+      x = time_horizon,
+      ymin = IRF_90[1, , i, shock],
+      ymax = IRF_90[2, , i, shock]
+    ), fill = "blue", alpha = 0.4) +
+    geom_ribbon(aes(
+      x = time_horizon,
+      ymin = IRF_68[1, , i, shock],
+      ymax = IRF_68[2, , i, shock]
+    ), fill = "lightblue", alpha = 0.6) +
+    geom_line(aes(x = time_horizon, y = main_IV),
+              color = "darkblue", linewidth = 1) +
+    geom_line(aes(x = time_horizon, y = IRF_50[, i, shock]),
+              color = "darkblue", linetype = "dashed") +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      title = names[i],
+      # subtitle = paste0("Elasticity = ", elas_key),
+      x = "Time",
+      y = "Unit Points"
+    ) +
+    theme_minimal(base_size = 14)
+}
+
+
+```
+
+
+
+
+```{r}
+plot_grid_for_elas <- function(elas_key, shock, results, lambda_0_log, irhor, n) {
+
+  plots <- lapply(seq_len(n), function(i) {
+    plot_irf(
+      i = i,
+      shock = shock,
+      elas_key = elas_key,
+      results = results,
+      lambda_0_log = lambda_0_log,
+      irhor = irhor
+    )
+  })
+    
+  grid.arrange(grobs = plots, nrow = 2)
+  # grid_plots <- grid.arrange(grobs = plots, nrow = 2)
+  #   
+  # legend_plot <- plot_grid(grid_plots, custom_legend , ncol = 1, rel_heights = c(1, 0.1))
+  # 
+  # # Title and final composition
+  # title <- ggdraw() + draw_label(paste0("Shock: ", ifelse(shock == 1, "Supply", "Demand"), 
+  #                                       "\n", "Elasticity = ", elas_key),
+  #                                , fontface = 'bold', x = 0.5, hjust = 0.5)
+  # final_plot <- plot_grid(title, legend_plot, ncol = 1, rel_heights = c(0.1, 1))
+  # 
+  # return(final_plot)
+}
+
+```
+
+
+
+```{r}
+
+shock_order <- c(1, 2)  # 1 = Supply, 2 = Demand
+shock_names <- c("Supply", "Demand")
+
+elas_grid_demand <- seq(from = -1, to = 0, by = 0.1)
+elas_grid_supply <- seq(from = -1, to = 5, by = 0.5)
+
+
+results_by_elas <- lapply(elas_grid_demand, run_bootstrap_for_elas)
+names(results_by_elas) <- paste0( elas_grid_demand)
+
+###### Imppose Supply elas instead of Demand elas
+results_by_elas_bis <- lapply(elas_grid_supply, run_bootstrap_for_elas_bis)
+names(results_by_elas_bis) <- paste0(elas_grid_supply)
+
+
+```
+
+
+```{r}
+for (e in elas_grid_demand) {
+
+  elas_key <- paste0(e)
+
+  cat("\n\n")
+  cat("## Elasticity =", e, "\n\n")
+
+  for (s in shock_order) {
+
+    cat("### ", shock_names[s], " shock\n\n")
+
+    grid <- plot_grid_for_elas(
+      elas_key = elas_key,
+      shock = s,
+      results = results_by_elas,
+      lambda_0_log = lambda_0_log,
+      irhor = irhor,
+      n = n
+    )
+
+    print(grid)
+  }
+}
+
+```
+
+
+
+```{r}
+for (e in elas_grid_supply) {
+
+  elas_key <- paste0(e)
+
+  cat("\n\n")
+  cat("## Elasticity =", e, "\n\n")
+
+  for (s in shock_order) {
+
+    cat("### ", shock_names[s], " shock\n\n")
+
+    grid <- plot_grid_for_elas(
+      elas_key = elas_key,
+      shock = s,
+      results = results_by_elas_bis,
+      lambda_0_log = lambda_0_log,
+      irhor = irhor,
+      n = n
+    )
+
+    print(grid)
+  }
+}
+
+```
+
+
+
+
+
+
+
+

@@ -52,7 +52,7 @@ solar_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/output
 # Définir le répertoire de travail
 setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 df_wind_spain_big <- read.csv("df_wind_spain_big.csv")%>% 
-  select(generation_gwh_avg, efficiency, capacity_mw, latitude, longitude, name, gppd_idnr)
+  dplyr::select(generation_gwh_avg, efficiency, capacity_mw, latitude, longitude, name, gppd_idnr)
 
 setDT(df_wind_spain_big)
 df_wind_spain_big <- df_wind_spain_big[
@@ -74,7 +74,7 @@ df_wind_spain_big <- df_wind_spain_big[
 
 
 df_solar_spain_big <- read.csv("df_solar_spain_big.csv")%>% 
-  select(generation_gwh_avg, efficiency, capacity_mw, latitude, longitude, name, gppd_idnr)
+  dplyr::select(generation_gwh_avg, efficiency, capacity_mw, latitude, longitude, name, gppd_idnr)
 
 setDT(df_solar_spain_big)
 df_solar_spain_big <- df_solar_spain_big[
@@ -110,7 +110,7 @@ demand_data <- as.data.table(read_parquet("wind_sol_demand_data.parquet"))
 # gdf_points[, id := .I]
 colnames(demand_data)
 gdf_demand_points <- read.csv("demand_points_corrected.csv") %>% 
-  select(c("latitude", "longitude", "factor", "comunidad"))
+  dplyr::select(c("latitude", "longitude", "factor", "comunidad"))
 dim(gdf_demand_points)
 colnames(gdf_demand_points)
 # Fusionner l'ID dans full_wind
@@ -121,7 +121,7 @@ demand_openmeteo_data <- demand_data[, .(
   cloud_cover = mean(cloud_cover*factor, na.rm = TRUE),
   global_tilted_irradiance = mean(global_tilted_irradiance*factor, na.rm = TRUE)
 ), by = date]
-
+colnames(demand_openmeteo_data) <- c("date", paste0(setdiff(colnames(demand_openmeteo_data), "date"), "_demand"))
 
 
 
@@ -148,7 +148,7 @@ supply_openmeteo_data <- merge(wind_openmeteo_data, sol_openmeteo_data,
 )
 
 
-colnames(demand_openmeteo_data) <- c("date", paste0(setdiff(colnames(demand_openmeteo_data), "date"), "_demand"))
+
 colnames(supply_openmeteo_data) <- c("date", paste0(setdiff(colnames(supply_openmeteo_data), "date"), "_supply"))
 
 wind_solar_data <-  merge(demand_openmeteo_data, 
@@ -164,103 +164,6 @@ setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(wind_solar_data, "wind_solar_data.parquet")
 
 
-wind_solar_data <- read_parquet("wind_solar_data.parquet")
-#difference is 
-# effective wind and solar energy including curtailment
-#whereas I might have sold energy from other plants
-#wind speed and sun exposition better for potential
 
-
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
-setwd(save_path_data)
-price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
-colnames(price_indispo_merge_esp)
-
-price_indispo_merge_esp$year <- year(price_indispo_merge_esp$delivery_date)
-price_indispo_merge_esp$month <- month(price_indispo_merge_esp$delivery_date)
-price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp$delivery_date)
-price_indispo_merge_esp$creneau <- hour(price_indispo_merge_esp$datetime)
-colnames(price_indispo_merge_esp)
-wind_solar_data_tot <- merge(
-  wind_solar_data,
-  price_indispo_merge_esp %>% 
-    select(day_ahead_forecast, intraday_update_renewables, unpredicted_renewables,
-           wind_solar_tot, gen_tot, temperature_demand, precipitation_demand,
-           relative_humidity_demand, Fore_Wind, Fore_Solar,year, month,
-            weekday, creneau,datetime),
-  by.x = "date", by.y = "datetime"
-)
-
-colnames(wind_solar_data_tot)
-
-#on essaye d'expliquer la prod de renouvelables avec mes infos et on regarde le R2
-#est ce que bien encapsulé
-
-wind_solar_data_tot %>% 
-  select(wind_speed_100m_supply, wind_speed_100m_demand,
-           global_tilted_irradiance_supply, global_tilted_irradiance_demand) %>% 
-  cor()
-
-m_wind <- lm(data =wind_solar_data_tot,
-                   Fore_Wind ~ wind_speed_100m_supply  + wind_speed_100m_demand+ 
-                   global_tilted_irradiance_supply + global_tilted_irradiance_demand)
-
-m_windc <- lm(data =wind_solar_data_tot,
-                    Fore_Wind ~ wind_speed_100m_supply  + wind_speed_100m_demand+ 
-                    global_tilted_irradiance_supply + global_tilted_irradiance_demand +
-                      temperature_demand + precipitation_demand +
-                      relative_humidity_demand)
-
-m_windfe <- lm(data =wind_solar_data_tot,
-               Fore_Wind ~ wind_speed_100m_supply  + wind_speed_100m_demand+ 
-                 global_tilted_irradiance_supply + global_tilted_irradiance_demand +
-                 temperature_demand + precipitation_demand +
-                 relative_humidity_demand + 
-                 as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau)
-                 )
-
-m_solar <- lm(data =wind_solar_data_tot,
-                  Fore_Solar ~ wind_speed_100m_supply  + wind_speed_100m_demand+ 
-                    global_tilted_irradiance_supply + global_tilted_irradiance_demand )
-
-m_solarc <- lm(data =wind_solar_data_tot,
-                   Fore_Solar ~ wind_speed_100m_supply  + wind_speed_100m_demand+ 
-                     global_tilted_irradiance_supply + global_tilted_irradiance_demand +
-                    temperature_demand + precipitation_demand +
-                    relative_humidity_demand)
-
-m_solarfe <- lm(data =wind_solar_data_tot,
-                    Fore_Solar ~ wind_speed_100m_supply  + wind_speed_100m_demand+ 
-                      global_tilted_irradiance_supply + global_tilted_irradiance_demand + +
-                     temperature_demand + precipitation_demand +
-                     relative_humidity_demand + 
-                     as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau)
-)
-
-stargazer(
-  #m_wind, 
-  m_windc, m_windfe,
-  #m_solar, 
-  m_solarc, m_solarfe,
-  type = "text",
-  keep = c(
-    "wind_speed_100m_supply",
-    "wind_speed_100m_demand",
-    "global_tilted_irradiance_supply",
-    "global_tilted_irradiance_demand"
-  ),
-  column.labels = c("Wind",  "Wind FE",
-                    "Solar",  "Solar FE"),
-  dep.var.labels = c("Production"),
-  title = "Regression Results for Wind and Solar Models",
-  digits = 3
-)
-
-#Good result because we manage to kill the demand variable
-#that supply wind speed is the only relevant
-#in demand doesn't play
-#same for irradiance
-
-#alors même qu'ils sont corrélés respectivement à 90 et 98 %
 
 

@@ -13,6 +13,7 @@ library(gridExtra)
 library(cowplot)
 
 
+#proxies <- proxies_kanzig
 
 
 first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas = 0) {
@@ -94,6 +95,142 @@ first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas 
   
 }
 
+
+
+first_var_estimation_bis <- function(x, res, p, proxies, irhor, controls = NULL, elas = 0) {
+  # x: endogenous variables
+  # y: dependent variables
+  # p: lag order
+  # proxies: instruments or proxies
+  # irhor: impulse response horizon (unused here, but kept for potential future use)
+  # controls: optional exogenous variables
+  
+  # proxies <- proxies_boot
+  # x <- xnew dim(y)
+  # y <- ynew
+  # n <- dim(x)[2]
+  T = nrow(x) -p
+  n <- ncol(x)
+  
+  Sigma_eta <- cov(res) 
+  
+  #suivre identification simplifiee de olea and al
+  #gamma <- t( t(proxies[c(-1:-p),]) %*% res)
+  gamma <- tryCatch({
+    t( t(proxies[c(-1:-p),]) %*% res)
+  }, error = function(e) {
+    proxies_cut <- window(proxies, start = time(proxies)[p+1])
+    return(t( t(proxies_cut) %*% res))  # ou matrix(NA, nrow=..., ncol=...)
+  })
+  
+  Sigma_a <- gamma %*%  ginv(t(gamma) %*% ginv(Sigma_eta) %*% gamma) %*% t(gamma)
+  if (k ==1){
+    
+    #calculate sigma_aa
+    
+    
+    theta_0 <-  Sigma_a[1,]/ Sigma_a[1,1]
+    
+    phi <-  ginv(theta_0)%*% gamma
+  }
+  
+  if(k>=2){
+    #calculate sigma_aa
+    zero_matrix <- matrix(0, nrow = (n-k), ncol = 2)
+    #my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
+    matrix_12 <- rbind( diag(k) , zero_matrix)
+    
+    
+    theta_01 <- gamma  %*% ginv(t(matrix_12) %*% gamma ) %*% c(1,elas)
+    
+    matrix_12_bis <- rbind( diag(2) , zero_matrix)
+    matrix_12_bis[,1] <-  ginv(Sigma_eta) %*% theta_01
+    
+    theta_02 <- gamma  %*% ginv( t(matrix_12_bis)  %*% gamma ) %*% c(0, 1)
+    
+    
+    theta_0 <- cbind(theta_01, theta_02)
+    
+    
+    
+    phi <- matrix(c(1,0, -theta_0[1,2][[1]], 1), nrow = 2, ncol = 2) %*% t(matrix_12)  %*% gamma
+  }
+  
+  return(list(theta_0= theta_0,  gamma=  gamma,
+              phi = phi, coef = coef(vl)))
+  
+}
+
+
+
+first_var_estimation_double_bis <- function(x, res, p, proxies, irhor, controls = NULL, elas = 0) {
+  
+  ####### Imposer la supply elasticity au lieu de la demand elasticity
+  
+  # x: endogenous variables
+  # y: dependent variables
+  # p: lag order
+  # proxies: instruments or proxies
+  # irhor: impulse response horizon (unused here, but kept for potential future use)
+  # controls: optional exogenous variables
+  
+  # proxies <- proxies_boot
+  # x <- xnew dim(y)
+  # y <- ynew
+  # n <- dim(x)[2]
+  T = nrow(x) -p
+  n <- ncol(x)
+  
+  Sigma_eta <- cov(res) 
+  
+  #suivre identification simplifiee de olea and al
+  #gamma <- t( t(proxies[c(-1:-p),]) %*% res)
+  gamma <- tryCatch({
+    t( t(proxies[c(-1:-p),]) %*% res)
+  }, error = function(e) {
+    proxies_cut <- window(proxies, start = time(proxies)[p+1])
+    return(t( t(proxies_cut) %*% res))  # ou matrix(NA, nrow=..., ncol=...)
+  })
+  
+  Sigma_a <- gamma %*%  ginv(t(gamma) %*% ginv(Sigma_eta) %*% gamma) %*% t(gamma)
+  if (k ==1){
+    
+    #calculate sigma_aa
+    
+    
+    theta_0 <-  Sigma_a[1,]/ Sigma_a[1,1]
+    
+    phi <-  ginv(theta_0)%*% gamma
+  }
+  
+  if(k>=2){
+    #calculate sigma_aa
+    zero_matrix <- matrix(0, nrow = (n-k), ncol = 2)
+    #my_diag <- matrix(c(1,0,0,1), nrow=2, ncol=2)
+    matrix_12 <- rbind( diag(k) , zero_matrix)
+    theta_02 <- gamma  %*% ginv(t(matrix_12) %*% gamma )%*% c(elas, 1) 
+    
+    matrix_12_bis <- rbind( diag(2) , zero_matrix)
+    matrix_12_bis[,1] <-  ginv(Sigma_eta) %*% theta_02
+    
+    e_1 <- rep(0, n)
+    e_1[1] <- 1
+    c <- ginv(Sigma_eta)%*%theta_02
+    
+    
+    theta_01 <- gamma  %*% ginv(t(cbind(e_1, c))%*% gamma  ) %*% c(1,0)
+    
+    
+    theta_0 <- cbind(theta_01, theta_02)
+    
+    phi <- matrix(c(1,theta_0[2,1][[1]], elas, 1), nrow = 2, ncol = 2) %*% t(matrix_12)  %*% gamma
+    
+  }
+  
+  return(list(theta_0= theta_0,  gamma=  gamma,
+              phi = phi, coef = coef(vl)))
+  
+}
 
 first_var_estimation_double <- function(x, y, p, proxies, irhor, controls = NULL, elas = 0) {
   # x: endogenous variables
@@ -278,6 +415,8 @@ irf_computation <- function(b11iSig, b21iSig, SigmaTSigmaTp, conf){ #ordering
   
 }
 
+#theta_0 = theta_0_log_diff
+
 get_lambda_0 <-function(C, theta_0, irhor=20){
   
   theta_0<- as.matrix(theta_0)
@@ -419,11 +558,16 @@ iterate_var_bis <- function(initial_obs, errors, var_model, controls =NULL) {
 }
 
 
-
+# iterate_var_ter(x, initial_obs = x[1:p,], errors= bootres, var_model = vl, controls)
+# Fit the VAR model
 iterate_var_ter <- function(x, initial_obs, errors, var_model, controls =NULL){
   #var_model <- vl
   #errors <- res
   coefficients <- coef(var_model)
+  
+  # intercepts <- sapply(coefficients, function(eq) {
+  #   if ("const" %in% rownames(eq)) eq["const", 1] else 0
+  # })
   
   # Number of variables and lags
   n <- ncol(x)          # number of endogenous variables
@@ -483,13 +627,13 @@ iterate_var_ter <- function(x, initial_obs, errors, var_model, controls =NULL){
 
 
 rebuild_coef_list <- function(vl, coef_sim) {
-  # Nombre d'équations
+  # Nombre d'?quations
   n_eq <- length(coef(vl))  
   
-  # Longueurs de chaque équation
+  # Longueurs de chaque ?quation
   eq_lengths <- sapply(coef(vl), function(x) nrow(x))
   
-  # Noms des coefficients dans chaque équation
+  # Noms des coefficients dans chaque ?quation
   coef_names <- lapply(coef(vl), rownames)
   n_eq <- length(coef(vl))
   eq_lengths <- sapply(coef(vl), nrow)
