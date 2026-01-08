@@ -77,6 +77,54 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
          Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity
   ) 
 
+colnames(price_indispo_merge_esp)
+
+price_indispo_merge_esp <- price_indispo_merge_esp %>%
+  
+  rename(
+    cold_excess_supply = cold_excess_ss,
+    heat_excess_supply = heat_excess_ss,
+    temperature_discomfort_supply = temperature_discomfort_ss
+  ) %>%
+  
+  mutate(
+    cold_spatial_mismatch_supply =
+      residuals(
+        lm(cold_excess_supply ~ cold_excess_demand,
+           data = .,
+           na.action = na.exclude)
+      ),
+    
+    cold_spatial_mismatch_demand =
+      residuals(
+        lm(cold_excess_demand ~ cold_excess_supply,
+           data = .,
+           na.action = na.exclude)
+      ),
+    
+    heat_spatial_mismatch_demand =
+      residuals(
+        lm(heat_excess_demand ~ heat_excess_supply,
+           data = .,
+           na.action = na.exclude)
+      ),
+    
+    heat_spatial_mismatch_supply =
+      residuals(
+        lm(heat_excess_supply ~ heat_excess_demand,
+           data = .,
+           na.action = na.exclude)
+      ),
+    
+    temp_spatial_mismatch_supply =
+      residuals(
+        lm(temperature_discomfort_supply ~ temperature_discomfort_demand,
+           data = .,
+           na.action = na.exclude)
+      )
+  )
+
+
 # Dossiers
 input_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs"
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
@@ -115,13 +163,16 @@ control_facotrs <- c("relative_humidity_2m_ss", "precipitation_ss",
                      "relative_humidity_2m_demand", "precipitation_demand",
                      "relative_humidity_2m_sth", "precipitation_sth"
                      )
+temp_factors <- c( "temperature_discomfort_ss"  , "temperature_discomfort_sth" ,
+                   "temperature_discomfort_demand")
+temp_baseline_factors <-  c("cold_spatial_mismatch_supply", "heat_spatial_mismatch_supply",
+                    "cold_excess_demand", "heat_excess_demand")
+# temp_factors <- c( "cold_excess_ss", "heat_excess_ss","cold_excess_demand", 
+#           "heat_excess_demand","cold_excess_sth","heat_excess_sth")
 
-temp_factors <- c( "cold_excess_ss", "heat_excess_ss","cold_excess_demand", 
-          "heat_excess_demand","cold_excess_sth","heat_excess_sth")
 
-
-factors <- c(general_factors,temp_factors)
-factors_indispo <- c(general_factors_indispo, temp_factors)
+factors <- c(general_factors,temp_baseline_factors )
+factors_indispo <- c(general_factors_indispo, temp_baseline_factors )
 
 price_grid <- seq(-200, 1000, length.out = 1001)
 # Get every 10th value
@@ -149,9 +200,10 @@ price_indispo_merge_esp_npc <- price_indispo_merge_esp %>%
 instruments_tot <- c("Fore_Wind",
                      "Fore_Solar",
                      "Published.Predicted.Unavailable.Capacity",
-                     "cbf_es",
                      "cold_excess_demand",
-                     "heat_excess_demand")
+                     "heat_excess_demand",
+                     # "temperature_discomfort_demand",
+                     "cbf_es")
 
 instruments_indispo <-  c("Fore_Wind",
                           "Fore_Solar",
@@ -230,6 +282,8 @@ get_fitted_no_price <- function(data_price, data_reg, factors = NULL, instrument
 }
 
 file_name <- files_to_load[1]
+df_bis <- read_parquet(file.path(input_dir, file_name))
+tail(df_bis)
 process_file <- function(file_name) {
   cat("Processing:", file_name, "\n")
   
@@ -237,10 +291,11 @@ process_file <- function(file_name) {
   df <- read_parquet(file.path(input_dir, file_name))
   df <-  df[PRICE %in% price_grid_sparse[13:(length(price_grid_sparse)-10)]]
   
+
   reg_data <- merge(
     df,
     price_indispo_merge_esp_npc,
-    by.x = c("DATE", "Hour"),
+    by.x = c("DATE", "hour_num"),
     by.y = c("delivery_date", "Hour"),
     all.x = TRUE
   ) %>% 
@@ -326,9 +381,9 @@ process_file <- function(file_name) {
 # results_1 <- lapply(files_to_load[1], process_file)
 # rbindlist(lapply(results_1, `[[`, "coef_table"), fill = TRUE)
 
-#results <- lapply(files_to_load[c(1,3)], process_file)
+results <- lapply(files_to_load[c(1,3)], process_file)
 
-results <- lapply(files_to_load[c(1,2,3,4)], process_file)
+#results <- lapply(files_to_load[c(1,2,3,4)], process_file)
 
 contrib_table_tot <- rbindlist(lapply(results, `[[`, "contrib_table"), fill = TRUE)
 coef_table_tot    <- rbindlist(lapply(results, `[[`, "coef_table"), fill = TRUE)
@@ -353,7 +408,7 @@ cols_fitted_supply <- grep("fit.*supply", names(price_indispo_merge_esp_npc), va
 table_cor_supply <- price_indispo_merge_esp_npc[, ..cols_fitted_supply] %>%
   as.data.frame() %>%
   cor(use = "complete.obs")
-
+table_cor_supply
 
 # Sélectionner toutes les colonnes contenant "fitted" et "supply"
 cols_fitted_demand <- grep("fit.*demand", names(price_indispo_merge_esp_npc), value = TRUE)
@@ -362,11 +417,13 @@ cols_fitted_demand <- grep("fit.*demand", names(price_indispo_merge_esp_npc), va
 table_cor_demand <- price_indispo_merge_esp_npc[, ..cols_fitted_demand] %>%
   as.data.frame() %>%
   cor(use = "complete.obs")
+table_cor_demand
 
 colnames(price_indispo_merge_esp_npc)
 
 # Construire le chemin complet
-file_out <- file.path(output_dir, "price_indispo_merge_esp_npc_all.parquet")
+file_out <- file.path(output_dir, "price_indispo_merge_esp_npc_all_final_2026.parquet")
+
 
 #file_out <- file.path(input_dir, "price_indispo_merge_esp_npc_no_cbf_YM.parquet")
 
@@ -374,8 +431,19 @@ file_out <- file.path(output_dir, "price_indispo_merge_esp_npc_all.parquet")
 write_parquet(price_indispo_merge_esp_npc, file_out)
 setwd(output_dir)
 
-write.csv(coef_table_tot , "coef_table_tot_all.csv")
-write.csv(contrib_table_tot , "contrib_table_tot.csv")
+write.csv(coef_table_tot , "coef_table_tot_all_2026.csv")
+write.csv(contrib_table_tot , "contrib_table_tot_2026.csv")
 
 
 
+#correction gen not included
+
+# output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+# setwd(output_dir)
+# price_indispo_merge_npc_all <- read_parquet( "price_indispo_merge_esp_npc_all_final.parquet")
+# # rename(renewable_day_ahead_forecast = day_ahead_forecast)
+# price_indispo_merge_npc_all <- merge(price_indispo_merge_npc_all,
+#                                      price_indispo_merge_esp %>% 
+#                                        dplyr::select(all_of(colnames(gen_data))),
+#                                      by = "datetime"
+#                                      write_parquet(price_indispo_merge_npc_all, "price_indispo_merge_esp_npc_all_final.parquet")

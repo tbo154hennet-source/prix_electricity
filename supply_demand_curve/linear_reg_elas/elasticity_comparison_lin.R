@@ -2,12 +2,37 @@ library(ggplot2)
 library(ggpubr)
 library(ggbrace)
 
+library(dplyr)
+library(lubridate)
 
 setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 list.files()
 local_slopes_demand_lin  <- read_parquet("local_slopes_reg_demand_10.parquet")
 local_slopes_supply_lin  <- read_parquet("local_slopes_reg_supply_10.parquet")
 
+local_slopes_demand_lin <- local_slopes_demand_lin %>%
+  mutate(
+    year  = year(DATE),
+    month = month(DATE)
+  )%>%
+  mutate(
+    price_residualized = resid(
+      lm(mean_log_price ~ factor(Hour) + factor(year) + factor(month),
+         data = .)
+    )
+  )
+
+local_slopes_supply_lin <- local_slopes_supply_lin %>%
+  mutate(
+    year  = year(DATE),
+    month = month(DATE)
+  )%>%
+  mutate(
+    price_residualized = resid(
+      lm(mean_log_price ~ factor(Hour) + factor(year) + factor(month),
+         data = .)
+    )
+  )
 # Exemple d'utilisation
 my_demand <- describe_local_slopes(local_slopes_demand_lin)
 # Calcul des quantiles pour le seuil 95%
@@ -18,6 +43,10 @@ local_slopes_demand_lin[, slope_w := pmin(pmax(slope, q_low), q_high)]
 
 # On calcule la moyenne pond?r?e des pentes
 w_mean_demand <- weighted.mean(local_slopes_demand_lin$slope, local_slopes_demand_lin$mean_log_price^2, na.rm= TRUE)
+w_mean_demand <- weighted.mean(local_slopes_demand_lin$slope, local_slopes_demand_lin$price_residualized^2, na.rm= TRUE)
+w_mean_demand <- mean(local_slopes_demand_lin$slope, na.rm= TRUE)
+colnames(local_slopes_demand_lin)
+
 mean_demand <- mean(local_slopes_demand_lin$slope, na.rm= TRUE)
 
 
@@ -28,8 +57,9 @@ q_high <- quantile(local_slopes_supply_lin$slope, probs = 0.975, na.rm = TRUE)
 # Winsorisation
 # Cr?ation d'un nouvel objet winsoris?
 local_slopes_supply_lin[, slope_w := pmin(pmax(slope, q_low), q_high)]
-w_mean_demand <- weighted.mean(local_slopes_supply_lin$slope, local_slopes_supply_lin$mean_log_price^2, na.rm= TRUE)
-mean_supply <- mean(local_slopes_supply_lin$slope, na.rm= TRUE)
+w_mean_supply <- weighted.mean(local_slopes_supply_lin$slope, local_slopes_supply_lin$mean_log_price^2, na.rm= TRUE)
+w_mean_supply <- weighted.mean(local_slopes_supply_lin$slope, local_slopes_supply_lin$price_residualized^2, na.rm= TRUE)
+w_mean_supply <- mean(local_slopes_supply_lin$slope, na.rm= TRUE)
 
 # w_mean_supply <- weighted.mean(price_indispo_merge_esp_elas$slope_supply, price_indispo_merge_esp_elas$resid_price^2, na.rm= TRUE)
 

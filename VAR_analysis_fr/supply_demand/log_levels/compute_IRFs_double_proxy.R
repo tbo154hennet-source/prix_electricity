@@ -1,6 +1,8 @@
 
 IV_data_log_esp[, c("delta_s_tot", "delta_d_tot", "delta_supply", "delta_demand")] %>% 
   cor()
+
+proxies <- ts(IV_data_log_esp[, c("delta_supply", "delta_demand")], frequency=12)
 # Fit the VAR model
 vl <- if (is.null(controls)) {
   vars::VAR(x_supply, p, type = "none")

@@ -1,7 +1,7 @@
-
+library(purrr)
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all.parquet")
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final.parquet")
 colnames(price_indispo_merge_esp_npc)
 
 price_indispo_merge_esp_npc <- 
@@ -30,8 +30,10 @@ control_factors <- c("relative_humidity_2m_ss", "precipitation_ss",
                      "relative_humidity_2m_sth", "precipitation_sth"
 )
 
-temp_factors <- c( "cold_excess_ss", "heat_excess_ss","cold_excess_demand", 
-                   "heat_excess_demand","cold_excess_sth","heat_excess_sth")
+# temp_factors <- c( "cold_excess_ss", "heat_excess_ss","cold_excess_demand", 
+#                    "heat_excess_demand","cold_excess_sth","heat_excess_sth")
+temp_factors <- c( "cold_excess_supply", "heat_excess_supply","cold_excess_demand", 
+                   "heat_excess_demand")
 
 
 my_factors <- c(general_factors, control_factors, temp_factors)

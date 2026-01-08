@@ -1,7 +1,8 @@
 
 library(data.table)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 #all_matched_indispo <- read_parquet("all_matched_indispo.parquet")
 
 all_matched_indispo <- read_parquet("all_matched_indispo.parquet") %>% 
@@ -9,6 +10,7 @@ all_matched_indispo <- read_parquet("all_matched_indispo.parquet") %>%
   mutate(duration = as.numeric(datetime_fin - datetime_debut, units = "hours"),
          publication_duration = as.numeric(datetime_pub - datetime_debut, units = "hours"))
 
+colnames(all_matched_indispo)
 all_matched_indispo <- 
   all_matched_indispo[!duplicated(all_matched_indispo$mrid), ] %>% 
   filter(duration > 1 & duration < 24*365)
@@ -109,6 +111,13 @@ setwd(save_path_data)
 write_parquet(publi_all_matched_indispo, "day_ahead_indispo_formatted.parquet")
 
 
+
+
+
+
+
+
+# 
 # setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant/esp')
 # # Lister tous les fichiers dans le dossier avec l'extension .parquet
 # parquet_files <- list.files(pattern = "\\.parquet$")
@@ -141,11 +150,18 @@ write_parquet(publi_all_matched_indispo, "day_ahead_indispo_formatted.parquet")
 #   # Remove the column by its index
 #   generation_per_plant <- generation_per_plant[, -indexes[2]]
 # }
-#on refait avec des noms de cnetrale qui correspondent à l'intitulé dans gen_per_plant
+# 
+# 
+# setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+# write_parquet(generation_per_plant, "generation_by_plant_esp.parquet")
 
 
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
+
+
+
+#setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 #write_parquet(generation_per_plant, "generation_by_plant_esp.parquet")
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 setDT(generation_per_plant)# Convertir en data.table
@@ -156,9 +172,9 @@ generation_per_plant <- generation_per_plant %>%
                            )
 
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+
 table <- read.csv( "abbreviations.csv")
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+
 centrale_matching <- read.csv("centrale_matching_plant.csv")
 colnames(centrale_matching) <- c("centrale_name","psr_resource_name",
                                  "plant_type",  "Installed.Capacity")
@@ -192,13 +208,16 @@ generate_hourly_dates <- function(start_datetime, end_datetime) {
 setwd(save_path_data)
 #write_parquet(res, "save_pub_status.parquet")
 publi_all_matched_indispo <- read_parquet( "day_ahead_indispo_formatted.parquet")
+publi_all_matched_indispo  <- publi_all_matched_indispo  %>%
+  distinct(psr_resource_name, centrale_name, datetime_pub,
+           start_datetime, end_datetime, .keep_all = TRUE)
 
 
 colnames(publi_all_matched_indispo)
 setDT(publi_all_matched_indispo)  # Convertir en data.table
 
-publi_all_matched_indispo <- merge(publi_all_matched_indispo, matching_table %>% 
-                                     select(psr_resource_name, production_resource_name),
+publi_all_matched_indispo <- merge(publi_all_matched_indispo, matching_table[3:nrow(matching_table),] %>% #enlever la double possibilité pour ABONO 
+                                     dplyr::select(psr_resource_name, production_resource_name) %>% distinct(),
                           by = "psr_resource_name")
 
 
@@ -221,4 +240,4 @@ filtered_indispo <- filtered_indispo[, unique(names(filtered_indispo)), with = F
 
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-write_parquet(filtered_indispo , "filtered_indispo_esp_OMIE.parquet")
+write_parquet(filtered_indispo , "filtered_indispo_esp_OMIE_2026.parquet")

@@ -144,7 +144,6 @@ IV_data_log[is.na(IV_data_log)] <- 0
 
 
 colnames(IV_data_log)
-colnames(IV_data_log_diff)
 # IV_data_log <- IV_data_log %>% 
 #   mutate(
 #     log_diff_gas = avg_spot_price_log - lag(as.numeric(avg_spot_price_log)),
@@ -221,8 +220,8 @@ ggplot(IV_data, aes(x = datetime)) +
 
 
 ggplot(IV_data, aes(x = datetime)) +
-  geom_line(aes(y =IV_data$spot_price , color = "Original")) +
-  geom_line(aes(y = seasonally_adjusted_df$spot_price, color = "Detrended")) +
+  geom_line(aes(y =IV_data$heat_excess , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$heat_excess, color = "Detrended")) +
   labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
        x = "Date", y = "Index") +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +

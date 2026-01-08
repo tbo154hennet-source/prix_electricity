@@ -8,6 +8,7 @@ library(tidyr)
 library(arrow)
 library(sandwich)
 library(lmtest)
+library(fixest)
 
 #setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
 
@@ -19,10 +20,10 @@ time_factors <- c("year", "month", "delivery_date", "creneau", "weekday", "datet
 # Lire le fichier .parquet et convertir en data.table
 # save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 # setwd(save_path_data)
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
-setwd(save_path_data)
-price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
-setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
+output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+setwd(output_dir)
+price_indispo_merge<- read_parquet( "price_indispo_merge_esp_npc_all.parquet")  %>% as.data.table()
+#setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
 
 price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp $delivery_date)
 price_indispo_merge_esp$creneau <- hour(price_indispo_merge_esp$datetime)
@@ -50,6 +51,22 @@ price_indispo_merge_esp[, (colnames_with_capacity) := lapply(.SD, function(x) fi
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(across(all_of(capacity_fields), 
                 ~ . / 1000))
+
+
+price_indispo_merge_esp$Wind_Total <- 
+  rowSums(price_indispo_merge_esp[, c("Wind Offshore", "Wind Onshore")], na.rm = TRUE)
+
+
+price_indispo_merge_esp <- price_indispo_merge_esp %>% 
+  mutate(intraday_update_wind = intraday_Wind - Fore_Wind,
+         unpredicted_wind = intraday_Solar - Fore_Solar,
+         intraday_update_sun = Wind_Total - intraday_Wind,
+         unpredicted_sun = Solar -intraday_Solar
+  )%>% 
+  mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity
+  ) 
 # price_indispo_merge_esp_subset <- price_indispo_merge_esp[, ..selected_cols]
 # price_indispo_merge_esp_subset[, Hour := creneau + 1]
 
@@ -65,8 +82,9 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 
 colnames(price_indispo_merge_esp)
 
-
+#factors = my_factors_detailed
 #price_test = price_grid[200]
+#price_test = price_grid[1]
 estimate_coeff_shift_qty <- function(price_test, reconstruct_full_curve_shift,
                                  factors){
   
@@ -80,6 +98,8 @@ estimate_coeff_shift_qty <- function(price_test, reconstruct_full_curve_shift,
     by.y = c("delivery_date", "Hour"),
     all.x = TRUE
   )
+  reg_data_test <- reg_data_test[!duplicated(reg_data_test$datetime), ]
+  
   # setdiff(c("PRICE",supply_factors), colnames(reg_data_test))
   #reg_data_test <- reg_data_test[complete.cases(.SD), .SD, .SDcols = c("PRICE",supply_factors)]
   # Définir les colonnes utiles AVANT le data.table
@@ -105,32 +125,40 @@ estimate_coeff_shift_qty <- function(price_test, reconstruct_full_curve_shift,
     response = "QTY"      # variable à gauche
   )
   # Applique la formule à lm()
-  lm_grid_point <- lm(
-    formula = formula,
-    data = reg_data_test
-  )
-  # summary(lm_grid_point)
-  # reg_data_test %>% 
-  #   dplyr::select(Fore_Solar, unpredicted_sun, intraday_update_sun) %>% 
-  #   cor()
-  # Fit your model
-  #lm_grid_point <- lm(formula = formula, data = reg_data_test)
+  # lm_grid_point <- lm(
+  #   formula = formula,
+  #   data = reg_data_test)
+  # # Compute Newey-West standard errors with lag = 24
+  # nw_se_24 <- NeweyWest(lm_grid_point, lag = 24, prewhite = FALSE)
+  # 
+  # # Extract coefficient test results with Newey-West SEs
+  # nw_coefs <- coeftest(lm_grid_point, vcov. = nw_se_24)
+  # 
+  # # Create the table with NW std errors
+  # coef_table <- data.table(
+  #   variable = rownames(nw_coefs),
+  #   estimate = nw_coefs[, "Estimate"],
+  #   std_error = nw_coefs[, "Std. Error"],
+  #   price_test = price_test
+  # )
+
+  m_grid <- feols(fml = formula,
+                  data = reg_data_test,
+                  NW(24) ~ datetime)
+  reg_results <- m_grid$coeftable
   
-  # Compute Newey-West standard errors with lag = 24
-  nw_se_24 <- NeweyWest(lm_grid_point, lag = 24, prewhite = FALSE)
+  reg_results <- as.data.table(reg_results)
+  reg_results$variable <- names(m_grid$coefficients)
+  reg_results <- reg_results %>%
+    mutate(price_test = price_test) %>% 
+    rename(estimate = Estimate,
+           std_error = `Std. Error`) %>% 
+    dplyr::select(variable, estimate, std_error, price_test)
   
-  # Extract coefficient test results with Newey-West SEs
-  nw_coefs <- coeftest(lm_grid_point, vcov. = nw_se_24)
+
   
-  # Create the table with NW std errors
-  coef_table <- data.table(
-    variable = rownames(nw_coefs),
-    estimate = nw_coefs[, "Estimate"],
-    std_error = nw_coefs[, "Std. Error"],
-    price_test = price_test
-  )
   
-  return(coef_table)
+  return(  reg_results)
   
 }
 

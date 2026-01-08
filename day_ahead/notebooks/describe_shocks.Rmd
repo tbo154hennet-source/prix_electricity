@@ -204,8 +204,8 @@ theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
 #   
 # Deuxième graphique: Nombre d'indisponibilités (n_indispo)
 plot2 <- ggplot() +
- geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Effective unavailability")) +
-  geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Declared unavailability"), 
+ geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Declared unavailability")) +
+  geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Effective unavailability"), 
            stat = "identity", position = "dodge") +
   labs( y = "Event count", fill = "Fuel type") +
   theme(
@@ -216,8 +216,8 @@ plot2 <- ggplot() +
         axis.title.y = element_text(size = 14),   # taille du titre axe y
         axis.text.y  = element_text(size = 12) )+
   scale_alpha_manual(name = "Unavailability", 
-                     values = c("Declared unavailability" = 1, 
-                                "Effective unavailability" = 0.4)) 
+                     values = c("Effective unavailability" = 1, 
+                                "Declared unavailability" = 0.4)) 
 custom_legend <- cowplot::get_legend(plot2)
 
 plot2 <-plot2 +
@@ -395,8 +395,9 @@ dayahead_price_indispo_data <- price_indispo_merge %>%
     #Wind_Onshore = mean(`Wind Onshore`, na.rm = TRUE),
   )
 #class(dayahead_price_indispo_data$delivery_date)
-renew_plot <- ggplot(data = dayahead_price_indispo_data %>% 
-                       filter(delivery_date <=as.Date("2023-01-01")), aes(x = delivery_date)) +
+renew_plot <- ggplot(data = dayahead_price_indispo_data, 
+                     # %>%filter(delivery_date <=as.Date("2023-01-01")),
+                     aes(x = delivery_date)) +
   geom_line(aes(y = Renewable_Generation, color = "Renewable Total")) +
   geom_line(aes(y = Wind_Onshore, color = "Wind Onshore")) +
   geom_line(aes(y = Solar, color = "Solar")) +

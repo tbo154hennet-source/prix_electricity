@@ -57,6 +57,51 @@ custom_legend <- cowplot::get_legend(plot_legend)
 same Anderson Rubin
 
 ```{r}
+make_bandwith_obj <- function(irf_data, my_confi_level, my_type, template_dim){
+  
+  # 1) filtrer et passer en large
+  wide_tbl <- irf_data %>% 
+    filter(confi_level == my_confi_level&
+           type        == my_type) %>%
+    dplyr::select(variable, horizon, value) %>% 
+    pivot_wider(
+      names_from = variable,
+      values_from = value
+    ) %>%
+    arrange(horizon) %>% 
+    dplyr::select(-horizon)
+  
+  # 2) extraire les deux éléments (array 3D)
+  mat12 <- apply(wide_tbl, c(1, 2), function(x) x)   # list matrix
+  # On transforme en array 3D [horizon × variable × 2]
+  #arr <- array(NA, dim = c(dim(mat12), 1))
+  
+  # # Extraire structure à 2 valeurs
+  # # mat1 = premier élément, mat2 = second élément
+  # mat1 <- apply(wide_tbl, c(1, 2), function(x) x[[1]])
+  #mat2 <- apply(wide_tbl, c(1, 2), function(x) x[[2]])
+  
+  # # 3) reconstruire new_obj avec même structure que bandwith_68
+  # new_obj <- array(NA, dim = template_dim)
+  # 
+  # new_obj[,,1] <- mat1[1,1:50,]
+  # new_obj[,,2] <- mat1[2,1:50,]
+  
+  #return( mat12[1:50,])
+  return( mat12)
+}
+quantile_probs_90 <- c(0.05, 0.95)
+quantile_probs_68 <- c(0.16, 0.84)
+quantile_probs_50 <- c(0.5, 0.5)
+compute_quantile_bands <- function(boot_array, probs) {
+  # boot_array: horizon+1 x nvar x nsim
+  apply(boot_array, c(1, 2), function(x) quantile(x, probs = probs, na.rm = TRUE))
+}
+```
+
+
+
+```{r}
 
 plot_irf_msw <- function(i, shock, band_lower_68,
     band_upper_68,band_lower_90, band_upper_90,

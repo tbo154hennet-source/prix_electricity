@@ -1,8 +1,10 @@
+library(ggplot2)
+
 input_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs"
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 
 setwd(output_dir)
-price_indispo_merge_esp_npc_no_cbf <- read_parquet( "price_indispo_merge_esp_npc.parquet")
+price_indispo_merge_esp_npc <- read_parquet( "price_indispo_merge_esp_npc_all_final_2026.parquet")
 
 # Sélectionner toutes les colonnes contenant "fitted" et "supply"
 cols_fitted_supply <- grep("fit.*supply", names(price_indispo_merge_esp_npc), value = TRUE)
@@ -11,7 +13,7 @@ cols_fitted_supply <- grep("fit.*supply", names(price_indispo_merge_esp_npc), va
 cols_fitted_demand <- grep("fit.*demand", names(price_indispo_merge_esp_npc), value = TRUE)
 
 # Group by month and sum shocks
-monthly_shocks <- price_indispo_merge_esp_npc_no_cbf %>%
+monthly_shocks <- price_indispo_merge_esp_npc %>%
   group_by(year, month) %>%
   summarise(across(all_of(c(cols_fitted_supply,cols_fitted_demand)), mean, na.rm = TRUE),
             datetime = first(datetime)
@@ -54,8 +56,8 @@ ggplot(monthly_shocks_long,
 
 
 setwd(output_dir)
-contrib_table_tot <- read.csv( "contrib_table_tot.csv")
-coef_table_tot<- read.csv("coef_table_tot.csv")
+contrib_table_tot <- read.csv( "contrib_table_tot_2026.csv")
+coef_table_tot<- read.csv("coef_table_tot_all_2026.csv")
 
 ################ NO FE
 
@@ -115,7 +117,7 @@ nice_names <- c(
   "Fore_Wind" = "Wind",
   "Published.Predicted.Unavailable.Capacity" = "Unavailabilities",
   "cbf_es" = "CBF",
-  "Temperature" = "Temperature"
+  "temperature_discomfort_demand" = "Temperature"
 )
 contrib_table_tot <- contrib_table_tot %>%
   mutate(

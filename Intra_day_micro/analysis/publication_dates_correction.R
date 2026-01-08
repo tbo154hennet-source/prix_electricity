@@ -41,6 +41,10 @@ for (idx in seq_along(files_list)) {
 
 pub_dates_df <- data.frame(file = order_numbers[2:length(files_sorted)], date = as.POSIXct(unlist(publication_dates)))
 getwd()
+
+pub_dates_df$date <- as.Date(substr(pub_dates_df$file, 1, 8), format = "%Y%m%d")
+
 write_parquet(pub_dates_df, "publication_dates.parquet")
 
-
+class(pub_dates_df)
+head(pub_dates_df)

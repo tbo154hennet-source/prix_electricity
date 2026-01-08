@@ -16,7 +16,7 @@ list.files(zip_path)
 
 # Get a list of all ZIP files in the directory
 zip_files <- list.files(zip_path, pattern = "\\.zip$", full.names = TRUE)
-
+#zip_files <- zip_files[78]
 # Loop through each ZIP file and extract it
 for (zip_file in zip_files) {
   unzip(zip_file, exdir = extract_dir)
@@ -131,23 +131,26 @@ format_indispo_bis <- function(all_unavailabilities) {
 
 # Read the file (assuming semicolon delimiters and possible headers)
 setwd(extract_dir)
-current_unavailabilities <- data.table(get_clean_data("indisp_20231106.18"))
+current_unavailabilities <- data.table(get_clean_data("indisp_20240601.1"))
 
 
-
+files_sorted[79470]
+length(files_sorted)
 # Initialize lists with preallocated size
 result_list <- vector("list", length(files_sorted))
 result_dismissed_indispo <- vector("list", length(files_sorted))
 
 i=which(order_numbers == "20231106019")
+i=which(order_numbers == "20240601001")
 # Create the sequence of indices
 files_list <- seq_along(files_sorted)[-length(files_sorted)]  # All indices except the last
 
 #end of first group
 # Extract elements starting from index 34323, 54907
+# Extract elements starting from index 54908, th end
 files_list <- files_list[i:(i+100)]
 
-
+files_list <- files_list[i:length(files_list)]
 
 
 # Process all files
@@ -210,8 +213,8 @@ Unavailabilities_data_dismissed_bis <- rbindlist(result_dismissed_indispo, use.n
 
 getwd()
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
-write_parquet( Unavailabilities_data_bis   ,"unavailabilities_OMIE_part3")
-write_parquet(Unavailabilities_data_dismissed_bis    ,"unavailabilities_dismissed_OMIE_part3")
+write_parquet( Unavailabilities_data_bis   ,"unavailabilities_OMIE_part4")
+write_parquet(Unavailabilities_data_dismissed_bis    ,"unavailabilities_dismissed_OMIE_part4")
 
 
 tot_files <- list.files()
@@ -221,13 +224,15 @@ dismissed_files <- list.files(pattern = "unavailabilities_dismissed_OMIE")
 # Read all parquet files in the directory
 unavailabilities_data <- map_dfr(unavailabilities_files, ~ read_parquet(.x))
 dismissed_data <- map_dfr(dismissed_files, ~ read_parquet(.x))
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 
 write_parquet(unavailabilities_data, "unavailabilities_tot_OMIE.parquet")
 write_parquet(dismissed_data, "unavailabilities_dismissed_tot_OMIE.parquet")
 
 # Read the parquet files
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
 
 unavailabilities_data <- read_parquet("unavailabilities_tot_OMIE.parquet")
 dismissed_data <- read_parquet("unavailabilities_dismissed_tot_OMIE.parquet")
@@ -263,7 +268,7 @@ unavailabilities_data <- unavailabilities_data %>%
   arrange(datetime_pub) %>% 
   slice_head(n = 1) %>% 
   ungroup()
-
+colnames(dismissed_data)
 dismissed_data <- dismissed_data %>% 
   group_by(datetime_debut, datetime_fin, mrid) %>% 
   arrange(datetime_pub) %>% 

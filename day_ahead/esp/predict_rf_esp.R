@@ -6,23 +6,46 @@ library(data.table)
 library(xgboost)
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE.parquet")
+# filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE.parquet")
+filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE_2026.parquet")
 colnames(filtered_indispo)
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
+# setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 
-setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
+# setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
 generation_by_fuel <- read_parquet('generation_by_fuel_format_esp.parquet')
 
-gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+# gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
+# setwd(gas_path)
+gas_path <- "Z:/prix_electricite_gitlab/day_ahead/outputs"
 setwd(gas_path)
-
+list.files()
 gas_prices <- read_excel("gas.xlsx") %>% 
   mutate(time = as.Date(time),
          spot_gas = as.numeric(paste0(
            `Gaz naturel, contrats à terme aux Pays-Bas (TTF), euros par megawatt-heure`
            ,".",virgule ))) %>% 
   dplyr::select(time, spot_gas)
+
+yahoo_gas <- read_parquet("yahoo_TTF_historical_data.parquet")
+yahoo_gas<-yahoo_gas %>% 
+  mutate(time = as.Date(Date)) %>% 
+  rename(spot_gas = `('Close', 'TTF=F')`)
+
+# library(ggplot2)
+# ggplot()+
+#   geom_line(data = gas_prices, aes(x=time, y = spot_gas, color = "Conj" ))+
+#   geom_line(data = yahoo_gas, aes(x=time, y = spot_gas , color = "Yahoo"))+
+#   theme_minimal()
+
+gas_prices <- rbind(gas_prices,
+                    yahoo_gas %>% 
+                      filter(time > max(gas_prices$time)) %>% 
+                      select(time, spot_gas)
+                    )
+
+write_parquet(gas_prices, "gas_price_formatted.parquet")
 
 prediction_data <- merge(generation_by_fuel, generation_per_plant, 
                          by='__index_level_0__') %>% 

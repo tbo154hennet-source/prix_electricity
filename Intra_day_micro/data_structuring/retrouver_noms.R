@@ -1,4 +1,13 @@
-
+library(arrow)
+library(purrr)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(readr)
+library(data.table)
+library(tibble)
+library(readxl)
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
 
@@ -55,7 +64,11 @@ write.csv(plant_info,"plant_info.csv")
 #je les ai matcher à la main
 #stat sur les indispos pour lesquelles j'ai la taille associée
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 centrale_matching <- read.csv("centrale_matching_plant.csv")
+table <- read.csv("abbreviations.csv")
+plant_info <- read.csv("plant_info.csv")
+
 colnames(centrale_matching) <- c("centrale_name","psr_resource_name",
                                  "plant_type",  "Installed.Capacity")
 
@@ -118,7 +131,7 @@ all_matched_indispo <- rbind(unavailabilities_data_matched %>%
 getwd()
 
 dim(all_matched_indispo)
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
 write_parquet(unavailabilities_data_matched, "unavailabilities_data_matched.parquet")
 write_parquet(dismissed_unavailabilities_data_matched, "dismissed_unavailabilities_data_matched.parquet")
 write_parquet(all_matched_indispo, "all_matched_indispo.parquet")

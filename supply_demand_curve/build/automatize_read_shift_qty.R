@@ -116,7 +116,7 @@ execute_code_shift_qty <- function(curve, type){
 
 
 # Nettoyer les fichiers ? traiter
-curve_path <- "Z:/Supply_demand_curves"
+curve_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Supply_demand_curves"
 setwd(curve_path)
 # Liste des fichiers dans le répertoire courant
 my_files <- list.files()

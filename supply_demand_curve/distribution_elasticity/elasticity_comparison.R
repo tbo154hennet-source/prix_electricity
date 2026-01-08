@@ -9,10 +9,34 @@ local_slopes_demand  <- read_parquet("local_slopes_demand_10.parquet") %>%
 local_slopes_supply  <- read_parquet("local_slopes_supply_10.parquet") %>% 
   filter(mean_log_price >= 10)
 
+local_slopes_demand <- local_slopes_demand %>%
+  mutate(
+    year  = year(DATE),
+    month = month(DATE)
+  )%>%
+  mutate(
+    price_residualized = resid(
+      lm(mean_log_price ~ factor(Hour) + factor(year) + factor(month),
+         data = .)
+    )
+  )
+
+local_slopes_supply <- local_slopes_supply %>%
+  mutate(
+    year  = year(DATE),
+    month = month(DATE)
+  )%>%
+  mutate(
+    price_residualized = resid(
+      lm(mean_log_price ~ factor(Hour) + factor(year) + factor(month),
+         data = .)
+    )
+  )
+
 colnames(local_slopes_demand)
 
 # Exemple d'utilisation
-my_demand <- describe_local_slopes(local_slopes_demand)
+#my_demand <- describe_local_slopes(local_slopes_demand)
 # Calcul des quantiles pour le seuil 95%
 q_low  <- quantile(local_slopes_demand$slope, probs = 0.025, na.rm = TRUE)
 q_high <- quantile(local_slopes_demand$slope, probs = 0.975, na.rm = TRUE)
@@ -22,21 +46,22 @@ local_slopes_demand[, slope_w := pmin(pmax(slope, q_low), q_high)]
 # On calcule la moyenne pond?r?e des pentes
 #w_mean_demand <- my_demand$w_mean + my_demand$alpha
 w_mean_demand <- weighted.mean(local_slopes_demand$slope, local_slopes_demand$mean_log_price**2, na.rm= TRUE)
-mean(local_slopes_demand$slope, na.rm= TRUE)
+w_mean_demand <- weighted.mean(local_slopes_demand$slope, local_slopes_demand$price_residualized**2, na.rm= TRUE)
+w_mean_demand <-mean(local_slopes_demand$slope, na.rm= TRUE)
 
-my_supply <- describe_local_slopes(local_slopes_supply)
+#my_supply <- describe_local_slopes(local_slopes_supply)
 # Calcul des quantiles pour le seuil 95%
 q_low  <- quantile(local_slopes_supply$slope, probs = 0.025, na.rm = TRUE)
 q_high <- quantile(local_slopes_supply$slope, probs = 0.975, na.rm = TRUE)
 # Winsorisation
 # Cr?ation d'un nouvel objet winsoris?
 local_slopes_supply[, slope_w := pmin(pmax(slope, q_low), q_high)]
-my_supply <- describe_local_slopes(local_slopes_supply)
+#my_supply <- describe_local_slopes(local_slopes_supply)
 mean(local_slopes_supply$slope, na.rm= TRUE)
-
-
-w_mean_supply <- my_supply$w_mean + my_supply$alpha
+#w_mean_supply <- my_supply$w_mean + my_supply$alpha
 w_mean_supply <- weighted.mean(local_slopes_supply$slope, local_slopes_supply$mean_log_price**2, na.rm= TRUE)
+w_mean_supply <- weighted.mean(local_slopes_supply$slope, local_slopes_supply$price_residualized**2, na.rm= TRUE)
+w_mean_supply <-mean(local_slopes_supply$slope, na.rm= TRUE)
 
 save_path <- "Z:/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
 setwd(save_path)
@@ -119,6 +144,12 @@ x_max <- max(local_slopes_supply$slope_w, na.rm = TRUE) - 0.5
 
 summary_table$x <- rep(0.95, nrow(summary_table))
 summary_table$y <- seq(from = 1.5, to = 2.5, length.out = nrow(summary_table))
+
+
+#enlever le Synthetic too much uncertainty
+summary_table <- summary_table %>% 
+  filter(!(Model=="Demand" & Methodology == "Synthetic"))
+
 
 # Plot avec trait vertical et texte
 my_elas <- ggplot(summary_table, aes(x=x, y=y)) +

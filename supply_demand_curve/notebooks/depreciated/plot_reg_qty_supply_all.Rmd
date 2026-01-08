@@ -21,8 +21,15 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
       variable == "cbf_es" ~ "CBF (MWh)",
       variable == "cold_excess_supply" ~ "Excess Cold (°C)",
       variable == "heat_excess_supply" ~ "Excess Heat (°C)",
+      variable == "cold_excess_ss" ~ "Excess Cold (°C)",
+      variable == "heat_excess_ss" ~ "Excess Heat (°C)",
+      variable == "cold_excess_sth" ~ "Excess Cold (°C)",
+      variable == "heat_excess_sth" ~ "Excess Heat (°C)",
       variable == "cold_excess_demand" ~ "Excess Cold (°C)",
       variable == "heat_excess_demand" ~ "Excess Heat (°C)",
+      variable == "temperature_discomfort_ss" ~ "Local PV Temperature Deviation (°C)",
+      variable == "temperature_discomfort_sth" ~ "Local Supply Temperature Deviation (°C)",
+      variable == "temperature_discomfort_demand" ~ "Local Demand Temperature Deviation (°C)",
       variable == "Published.Unavailable.Capacity" ~ "Plant Unavailability (MWh)",
       variable == "Published.Unavailable.Nuclear.Capacity" ~ "Nuclear Plant Unavailability (MWh)",
       TRUE ~ variable  # fallback
@@ -87,8 +94,10 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
 ```{r}
 
 
-renewable_factors <- c("renewable_day_ahead_forecast", "unpredicted_renewables", 
-                     "intraday_update_renewables")
+renewable_factors <- c("Fore_Wind" ,  "intraday_update_wind",  "unpredicted_wind"   ,
+                       "Fore_Solar" ,  "intraday_update_sun",  "unpredicted_sun"  
+                       
+                       )
 
 # international_exchanges_factors <- c("NTC_ES_FR" ,"NTC_FR_ES",                                 
 #                              "NTC_ES_PT", "NTC_PT_ES"
@@ -96,12 +105,11 @@ renewable_factors <- c("renewable_day_ahead_forecast", "unpredicted_renewables",
 
 international_exchanges_factors <- c("cbf_es")
 
-temperature_factors <- c(
-  "temperature_supply", "temperature_demand", 
-  "cold_excess_supply", "heat_excess_supply",
-  "cold_excess_demand", "heat_excess_demand"
-  
-)
+
+temperature_factors <- c("cold_excess_ss", "heat_excess_ss",
+                           "cold_excess_sth", "heat_excess_sth",
+                           "cold_excess_demand", "heat_excess_demand")
+                          
 
 other_weather_factors <- c("precipitation_supply", "relative_humidity_supply",
                            "precipitation_demand","relative_humidity_demand")
@@ -116,10 +124,10 @@ indispo_factors <- c("Published.Unavailable.Capacity", "Uneffective.Unavailable.
 
 sum_up_factors <- c(
   "Published.Unavailable.Capacity","renewable_day_ahead_forecast",
-  "cold_excess_supply", "heat_excess_supply"
+  "cold_excess_demand", "heat_excess_demand"
 )
 
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
 
@@ -129,11 +137,15 @@ price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
 
 ```{r}
 setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
-coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse.rds")
+
+coef_supply_unmatched_detailed <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_detailed.rds")
+coef_supply_unmatched_data_detailed <- rbindlist(coef_supply_unmatched)
+
+coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv.rds")
 coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
 
-coef_supply_matched <- readRDS("reg_shift_result_qty_supply_matched_sparse.rds")
-coef_supply_matched_data <- rbindlist(coef_supply_matched)
+# coef_supply_matched <- readRDS("reg_shift_result_qty_supply_matched_sparse.rds")
+# coef_supply_matched_data <- rbindlist(coef_supply_matched)
 
 
 # coef_supply_unmatched <- readRDS("reg_shift_result_supply_unmatched.rds")
@@ -147,15 +159,7 @@ coef_supply_matched_data <- rbindlist(coef_supply_matched)
 ```{r}
 
 plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
-   variables = temperature_factors,
-   type = "Supply", matched = "unmatched")
-
-
-```
-
-```{r}
-plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
-   variables = other_weather_factors,
+   variables = temp_factors,
    type = "Supply", matched = "unmatched")
 
 
@@ -163,7 +167,11 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data,
 
 
 
+
+
 ```{r}
+unique(coef_supply_unmatched_data$variable)
+
 plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
    variables = renewable_factors,
    type = "Supply", matched = "unmatched")
@@ -266,7 +274,6 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_condensed_variat
 setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_wind_sun_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_wind_sun_variation.rds")
 coef_supply_unmatched_data_wind_sun_variation <- rbindlist(coef_supply_unmatched_wind_sun_variation)
-
 
 
 new_renewable_factors <- c("wind_speed_100m" , "global_tilted_irradiance")

@@ -1,6 +1,6 @@
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all.parquet")
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final.parquet")
 
 #un faible nombre de duplicates
 price_indispo_merge_esp_npc %>%
@@ -14,7 +14,7 @@ price_indispo_merge_esp_npc <-
 
 
 colnames(price_indispo_merge_esp_npc)
-
+controls_vec <- c("year", "month", "weekday", "creneau")
 select_fitted <- function(x, type) {
   grep(paste0(type, ".*matched"), names(x), value = TRUE) |>
     (\(v) grep("indispo", v, invert = TRUE, value = TRUE))()
@@ -86,7 +86,7 @@ for(s_col in c(cols_fitted_supply_npc)){
 
 
 iv_results_feols_all_lag <- list()
-s_col  <- "shock_supply_unmatched_orth"
+s_col  <- "fit_supply_unmatched"
 # d_col <- "fitted_select_nfedemand_matched_orth"
 # Boucle sur chaque couple correspondant (match par suffixe)
 for(s_col in c(cols_fitted_supply_npc)){
@@ -118,7 +118,7 @@ for(s_col in c(cols_fitted_supply_npc)){
   # Generate 12 lags
   price_indispo_merge_esp_npc <- price_indispo_merge_esp_npc %>%
     mutate(across(
-      all_of(inst_name),
+      all_of(c(instr_vars_s,  instr_vars_d) ),
       list(
         lag1 = ~dplyr::lag(.x, 1)
       ),
@@ -126,7 +126,11 @@ for(s_col in c(cols_fitted_supply_npc)){
     )) 
   
   # Build the formula dynamically
-  lag_controls <- paste0(inst_name, "_lag", 1, collapse = " + ")
+  lag_controls <- paste0(c(instr_vars_s,  instr_vars_d), "_lag", 1, collapse = " + ")
+  
+  # Build the formula dynamically
+  # lag_controls_s <- paste0(c(instr_vars_s), "_lag", 1, collapse = " + ")
+  # lag_controls_d <- paste0(c(instr_vars_d), "_lag", 1, collapse = " + ")
   
   iv_formula_s <- as.formula(
     paste0(
@@ -138,19 +142,6 @@ for(s_col in c(cols_fitted_supply_npc)){
   
   inst_name <- instr_vars_d
   
-  # Generate 12 lags
-  price_indispo_merge_esp_npc <- price_indispo_merge_esp_npc %>%
-    mutate(across(
-      all_of(inst_name),
-      list(
-        lag1 = ~dplyr::lag(.x, 1)
-      ),
-      .names = "{.col}_{.fn}"
-    )) 
-  
-  # Build the formula dynamically
-  lag_controls <- paste0(inst_name, "_lag", 1, collapse = " + ")
-  
   iv_formula_d <- as.formula(
     paste0(
       "log(gen_tot_da) ~ ", rhs_vars_d, " + ", lag_controls,
@@ -159,15 +150,10 @@ for(s_col in c(cols_fitted_supply_npc)){
   )
   
   iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
-  "datetime" %in% colnames(price_indispo_merge_esp_npc)
-  class(price_indispo_merge_esp_npc$datetime)
-  
-
-  
-  
-  # Classic F-stat for the instruments
-  fstat_s <- fitstat(summary(iv_supply, stage = 1), type = "ivf")
-  fstat_d <- fitstat(summary(iv_demand, stage = 1), type = "ivf")
+  # 
+  # # Classic F-stat for the instruments
+  # fstat_s <- fitstat(summary(iv_supply, stage = 1), type = "ivf")
+  # fstat_d <- fitstat(summary(iv_demand, stage = 1), type = "ivf")
   
   # Stocker dans la liste
   # iv_results_feols_all_lag[[suffix]] <- list(
@@ -181,8 +167,6 @@ for(s_col in c(cols_fitted_supply_npc)){
     demand =iv_demand)
 }
 
-
-c(cols_fitted_supply_npc)
 
 #on se débarrasse des _nfe
 names(iv_results_feols_all_lag)

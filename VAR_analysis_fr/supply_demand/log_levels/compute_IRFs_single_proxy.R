@@ -1,9 +1,10 @@
 library(vars)
+library(varexternal)
 source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_control_bis.R")
 source("bootstrap_auxiliary_control_ter.R")
-
+source("bootstrap_ter.R")
 
 save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
@@ -44,6 +45,7 @@ T = nrow(vars_supply) - p
 k <- 1
 #nbre d'instruments
 l <- 1
+controls = NULL
 
 x_supply =ts(vars_supply, start=c(2015,1), end=c(2023,12), frequency=12)
 x_demand =ts(vars_demand, start=c(2015,1), end=c(2023,12), frequency=12)
@@ -58,11 +60,25 @@ pca <- prcomp(X)
 # Valeurs propres (variances) des composantes principales
 eigenvalues <- pca$sdev^2
 
+
+# Loadings
+loadings <- pca$rotation
+
+# Eigenvalues
+eigenvalues <- pca$sdev^2
+
+# Variance totale (somme des variances des variables)
+total_var <- sum(apply(X, 2, stats::var))
+
+# Part de variance expliquée par variable et par composante
+var_by_var_pc <- sweep(loadings^2, 2, eigenvalues, `*`) / total_var
+
+var_by_var_pc
+
 # Variance expliquée par chaque composante
 variance_explained <- eigenvalues / sum(eigenvalues)
 variance_explained
 
-loadings <- pca$rotation
 
 # Reconstruction
 IV_data_log_esp$delta_supply <- pca$x[, 1]
@@ -70,6 +86,10 @@ IV_data_log_esp$delta_demand <- pca$x[, 2]
 
 
 ####### With MSW
+confidence = c(0.68, 0.9)
+NWlags= 0
+norm        = 1 # Variable used for normalization
+scale       = 1
 
 VAR_supply_pc <-SVARIV(ydata = x_supply, z = IV_data_log_esp$delta_supply,p,
                     confidence,NWlags,
@@ -124,7 +144,7 @@ to <- l*p
 to_bis <- l*(p-1)
 lambda_0_log_supply <- get_lambda_0(C, theta_0)
 nboot = 1000
-bootIRFs_supply <-gamma_bootstrap_mbb_corrected(x, nboot, theta_0 = theta_0 , proxies = proxies, controls=NULL, elas = 0,
+bootIRFs_supply <-gamma_bootstrap_mbb_corrected(x= x_supply, nboot, theta_0 = theta_0 , proxies = proxies, controls=NULL, elas = 0,
                                          start_ts = c(2015,1), end_ts =c(2023,12), irhor = irhor)
 
 

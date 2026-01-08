@@ -79,6 +79,9 @@ load_batches <- function(folder) {
 }
 
 solar_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_batches")
+setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+list.files()
+
 solar_temp_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_temp_batches")
 
 solar_all_dt <- merge(solar_dt, solar_temp_dt, 
@@ -130,7 +133,7 @@ sol_all_openmeteo_data <- solar_all_dt[, .(
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 # Charger les données
-temperature_demand_data <- as.data.table(read_parquet("temperature_pop.parquet"))
+temperature_demand_data <- as.data.table(read_parquet("temperature_pop_all.parquet"))
 
 gdf_demand_points <- read.csv("demand_points_corrected.csv") %>% 
   dplyr::select(c("latitude", "longitude", "factor", "comunidad"))
@@ -160,7 +163,7 @@ colnames(temperature_demand_openmeteo_data) <- c("date", paste0(setdiff(colnames
 # Définir le répertoire de travail
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
-full_plant <- read_parquet("temperature_plants.parquet")
+full_plant <- read_parquet("temperature_plants_all.parquet")
 
 full_plant <- full_plant %>%
   distinct(date, latitude, longitude, .keep_all = TRUE)

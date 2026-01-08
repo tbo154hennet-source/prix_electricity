@@ -12,10 +12,6 @@ library(grid)
 library(gridExtra)
 library(cowplot)
 
-
-#proxies <- proxies_kanzig
-
-
 first_var_estimation <- function(x, y, p, proxies, irhor, controls = NULL, elas = 0) {
   # x: endogenous variables
   # y: dependent variables

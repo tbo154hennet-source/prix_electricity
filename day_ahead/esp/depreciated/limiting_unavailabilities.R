@@ -40,6 +40,7 @@ for (col in duplicated_names){
 
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
+setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 write_parquet(generation_per_plant, "generation_by_plant_esp.parquet")
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 setDT(generation_per_plant)# Convertir en data.table

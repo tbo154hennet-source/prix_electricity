@@ -8,8 +8,8 @@ country_code = 'FR'
 
 #2016-03
 # Define start and end dates
-start_date = pd.Timestamp('20240101', tz='Europe/Brussels')
-end_date = pd.Timestamp('20240531', tz='Europe/Brussels')
+start_date = pd.Timestamp('20251101', tz='Europe/Brussels')
+end_date = pd.Timestamp('20251231', tz='Europe/Brussels')
 # Generate monthly date ranges
 monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
 import os
@@ -59,3 +59,5 @@ for date in monthly_dates:
 
         # Print a success message
         print(f"Data queried successfully for the {label}: {start.strftime('%Y-%m')}")
+
+os.getcwd()

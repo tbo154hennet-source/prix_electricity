@@ -22,7 +22,7 @@ slopes_demand_by_month <- local_slopes_demand%>%
   summarise(
     mean_slope = mean(slope, na.rm = TRUE),
     mean_se = mean(se_slope, na.rm = TRUE),
-    mean_price = mean(mean_log_price, na.rm = TRUE)),
+    mean_price = mean(mean_log_price, na.rm = TRUE),
     n = n()
   )
 slopes_supply_by_month <- local_slopes_supply%>%
@@ -31,7 +31,7 @@ slopes_supply_by_month <- local_slopes_supply%>%
   summarise(
     mean_slope = mean(slope, na.rm = TRUE),
     mean_se = mean(se_slope, na.rm = TRUE),
-    mean_price = mean(mean_log_price, na.rm = TRUE)),
+    mean_price = mean(mean_log_price, na.rm = TRUE),
     n = n()
   )
 
@@ -64,6 +64,11 @@ plot_hetero_by_month <- ggplot() +
 
 plot_hetero_by_month
 
+save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+setwd(save_latex_path)
+ggsave(plot_hetero_by_month,
+       filename = "elas_hetero_hour.png" , width = 12, height = 6, dpi = 300)
+
 #on ne voit pas grand chose par mois
 
 ############### By hour of the day
@@ -73,7 +78,7 @@ slopes_demand_by_hour <- local_slopes_demand%>%
   summarise(
     mean_slope = mean(slope, na.rm = TRUE),
     mean_se = mean(se_slope, na.rm = TRUE),
-    mean_price = mean(mean_log_price, na.rm = TRUE)),
+    mean_price = mean(mean_log_price, na.rm = TRUE),
     n = n()
   )
 slopes_supply_by_hour <- local_slopes_supply%>%
@@ -81,7 +86,7 @@ slopes_supply_by_hour <- local_slopes_supply%>%
   summarise(
     mean_slope = mean(slope, na.rm = TRUE),
     mean_se = mean(se_slope, na.rm = TRUE),
-    mean_price = mean(mean_log_price, na.rm = TRUE)),
+    mean_price = mean(mean_log_price, na.rm = TRUE),
     n = n()
   )
 
@@ -112,8 +117,14 @@ plot_hetero_by_hour <- ggplot() +
   )+ guides(color = "none")
 
 
+
 plot_hetero_by_hour
 
+
+save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+setwd(save_latex_path)
+ggsave(plot_hetero_by_hour,
+       filename = "elas_hetero_hour.png" , width = 12, height = 6, dpi = 300)
 
 ############# HEterogeneity by price
 
@@ -171,6 +182,10 @@ plot_hetero_by_quantile <- ggplot() +
 plot_hetero_by_quantile
 
 
+save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+setwd(save_latex_path)
+ggsave(plot_hetero_by_quantile,
+       filename = "elas_hetero_price.png" , width = 12, height = 6, dpi = 300)
 
 slopes_demand_by_quantile <- local_slopes_demand%>%
   mutate(price_quantile = ntile(mean_log_price, 100) ,

@@ -98,7 +98,7 @@ VAR_series <- read_parquet("VAR_series_esp.parquet")
 
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge <- read_parquet("price_indispo_merge_esp_npc_all.parquet")
+price_indispo_merge <- read_parquet("price_indispo_merge_esp_npc_all_final.parquet")
 
 colnames(price_indispo_merge)
 
@@ -251,36 +251,58 @@ gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
 
 #design partie temperature
 
-cold_months <- c(1, 2, 11, 12)
-hot_months <- c(6, 7, 8, 9)
-
-#backfill spot gas
 colnames(price_indispo_merge)
-
-price_indispo_merge <- price_indispo_merge %>%
-  mutate(
-    temp_spatial_resid = resid(
-      lm(temperature_demand ~ temperature_sth,
-         data = .,
-         na.action = na.exclude)
-    )
-  )
 
 monthly_weather_data <- price_indispo_merge %>%
   arrange(datetime) %>% 
   group_by(year, month) %>%
   summarise(
     temperature = mean(temperature_sth, na.rm = TRUE),
-    cold_excess = mean(cold_excess_sth, na.rm = TRUE),
-    heat_excess = mean(heat_excess_sth, na.rm = TRUE),
-    temp_excess = mean(cold_excess_sth + heat_excess_sth, na.rm = TRUE),
-    temp_spatial_mismatch = mean(temp_spatial_resid, na.rm = TRUE),
+    cold_excess = mean(cold_excess_demand, na.rm = TRUE),
+    heat_excess = mean(heat_excess_demand, na.rm = TRUE),
+    temperature_discomfort = mean(temperature_discomfort_demand, na.rm = TRUE),
+    temp_excess = mean(cold_excess_demand + heat_excess_demand, na.rm = TRUE),
+    temp_spatial_mismatch_supply= mean(temp_spatial_mismatch_supply, na.rm = TRUE),
     precipitation = mean(precipitation_sth, na.rm = TRUE),
     relative_humidity = mean(relative_humidity_2m_sth, na.rm = TRUE),
     wind_speed_100m = mean(wind_speed_100m_supply, na.rm = TRUE),
     cloud_cover = mean(cloud_cover_supply, na.rm = TRUE),
     global_tilted_irradiance = mean(global_tilted_irradiance_supply, na.rm = TRUE),
     datetime = first(datetime),
+    .groups = "drop"
+  )
+
+### at the macro level use for instrument cooling degree hours and heating degree hours
+### and use deseasonnalize
+
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+tempall_data_data <- read_parquet( "tempall_data_data.parquet")
+
+colnames(tempall_data_data)
+
+T_base <- 18
+
+tempall_data_data <- tempall_data_data %>%
+  mutate(
+    across(
+      c("temperature_demand"),
+      list(
+        HDD = ~pmax(0,. - T_base),
+        CDD = ~pmax(0, T_base - .)
+      ),
+      .names = "{.fn}_{sub('^temperature_', '', .col)}"
+    )
+  )
+
+HCDD_cols <- colnames(tempall_data_data)[grep("^HDD_|^CDD_", colnames(tempall_data_data))]
+
+temp_monthly <- tempall_data_data %>%
+  mutate(month = month(date),
+         year = year(date)) %>% 
+  group_by(month, year) %>% 
+  summarise(
+    across(all_of(HCDD_cols), mean, na.rm = TRUE),
+    date = first(date),
     .groups = "drop"
   )
 
@@ -292,7 +314,7 @@ colnames(gas_fundamental_data)
 #colnames(temperature_instrument)
 colnames(monthly_crossborder_data)
 colnames(monthly_weather_data)
-
+colnames(temp_monthly)
 
 
 IV_data <- merge(VAR_series, monthly_energy_data, by= c('month', 'year'))
@@ -303,6 +325,9 @@ IV_data <- merge(IV_data, gas_fundamental_data,
                  by= c('month', 'year'))
 IV_data <- merge(IV_data, monthly_weather_data %>% 
                    dplyr::select(-datetime),
+                 by= c('month', 'year'))
+IV_data <- merge(IV_data, temp_monthly %>% 
+                   dplyr::select(-date),
                  by= c('month', 'year'))%>%
   arrange(datetime)
 
@@ -375,5 +400,14 @@ setwd(save_plot_path)
 ggsave("renewable_energy_decomposition.png", plot = renewable_energy_decomposition , width = 12, height = 6, dpi = 300)
 
 
+
+
+
+#compare the two tmeperature measures
+
+IV_data %>%
+  select(cold_excess, heat_excess,
+         HDD_demand, CDD_demand) %>% 
+  cor()
 
 

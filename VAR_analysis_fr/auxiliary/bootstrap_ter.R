@@ -115,15 +115,13 @@ gamma_bootstrap_mbb_corrected <- function(x,nboot,  theta_0, proxies, controls=N
     # Rassembler les blocs dans l’ordre
     if(k==1){
       bootProxy <- unlist(lapply(index, function(ii) ProxyBlocks[, ,ii]))
+      bootProxy <- c(proxies[1:p, , drop = FALSE],bootProxy)
+    }else{
+      bootProxy <-rbind( proxies[1:p, , drop = FALSE],  bootProxy)
     }
-    proxies_boot <- rbind(
-      proxies[1:p, , drop = FALSE],
-      bootProxy
-    )
-    
 
     theta_0_boot <- first_var_estimation_bis(x, bootres, p, 
-                rbind( proxies[1:p, , drop = FALSE],  bootProxy),
+                                             bootProxy ,
                 irhor, controls = NULL, elas = elas)$theta_0
 
     lambda_0_boot <- get_lambda_0(C, theta_0_boot, irhor=irhor)

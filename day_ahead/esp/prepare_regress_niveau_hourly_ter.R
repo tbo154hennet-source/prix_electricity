@@ -16,7 +16,7 @@ rf_predictions_data_esp <- read_parquet('rf_predictions_data_xgb_esp.parquet') %
 colnames(rf_predictions_data_esp)
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
-filtered_indispo_esp <- read_parquet("filtered_indispo_esp_OMIE.parquet") %>% 
+filtered_indispo_esp <- read_parquet("filtered_indispo_esp_OMIE_2026.parquet") %>% 
   arrange(datetime_slot)
 colnames(filtered_indispo_esp)
 
@@ -164,32 +164,24 @@ final_indispo_tot_wide_esp <- final_indispo_tot_wide_esp %>%
                            Uneffective.Cluster.Capacity)
   )
 
+max(final_indispo_tot_wide_esp$datetime_slot)
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 
 #write_parquet(final_indispo_tot_wide_esp, "final_indispo_tot_wide_esp.parquet")
 final_indispo_tot_wide_esp <- read_parquet("final_indispo_tot_wide_esp.parquet")
 
-library(lubridate)
 
-load_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/day_ahead_prices/esp"
-setwd(load_path_data)
-# Lister tous les fichiers dans le dossier avec l'extension .parquet
-parquet_files <- list.files(pattern = "\\.parquet$")
-# Lire tous les fichiers parquet et les fusionner dans un seul dataframe
-# Liste des noms de colonnes souhaités
-colnames_target <- c( "price", "datetime")
+#Pour source de prix et de quantité,
+#on complète avec auction_summary
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+gen_data_aligned <- read_parquet("esp_generation_day_ahead_all.parquet")
+price_indispo_merge_esp <- left_join(gen_data_aligned,
+                                     final_indispo_tot_wide_esp,
+                                     by = c("datetime" = "datetime_slot"))
 
-# Lecture + renommage dans lapply
-day_ahead_prices <- parquet_files %>%
-  lapply(function(file) {
-    df <- read_parquet(file)
-    names(df) <- colnames_target
-    return(df)
-  }) %>%
-  bind_rows() %>%
-  arrange(datetime)
-
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+day_ahead_prices<- read_parquet("esp_day_ahead_prices_all.parquet")
 
 day_ahead_prices<- day_ahead_prices %>% 
   mutate(year = as.character(year(datetime)),
@@ -203,22 +195,17 @@ day_ahead_prices<- day_ahead_prices %>%
   #filter(delivery_date >= as.Date('2018-01-01')) %>% 
   arrange(datetime)
 
+price_indispo_merge_esp <- left_join(price_indispo_merge_esp,
+                                     day_ahead_prices,
+                                     by = c("datetime" ))
 
-# day_ahead_prices[61,]
-# View(final_indispo_tot_wide %>% 
-#   filter(datetime_slot == "2018-01-03 13:00:00"))
-price_indispo_merge_esp <- left_join(day_ahead_prices,
-                                 final_indispo_tot_wide_esp,
-      by = c("datetime" = "datetime_slot"))
-
-#getting outages share
-save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
-setwd(save_path_data)
+# save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
+# setwd(save_path_data)
 save_path_data <- "Z:/prix_electricite_gitlab"
 setwd(save_path_data)
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
 colnames(renewable_forecasts)
-
+# max(renewable_forecasts$`__index_level_0__`)
 #nota bene intradailiy forecast commence à partir du 13 février 2018 13-02-2018
 #sample start
 
@@ -228,10 +215,13 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 
 #add temperature  and other weather conditions
 
+
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 tempall_data_data <- read_parquet( "tempall_data_data.parquet")
 
 colnames(tempall_data_data)
+
+tail(tempall_data_data)
 # setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 # temperature_openmeteo_data <- read_parquet("temperature_opendata_tot.parquet")
 # colnames(temperature_openmeteo_data)
@@ -239,113 +229,102 @@ colnames(tempall_data_data)
 #question sou-jacente
 #quelle est la temporalité d'ajustement au froid
 
-mean_temperatures_hour <- tempall_data_data %>% 
-  mutate(week = week(date),
-         hour = hour(date)) %>%
-  group_by(week, hour) %>% 
-  summarise(
-    mean_temp_demand = mean(as.numeric(temperature_demand), na.rm = TRUE),
-    mean_temp_ss = mean(as.numeric(temperature_ss), na.rm = TRUE),
-    mean_temp_sth = mean(as.numeric(temperature_sth), na.rm = TRUE),
-    .groups = "drop"
-  )
+# mean_temperatures_hour <- tempall_data_data %>% 
+#   mutate(week = week(date),
+#          hour = hour(date)) %>%
+#   group_by(week, hour) %>% 
+#   summarise(
+#     mean_temp_demand = mean(as.numeric(temperature_demand), na.rm = TRUE),
+#     mean_temp_ss = mean(as.numeric(temperature_ss), na.rm = TRUE),
+#     mean_temp_sth = mean(as.numeric(temperature_sth), na.rm = TRUE),
+#     .groups = "drop"
+#   )
 
-cold_months <- c(1, 2, 11, 12)
-hot_months <- c(6, 7, 8, 9)
+# cold_months <- c(1, 2, 11, 12)
+# hot_months <- c(6, 7, 8, 9)
 
+T_base <- 18
 temperature_openmeteo_data_test <- tempall_data_data %>%
-  mutate(
-    week = week(date),
-    hour = hour(date),
-    month = month(date),
-    year = year(date),
-    day_month = format(date, "%d-%m")
-  ) %>%
+  # mutate(
+  #   week = week(date),
+  #   hour = hour(date),
+  #   month = month(date),
+  #   year = year(date),
+  #   day_month = format(date, "%d-%m")
+  # ) %>%
   # Join hourly means
-  left_join(mean_temperatures_hour, by = c("week", "hour")) %>%
-  rename(hourly_mean_temp_demand = mean_temp_demand,
-         hourly_mean_temp_ss = mean_temp_ss,
-         hourly_mean_temp_sth = mean_temp_sth
-         ) %>%
+  # left_join(mean_temperatures_hour, by = c("week", "hour")) %>%
+  # rename(hourly_mean_temp_demand = mean_temp_demand,
+  #        hourly_mean_temp_ss = mean_temp_ss,
+  #        hourly_mean_temp_sth = mean_temp_sth
+  #        ) %>%
   mutate(
-    cold_excess_ss = -ifelse(month %in% cold_months, 
-                                      temperature_ss - hourly_mean_temp_ss, 0),
-    heat_excess_ss = ifelse(month %in% hot_months, 
-                                     temperature_ss - hourly_mean_temp_ss, 0),
-    cold_excess_demand = -ifelse(month %in% cold_months, 
-                                      temperature_demand - hourly_mean_temp_demand, 0),
-    heat_excess_demand = ifelse(month %in% hot_months, 
-                                     temperature_demand - hourly_mean_temp_demand, 0), 
-    cold_excess_sth = -ifelse(month %in% cold_months, 
-                                 temperature_sth - hourly_mean_temp_sth, 0),
-    heat_excess_sth = ifelse(month %in% hot_months, 
-                                temperature_sth - hourly_mean_temp_sth, 0), 
+    # cold_excess_ss = -ifelse(month %in% cold_months, 
+    #                                   temperature_ss - hourly_mean_temp_ss, 0),
+    # heat_excess_ss = ifelse(month %in% hot_months, 
+    #                                  temperature_ss - hourly_mean_temp_ss, 0),
+    # cold_excess_demand = -ifelse(month %in% cold_months, 
+    #                                   temperature_demand - hourly_mean_temp_demand, 0),
+    # heat_excess_demand = ifelse(month %in% hot_months, 
+    #                                  temperature_demand - hourly_mean_temp_demand, 0), 
+    # cold_excess_sth = -ifelse(month %in% cold_months, 
+    #                              temperature_sth - hourly_mean_temp_sth, 0),
+    # heat_excess_sth = ifelse(month %in% hot_months, 
+    #                             temperature_sth - hourly_mean_temp_sth, 0), 
     
+    heat_excess_ss      = pmax(temperature_ss - T_base, 0),
+    heat_excess_sth     = pmax(temperature_sth - T_base, 0),
+    heat_excess_demand  = pmax(temperature_demand - T_base, 0),
+    
+    cold_excess_ss      = pmax(T_base - temperature_ss, 0),
+    cold_excess_sth     = pmax(T_base - temperature_sth, 0),
+    cold_excess_demand  = pmax(T_base - temperature_demand, 0),
+    #distnce à la tempérautre de confort 
+    #18°C dans la littérature
+    temperature_discomfort_ss = abs(temperature_ss - T_base),
+    temperature_discomfort_sth = abs(temperature_sth - T_base),
+    temperature_discomfort_demand = abs(temperature_demand - T_base)
   )
 
+temperature_openmeteo_data_test %>% 
+  select(cold_excess_ss, cold_excess_sth, cold_excess_demand,
+         heat_excess_ss, heat_excess_sth, heat_excess_demand) %>% 
+  cor(use = "complete.obs")
 
-
+colnames(temperature_openmeteo_data_test)
+tail(temperature_openmeteo_data_test)
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
-  left_join(temperature_openmeteo_data_test %>% 
-              dplyr::select(-year, -month), by=c('datetime' = 'date'))
+  left_join(temperature_openmeteo_data_test , by=c('datetime' = 'date'))
+
+
 
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 wind_solar_openmeteo_data <- read_parquet("wind_solar_data.parquet")
 colnames(wind_solar_openmeteo_data )
+max(wind_solar_openmeteo_data$date)
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
   left_join(wind_solar_openmeteo_data , by=c('datetime' = 'date'))
+  
 
-#add day ahead generation
-
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp")
-# Get all files in the directory
-# List only .parquet files in the directory
-my_files <- list.files(pattern = "\\.parquet$")
-# Read all files into a list of data frames
-gen_list <- lapply(my_files, function(file) {
-  message(file)  # equivalent to print
-  read_parquet(file)
-})
-
-# Combine all data frames and remove duplicates
-gen_data <- unique(do.call(rbind, gen_list))
-# Rename columns
-colnames(gen_data) <- c('gen_tot_da', 'gen_tot_da_conso', 'datetime')
-gen_data$gen_tot_da_net <- gen_data$gen_tot_da -  gen_data$gen_tot_da_conso 
-
-
-
-price_indispo_merge_esp <- price_indispo_merge_esp %>%
-  left_join(gen_data, by=c('datetime'))
-
-
-colnames(price_indispo_merge_esp)
 
 # pour l'estimation en niveau,
 #on rajoute le spot gas price
 library(readxl)
-gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
-setwd(gas_path)
 
-gas_prices <- read_excel("gas.xlsx") %>% 
-  mutate(time = as.Date(time),
-         spot_gas = as.numeric(paste0(
-           `Gaz naturel, contrats à terme aux Pays-Bas (TTF), euros par megawatt-heure`
-                                      ,".",virgule ))) %>% 
-  dplyr::select(time, spot_gas)
-
-colnames(price_indispo_merge_esp)
+setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+gas_prices <- read_parquet( "gas_price_formatted.parquet")
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
   left_join(gas_prices, by=c('delivery_date' = 'time'))
-nrow(price_indispo_merge_esp)
-price_indispo_merge_esp <- price_indispo_merge_esp %>% distinct()
+
+
+price_indispo_merge_esp <- price_indispo_merge_esp %>% distinct(datetime, .keep_all = TRUE)
 
 save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_esp, "price_indispo_merge_esp.parquet")
-
+price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp.parquet")
 
 # Winsoriser au 95e centile
 p95 <- quantile(price_indispo_merge_esp$price, 0.95, na.rm = TRUE)
@@ -354,14 +333,13 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
   mutate(price_wins = pmin(price, p95))
 
 # Cr?er l'histogramme
-price_histo <- ggplot(price_indispo_merge_esp %>% filter(year <= 2023), aes(x = price_wins)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
-  labs(
-    title = "Distribution of Iberian Day-Ahead Market Prices (winsorised at 95%)",
-    x = "Price (euros/MWh)",
-    y = "Count"
-  ) +
+ggplot(price_indispo_merge_esp, aes(x = price_wins)) +
+  geom_histogram(aes(y = ..density..), binwidth = 1,
+                 fill = "steelblue", color = "black", alpha = 0.5) +
+  #geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(x = "Price (euros/MWh)", y = "Density") +
   theme_minimal()
+
 
 # Sauvegarder dans le dossier voulu
 ggsave(
@@ -401,8 +379,10 @@ crossborder_data <- price_merge_CBF %>%
   arrange(datetime) %>% 
   ungroup()
 
+dup_rows <- price_indispo_merge_esp[duplicated(price_indispo_merge_esp$datetime) | 
+                       duplicated(price_indispo_merge_esp$datetime, fromLast = TRUE), ]
 
-price_indispo_merge_esp_NTC <- merge(price_indispo_merge_esp, crossborder_data %>% 
+price_indispo_merge_esp_NTC <- left_join(price_indispo_merge_esp, crossborder_data %>% 
                                        dplyr::select(NTC_ES_FR,NTC_FR_ES,                          
                                         NTC_ES_PT, NTC_PT_ES,
                                         renewable_day_ahead_forecast_ex_es, cbf_es,
@@ -414,3 +394,4 @@ save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_esp_NTC, "price_indispo_merge_esp_NTC.parquet")
 
+tail(price_indispo_merge_esp_NTC )

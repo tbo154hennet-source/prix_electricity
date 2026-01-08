@@ -44,9 +44,14 @@ load_batches <- function(folder) {
   return(dt)
 }
 
-wind_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/wind_batches")
-solar_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_batches")
+wind_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/wind_batches")%>% 
+  arrange(date)
 
+
+solar_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_batches")%>% 
+  arrange(date)
+
+tail(wind_dt)
 
 #il faut weight les points selon les capacity 
 # Définir le répertoire de travail
@@ -76,6 +81,7 @@ df_wind_spain_big <- df_wind_spain_big[
 df_solar_spain_big <- read.csv("df_solar_spain_big.csv")%>% 
   dplyr::select(generation_gwh_avg, efficiency, capacity_mw, latitude, longitude, name, gppd_idnr)
 
+
 setDT(df_solar_spain_big)
 df_solar_spain_big <- df_solar_spain_big[
   , {
@@ -93,16 +99,20 @@ df_solar_spain_big <- df_solar_spain_big[
   },
   by = .(latitude, longitude)
 ]
+
+
 wind_dt <- merge(wind_dt, df_wind_spain_big, 
                  by = c("latitude", "longitude"), all.x = TRUE)
 
-solar_dt <- merge(solar_dt, df_solar_spain_big, 
+solar_dt<- merge(solar_dt, df_solar_spain_big, 
                  by = c("latitude", "longitude"), all.x = TRUE)
 
-
+# 
+# head(solar_dt)
+# tail(solar_dt)
 
 # Charger les données
-demand_data <- as.data.table(read_parquet("wind_sol_demand_data.parquet"))
+demand_data <- as.data.table(read_parquet("wind_sol_demand_data_all.parquet"))
 # Échantillonner 100 000 lignes aléatoirement
 # sample_demand <- wind_dt[sample(.N, 100000)]
 # # Créer un tableau unique des coordonnées avec un identifiant
@@ -156,8 +166,8 @@ wind_solar_data <-  merge(demand_openmeteo_data,
                           by = c("date")
 )
 
-
-wind_solar_data_test <- head(wind_solar_data, 100)
+tail(wind_solar_data, 10)
+wind_solar_data_test <- tail(wind_solar_data, 100)
 
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")

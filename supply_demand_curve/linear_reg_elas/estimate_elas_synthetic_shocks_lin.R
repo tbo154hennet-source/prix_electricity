@@ -1,6 +1,6 @@
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all.parquet")
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final.parquet")
 
 #un faible nombre de duplicates
 price_indispo_merge_esp_npc %>%
@@ -86,7 +86,7 @@ for(s_col in c(cols_fitted_supply_npc)){
 
 
 iv_results_feols_all_lag_lin <- list()
-s_col  <- "shock_supply_unmatched_orth"
+s_col  <- "fit_supply_unmatched"
 # d_col <- "fitted_select_nfedemand_matched_orth"
 # Boucle sur chaque couple correspondant (match par suffixe)
 for(s_col in c(cols_fitted_supply_npc)){

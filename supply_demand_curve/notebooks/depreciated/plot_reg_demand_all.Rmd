@@ -13,23 +13,47 @@ setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 # coef_supply_matched_data <- rbindlist(coef_supply_matched)
 
 
-coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse.rds")
-coef_demand_unmatched_data <- rbindlist(coef_demand_unmatched)
+coef_demand_unmatched_detailed <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv_detailed.rds")
+coef_demand_unmatched_data_detailed <- rbindlist(coef_demand_unmatched)
 
+coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv.rds")
+coef_demand_unmatched_data <- rbindlist(coef_demand_unmatched)
 
 # coef_supply_matched <- readRDS("reg_shift_result_qty_demand_matched_sparse.rds")
 # coef_supply_matched_data <- rbindlist(coef_supply_matched)
 ```
 
 ```{r}
-plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
-   variables = temperature_factors,
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_detailed, 
+   variables = c("cold_excess_ss"  ,   "heat_excess_ss"),
    type = "Demand", matched = "unmatched")
 
 
 ```
 
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_detailed, 
+   variables = c("cold_excess_demand"  ,   "heat_excess_demand"),
+   type = "Demand", matched = "unmatched")
 
+```
+
+```{r}
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_detailed, 
+   variables = c("cold_excess_sth"  ,  "heat_excess_sth"),
+   type = "Demand", matched = "unmatched")
+
+```
+
+
+```{r}
+
+plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = temp_factors,
+   type = "Demand", matched = "unmatched")
+
+
+```
 
 ```{r}
 plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
@@ -57,35 +81,7 @@ plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data,
 
 ```
 
-# Variations with temperature
 
-```{r}
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
-coef_demand_unmatched_temp_variation<-readRDS("reg_shift_result_qty_demand_unmatched_sparse_temp_bis_variation.rds")
-coef_demand_unmatched_data_temp_variation <- rbindlist(coef_demand_unmatched_temp_variation)
-
-temp_factors <- c(
-                  "cold_excess_demand", "heat_excess_demand",
-                         "cold_excess_mismatch", "heat_excess_mismatch")
-
-plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_temp_variation, 
-   variables = temp_factors,
-   type = "demand", matched = "unmatched")
-
-
-
-```
-
-
-```{r}
-
-plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data_temp_variation, 
-   variables = renewable_factors,
-   type = "demand", matched = "unmatched")
-
-
-
-```
 
 
 

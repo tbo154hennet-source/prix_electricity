@@ -9,14 +9,14 @@ library(arrow)
 reconstruct_stocked_curve <- function(type, matched){
   
   if (type == "demand"){
-    curve_shift_data <- read_parquet( 'curve_shift_data_demand_qty_bis.parquet')
+    curve_shift_data <- read_parquet( 'curve_shift_data_demand_qty_2026.parquet')
   }else if(type == "supply"){
-    curve_shift_data <- read_parquet( 'curve_shift_data_supply_qty_bis.parquet')
+    curve_shift_data <- read_parquet( 'curve_shift_data_supply_qty_2026.parquet')
   }else{
     return("Invalid type")
   }
   setDT(curve_shift_data)
-  curve_shift_data <- curve_shift_data[DATE >= "02/03/2018" & DATE <= "31/12/2023"]
+  curve_shift_data <- curve_shift_data[DATE >= "02/03/2018" & DATE <= "31/12/2025"]
   if (matched == "matched"){
     curve_shift_data <- curve_shift_data[MATCHED == "C"]
   }else if (matched == "unmatched"){
@@ -35,7 +35,7 @@ reconstruct_stocked_curve <- function(type, matched){
                                                    on = .(DATE, Hour, OFFER_TYPE, MATCHED, PRICE <= PRICE_test),
                                                    mult = "last",
                                                    allow.cartesian = TRUE][
-                                                     , Hour := as.numeric(Hour)][, DATE := as.Date(DATE, format = "%d/%m/%Y")][ order(DATE, Hour)]
+                                                     , Hour := Hour][, DATE := as.Date(DATE, format = "%d/%m/%Y")][ order(DATE, Hour)]
   return(reconstruct_full_curve_shift)
   
 }
@@ -48,24 +48,60 @@ combinations <- expand.grid(
   matched = c( "unmatched", "matched"),
   type = c("supply", "demand")
 )
-i = 1
+i = 2
 getwd()
 # Boucle sur chaque ligne
 for (i in 1:nrow(combinations)) {
+  
   current_type <- combinations$type[i]
   current_matched <- combinations$matched[i]
+  print(current_type)
+  print(current_matched)
   reconstruct_full_curve_shift <- reconstruct_stocked_curve(
     type = as.character(current_type), 
     matched = as.character(current_matched))
-  write_parquet(reconstruct_full_curve_shift, 
+  
+  reconstruct_full_curve_shift[, is_quarter := grepl("Q[1-4]$", Hour)]
+  reconstruct_full_curve_shift[, hour := sub("Q[1-4]$", "", Hour)]
+  reconstruct_full_curve_shift[, hour_num := as.integer(sub("^H", "", hour))]
+  
+  threshold_date <- reconstruct_full_curve_shift[is_quarter == FALSE, max(DATE)]
+  
+  dt_quarter <- reconstruct_full_curve_shift[
+    is_quarter == TRUE
+  ]
+  
+  dt_hourly <- reconstruct_full_curve_shift[
+    is_quarter == FALSE
+  ]
+  
+  dt_quarter_hourly <- dt_quarter[
+    ,
+    .(
+      QTY = mean(QTY, na.rm = TRUE)
+    ),
+    by = .(DATE, hour, hour_num, OFFER_TYPE, MATCHED, PRICE)
+  ]
+  
+  dt_final <- rbindlist(
+    list(dt_hourly, dt_quarter_hourly),
+    use.names = TRUE,
+    fill = TRUE
+  )
+  tail(dt_final)
+  write_parquet(dt_final, 
                 paste0("reconstruct_full_curve_shift_qty_",as.character(current_type),
                        "_",as.character(current_matched), ".parquet"))
+  # write_parquet(reconstruct_full_curve_shift, 
+  #               paste0("reconstruct_full_curve_shift_qty_",as.character(current_type),
+  #                      "_",as.character(current_matched), ".parquet"))
   rm(reconstruct_full_curve_shift)
   gc()
   # Tu peux mettre ici le code ? ex?cuter pour chaque combinaison
 }
 
 
+#pour la fin de période convertir les données à l'échelle du 1/4 d'heures en horaires
 
 
 
@@ -85,8 +121,8 @@ gc()
 summary_supply_curve <- reconstruct_full_curve_shift_supply[, .(
   median_qty = median(QTY, na.rm = TRUE),
   mean_qty = mean(QTY, na.rm = TRUE),
-  lower_bound = quantile(QTY, probs = 0.005, na.rm = TRUE),
-  upper_bound = quantile(QTY, probs = 0.995, na.rm = TRUE)
+  lower_bound = quantile(QTY, probs = 0.025, na.rm = TRUE),
+  upper_bound = quantile(QTY, probs = 0.975, na.rm = TRUE)
 ), by = PRICE]
 
 
@@ -94,8 +130,8 @@ summary_supply_curve <- reconstruct_full_curve_shift_supply[, .(
 summary_demand_curve <- reconstruct_full_curve_shift_demand[, .(
   median_qty = median(QTY, na.rm = TRUE),
   mean_qty = mean(QTY, na.rm = TRUE),
-  lower_bound = quantile(QTY, probs = 0.005, na.rm = TRUE),
-  upper_bound = quantile(QTY, probs = 0.995, na.rm = TRUE)
+  lower_bound = quantile(QTY, probs = 0.025, na.rm = TRUE),
+  upper_bound = quantile(QTY, probs = 0.975, na.rm = TRUE)
 ), by = PRICE]
 
 
