@@ -1,4 +1,6 @@
-
+library(dplyr)
+library(arrow)
+library(tidyr)
 path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/intra_day_prices/OMIE-day-ahead-complement"
 files <- list.files(
   path = path,
@@ -7,7 +9,6 @@ files <- list.files(
 )
 library(data.table)
 f <- files[1]
-library(data.table)
 
 read_omie_file <- function(f) {
 
@@ -154,25 +155,37 @@ write_parquet(
   day_ahead_prices_all, "esp_day_ahead_prices_all.parquet")
 
 
+paths <- c(
+  "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp/Generation_forecast",
+  "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp/Load_forecast",
+  "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp/Load_final"
+)
 
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot/esp")
-# Get all files in the directory
-# List only .parquet files in the directory
-my_files <- list.files(pattern = "\\.parquet$")
-# Read all files into a list of data frames
-gen_list <- lapply(my_files, function(file) {
-  message(file)  # equivalent to print
-  read_parquet(file)
-})
+read_parquet_folder <- function(path) {
+  files <- list.files(path, pattern = "\\.parquet$", full.names = TRUE)
+  
+  df_list <- lapply(files, function(file) {
+    message(basename(file))
+    read_parquet(file)
+  })
+  
+  unique(do.call(rbind, df_list))
+}
 
-# Combine all data frames and remove duplicates
-gen_data <- unique(do.call(rbind, gen_list))
-# Rename columns
-colnames(gen_data) <- c('gen_tot_da', 'gen_tot_da_conso', 'datetime')
-gen_data$gen_tot_da_net <- gen_data$gen_tot_da -  gen_data$gen_tot_da_conso 
+data_list <- lapply(paths, read_parquet_folder)
 
-gen_data <- gen_data %>% 
-  filter(datetime <= threshold_date)
+gen_data <- Reduce(function(x, y) {
+  inner_join(x, y, by = "__index_level_0__")
+}, data_list)
+
+
+colnames(gen_data) <- c('gen_forecast', 'gen_forecast_conso',
+ 'datetime', "load_forecast", "load_tot")
+gen_data$gen_forecast_net <- gen_data$gen_forecast -  gen_data$gen_forecast_conso 
+gen_data <- gen_data %>%
+  mutate(date = as.Date(datetime))
+# gen_data <- gen_data %>% 
+#   filter(datetime <= threshold_date)
 threshold_date_gen <- gen_data %>%
   mutate(date = as.Date(datetime)) %>%
   group_by(date) %>%
@@ -181,18 +194,22 @@ threshold_date_gen <- gen_data %>%
   summarise(threshold_date = min(date)) %>%
   pull(threshold_date)
 
-
+class(threshold_date_gen)
+class(dt$datetime)
 #attention gen_data is wrong for the last 3 months
 #not provided
 
 library(data.table)
 dt <- as.data.table(gen_data)
 dt_hourly_after_threshold <- dt[
-  datetime >= threshold_date_gen,
+  date >= threshold_date_gen,
   .(
-    gen_tot_da       = mean(gen_tot_da, na.rm = TRUE),
-    gen_tot_da_conso = mean(gen_tot_da_conso, na.rm = TRUE),
-    gen_tot_da_net   = mean(gen_tot_da_net, na.rm = TRUE)
+    gen_forecast    = mean(gen_forecast, na.rm = TRUE),
+    gen_forecast_conso = mean(gen_forecast_conso, na.rm = TRUE),
+    gen_forecast_net = mean(gen_forecast_net, na.rm = TRUE),
+    load_forecast   = mean(load_forecast, na.rm = TRUE),
+    load_tot        = mean(load_tot, na.rm = TRUE)
+
   ),
   by = .(
     datetime = as.POSIXct(
@@ -202,11 +219,11 @@ dt_hourly_after_threshold <- dt[
     )
   )
 ]
-dt_hourly <- dt[ datetime <= threshold_date_gen,]
+dt_hourly <- dt[ date <= threshold_date_gen,]
 
-gen_data <- rbind( dt_hourly,
+gen_data <- full_join(dt_hourly,
         dt_hourly_after_threshold
-        ) 
+        )
 
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(gen_data, "esp_generation_day_ahead.parquet")

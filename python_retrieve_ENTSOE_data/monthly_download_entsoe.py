@@ -6,10 +6,10 @@ import os
 
 # Define start and end dates
 client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
-country_code = 'FR'
+country_code = 'ES'
 #country_code_to = 'FR'   
 # Define start and end dates
-start_date = pd.Timestamp('20240101', tz='Europe/Brussels')
+start_date = pd.Timestamp('20150101', tz='Europe/Brussels')
 #end_date = pd.Timestamp('20170101', tz='Europe/Brussels')
 end_date = pd.Timestamp('20260101', tz='Europe/Brussels')
 # Generate monthly date ranges
@@ -18,7 +18,7 @@ import os
 #path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_tot\esp\by_fuel'  # Remplacez par votre chemin
 #path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Wind_solar_forecast\PT'
 #path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\day_ahead_prices\fr'
-path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_tot\fr'
+path = r'C:\Users\DBT3KD\Desktop\Etude_macro_elec\DATA\Generation_tot\esp\Load_forecast'
 os.chdir(path)
 os.getcwd()
 #date = monthly_dates[len(monthly_dates)-6]
@@ -39,9 +39,11 @@ for date in monthly_dates:
      #   country_code, start=start_month, end=end_month, docstatus=None, periodstartupdate=None, periodendupdate=None)
     #wind_and_solar_forecast = client.query_wind_and_solar_forecast(country_code, start=start_year, end=end_year, psr_type=None)
     #intraday_wind_and_solar_forecast = client.query_intraday_wind_and_solar_forecast(country_code, start=start_year, end=end_year, psr_type=None)
-    
-    generation_tot = client.query_generation(country_code, start=start_month, end=end_month, psr_type=None, include_eic=False)
-    #withdrawn_unavailability_of_generation_units = client.query_withdrawn_unavailability_of_generation_units(country_code, start_year, end_year)
+    #load = client.query_load(country_code, start=start_month, end=end_month)
+    load_forecast = client.query_load_forecast(country_code, start=start_month, end=end_month)
+    # generation = pa.Table.from_pandas(client.query_generation(country_code, start=start_month, end=end_month, psr_type=None, include_eic=False))
+    # generation_forecast = pa.Table.from_pandas(client.query_generation_forecast(country_code, start=start_month, end=end_month))
+    # withdrawn_unavailability_of_generation_units = client.query_withdrawn_unavailability_of_generation_units(country_code, start_year, end_year)
     #query_crossborder_flows = client.query_crossborder_flows(country_code_from, country_code_to, start_month, end_month)
     #client.query_scheduled_exchanges(country_code_from, country_code_to, start, end, dayahead=False)
     #client.query_net_transfer_capacity_dayahead(country_code_from, country_code_to, start, end)
@@ -56,12 +58,14 @@ for date in monthly_dates:
     # Convert to a PyArrow Table
     # day_ahead_prices = client.query_day_ahead_prices(country_code, start=start_month, end=end_month)
     # table = pa.Table.from_pandas(day_ahead_prices.to_frame(name="day_ahead_prices"))
-    table = pa.Table.from_pandas(generation_tot)
+    table = pa.Table.from_pandas(load_forecast)
     #my_table = pa.Table.from_pandas(day_ahead_prices)
     # Write the table to a Parquet file
     pq.write_table(table, string)
     # Print a message indicating the successful query
     print(f"Data queried successfully for the month: {start_month.strftime('%Y-%m')}")
 
+
 #query_withdrawn_unavailability_of_generation_units
 # day_ahead_prices.head()
+table.to_pandas().tail()

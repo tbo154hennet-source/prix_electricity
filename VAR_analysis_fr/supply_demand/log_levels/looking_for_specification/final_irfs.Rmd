@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+setwd(source_path)
+source("auxiliary_irf_plot.R")
+```
+
+
+
+## Anderson-Rubin
+
+
+```{r}
+# VAR_demand <- VAR_demand_pc
+plot_full_irf(VAR_data =VAR_demand_pc, shock = 2, plot_irf = plot_irf_msw)
+
+```
+
+
+
+```{r}
+plot_full_irf(VAR_data = VAR_supply_pc, shock = 2, plot_irf = plot_irf_msw)
+
+```
+
+
+## Moving block bootstrap(MBB)
+
+
+```{r}
+
+plot_full_irf_mbb(bootIRFs_demand, shock = 2, plot_irf= plot_irf_mbb, lambda_0_log_demand)
+
+```
+
+```{r}
+
+plot_full_irf_mbb(bootIRFs_supply, shock = 2, plot_irf_mbb, lambda_0_log_supply)
+
+```
+
+
+
+Double shock
+
+
+
+
+
+```{r}
+
+plot_full_irf_mbb(bootIRFs_double, shock = 1, plot_irf_mbb_double, lambda_0_log_double)
+
+```
+
+```{r}
+
+plot_full_irf_mbb(bootIRFs_double, shock = 2, plot_irf_mbb_double, lambda_0_log_double, double =TRUE)
+
+```
+
+
+No Orthogonalization
+
+
+```{r}
+plot_full_irf_mbb(bootIRFs_double_original, shock = 1, plot_irf_mbb_double, lambda_0_log_double_original)
+```
+```{r}
+plot_full_irf_mbb(bootIRFs_double_original, shock = 2, plot_irf_mbb_double, lambda_0_log_double_original)
+```
+
+

@@ -175,7 +175,8 @@ final_indispo_tot_wide_esp <- read_parquet("final_indispo_tot_wide_esp.parquet")
 #Pour source de prix et de quantité,
 #on complète avec auction_summary
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
-gen_data_aligned <- read_parquet("esp_generation_day_ahead_all.parquet")
+gen_data_aligned <- read_parquet("esp_generation_day_ahead.parquet")
+
 price_indispo_merge_esp <- left_join(gen_data_aligned,
                                      final_indispo_tot_wide_esp,
                                      by = c("datetime" = "datetime_slot"))
@@ -333,7 +334,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
   mutate(price_wins = pmin(price, p95))
 
 # Cr?er l'histogramme
-ggplot(price_indispo_merge_esp, aes(x = price_wins)) +
+price_histo <- ggplot(price_indispo_merge_esp, aes(x = price_wins)) +
   geom_histogram(aes(y = ..density..), binwidth = 1,
                  fill = "steelblue", color = "black", alpha = 0.5) +
   #geom_density(fill = "steelblue", alpha = 0.6) +

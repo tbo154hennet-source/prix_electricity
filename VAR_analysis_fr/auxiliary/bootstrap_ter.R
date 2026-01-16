@@ -42,7 +42,7 @@
 gamma_bootstrap_mbb_corrected <- function(x,nboot,  theta_0, proxies, controls=NULL, elas = 0,
                                           start_ts = c(2015,1), end_ts =c(2023,12), irhor=irhor){
   T_bis <- nrow(x) - p
-  
+  n <- ncol(x)
   BlockSize <- round(5 * T_bis**0.25)
   nBlock <- ceiling((T_bis) / BlockSize)
 
@@ -305,7 +305,7 @@ gamma_bootstrap_mbb_corrected_final <- function(x,nboot,  theta_0, proxies, cont
     sample(1:(T - BlockSize + 1), nBlock, replace = TRUE),
     simplify = FALSE
   )
-  
+
   for (j in 1:nboot) {
     index <- block_index_list[[j]]
     # Reconstruct bootstrap residuals
@@ -313,6 +313,8 @@ gamma_bootstrap_mbb_corrected_final <- function(x,nboot,  theta_0, proxies, cont
     bootres <- bootres[c(1:T),]
     bootProxy <- do.call(rbind, lapply(index, function(ii) ProxyBlocks[,,ii])
                          )
+    bootProxy <- bootProxy[1:T, , drop = FALSE]
+
     # Rassembler les blocs dans l’ordre
     if(k==1){
       bootProxy <- unlist(lapply(index, function(ii) ProxyBlocks[, ,ii]))

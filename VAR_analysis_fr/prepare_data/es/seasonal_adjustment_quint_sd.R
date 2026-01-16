@@ -8,13 +8,17 @@ library(arrow)
 library(purrr)
 Sys.setenv(lang = "en_US")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
-IV_data <- read_parquet('IV_data_esp_elas_sd.parquet') 
+IV_data <- read_parquet('IV_data_esp_elas_sd_2026.parquet') 
 
 #normalize prices with price index
 IV_data <- IV_data %>%
-  mutate(across(contains("spot"), ~ . / HICP*100 ))
+  mutate(across(contains("spot"), ~ . / HICP*100 )) %>% 
+#pour l'instant IPI Esp va jusqu'à 2025-10-01  
+  filter(observation_date <= as.Date("2025-09-01") ) %>% 
+  select(-IPI_FRED, - Spot_gas)
+  
 
 #grep("spot", colnames(IV_data), value = TRUE, ignore.case = TRUE)
 
@@ -24,7 +28,7 @@ IV_data <- IV_data %>%
 # IV_data$spot_price
 # IV_data <- IV_data[1:108,]
 periodicity_test_col <- setdiff(colnames(IV_data),
-                                c("month" , "year" ,                     
+                                c("month" , "year" ,      "ffr",                
                                   "datetime", "last_Date", "last_Trading.day",
                                   "X" ,"Date", "observation_date", "T_min", "T_max"))
 
@@ -48,7 +52,7 @@ IV_data_detrended <- IV_data %>%
 
 #determine which variables need to be desasonnalized
 
-
+#series <- IV_data_detrended$wind_forecast
 detect_general_periodicity <- function(series) {
   spec <- spectrum(series, plot = FALSE)  # Compute the periodogram
   dominant_freq <- spec$freq[which.max(spec$spec)]  # Get the most dominant frequency
@@ -75,10 +79,11 @@ dominant_periodicity <- IV_data_detrended %>%
   pivot_longer(everything(), names_to = "series", values_to = "dominant_period") %>%
   filter(as.numeric(dominant_period) <= 13)
 
+print(dominant_periodicity, n= 30)
 
 #after plotting I choose to add NE Index that exhibits obvious periodicity
 
-var_season <- c(dominant_periodicity$series, "NE_Index")
+var_season <- c(dominant_periodicity$series, "NE_Index", "HICP")
 
 
 # Initialize a list to store the seasonally adjusted series
@@ -86,16 +91,17 @@ adjusted_data <- list()
 start_date = c('2015', '01')
 frequency = 12
 
+
 # Loop over each variable and perform STL decomposition
 for (var in colnames(IV_data)) {
-  ts_data <- ts(IV_data[[var]], start = start_date, frequency = frequency)
-  print(var)
-  if (var %in% var_season){
-    # Perform STL decomposition
+  if(var %in% var_season){
+    ts_data <- ts(IV_data[[var]], start = start_date, frequency = frequency)
+    print(var)
     stl_fit <- stl(ts_data, s.window = "periodic")
     # Extract the seasonally adjusted component
     ts_data <- seasadj(stl_fit)
-    
+  }else{
+    ts_data <- ts(IV_data[[var]], start = start_date, frequency = frequency)
   }
   adjusted_data[[var]] <- ts_data
 }
@@ -163,7 +169,7 @@ colnames(IV_data_log)
 
 
 #write.csv(detrended_data, "DATASET_sa_detrended.csv")
-write_parquet(IV_data_log, 'IV_data_esp_log_elas_sd.parquet')
+write_parquet(IV_data_log, 'IV_data_esp_log_elas_sd_2026.parquet')
 
 
 #write_parquet(IV_data_log, 'IV_data_esp_log_detrended.parquet')
@@ -181,7 +187,7 @@ for (col in cols_to_transform) {
 }
 
 IV_data_log_diff[1,paste0(cols_to_transform, "_log_diff")] <- 0
-write_parquet(IV_data_log_diff, 'IV_data_esp_log_diff_elas_sd.parquet')
+write_parquet(IV_data_log_diff, 'IV_data_esp_log_diff_elas_sd_2026_2026.parquet')
 
 
 
@@ -198,7 +204,7 @@ for (col in cols_to_transform) {
 }
 
 IV_data_diff[1,paste0(cols_to_transform, "_diff")] <- 0
-write_parquet(IV_data_diff, 'IV_data_esp_diff_elas_sd.parquet')
+write_parquet(IV_data_diff, 'IV_data_esp_diff_elas_sd_2026_2026.parquet')
 getwd()
 rm(IV_data_esp_diff)
 gc()  # force le garbage collection
@@ -210,6 +216,15 @@ gc()  # force le garbage collection
 
 par(mar = c(2, 2, 2, 2))
 plot.new()
+
+ggplot(IV_data, aes(x = datetime)) +
+  geom_line(aes(y =IV_data$spot_price , color = "Price")) +
+  geom_line(aes(y = IV_data$gen_tot, color = "Generation")) +
+  geom_line(aes(y = IV_data$load_tot, color = "Load")) +
+  labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
+       x = "Date", y = "Index") +
+  theme_minimal()
+
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y =IV_data$NE_Index , color = "Original")) +
   geom_line(aes(y = seasonally_adjusted_df$NE_Index, color = "Detrended")) +
@@ -218,6 +233,26 @@ ggplot(IV_data, aes(x = datetime)) +
   scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
   theme_minimal()
 
+ggplot(IV_data, aes(x = datetime)) +
+  geom_line(aes(y =IV_data$spot_gas, color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$spot_gas, color = "Detrended")) +
+  geom_line(aes(y =IV_data$spot_gas_capped, color = "Original Cap")) +
+  geom_line(aes(y = seasonally_adjusted_df$spot_gas_capped, color = "Detrended Cap")) +
+  labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
+       x = "Date", y = "Index") +
+  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red",
+                                "Original Cap" = "darkblue", "Detrended Cap" = "darkred")) +
+  theme_minimal()
+
+
+
+ggplot(IV_data, aes(x = datetime)) +
+  geom_line(aes(y =IV_data$HICP , color = "Original")) +
+  geom_line(aes(y = seasonally_adjusted_df$HICP, color = "Detrended")) +
+  labs(title = "Non-Energy Index - Original and Seasonally Adjusted",
+       x = "Date", y = "Index") +
+  scale_color_manual(values = c("Original" = "blue", "Detrended" = "red")) +
+  theme_minimal()
 
 ggplot(IV_data, aes(x = datetime)) +
   geom_line(aes(y =IV_data$heat_excess , color = "Original")) +

@@ -1,0 +1,73 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+
+supply_msw_main_plot <- plot_full_irf(VAR_data =VAR_supply_pc, shock = 1, plot_irf = plot_irf_msw)
+
+supply_msw_main_plot
+```
+
+```{r}
+supply_msw_wedge_plot <- plot_full_irf(VAR_data =VAR_supply_pc_wedge, shock = 1, plot_irf = plot_irf_msw)
+supply_msw_wedge_plot
+```
+
+
+
+
+```{r}
+supply_msw_wind_plot <- plot_full_irf(VAR_data =VAR_wind, shock = 1, plot_irf = plot_irf_msw)
+supply_msw_wind_plot
+```
+
+
+
+```{r}
+demand_msw_main_plot <-  plot_full_irf(VAR_data =VAR_demand_pc, shock = 2, plot_irf = plot_irf_msw)
+demand_msw_main_plot
+```
+
+
+
+
+
+```{r}
+
+save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+setwd(save_plot_path)
+
+ggsave("supply_msw_main_plot.png", plot = supply_msw_main_plot, width = 10, height = 6, dpi = 300)
+ggsave("supply_msw_wedge_plot.png", plot = supply_msw_wedge_plot, width = 10, height = 6, dpi = 300)
+ggsave("supply_msw_wind_plot.png", plot = supply_msw_main_plot, width = 10, height = 6, dpi = 300)
+ggsave("demand_msw_main_plot.png", plot = demand_msw_main_plot, width = 10, height = 6, dpi = 300)
+
+
+
+```
+
+
+# MBB double
+
+
+
+```{r}
+plot_full_irf_mbb(bootIRFs = bootIRFs_double_original[,,,1], shock = 1, plot_irf= plot_irf_mbb, lambda_0 =lambda_0_log_double_original[,,1], double =TRUE)
+
+```
+
+
+```{r}
+plot_full_irf_mbb(bootIRFs = bootIRFs_double_original[,,,2], shock = 2, plot_irf= plot_irf_mbb, lambda_0 =lambda_0_log_double_original[,,2], double =TRUE)
+```
+
+
+
+
+

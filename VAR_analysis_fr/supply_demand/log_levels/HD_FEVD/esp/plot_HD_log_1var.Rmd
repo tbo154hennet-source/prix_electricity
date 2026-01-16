@@ -1,0 +1,334 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Load Data
+
+```{r}
+
+
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+setwd(source_path)
+source("hd_aux_log.R")
+
+
+library(slider)
+save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+setwd(save_rds_path_hd)
+historical_decomp_iv_tibo <- readRDS( "hd_iv_log.rds")
+#historical_decomp_iv_tibo <- historical_decomp_iv_tibo[, , c(2, 1)]
+hd_cholesky <- readRDS( "hd_chol_log.rds")
+
+vars <- vars_demand
+mean_vector <- colMeans(vars_demand, na.rm = TRUE)
+vars_demand_demeaned <- sweep(vars_demand, 2, mean_vector, "-")
+vars_demand_reconstructed <- sweep(vars_demand_demeaned, 2, mean_vector, "+")
+
+IV_data_log_esp <- IV_data_log_esp %>% 
+  mutate(
+    HICP_log_diff = HICP_log - lag(HICP_log),
+    HICP_log_diff = replace_na(HICP_log_diff, 0)
+  )
+
+vars_demand<- ts(IV_data_log_esp[, c(headers_var_gen_first_mp_gas)], frequency=12)
+
+p = 12     
+irhor = 40
+x_demand =ts(vars_demand , start=c(2015,1), end=c(2025,9), frequency=12)
+y =vars_demand[-1:-p, ]
+T = nrow(y)
+#variables dans VAR
+#nbre de variables instrumentees
+k <- 1
+#nbre d'instruments
+l <- 1
+
+# Fit the VAR model
+vl_demand <- if (is.null(controls)) {
+  vars::VAR(x_demand, p, type = "none")
+} else {
+  vars::VAR(x_demand, p, type = "none", exogen = controls)
+}
+
+
+```
+
+# Historical Decomposition
+
+```{r}
+library(ggplot2)
+dates_formatted <- as.yearmon(time(x_demand))
+dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
+str(dates_formatted)
+colors_shock <- c(  "purple", "yellow",  "blue", "green", "red", "orange", "pink")
+names <- c( "Load" ,"$P_{elec}$", "Generation", 
+            "IPI",  "$HICP$", "ECB rate","$P_{gas}$")
+
+theta_0 <- matrix(rnorm(10, 0, 1), ncol=2, nrow= 5)
+irf_response_test <- as.data.frame(theta_0)
+irf_response_test$shock <- rep(names, length.out = length(theta_0[,1]))
+irf_response_test$shock <- factor(irf_response_test$shock, levels = names)
+# fake plot just to construct the correct legend
+dates_formatted <- as.yearmon(time(x_demand))
+#dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
+# Format to shorter labels (e.g., "May 15", "Jun 15", ...)
+
+
+plot_legend <- ggplot(data =irf_response_test, aes(x=V1, fill = shock))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+  values = colors_shock,
+  labels = TeX(names))
+# Légende personnalisée (à ajuster selon vos besoins)
+custom_legend <- cowplot::get_legend(plot_legend)
+
+```
+
+La différence qui existe entre ma série et la série reconstruite
+correspond à l'approximation de la limite des horizons.
+Lorsque pour une Cholesky, on calcule de plus en plus d'horizons,
+la différence entre les deux courbes se réduit
+En plus, il y avait la dérive intuitée par Giovanni.
+
+
+
+
+
+```{r}
+
+zero_errors <- matrix(0, nrow = dim(res)[1], ncol = dim(res)[2])
+
+reconstruct_derive_without_errors_ter <- iterate_var_ter(x=x_demand,
+                                                     initial_obs = x_demand[1:p, ],
+                                                     errors = zero_errors,
+                                                     var_model = vl_demand
+)
+
+T_use <- nrow(shock_sum)
+n_shocks <- dim(hd_cholesky)[3]
+
+hd_with_trend <- array(0, dim = c(T_use, n_vars_demand, n_shocks + 1))
+hd_with_trend[, , 1:n_shocks] <- hd_cholesky[1:T_use, , 1:n_shocks]
+
+# dernière composante = trend/baseline demeaned
+hd_with_trend[, , n_shocks + 1] <- trend_component
+dimnames(hd_with_trend)[[3]] <- c(paste0("shock_", 1:n_shocks), "trend (baseline - mean)")
+
+
+# Prepare data for plotting
+# baseline <- reconstruct_derive_without_errors_ter  # ensure this is T x n_vars_demand
+# y_hat <- baseline + shock_sum
+
+
+alpha_chosen = 1
+historical_decomp_matrix <- hd_cholesky
+
+# dim(hd_cholesky)
+# #add a component that would be trend
+# dim(reconstruct_derive_without_errors_ter)
+# 
+# hd_cholesky reconstruct_derive_without_errors_ter[(p+1):nrow(reconstruct_derive_without_errors_ter), ]
+
+n_serie = 5
+ne_hd <- plot_hd_demeaned(series = n_serie)+
+    labs(title=TeX(paste("Historical Decomposition of HICP")) ,
+         x="Time", y="Contribution")
+inflation_12m = IV_data_log_esp$HICP_log - reconstruct_derive_without_errors_ter[(p+1):nrow(reconstruct_derive_without_errors_ter), n_serie]
+ne_hd <- ne_hd +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)]), color = "black", linetype = "dashed") +
+    labs(title=TeX(paste("Historical Decomposition of HICP with 12-month Inflation")) ,
+         x="Time", y="Contribution")
+
+ne_hd
+```
+
+
+
+```{r}
+
+colors_shock <- c(  "purple", "yellow",  "blue", "green", "red", "orange", "pink", "grey")
+names <- c( "Load" ,"$P_{elec}$", "Generation", 
+            "IPI",  "$HICP$", "ECB rate","$P_{gas}$", "Trend")
+
+theta_0 <- matrix(rnorm(10, 0, 1), ncol=2, nrow= 5)
+irf_response_test <- as.data.frame(theta_0)
+irf_response_test$shock <- rep(names, length.out = length(theta_0[,1]))
+irf_response_test$shock <- factor(irf_response_test$shock, levels = names)
+# fake plot just to construct the correct legend
+dates_formatted <- as.yearmon(time(x_demand))
+#dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
+# Format to shorter labels (e.g., "May 15", "Jun 15", ...)
+
+plot_legend <- ggplot(data =irf_response_test, aes(x=V1, fill = shock))+
+  geom_histogram()+
+  theme( legend.direction = "horizontal")+
+scale_fill_manual(
+  values = colors_shock,
+  labels = TeX(names))
+# Légende personnalisée (à ajuster selon vos besoins)
+custom_legend_trend <- cowplot::get_legend(plot_legend)
+
+
+
+n_shocks <- dim(hd_cholesky)[3]
+
+hd_with_trend <- array(0, dim = c(n_obs, n_vars_demand, n_shocks + 1))
+hd_with_trend[, , 1:n_shocks] <- hd_cholesky[1:n_obs, , 1:n_shocks]
+
+# dernière composante = trend/baseline demeaned
+hd_with_trend[, , n_shocks + 1] <- as.matrix((reconstruct_derive_without_errors_ter - mean(IV_data_log_esp$HICP_log))[(p+1):nrow(reconstruct_derive_without_errors_ter),])
+dimnames(hd_with_trend)[[3]] <- c(paste0("shock_", 1:n_shocks), "trend (baseline - mean)")
+
+historical_decomp_matrix <- hd_with_trend
+
+
+n_serie = 5
+ne_hd <- plot_hd_demeaned(series = n_serie)+
+    labs(title=TeX(paste("")) ,
+         x="Time", y="Inflation Contribution")
+inflation_12m = IV_data_log_esp$HICP_log - mean(IV_data_log_esp$HICP_log)
+ne_hd <- ne_hd +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)]), color = "black", linetype = "dashed") 
+
+ne_hd
+```
+
+
+
+
+# IV partial Identification
+
+
+Attention, ici les deux tableaux historical_decomp_iv_tibo[,,1] et historical_decomp_iv_tibo[,,2] ne s'additionnent pas pas selon l'identification des chocs de prix et de demande respectivement avec mon instrument de supply, de demand
+
+
+supply_shock_legend
+
+```{r}
+dates_formatted <- as.yearmon(time(x_demand))
+names <- c("Demand", "Supply")
+colors_shock <- rev(c( "red", "green"))
+#colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
+historical_decomp_matrix <-  historical_decomp_iv_tibo
+n_serie = 5
+ne_iv <- plot_hd_demeaned(series = n_serie)+
+    labs(title=TeX(paste("")) ,
+         x="Time", y="Inflation Contribution")
+
+ne_iv
+
+```
+
+
+
+
+
+```{r}
+dates_formatted <- as.yearmon(time(x_demand))
+names <- c("Demand", "Supply")
+colors_shock <- rev(c( "red", "green"))
+#colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
+historical_decomp_matrix <-  historical_decomp_iv_tibo
+n_serie = 5
+ne_iv <- plot_hd_demeaned(series = n_serie)+
+    labs(title=TeX(paste("")) ,
+         x="Time", y="Inflation Contribution")
+
+pelec_12m = (IV_data_log_esp$spot_price - mean(IV_data_log_esp$spot_price))/1000
+
+ne_iv <- ne_iv +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)], color = "HICP"), linetype = "dashed") +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = pelec_12m[(p+1):(length(inflation_12m)-p)], color = "Pelec"),  linetype = "dashed") 
+
+
+ne_iv <- ne_iv +
+  scale_y_continuous(
+    name = "HICP Contribution",
+    sec.axis = sec_axis(
+      ~ . *1000,
+      name = "Pelec (euros)"
+    )
+  ) 
+
+ne_iv <- ne_iv +
+  scale_color_manual(
+    name = "",
+    values = c(
+      "HICP" = "black",
+      "Pelec" = "darkgoldenrod"
+    ),
+    labels = TeX(c(
+      "HICP",
+      "$P_{elec}$")
+    )
+  )
+
+
+ne_iv
+
+```
+
+
+
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("plot_hd_cholesky.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
+ggsave("plot_hd_iv.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
+# ggsave("ne_hd_demeaned_4v.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
+# #ggsave("ne_hd_iv_4v.png", plot = ne_hd_iv, width = 8, height = 6, dpi = 300)
+# ggsave("ne_hd_12_4v.png", plot = ne_hd_12, width = 8, height = 6, dpi = 300)
+# ggsave("ne_hd_compare_4v.png", plot = ne_hd_compare, width = 8, height = 6, dpi = 300)
+#ggsave("ne_hd_12_compare.png", plot = ne_hd_compare_12, width = 12, height = 6, dpi = 300)
+
+```
+
+Describing the summation Error
+
+```{r}
+series = 4
+data <- data.frame(
+  x = dates_formatted,
+  y = vars_demand_demeaned[5:nrow(vars_demand_demeaned),series],
+  ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum)
+)
+
+
+ggplot(data, aes(x = x)) +
+  geom_line(aes(y = y, color = "Actual")) +
+  geom_line(aes(y = ytest, color = "Decomposition")) +
+  geom_line(aes(y = y- ytest, color = "Error")) +
+  scale_color_manual(values = c("Actual" = "blue", 
+                                "Decomposition" = "red",
+                                "Error"="black")) +
+  theme_minimal() +
+  labs(title = paste("Decomposition of", series, "using historical data"),
+       x = "Date",
+       y = "Value") +
+  theme(legend.position = "top")
+```
+
+Montrer le terme de dérive lorsqu'on fait tourner la VAR sans erreurs
+
+
+```{r}
+
+
+ggplot() +
+  geom_line(mapping= aes(x= dates_formatted, 
+                         y = reconstruct_derive_without_errors_ter[,series][c(-1:-p)], color = "Derive"))+
+  geom_line(data=data, mapping=aes(x = x, y = y - ytest, color = "Error")) +
+  scale_color_manual(values = c("Derive" = "blue", 
+                                "Decomposition" = "red",
+                                "Error"="black")) +
+  theme_minimal() +
+  labs(title = paste("Decomposition of", series, "using historical data"),
+       x = "Date",
+       y = "Value") +
+  theme(legend.position = "top")
+```
+

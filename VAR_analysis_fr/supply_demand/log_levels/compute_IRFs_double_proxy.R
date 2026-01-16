@@ -1,13 +1,14 @@
 
-IV_data_log_esp[, c("delta_s_tot", "delta_d_tot", "delta_supply", "delta_demand")] %>% 
+IV_data_log_esp[, c("delta_s_orth", "delta_d_orth","delta_supply", "delta_supply_incorpo", "delta_demand")] %>% 
   cor()
 
-proxies <- ts(IV_data_log_esp[, c("delta_supply", "delta_demand")], frequency=12)
+
+controls = NULL
 # Fit the VAR model
 vl <- if (is.null(controls)) {
-  vars::VAR(x_supply, p, type = "none")
+  vars::VAR(x_demand, p, type = "none")
 } else {
-  vars::VAR(x_supply, p, type = "none", exogen = controls)
+  vars::VAR(x_demand, p, type = "none", exogen = controls)
 }
 
 
@@ -16,11 +17,14 @@ coef = coef(vl)
 bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
 res = residuals(vl)
 
+theta_0_supply
+theta_0_supply_control
+theta_0_supply_wedge
 
-proxies <- ts(IV_data_log_esp[, c("delta_supply", "delta_demand")], frequency=12)
+proxies <- ts(IV_data_log_esp[, c("delta_supply_incorpo", "delta_demand" )], frequency=12)
 k=2
 l=2
-theta_0_double <- first_var_estimation_bis(x_supply, res, p, proxies, irhor, controls = NULL, target_elas)$theta_0
+theta_0_double <- first_var_estimation_bis( x= x_demand, res, p, proxies, irhor, controls = NULL, elas = -0.02)$theta_0
 
 
 
@@ -63,22 +67,23 @@ compute_quantile_bands_dim3 <- function(boot_array, probs) {
 }
 
 
-bootIRFs_double <-gamma_bootstrap_mbb_corrected(x = x_supply, nboot,  theta_0 = theta_0_double ,
+bootIRFs_double <-gamma_bootstrap_mbb_corrected(x = x_demand, nboot,  theta_0 = theta_0_double ,
                                                 proxies = proxies, controls=NULL, target_elas,
-                                                start_ts = c(2015,1), end_ts =c(2023,12), irhor = irhor)
+                                                start_ts = c(2015,1), end_ts =c(2025,9), irhor = irhor)
 
 ###################### double with original shocks
 
 
-
+theta_0_wind
+theta_0_wind_control
 
 proxies <- ts(IV_data_log_esp[, c("delta_s_tot", "delta_d_tot")], frequency=12)
 k=2
 l=2
-theta_0_double_original <- first_var_estimation_bis(x_supply, res, p, proxies, irhor, controls = NULL, target_elas)$theta_0
-#first_var_estimation_double(x_supply, res, p, proxies, irhor, controls = NULL, elas = -0.3)$theta_0
-
-
+theta_0_double_original <- first_var_estimation_bis(x_supply, res, p, proxies, irhor, controls = NULL, elas = -0.02)$theta_0
+#first_var_estimation_double(x_demand, res, p, proxies, irhor, controls = NULL, elas = -0.3)$theta_0
+dim(res)
+dim(proxies)
 AL <- do.call(cbind, lapply(coef(vl), function(df) df[, 1]))
 # Optionally, set column names if needed
 names(AL) <- names(coef(vl))
@@ -115,10 +120,10 @@ compute_quantile_bands_dim3 <- function(boot_array, probs) {
   }
 }
 
-x <- x_supply
-bootIRFs_double_original <-gamma_bootstrap_mbb_corrected(x_supply, nboot,  theta_0 = theta_0_tot ,
-                                                proxies = proxies, controls=NULL, target_elas,
-                                                start_ts = c(2015,1), end_ts =c(2023,12), irhor = irhor)
+
+bootIRFs_double_original <- gamma_bootstrap_mbb_corrected_final(x = x_supply, nboot,  theta_0 = theta_0_double_original ,
+                                                proxies = proxies, controls=NULL, elas =0,
+                                                start_ts = c(2015,1), end_ts =c(2025,9), irhor = irhor)
 
 
 

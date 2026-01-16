@@ -1,0 +1,65 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+setwd(source_path)
+source("auxiliary_irf_plot.R")
+```
+
+```{r}
+my_plot <- ggplot(data = IV_data_log_esp, aes(x= observation_date))+
+  geom_line(aes(y = delta_demand, color = "Demand PC"))+
+  geom_line(aes(y = delta_d_tot, color = "Demand"))+
+  geom_line(aes(y = delta_supply, color = "Supply PC"))+
+  geom_line(aes(y = delta_s_tot, color = "Supply"))+
+  labs(x= "Time", y= "Proxies")
+  theme_minimal()
+my_plot 
+```
+
+# Demand shock
+
+```{r}
+plot_full_irf(VAR_data =VAR_demand_pc, shock = 2, plot_irf = plot_irf_msw)
+
+```
+
+
+
+```{r}
+plot_full_irf_mbb(bootIRFs = bootIRFs_demand, shock = 2, plot_irf= plot_irf_mbb, lambda_0 = lambda_0_log_demand)
+
+```
+
+# Supply shock
+
+
+
+```{r}
+plot_full_irf(VAR_data = VAR_supply_ng_pc, shock = 1, plot_irf = plot_irf_msw)
+
+```
+
+```{r}
+plot_full_irf(VAR_data = VAR_supply_resid_pc, shock = 1, plot_irf = plot_irf_msw)
+
+```
+
+```{r}
+plot_full_irf(VAR_data =VAR_wind, shock = 1, plot_irf = plot_irf_msw)
+
+```
+
+```{r}
+plot_full_irf_mbb(bootIRFs = bootIRFs_supply, shock = 1, plot_irf= plot_irf_mbb, lambda_0 =lambda_0_log_supply)
+
+```
+
+
+
+
+

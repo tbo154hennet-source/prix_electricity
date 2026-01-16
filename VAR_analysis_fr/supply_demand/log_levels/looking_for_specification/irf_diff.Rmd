@@ -1,0 +1,42 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+setwd(source_path)
+source("auxiliary_irf_plot_diff.R")
+```
+
+
+
+```{r}
+plot_full_irf(VAR_data =VAR_demand_pc, shock = 2, plot_irf = plot_irf_msw, type = "diff")
+
+```
+
+```{r}
+plot_full_irf(VAR_data =VAR_demand_pc_diff, shock = 2, plot_irf = plot_irf_msw, type = "diff")
+
+```
+
+
+
+```{r}
+plot_full_irf(VAR_data =VAR_supply_pc, shock = 2, plot_irf = plot_irf_msw, type = "diff")
+
+```
+
+
+
+```{r}
+plot_full_irf(VAR_data =VAR_supply_pc_diff, shock = 2, plot_irf = plot_irf_msw, type = "diff")
+
+```
+
+
+
+
