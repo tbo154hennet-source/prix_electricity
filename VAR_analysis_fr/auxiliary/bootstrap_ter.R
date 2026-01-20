@@ -313,13 +313,13 @@ gamma_bootstrap_mbb_corrected_final <- function(x,nboot,  theta_0, proxies, cont
     bootres <- bootres[c(1:T),]
     bootProxy <- do.call(rbind, lapply(index, function(ii) ProxyBlocks[,,ii])
                          )
-    bootProxy <- bootProxy[1:T, , drop = FALSE]
 
     # Rassembler les blocs dans l’ordre
     if(k==1){
       bootProxy <- unlist(lapply(index, function(ii) ProxyBlocks[, ,ii]))
     }
-
+    bootProxy <- bootProxy[1:T, drop = FALSE]
+    
     bootData <- iterate_var_ter(x, x[1:p,], bootres, vl, controls)
     
     # Fit the VAR model
@@ -465,4 +465,155 @@ run_bootstrap_for_elas_bis <- function(elas_value) {
 }
 
 
+
+
+
+
+gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, proxies, controls=NULL, elas = 0,
+                                                start_ts = c(2015,1), end_ts =c(2023,12), irhor=irhor){
+  T_bis <- nrow(x) - p
+  
+  BlockSize <- round(5 * T_bis**0.25)
+  nBlock <- ceiling((T_bis) / BlockSize)
+  
+  
+  # Center VAR residuals
+  VARcentering <- sapply(1:BlockSize, function(j) {
+    colMeans(res[j:(T - BlockSize + j), ])
+  })
+  VARcentering <- matrix(rep(VARcentering, each = nBlock), nrow = T, ncol = n, byrow = TRUE)
+  centered_res <- res - VARcentering
+  
+  # Create blocks for residuals
+  VARBlocks <- array(NA, dim = c(BlockSize, n, T - BlockSize + 1))
+  for (j in 1:(T - BlockSize + 1)) {
+    VARBlocks[,,j] <- centered_res[j:(j + BlockSize - 1), ]
+  }
+  
+  # Proxy blocks
+  if (k==1){
+    proxies_short <- proxies[(p+1):length(proxies)]
+    Proxycentering <- sapply(1:BlockSize, function(j) {
+      subProxy <- proxies[j:(T - BlockSize + j)]
+      mean(subProxy[subProxy != 0]) - mean(proxies[proxies[1] != 0])
+    })
+    Proxycentering <- matrix(rep(Proxycentering, each = nBlock), nrow = T, ncol = 1, byrow = TRUE)
+  } else{
+    proxies_short <- proxies[(p+1):nrow(proxies), ]
+    # Center proxy variables
+    Proxycentering <- sapply(1:BlockSize, function(j) {
+      subProxy <- proxies[j:(T - BlockSize + j), 1]
+      mean(subProxy[subProxy != 0]) - mean(proxies[proxies[,1] != 0, 1])
+    })
+    Proxycentering <- matrix(rep(Proxycentering, each = nBlock), nrow = T, ncol = ncol(proxies), byrow = TRUE)
+    
+  }
+  centered_proxies <- proxies_short - Proxycentering
+  
+  ProxyBlocks <- array(NA, dim = c(BlockSize, k, T - BlockSize + 1))
+  for (j in 1:(T - BlockSize + 1)) {
+    if (k==1){
+      ProxyBlocks[,,j] <- proxies_short[j:(j + BlockSize - 1)]
+    } else{
+      ProxyBlocks[,,j] <- proxies_short[j:(j + BlockSize - 1),]
+    }
+    
+  }
+  
+  if (k == 1) {
+    bootIRFs <- array(NA, dim = c(irhor, n, nboot))
+    boot_structural_shocks <- matrix(NA_real_, nrow = nboot, ncol = T)  # 1 shock x T, répété nboot fois
+  }else{
+    bootIRFs <- array(NA, dim = c(irhor, n, nboot,k))
+  }
+  
+  
+  # ProxyCount <- matrix(0, nrow = nboot, ncol = ncol(proxies))
+  
+  
+  
+  set.seed(123)
+  j =1
+  block_index_list <- replicate(
+    nboot,
+    sample(1:(T - BlockSize + 1), nBlock, replace = TRUE),
+    simplify = FALSE
+  )
+
+  for (j in 1:nboot) {
+    index <- block_index_list[[j]]
+    # Reconstruct bootstrap residuals
+    bootres <- do.call(rbind, lapply(index, function(ii) VARBlocks[,,ii]))
+    bootres <- bootres[c(1:T),]
+    bootProxy <- do.call(rbind, lapply(index, function(ii) ProxyBlocks[,,ii])
+    )
+    
+    # Rassembler les blocs dans l’ordre
+    if(k==1){
+      bootProxy <- unlist(lapply(index, function(ii) ProxyBlocks[, ,ii]))
+    }
+    bootProxy <- bootProxy[1:T, drop = FALSE]
+    bootData <- iterate_var_ter(x, x[1:p,], bootres, vl, controls)
+    
+    # Fit the VAR model
+    vboot <- if (is.null(controls)) {
+      vars::VAR(bootData, p, type = "none")
+    } else {
+      vars::VAR(bootData, p, type = "none", exogen = controls)
+    }
+    AL_boot <- do.call(cbind, lapply(coef(vboot), function(df) df[, 1]))
+    
+    # Caux        = [eye(VAR.n),MARep(AL,VAR.p,VAR.irhor-1)]
+    # Step 1: Compute MA coefficients for VAR.p and VAR.irhor-1
+    C_boot  <- MARep(t(AL_boot), p, hori)
+    
+    if (k ==1){
+      boot_estimation <- first_var_estimation_bis(x, res =bootres, p, proxies =c(proxies[1:p],bootProxy),
+                                               irhor, controls = NULL, elas = elas)
+      
+      theta_0_boot <- boot_estimation$theta_0
+      gamma_boot  <- boot_estimation$gamma
+      phi_boot <- boot_estimation$phi
+      lambda_0_boot <- get_lambda_0(C_boot, theta_0_boot, irhor=irhor)
+      
+      
+      
+      Sigma_eta_boot = cov(bootres)
+      #calculate sigma_aa
+      Sigma_a_boot <- gamma_boot %*%  ginv(t(gamma_boot) %*% ginv(Sigma_eta_boot) %*% gamma_boot) %*% t(gamma_boot)
+      
+      Sigma_theta_boot <- t(theta_0_boot) %*% theta_0_boot
+      D_boot <- solve(Sigma_theta_boot)  %*% t(theta_0_boot) %*%  Sigma_a_boot %*% theta_0_boot %*% solve(Sigma_theta_boot)
+      
+      #almost diagonal matrix_supply
+      right_term_boot <- t(gamma_boot) %*% ginv(Sigma_eta_boot) %*% t(bootres)
+      D_inv_boot <- try(solve(D_boot), silent = TRUE); if (inherits(D_inv_boot, "try-error")) D_inv_boot <- ginv(D_boot)
+      
+      left_matrix_supply <- t(phi_boot) %*% D_inv_boot
+      # with this strategy the system is undertemined,
+      #I impose additional assumptions
+      
+      structural_shocks_IV_boot <- solve(t(left_matrix_supply) %*% left_matrix_supply) %*% t(left_matrix_supply) %*% right_term_boot
+      
+    }else{
+      theta_0_boot <- first_var_estimation_bis(x, res =bootres, p, proxies = rbind(proxies[1:p,],bootProxy),
+                                               irhor, controls = NULL, elas = elas)$theta_0
+    }
+    
+    
+    
+    
+    if(k==1){
+      bootIRFs[,,j] <- lambda_0_boot
+      boot_structural_shocks[j, ] <- as.numeric(structural_shocks_IV_boot[1, ])  # stocke le DRAW j
+    }else{
+      bootIRFs[,,j,] <- lambda_0_boot
+    }
+    
+    # Re-estimate VAR (in R you can use vars::VAR)
+    # bootvarEst <- vars::VAR(bootData[(p+1):(T+p), ], p = p, type = "const")
+    
+  }
+  return(list(bootIRFs = bootIRFs, boot_structural_shocks = boot_structural_shocks))
+}
 

@@ -17,6 +17,7 @@ library(slider)
 save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 historical_decomp_iv_tibo <- readRDS( "hd_iv_log.rds")
+historical_decomp_iv_wedge <- readRDS( "hd_iv_log_incorpo.rds")
 #historical_decomp_iv_tibo <- historical_decomp_iv_tibo[, , c(2, 1)]
 hd_cholesky <- readRDS( "hd_chol_log.rds")
 
@@ -272,13 +273,41 @@ ne_iv
 
 
 
+```{r}
+dates_formatted <- as.yearmon(time(x_demand))
+names <- c("Demand", "Supply")
+colors_shock <- rev(c( "red", "green"))
+#colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
+historical_decomp_matrix <- historical_decomp_iv_tibo
+n_serie = 5
+ne_compare<- plot_hd_demeaned(series = n_serie)+
+  labs(title=TeX(paste("")) ,
+       x="Time", y="Inflation Contribution")
+
+names <- c("Demand Wedge", "Supply Wedge")
+colors_shock <- rev(c( "darkred", "darkgreen"))
+#colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
+historical_decomp_matrix <-   historical_decomp_iv_wedge
+ne_compare<- ne_compare+ plot_hd_demeaned(series = n_serie)
+
+ne_compare
+
+```
+
+
+
+
+
+
+
 
 ```{r}
 save_plot_path <- 'Z:/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("plot_hd_cholesky.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
-ggsave("plot_hd_iv.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
+ggsave("plot_hd_iv.png", plot = ne_iv, width = 8, height = 6, dpi = 300)
+ggsave("plot_hd_iv_wedge.png", plot = ne_iv_wedge, width = 8, height = 6, dpi = 300)
 # ggsave("ne_hd_demeaned_4v.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
 # #ggsave("ne_hd_iv_4v.png", plot = ne_hd_iv, width = 8, height = 6, dpi = 300)
 # ggsave("ne_hd_12_4v.png", plot = ne_hd_12, width = 8, height = 6, dpi = 300)

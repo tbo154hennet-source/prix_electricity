@@ -90,8 +90,8 @@ lockdowns <- data.frame(
     "Lockdown Tightening",
     "Semana Santa",
     "Reopening Non-essential activities",
-    "Phase 0",
-    "Phase 1"
+    "Phase 0 Restriction Alleviating",
+    "Phase 1 Restriction Alleviating"
   )
 )
 lockdowns$phase <- factor(
@@ -140,4 +140,10 @@ my_plot <- ggplot(df_2020 %>%
   theme_minimal()
 
 my_plot
+
+
+save_plot_path <- 'Z:/Overleaf_elec/images/intra_day'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("covid_elec_forecast_error.png", plot = my_plot, width = 8, height = 6, dpi = 300)
 

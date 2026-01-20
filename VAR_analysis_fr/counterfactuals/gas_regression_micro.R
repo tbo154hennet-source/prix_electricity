@@ -24,43 +24,26 @@ capacity_fields <-
   c(colnames_with_capacity,
     "renewable_day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables" )
 
-
-price_indispo_merge_esp[colnames_with_capacity] <- lapply(price_indispo_merge_esp[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+price_indispo_merge_esp[, (colnames_with_capacity) :=
+                          lapply(.SD, function(x) fifelse(is.na(x), 0, x)),
+                        .SDcols = colnames_with_capacity
+]
+#price_indispo_merge_esp[colnames_with_capacity] <- lapply(price_indispo_merge_esp[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
 #
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(across(all_of(capacity_fields), 
                 ~ . / 1000)) %>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
          Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
-         Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity,
-         temperature_mismatch = temperature_demand - temperature_supply 
+         Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity
   ) 
 
-price_indispo_merge_esp <- price_indispo_merge_esp[complete.cases(price_indispo_merge_esp),]
-price_indispo_merge_esp <- price_indispo_merge_esp[!rowSums(sapply(price_indispo_merge_esp, is.infinite)), ]
+#price_indispo_merge_esp <- price_indispo_merge_esp[complete.cases(price_indispo_merge_esp),]
+# price_indispo_merge_esp <- price_indispo_merge_esp[!rowSums(sapply(price_indispo_merge_esp, is.infinite)), ]
 price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp$delivery_date)
 price_indispo_merge_esp$creneau <- hour(price_indispo_merge_esp$datetime)
-
+tail(price_indispo_merge_esp$spot_gas)
 colnames(price_indispo_merge_esp)
-#backfill spot gas
-setwd("Z:/prix_electricite_gitlab")
-gas_price_data <- read_excel("gas_daily.xlsx")
-colnames(gas_price_data) <- c("time","price", "virgule")
-gas_price_data <- gas_price_data %>%
-  mutate(gas_price = as.numeric(paste0(price, ".", virgule)),
-         time =as.Date(time)) %>% 
-  dplyr::select(gas_price, time)
-#complete missing dates with backfill method
-# Générer la séquence complète de dates
-all_dates <- seq.Date(min(gas_price_data$time),
-                      max(gas_price_data$time),
-                      by = "day")
-
-gas_price_data_complete <- gas_price_data %>%
-  # Créer toutes les dates
-  complete(time = all_dates) %>%
-  # Remplir les NA par la dernière valeur connue (backfill)
-  fill(gas_price, .direction = "up")
 
 
 setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals")
@@ -87,9 +70,7 @@ carbon_price_data_complete <- carbon_price_data %>%
 
 
 
-price_indispo_merge_esp <- merge(price_indispo_merge_esp,
-                                 gas_price_data_complete,
-                                 by.x = "delivery_date", by.y ="time")
+
 
 class(price_indispo_merge_esp$delivery_date)
 class(carbon_price_data_complete$time)
@@ -121,86 +102,112 @@ all_years <- sort(unique(price_indispo_merge_esp$year))  # toutes les années po
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   left_join(iberian_cap, by = c("year", "month")) %>% 
-  mutate(gas_price_capped = ifelse(delivery_date >=  as.Date("2022-06-15" ),
-                                  gas_cap, gas_price),
+  mutate(spot_gas_capped = ifelse(delivery_date >=  as.Date("2022-06-15" ) & delivery_date <=  as.Date("2023-02-01" ),
+                                  gas_cap, spot_gas),
          year_factor = factor(year, levels = all_years),
          year_factor = relevel(year_factor, ref = "2022")
          
-         )
+         ) %>% 
+  filter(gen_forecast_net >0)
+
+View(IV_data_log_esp %>% 
+  select(observation_date, wedge_iber_exception))
+
+#gas iberic exception est binding jusqu'au 2023-02-01
 
 price_indispo_merge_esp_pre_iberic <- price_indispo_merge_esp %>% 
   filter(delivery_date <=  as.Date("2022-06-15" ))
 
-price_indispo_merge_esp_post_iberic <- price_indispo_merge_esp %>% 
-  filter(delivery_date >=  as.Date("2022-06-15" ))
+price_indispo_merge_esp_iberic <- price_indispo_merge_esp %>% 
+  filter(delivery_date >=  as.Date("2022-06-15" ) & delivery_date <=  as.Date("2023-02-01" ))
 
+price_indispo_merge_esp_post_iberic <- price_indispo_merge_esp %>% 
+  filter(delivery_date >=  as.Date("2023-02-01" ))
 
 library(stargazer)
+
+colnames(price_indispo_merge_esp)
 
 formula_str <- "price ~  Published.Unavailable.Capacity + Unpublished.Unavailable.Capacity+
     #Uneffective.Unavailable.Capacity + 
     Published.Unavailable.Nuclear.Capacity+
     Unpublished.Unavailable.Nuclear.Capacity +
     #Uneffective.Unavailable.Nuclear.Capacity+
-    Fore_Wind + Fore_Solar +nuclear+
-    thermal_tot + hydro_tot +
-     log(gen_tot) + unpredicted_renewables + intraday_update_renewables + 
-    temperature_demand +
-    precipitation_demand + 
-    relative_humidity_demand + carbon_price +
-    year_factor + as.factor(month)+
+    Fore_Wind + Fore_Solar +
+    nuclear+thermal_tot + hydro_tot +
+     log(gen_forecast_net) + log(load_tot) + unpredicted_renewables + intraday_update_renewables + 
+    temperature_demand + year_factor+
+    precipitation_demand  + carbon_price +
     + as.factor(weekday) + as.factor(creneau)"
 
-equation <- as.formula(paste(formula_str, "+ gas_price "))
-equation_cap <- as.formula(paste(formula_str, "+ gas_price_capped"))
 
-m_esp_pre_cap <- lm(
+equation <- as.formula(paste(formula_str, "+ spot_gas "))
+equation_cap <- as.formula(paste(formula_str, "+ spot_gas_capped"))
+
+m_pre_cap <- lm(
   equation_cap,
   data= price_indispo_merge_esp_pre_iberic)
 
-m_esp_post_cap <- lm(
+m_cap <- lm(
+  equation_cap,
+  data= price_indispo_merge_esp_iberic)
+#une erreur aberrante pour 2025-04-28  gen_forecast_net =0
+
+m_post_cap <- lm(
   equation_cap,
   data= price_indispo_merge_esp_post_iberic)
 
 
-m_esp_pre <- lm(
+m_pre <- lm(
   equation,
   data= price_indispo_merge_esp_pre_iberic)
 
-m_esp_post <- lm(
+m <- lm(
+  equation,
+  data= price_indispo_merge_esp_iberic)
+
+
+m_post <- lm(
   equation,
   data= price_indispo_merge_esp_post_iberic)
-summary(m_esp_pre)
-
+summary(m_cap)
 # Matrice de variance-covariance clusterisée
 
-vcov_esp_pre_cap  <-  NeweyWest(m_esp_pre_cap, lag = 12, prewhite = FALSE, adjust = TRUE)
+vcov_esp_pre_cap  <-  NeweyWest(m_pre_cap, lag = 12, prewhite = FALSE, adjust = TRUE)
 cl_se_esp_pre_cap <- sqrt(diag(vcov_esp_pre_cap))
 
-vcov_esp_post_cap  <- NeweyWest(m_esp_post_cap, lag = 12, prewhite = FALSE, adjust = TRUE)
+vcov_esp_cap  <-  NeweyWest(m_cap, lag = 12, prewhite = FALSE, adjust = TRUE)
+cl_se_esp_cap <- sqrt(diag(vcov_esp_cap))
+
+
+vcov_esp_post_cap  <- NeweyWest(m_post_cap, lag = 12, prewhite = FALSE, adjust = TRUE)
 cl_se_esp_post_cap <- sqrt(diag(vcov_esp_post_cap))
 
-vcov_esp_pre  <- NeweyWest(m_esp_pre, lag = 12, prewhite = FALSE, adjust = TRUE)
+vcov_esp_pre  <- NeweyWest(m_pre, lag = 12, prewhite = FALSE, adjust = TRUE)
 cl_se_esp_pre <- sqrt(diag(vcov_esp_pre))
 
-vcov_esp_post  <- NeweyWest(m_esp_post, lag = 12, prewhite = FALSE, adjust = TRUE)
+vcov_esp <- NeweyWest(m, lag = 12, prewhite = FALSE, adjust = TRUE)
+cl_se_esp <- sqrt(diag(vcov_esp))
+
+
+vcov_esp_post  <- NeweyWest(m_post, lag = 12, prewhite = FALSE, adjust = TRUE)
 cl_se_esp_post <- sqrt(diag(vcov_esp_post))
 
 
 
 
-#summary(m_esp_pre)
+#summary(m_pre)
 reg_table <- stargazer(
-  m_esp_pre_cap, m_esp_post_cap, m_esp_pre, m_esp_post,  
+  m_pre_cap, m_cap, m_post_cap, m_pre, m, m_post,  
   type = "text",
-  se = list(cl_se_esp_pre_cap, cl_se_esp_post_cap, cl_se_esp_pre, cl_se_esp_post),
+  se = list(cl_se_esp_pre_cap, cl_se_esp_cap, cl_se_esp_post_cap, cl_se_esp_pre, cl_se_esp, cl_se_esp_post),
   title = "Regression Results",
-  column.labels = c("Pre Cap", "Post Cap", "Pre", "Post"),
-  keep = c("gas_price", "gas_price_capped")
+  column.labels = c("Pre Cap", "Cap", "Post Cap", "Pre", "During", "Post"),
+  keep = c("spot_gas", "spot_gas_capped")
 )
 
 View(price_indispo_merge_esp %>% 
-       dplyr::select(datetime, delivery_date, price, gen_tot, gas_price, gas_price_capped))
+       dplyr::select(datetime, delivery_date, price, load_tot, gas_price, spot_gas_capped))
 
 
 #en france
@@ -304,17 +311,17 @@ reg_table <- stargazer(
   se = list( cl_se_fr_pre, cl_se_fr_post),
   title = "Regression Results",
   column.labels = c( "Pre ES", "Post ES", "Pre Cap ES", "Post Cap ES", "Pre FR", "Post FR"),
-  keep = c("gas_price", "gas_price_capped")
+  keep = c("gas_price", "spot_gas_capped")
 )
 
 library(broom)   # pour tidy()
 
 # mettre tous tes modèles dans une liste nommée
 models <- list(
-  "ES_Pre"       = m_esp_pre,
-  "ES_Post"      = m_esp_post,
-  "ES_Pre_Cap"   = m_esp_pre_cap,
-  "ES_Post_Cap"  = m_esp_post_cap,
+  "ES_Pre"       = m_pre,
+  "ES_Post"      = m_post,
+  "ES_Pre_Cap"   = m_pre_cap,
+  "ES_Post_Cap"  = m_post_cap,
   "FR_Pre"       = m_fr_pre,
   "FR_Post"      = m_fr_post
 )
@@ -345,7 +352,7 @@ extract_coef <- function(model, se_vec, var){
 }
 
 # toutes les variables d’intérêt
-vars <- c("gas_price", "gas_price_capped")
+vars <- c("gas_price", "spot_gas_capped")
 
 # extraction
 results <- imap_dfr(models, function(mod, name){
@@ -389,7 +396,7 @@ table_latex <-results_stars %>%
   dplyr::select(-Cap) %>% 
   mutate(term = case_when(
     term == "gas_price" ~ "Gas",
-    term == "gas_price_capped" ~ "Gas capped",
+    term == "spot_gas_capped" ~ "Gas capped",
     TRUE ~ term
   )) %>% 
   gt(rowname_col = "term") %>%
@@ -422,11 +429,11 @@ gtsave(table_latex, "table_gas_pass.tex")
 
 
 # Recupérer les niveaux utilisés dans le modèle
-data_2022 <- price_indispo_merge_esp %>% 
-  filter(year == "2022")
+data_2022 <- price_indispo_merge_esp_iberic %>% 
+  filter(year == "2022" )
 
 pred_post <- predict(
-  m_esp_pre,
+  m_pre,
   newdata = data_2022,
   se.fit = TRUE  # pour obtenir l'intervalle de confiance
   , interval = "prediction")
@@ -448,6 +455,7 @@ pred_post_df <- data.frame(
   date = data_2022$delivery_date,
   price = data_2022$price,
   gen_tot = data_2022$gen_tot,
+  load_tot = data_2022$load_tot,
   predicted_price = fit_values
 )
 
@@ -456,18 +464,20 @@ pred_post_df <- data.frame(
 
 #by hand to have factor level 2023
 # Extraire coefficients
-data_2022_2023 <- price_indispo_merge_esp %>% 
-  filter(year >= "2022")
+data_2022_2023 <- price_indispo_merge_esp_iberic %>% 
+  filter(year >= "2022"  & year <= "2023")
 
 
-coef_pre  <- coef(m_esp_pre)
-coef_post <- coef(m_esp_post)
+coef_pre  <- coef(m_pre)
+coef <- coef(m)
+coef_post <- coef(m_post)
+
 names_pre <- names(coef_pre)
 # Si le facteur year2023 existe dans post mais pas dans pre :
-coef_pre["year_factor2023"] <- coef_post["year_factor2023"]
+coef_pre["year_factor2023"] <- coef["year_factor2023"]
 
 # 2. Matrice de design
-X_new <- model.matrix(formula(m_esp_pre), data = data_2022_2023)
+X_new <- model.matrix(formula(m_pre), data = data_2022_2023)
 
 # Liste des noms de colonnes manquantes
 missing_cols <- setdiff(names_pre, colnames(X_new))
@@ -481,6 +491,8 @@ for (col in missing_cols) {
 # R?ordonner les colonnes de X_new pour matcher l'ordre des coefficients
 X_new <- X_new[, names(coef_pre)]
 
+dim(X_new)
+dim(data_2022_2023)
 # setdiff(names(coef_pre), colnames(X_new))
 # dim(X_new)
 # length(coef_pre)
@@ -488,8 +500,8 @@ X_new <- X_new[, names(coef_pre)]
 yhat <- as.numeric(X_new %*% coef_pre)
 
 # 4. Variance-covariance des betas
-vcov_beta_pre <- vcov(m_esp_pre)
-vcov_beta_post <- vcov(m_esp_post)
+vcov_beta_pre <- vcov(m_pre)
+vcov_beta <- vcov(m)
 
 
 # noms des coefficients
@@ -508,7 +520,7 @@ vcov_beta_pre_expanded[names_pre, names_pre] <- vcov_beta_pre
 
 # pour la variance/covariance du coef manquant : 
 # on peut copier la valeur de post
-vcov_beta_pre_expanded[missing_coef, missing_coef] <- vcov_beta_post[missing_coef, missing_coef]
+vcov_beta_pre_expanded[missing_coef, missing_coef] <- vcov_beta[missing_coef, missing_coef]
 
 # (optionnel) copier aussi les covariances avec les autres variables si tu veux les prendre de post :
 # compl?ter covariances avec les autres coefficients
@@ -516,11 +528,11 @@ other_coefs <- setdiff(names_pre, missing_coef)
 
 names_factors_pre <- names(coef_pre[grep("year_factor", names(coef_pre))])[c(-5)]
 for (mc in missing_coef) {
-  vcov_beta_pre_expanded[mc, setdiff(names_pre, names_factors_pre )] <- vcov_beta_post[mc, setdiff(names_pre, names_factors_pre )]
-  vcov_beta_pre_expanded[setdiff(names_pre, names_factors_pre ), mc] <- vcov_beta_post[setdiff(names_pre, names_factors_pre ), mc]
+  vcov_beta_pre_expanded[mc, setdiff(names_pre, names_factors_pre )] <- vcov_beta[mc, setdiff(names_pre, names_factors_pre )]
+  vcov_beta_pre_expanded[setdiff(names_pre, names_factors_pre ), mc] <- vcov_beta[setdiff(names_pre, names_factors_pre ), mc]
   vcov_beta_pre_expanded[names_factors_pre , mc] <- 0.5 #arbitraire
   vcov_beta_pre_expanded[ mc, names_factors_pre] <- 0.5
-  vcov_beta_pre_expanded[mc, mc] <- vcov_beta_post[mc, mc]
+  vcov_beta_pre_expanded[mc, mc] <- vcov_beta[mc, mc]
 }
 # View(vcov_beta_pre_expanded)
 # View(vcov_beta_pre_expanded[ ,names(coef_pre[grep("year_factor", names(coef_pre))])])
@@ -532,7 +544,7 @@ se_fit[is.na(se_fit)] <- 0
 
 
 # 6. R?siduelle sigma^2
-sigma2 <- summary(m_esp_pre)$sigma^2
+sigma2 <- summary(m_pre)$sigma^2
 
 #for missing se_fit fit just put zero
 #anyway the confidence bands are not driven by uncertain on the reg parameters
@@ -544,7 +556,7 @@ se_pred <- sqrt(se_fit^2 + sigma2)
 
 # 8. Quantile de Student
 alpha <- 0.05
-tval <- qt(1 - alpha/2, df = m_esp_pre$df.residual)
+tval <- qt(1 - alpha/2, df = m_pre$df.residual)
 
 # 9. IC et PI
 ci_lower <- yhat - tval * se_fit
@@ -553,7 +565,18 @@ ci_upper <- yhat + tval * se_fit
 pi_lower <- yhat - tval * se_pred
 pi_upper <- yhat + tval * se_pred
 
-# 10. Stocker r?sultats
+mf <- model.frame(formula(m_pre), data = data_2022_2023, na.action = na.omit)
+
+idx_kept <- as.integer(rownames(mf))             # indices originaux conservés
+idx_all  <- seq_len(nrow(data_2022_2023))
+
+idx_dropped <- setdiff(idx_all, idx_kept)
+idx_dropped
+
+# sous-échantillonner les colonnes de data_2022_2023 sur les mêmes lignes
+d_used <- data_2022_2023[idx_kept, ]
+
+# construire le data.frame final, aligné
 pred_post_2022_2023 <- data.frame(
   predicted_price = yhat,
   se.fit = se_fit,
@@ -561,12 +584,13 @@ pred_post_2022_2023 <- data.frame(
   upr.CI = ci_upper,
   lwr.PI = pi_lower,
   upr.PI = pi_upper,
-  year = data_2022_2023$year,
-  month = data_2022_2023$month,
-  date = data_2022_2023$delivery_date,
-  datetime = data_2022_2023$datetime,
-  price = data_2022_2023$price,
-  gen_tot = data_2022_2023$gen_tot
+  year = d_used$year,
+  month = d_used$month,
+  date = d_used$delivery_date,
+  datetime = d_used$datetime,
+  price = d_used$price,
+  gen_tot = d_used$gen_tot,
+  load_tot = d_used$load_tot
 )
 
 
@@ -613,10 +637,10 @@ monthly_pred <- pred_post_2022_2023 %>%
   summarise(
     n = n(),
     datetime = median(datetime),
-    price = weighted_mean(price, gen_tot),
-    predicted_price = weighted_mean(predicted_price, gen_tot),
-    gen_tot = mean(gen_tot),
-    var_fit = weighted_mean(se.fit^2, gen_tot) / n(),       # variance de la moyenne
+    price = weighted_mean(price, load_tot),
+    predicted_price = weighted_mean(predicted_price, load_tot),
+    load_tot = mean(load_tot),
+    var_fit = weighted_mean(se.fit^2, load_tot) / n(),       # variance de la moyenne
     #var_pred = sum(se_pred^2) / n()^2,     # variance pr?diction
     .groups = "drop"
   ) %>%
@@ -662,7 +686,24 @@ price_indispo_merge_fr_plot <- price_indispo_merge_fr %>%
             year = first(year)
             )
 
+
+monthly_observed_price <- price_indispo_merge_esp %>%
+  group_by(delivery_date) %>%
+  # mutate(n = n()) %>% 
+  # filter(n >= 20) %>% 
+  summarise(
+    n = n(),
+    datetime = first(datetime),
+    price = mean(price, na.rm = TRUE),
+    spot_gas =mean(spot_gas, na.rm = TRUE),
+    #var_pred = 
+    .groups = "drop"
+  )
+
+
 price_plot <- ggplot( ) +
+  geom_line(data = monthly_observed_price %>% filter(delivery_date >= as.Date("2021-01-01") &delivery_date <=  as.Date("2024-01-01")),
+            aes(x =delivery_date,y = price, color ="Elec ES", linetype = "Observed"), size = 0.7) +
   # Observé
   geom_line(data = pred_post_df_plot_2022_2023, aes(x =date,y = price, color ="Elec ES", linetype = "Observed"), size = 0.7) +
   # Prédiction
@@ -675,8 +716,11 @@ price_plot <- ggplot( ) +
   geom_ribbon(data = pred_post_df_plot_2022_2023, aes(x =date, ymin = pi_lower, ymax = pi_upper, fill = "Elec 95% CI"), alpha = 0.2)+#,show.legend = FALSE ) +
   
   geom_line(data = IV_data_esp %>% filter(observation_date >= as.Date("2022-05-01")), aes(x = observation_date, y = spot_gas_capped, color ="Gas TTF", linetype = "Observed"))+
-  geom_line(data = price_indispo_merge_fr_plot %>% filter(year >= 2022), aes(x = delivery_date, y = gas_price, color ="Gas TTF",  linetype = "Counterfactual"))+
-  geom_line(data = price_indispo_merge_fr_plot %>% filter(year >= 2022), aes(x = delivery_date, y = price, color ="Elec FR", linetype = "Observed"))+
+  geom_line(data = monthly_observed_price %>% filter(delivery_date >= as.Date("2021-01-01")&delivery_date <=  as.Date("2024-01-01")),
+            aes(x =delivery_date,y =  spot_gas, color ="Gas TTF", linetype = "Counterfactual"), size = 0.7) +
+  
+  #geom_line(data = price_indispo_merge_fr_plot %>% filter(year >= 2022), aes(x = delivery_date, y = gas_price, color ="Gas TTF",  linetype = "Counterfactual"))+
+  geom_line(data = price_indispo_merge_fr_plot %>% filter(year >= 2021), aes(x = delivery_date, y = price, color ="Elec FR", linetype = "Observed"))+
   
   labs(
     #title = "Prix prédit vs. observé (Post 2022)",

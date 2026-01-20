@@ -9,7 +9,7 @@ fs_data <- IV_data_log_esp[, c(headers_var_spot_first_mp_gas,
                                "delta_demand","delta_supply", "year", "wedge_iber_exception")][-1:-p, ]
 fs_data$res_price <- res[,1]
 m_wedge <- lm(
-  "res_price ~ delta_supply + delta_demand + wedge_iber_exception + factor(year)",
+  "res_price ~ delta_supply  + wedge_iber_exception + factor(year)",
   data = fs_data
 )
 s <- summary(m_wedge)
@@ -76,6 +76,9 @@ theta_0_supply
 theta_0_supply_control
 theta_0_supply_wedge
 
+lambda_0_log_supply
+lambda_0_log_supply_control
+lambda_0_log_supply_wedge
 
 VAR_supply_pc_wedge <-SVARIV(ydata = x_supply, z = IV_data_log_esp$delta_supply_incorpo,p,
                        confidence,NWlags,
