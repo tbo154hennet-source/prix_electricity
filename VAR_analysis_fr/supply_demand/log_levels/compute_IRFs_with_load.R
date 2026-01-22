@@ -215,7 +215,11 @@ theta_0_wind <- first_var_estimation_bis(y, res, p, proxies, irhor, controls = c
 
 
 IV_data_log_esp %>% 
-  select(delta_demand, delta_supply, wind_forecast_log,
+  dplyr::select(delta_demand, delta_supply, wind_forecast_log,
          delta_d_orth, delta_s_orth) %>% 
   cor(use = "complete.obs")
+
+
+
+lambda_0_log_supply_wedge
 

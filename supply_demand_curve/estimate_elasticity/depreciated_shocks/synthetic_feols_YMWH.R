@@ -35,8 +35,8 @@ price_indispo_merge_delta_clean <- price_indispo_merge_compare %>%
   distinct()
 
 dep_var <- "log(price+1)"
-endog_vars <- c("log(gen_tot_da)")
-#endog_vars <- c("log(gen_tot_da)")
+endog_vars <- c("log(load_tot)")
+#endog_vars <- c("log(load_tot)")
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
                    "as.factor(day)", "as.factor(creneau)"
@@ -139,7 +139,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_s
+      "log(load_tot) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_s
     )
   )
 
@@ -147,7 +147,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_d
+      "log(load_tot) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_d
     )
   )
   iv_supply <- feols(iv_formula_s, data = price_indispo_merge_feols_YMWH)
@@ -288,7 +288,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_s, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_s
     )
   )
@@ -322,7 +322,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_s, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_d
     )
   )

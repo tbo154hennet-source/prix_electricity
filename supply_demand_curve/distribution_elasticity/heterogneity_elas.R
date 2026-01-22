@@ -91,14 +91,14 @@ slopes_supply_by_hour <- local_slopes_supply%>%
   )
 
 plot_hetero_by_hour <- ggplot() +
-  geom_point(data = slopes_demand_by_hour, aes(x = Hour, y = mean_slope, color = "Demand"), size = 2) +
+  geom_point(data = slopes_demand_by_hour, aes(x = as.numeric(Hour), y = mean_slope, color = "Demand"), size = 2) +
   geom_errorbar(data = slopes_demand_by_hour,
-              aes(x = Hour,ymin = mean_slope - 1.96 * mean_se, ymax = mean_slope + 1.96 * mean_se, fill = "Demand"),
+              aes(x = as.numeric(Hour),ymin = mean_slope - 1.96 * mean_se, ymax = mean_slope + 1.96 * mean_se, fill = "Demand"),
               width = 0.2, alpha = 0.4
   ) +
-  geom_point(data = slopes_supply_by_hour, aes(x = Hour, y = mean_slope, color = "Supply"), size = 2) +
+  geom_point(data = slopes_supply_by_hour, aes(x = as.numeric(Hour), y = mean_slope, color = "Supply"), size = 2) +
   geom_errorbar(data = slopes_supply_by_hour,
-              aes(x = Hour,ymin = mean_slope - 1.96 * mean_se, ymax = mean_slope + 1.96 * mean_se, fill = "Supply"),
+              aes(x = as.numeric(Hour),ymin = mean_slope - 1.96 * mean_se, ymax = mean_slope + 1.96 * mean_se, fill = "Supply"),
               width = 0.2, alpha = 0.4
   ) +
   labs(

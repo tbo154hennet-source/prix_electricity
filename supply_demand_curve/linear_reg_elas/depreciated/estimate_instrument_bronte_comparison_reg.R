@@ -187,7 +187,7 @@ extended_controls <- c( "cold_excess_supply"  , "heat_excess_supply","global_til
 
 price_indispo_merge_bronte_clean <- price_indispo_merge_bronte %>%
   rename(renewable_day_ahead_forecast = day_ahead_forecast) %>% 
-  dplyr::select(all_of(c(controls_delta, controls_clean, extended_controls, "year", "gen_tot","gen_tot_da", "price", "spot_gas",
+  dplyr::select(all_of(c(controls_delta, controls_clean, extended_controls, "year", "gen_tot","load_tot", "price", "spot_gas",
                          "month", "weekday", "creneau", "wind_speed_100m", "Fore_Wind", "intraday_Wind", "Wind Onshore"))) %>%       # sélectionne les colonnes dans col_names
   filter(complete.cases(.) )   %>% 
   filter(price >= 0)
@@ -219,7 +219,7 @@ price_indispo_merge_bronte_clean <- read_parquet( "price_indispo_merge_bronte_cl
 
 # Build the formula as a string
 ols_formula_str <- as.formula(
-  paste("gen_tot_da", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
 )
 
 
@@ -228,7 +228,7 @@ m_ols_c <- ivreg(ols_formula_str , data = price_indispo_merge_bronte_clean)
 
 # Build the formula as a string
 bronte_formula_str <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
   paste(paste(c("wind_speed_100m", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
@@ -237,7 +237,7 @@ m_bronte_c <- ivreg(bronte_formula_str , data = price_indispo_merge_bronte_clean
 
 # Build the formula as a string
 bronte_formula_str_fore <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
   paste(paste(c("Fore_Wind", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
@@ -247,7 +247,7 @@ m_bronte_fore <- ivreg(bronte_formula_str_fore , data = price_indispo_merge_bron
 
 # Build the formula as a string
 iv_formula_str <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
   paste(paste(c("delta_s_wind_speed_100m", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
@@ -256,7 +256,7 @@ m_iv_c <- ivreg(iv_formula_str , data = price_indispo_merge_bronte_clean)
 
 # Build the formula as a string
 iv_formula_str_fore <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
   paste(paste(c("delta_s_Fore_Wind", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
@@ -304,7 +304,7 @@ reg_table_renwables_bis <- stargazer(
 )
 
 
-extract_coef_se <- function(model, variable = "gen_tot_da") {
+extract_coef_se <- function(model, variable = "load_tot") {
   s <- summary(model)
   est <- s$coefficients[variable, "Estimate"]
   se  <- s$coefficients[variable, "Std. Error"]

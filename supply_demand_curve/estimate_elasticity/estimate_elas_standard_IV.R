@@ -1,7 +1,8 @@
 library(purrr)
+library(fixest)
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final.parquet")
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 colnames(price_indispo_merge_esp_npc)
 
 price_indispo_merge_esp_npc <- 
@@ -9,8 +10,12 @@ price_indispo_merge_esp_npc <-
   distinct(datetime, .keep_all = TRUE)
 
 general_factors <- c(
-  "Fore_Wind","intraday_update_wind", "unpredicted_wind",
-  "Fore_Solar", "unpredicted_sun","intraday_update_sun",
+  "Fore_Wind",
+  #ces controles me font perdre 25000 lignes, je prefere les enlever
+  
+  #"intraday_update_wind", "unpredicted_wind",
+  "Fore_Solar", 
+  #"unpredicted_sun","intraday_update_sun",
   "spot_gas",
   "Published.Predicted.Unavailable.Capacity",
   "Unpublished.Predicted.Unavailable.Capacity",
@@ -42,31 +47,33 @@ my_factors <- c(general_factors, control_factors, temp_factors)
 
 ################### OLS
 
-ols_m <- feols(log(gen_tot_da) ~ log(price + 1) + year + month + creneau + spot_gas ,
-               data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+ols_m <- feols(log(load_tot) ~ log(price + 1) + year + month + creneau + spot_gas ,
+               data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 my_controls <- paste( paste(c(my_factors), collapse = " + "), sep = " + ")
 
 ols_formula <- as.formula(
-  paste0("log(gen_tot_da) ~ log(price + 1) + year + month + creneau + spot_gas +", my_controls))
+  paste0("log(load_tot) ~ log(price + 1) + year + month + creneau + spot_gas +", my_controls))
 
-ols_mc <- feols(ols_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+#colSums(is.na(price_indispo_merge_esp_npc[, ..my_factors]))
+
+ols_mc <- feols(ols_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 
 ####################### IV using standard Instruments
 
 iv_wind_controls <- paste0(setdiff(my_factors, "Fore_Wind"), collapse = " + ")
 iv_wind_formula <-  as.formula(
-  paste0("log(gen_tot_da) ~  year + month + creneau + spot_gas +", iv_wind_controls, " | log(price + 1) ~ Fore_Wind "))
+  paste0("log(load_tot) ~  year + month + creneau + spot_gas +", iv_wind_controls, " | log(price + 1) ~ Fore_Wind "))
 
-iv_wind_m <- feols(iv_wind_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+iv_wind_m <- feols(iv_wind_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 
 iv_temp_controls <- paste0(setdiff(my_factors, temp_factors ), collapse = " + ")
 iv_temp_formula <-  as.formula(
-  paste0("log(gen_tot_da) ~  year + month + creneau + spot_gas +", iv_temp_controls, " | log(price + 1) ~ cold_excess_demand + heat_excess_demand"))
+  paste0("log(load_tot) ~  year + month + creneau + spot_gas +", iv_temp_controls, " | log(price + 1) ~ cold_excess_demand + heat_excess_demand"))
 
-iv_temp_m <- feols(iv_temp_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+iv_temp_m <- feols(iv_temp_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 
 ####################### IV using lag of standard instruments
@@ -90,7 +97,7 @@ lag_controls_s <- paste0(inst_name_s, "_lag", 1, collapse = " + ")
 
 iv_formula_s <- as.formula(
   paste0(
-    "log(gen_tot_da) ~  year + month + creneau + spot_gas +",
+    "log(load_tot) ~  year + month + creneau + spot_gas +",
     iv_wind_controls, " + ", lag_controls_s," | log(price + 1) ~ ", inst_name_s
   )
 )
@@ -100,15 +107,15 @@ lag_controls_d <- paste0(inst_name_d, "_lag", 1, collapse = " + ")
 
 iv_formula_d <- as.formula(
   paste0(
-    "log(gen_tot_da) ~  year + month + creneau + spot_gas +",
+    "log(load_tot) ~  year + month + creneau + spot_gas +",
     iv_temp_controls, " + ", lag_controls_d," | log(price + 1) ~ ", paste0(inst_name_d, collapse = " + ")
   )
 )
 
 
-iv_wind_lag <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+iv_wind_lag <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
-iv_temp_lag <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+iv_temp_lag <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 #fitstat(show_types = TRUE)
 etable(ols_m,ols_mc,

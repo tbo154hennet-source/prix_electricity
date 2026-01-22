@@ -117,7 +117,7 @@ controls_vec <- c("year", "month", "weekday", "creneau", "spot_gas")
 rhs_vars <- paste( paste(controls_vec, collapse = " + "), sep = " + ")
 ols_formula <- as.formula(
   paste0(
-    "gen_tot_da ~ ", rhs_vars, "+ price")
+    "load_tot ~ ", rhs_vars, "+ price")
 )
 m_ols <- feols(ols_formula, data = price_indispo_merge_feols_all, vcov_NW("datetime", lag = 24))
 summary(m_ols)
@@ -149,7 +149,7 @@ for(s_col in c(cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "gen_tot_da ~ ", rhs_vars, " | price ~ ", instr_vars_s
+      "load_tot ~ ", rhs_vars, " | price ~ ", instr_vars_s
     )
   )
   
@@ -157,7 +157,7 @@ for(s_col in c(cols_fitted_supply_orth)){
   
   iv_formula_d <- as.formula(
     paste0(
-      "gen_tot_da ~ ", rhs_vars, " | price ~ ", instr_vars_d
+      "load_tot ~ ", rhs_vars, " | price ~ ", instr_vars_d
     )
   )
   iv_supply <- feols(iv_formula_s, data = price_indispo_merge_feols_all, vcov_NW("datetime", lag = 24))
@@ -278,7 +278,7 @@ for(s_col in c(cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "gen_tot_da ~ ", rhs_vars_s, " + ", lag_controls,
+      "load_tot ~ ", rhs_vars_s, " + ", lag_controls,
       " | price ~ ", instr_vars_s
     )
   )
@@ -312,7 +312,7 @@ for(s_col in c(cols_fitted_supply_orth)){
   
   iv_formula_d <- as.formula(
     paste0(
-      "gen_tot_da ~ ", rhs_vars_s, " + ", lag_controls,
+      "load_tot ~ ", rhs_vars_s, " + ", lag_controls,
       " | price ~ ", instr_vars_d
     )
   )

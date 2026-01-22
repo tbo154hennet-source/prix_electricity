@@ -129,7 +129,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_s
+      "log(load_tot) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_s
     )
   )
   
@@ -137,7 +137,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_d
+      "log(load_tot) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_d
     )
   )
   iv_supply <- feols(iv_formula_s, data = price_indispo_merge_feols_YM)
@@ -277,7 +277,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_s, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_s
     )
   )
@@ -311,7 +311,7 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_s, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_d
     )
   )

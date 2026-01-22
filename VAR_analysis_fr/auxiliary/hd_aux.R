@@ -132,7 +132,6 @@ plot_hd_demeaned <- function(series){
 }
 
 
-
 plot_hd_inflation_glissante_12 <- function(series){
   
   
@@ -143,29 +142,26 @@ plot_hd_inflation_glissante_12 <- function(series){
   colnames(decomp_tot_data)[-1] <- names
   decomp_tot_data <- decomp_tot_data %>%
     mutate(index = row_number())
+  
+  k <- 12  # horizon 12 mois
+  
+  pi_ann_series <- (IV_data_log_esp$HICP_log[(k+1):(T+p)] - IV_data_log_esp$HICP_log[1:((T+p)-k)]) 
+  
+  # Colonnes de chocs/contributions (tout sauf time et index)
+  comp_cols <- setdiff(names(decomp_tot_data), c("time", "index"))
+  
+  decomp_infl_12m <- decomp_tot_data %>%
+    arrange(time) %>%
+    # Différence à 12 mois de chaque contribution
+    mutate(across(all_of(comp_cols),
+                  ~ . - dplyr::lag(., k),
+                  .names = "{.col}")) %>%
+    # Supprimer les 12 premières lignes (NA)
+    filter(!is.na(.data[[comp_cols[1]]])) 
   # Reshaper les données en format long pour ggplot2
-  long_data <- pivot_longer(decomp_tot_data, 
+  long_data <- pivot_longer(decomp_infl_12m , 
                             cols = -c(time, index),  names_to = "category",
                             values_to = "value")
-  # I find a way to calculate trend only when 
-  if (length(colnames(decomp_tot_data)[-1]) == length(colors_shock)){
-    trend_data <- long_data %>%
-      filter(category == "$HICP$") %>%
-      mutate(
-        category = "Trend",
-        value = mean_vector[series]
-      )
-    
-    # Combiner avec les autres catégories
-    long_data <- bind_rows(long_data, trend_data)
-  }
-  
-  # Exemple : calcul de la moyenne glissante sur les 12 dernières valeurs
-  long_data <- long_data %>%
-    group_by(category) %>%
-    arrange(category, time) %>%  # assure-toi d'avoir une variable temporelle (ex: `time`)
-    mutate(rolling_avg = slide_dbl(value, sum, .before = 11, .complete = TRUE))
-  
   
   # S'assurer que 'category' a l'ordre des niveaux correspondant à 'rev(colors_shock)'
   #long_data$category <- factor(long_data$category, levels = names)
@@ -175,7 +171,7 @@ plot_hd_inflation_glissante_12 <- function(series){
   
   # Tracer des barres empilées avec ggplot2
   my_plot <- ggplot()+
-    geom_bar(data= long_data %>% filter(time < as.Date("2023-01-01")), aes(x = time, y =rolling_avg, fill = category),
+    geom_bar(data= long_data %>% filter(time < as.Date("2024-09-01")), aes(x = time, y =value, fill = category),
              stat = "identity", position = "stack", alpha = alpha_chosen) +  # Barres empilées
     scale_fill_manual(
       values = rev(colors_shock)[(length(colors_shock)-(dim(decomp_tot_data)[2]-1)+1):length(colors_shock)],
@@ -183,22 +179,9 @@ plot_hd_inflation_glissante_12 <- function(series){
     #scale_fill_manual(values = c("blue", "red", "green"), labels = c("Supply", "Demand", "Other")) +
     theme_minimal()
   
-  # comparison <- lag(as.vector(vars_demeaned[5:96,series]), 20)
-  # comparison[1:20] <- rep(vars_demeaned[4,series], 10)
-  
-  #y_diff <- vars_demeaned[5:nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
-  y_diff <- vars[(p+1):nrow(vars_demeaned),series] - reconstruct_derive_without_errors_ter[,series][c(-1:-p)] 
-  
-  data <- data.frame(
-    x = as.Date(dates_formatted[(p+1):length(dates_formatted)]),
-    y = cumsum(y_diff),
-    #ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) 
-    ytest = apply(historical_decomp_matrix[,series,, drop = FALSE], 1, sum) + mean_vector[series]
-    #ytrend = + c(1:T)*mean_vector[series]
-  )%>%  # assure-toi d'avoir une variable temporelle (ex: `time`)
-    mutate(rolling_avg_contrib = slide_dbl(ytest, sum, .before = 11, .complete = TRUE))
   
   my_plot <- my_plot+
+    # geom_line(aes(x = as.Date(dates_formatted[-(1:p)]) , y =  pi_ann_series))+
     theme(legend.text = element_text(size = 15),      # taille du texte
           legend.title = element_text(size = 16),     # taille du titre
           legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
@@ -214,103 +197,105 @@ plot_hd_inflation_glissante_12 <- function(series){
 }
 
 
-plot_hd_inflation_glissante_12_compare <- function(series){
+plot_hd_inflation_glissante_12_compare <- function(series_1=1, series_2=5){
+  
+  
+
+  decomp_tot_data <- data.frame(
+    time= as.Date(dates_formatted[(p+1):length(dates_formatted)]),
+    historical_decomp_matrix[,series_2,])
+  # Plot the decomposition
+  colnames(decomp_tot_data)[-1] <- names
+  decomp_tot_data <- decomp_tot_data %>%
+    mutate(index = row_number())
+  
+  k <- 12  # horizon 12 mois
+  
+  pi_ann_series <- (IV_data_log_esp$HICP_log[(k+1):(T+p)] - IV_data_log_esp$HICP_log[1:((T+p)-k)]) 
+  
+  # Colonnes de chocs/contributions (tout sauf time et index)
+  comp_cols <- setdiff(names(decomp_tot_data), c("time", "index"))
+  
+  decomp_infl_12m <- decomp_tot_data %>%
+    arrange(time) %>%
+    # Différence à 12 mois de chaque contribution
+    mutate(across(all_of(comp_cols),
+                  ~ . - dplyr::lag(., k),
+                  .names = "{.col}")) %>%
+    # Supprimer les 12 premières lignes (NA)
+    filter(!is.na(.data[[comp_cols[1]]])) 
+  # Reshaper les données en format long pour ggplot2
+  long_data <- pivot_longer(decomp_infl_12m , 
+                            cols = -c(time, index),  names_to = "category",
+                            values_to = "value")
+  
+  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'rev(colors_shock)'
+  #long_data$category <- factor(long_data$category, levels = names)
+  long_data$category <- factor(long_data$category, levels = rev(names))
+  
   
   
   decomp_tot_data <- data.frame(
     time= as.Date(dates_formatted[(p+1):length(dates_formatted)]),
-    historical_decomp_matrix1[,series,])
+    historical_decomp_matrix[,series_1,])
   # Plot the decomposition
-  
-  
   colnames(decomp_tot_data)[-1] <- names
   decomp_tot_data <- decomp_tot_data %>%
     mutate(index = row_number())
   # Reshaper les données en format long pour ggplot2
-  long_data_chol <- pivot_longer(decomp_tot_data, 
-                                 cols = -c(time, index),  names_to = "category",
-                                 values_to = "value")
+  long_data_price <- pivot_longer(decomp_tot_data, 
+                            cols = -c(time, index),  names_to = "category",
+                            values_to = "value")
   
-  # Exemple : calcul de la moyenne glissante sur les 12 dernières valeurs
-  long_data_chol <- long_data_chol %>%
-    group_by(category) %>%
-    arrange(category, time) %>%  # assure-toi d'avoir une variable temporelle (ex: `time`)
-    mutate(rolling_avg = slide_dbl(value, sum, .before = 11, .complete = TRUE),
-           Method = "Cholesky") %>% 
-    filter(category == "Supply" | category == "Demand")
+
+  long_data_price$category <- factor(long_data_price$category, levels = rev(names))
   
+  long_data_tot <- rbind(long_data %>% 
+                           mutate(variable = "inflation"),
+                         long_data_price %>% 
+                           mutate(variable = "price"))%>%
+    mutate(fill_key = paste(category, variable))
   
-  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'rev(colors_shock)'
-  #long_data$category <- factor(long_data$category, levels = names)
-  long_data_chol$category <- factor(long_data_chol$category, levels = rev(names))
-  
-  
-  
-  decomp_tot_data <- data.frame(
-    time=as.Date(dates_formatted[(p+1):length(dates_formatted)]),
-    historical_decomp_matrix2[,series,])
-  # Plot the decomposition
-  colnames(decomp_tot_data)[-1] <-names
-  decomp_tot_data <- decomp_tot_data %>%
-    mutate(index = row_number())
-  # Reshaper les données en format long pour ggplot2
-  long_data_iv <- pivot_longer(decomp_tot_data, 
-                               cols = -c(time, index),  names_to = "category",
-                               values_to = "value")
-  
-  
-  # Exemple : calcul de la moyenne glissante sur les 12 dernières valeurs
-  long_data_iv <- long_data_iv %>%
-    group_by(category) %>%
-    arrange(category, time) %>%  # assure-toi d'avoir une variable temporelle (ex: `time`)
-    mutate(rolling_avg = slide_dbl(value, sum, .before = 11, .complete = TRUE),
-           Method = "IV")%>% 
-    filter(category == "Supply" | category == "Demand") 
-  
-  
-  # S'assurer que 'category' a l'ordre des niveaux correspondant à 'rev(colors_shock)'
-  #long_data$category <- factor(long_data$category, levels = names)
-  long_data_iv$category <- factor(long_data_iv$category, levels = rev(names))
-  
-  
-  
-  # 2. Plot separately but still trigger alpha legend
-  ne_hd_compare <- ggplot() +
-    # Cholesky layer (alpha = 1)
-    geom_bar(data = long_data_chol, aes(x = time, y = rolling_avg, fill = category, alpha = Method),
-             stat = "identity", position = "stack") +
-    
-    # IV layer (alpha = 0.4)
-    geom_bar(data = long_data_iv, aes(x = time, y = rolling_avg, fill = category, alpha = Method),
-             stat = "identity", position = "stack") +
-    
-    # 3. Manual alpha scale
-    scale_alpha_manual(
-      values = c("Cholesky" = 0.4, "IV" = 1),
-      name = "Identification"
+  fill_values <- c(
+    "Supply price"      = "darkblue",
+    "Demand price"     = "blue",
+    "Supply inflation" = "darkred",
+    "Demand inflation" = "red"
+  )
+  fill_labels <- c(
+    "Supply price"      = expression("Supply " * P[elec]),
+    "Demand price"     = expression("Demand " * P[elec]),
+    "Supply inflation" = expression("Supply " * pi),
+    "Demand inflation" = expression("Demand " * pi)
+  )
+  long_data_tot$fill_key
+  my_plot <- ggplot() +
+    geom_bar(
+      data = long_data_tot %>% filter(time < as.Date("2024-09-01")),
+      aes(x = time, y = value, fill = fill_key),
+      stat = "identity",
+      position = "stack",
+      alpha = alpha_chosen
     ) +
-    
-    # 4. Manual fill scale with LaTeX labels
     scale_fill_manual(
-      values = c( "red", "green"),
-      labels = c( "Supply", "Demand"),
-      name = "Shock"
+      values = fill_values,
+      labels = fill_labels,
+      name   = NULL
     ) +
-    
-    guides(
-      alpha = guide_legend(order = 1),
-      fill = guide_legend(order = 2)
-    )+
-    labs(title = "Comparing HD for HICP",
-         x = "Time",
-         y = "Contribution") +
-    theme(legend.text = element_text(size = 15),      # taille du texte
-          legend.title = element_text(size = 16),     # taille du titre
-          legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
-          axis.title.x = element_text(size = 14),   # taille du titre axe x
-          axis.title.y = element_text(size = 14),   # taille du titre axe y
-          axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
-          axis.text.y  = element_text(size = 12)    # taille des ticks y
+    theme_minimal()
+  
+  my_plot <- my_plot +
+    theme(
+      legend.text = element_text(size = 15),
+      legend.title = element_text(size = 16),
+      legend.key.size = unit(1.5, "cm"),
+      axis.title.x = element_text(size = 14),
+      axis.title.y = element_text(size = 14),
+      axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),
+      axis.text.y  = element_text(size = 12)
     )
-  return(ne_hd_compare)
+  
+  
+  
+  return(my_plot)
 }

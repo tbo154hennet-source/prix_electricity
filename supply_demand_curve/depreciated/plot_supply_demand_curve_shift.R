@@ -118,7 +118,7 @@ ggplot(data = plot_data) +
   # Histogramme mis à l'échelle
   geom_histogram(
     data = price_indispo_merge_esp,
-    mapping = aes(x = gen_tot_da, y = ..count.. * scale_factor),
+    mapping = aes(x = load_tot, y = ..count.. * scale_factor),
     bins = 60,
     color = "black",
     fill = NA
@@ -149,7 +149,7 @@ plot_data <- coef_data %>%
   filter(cum_energy_test >= 5000)
 
 # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
-scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$gen_tot_da, plot = FALSE)$counts)
+scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$load_tot, plot = FALSE)$counts)
 
 ggplot(data = plot_data) +
   # Courbe principale avec bande de confiance
@@ -166,7 +166,7 @@ ggplot(data = plot_data) +
   # Histogramme mis à l'échelle
   geom_histogram(
     data = price_indispo_merge_esp,
-    mapping = aes(x = gen_tot_da, y = ..count.. * scale_factor),
+    mapping = aes(x = load_tot, y = ..count.. * scale_factor),
     bins = 60,
     color = "black",
     fill = NA

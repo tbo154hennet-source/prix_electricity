@@ -52,7 +52,7 @@ for(s_col in c(cols_fitted_supply_npc)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " | log(price + 1) ~ ", instr_vars_s
+      "log(load_tot) ~ ", rhs_vars_s, " | log(price + 1) ~ ", instr_vars_s
     )
   )
   
@@ -60,11 +60,11 @@ for(s_col in c(cols_fitted_supply_npc)){
   rhs_vars_d <- paste( paste(c(controls_vec,s_col), collapse = " + "), sep = " + ")
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_d, " | log(price + 1) ~ ", instr_vars_d
+      "log(load_tot) ~ ", rhs_vars_d, " | log(price + 1) ~ ", instr_vars_d
     )
   )
-  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
-  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
+  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
   
   
   # Classic F-stat for the instruments
@@ -132,11 +132,11 @@ for(s_col in c(cols_fitted_supply_npc)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_s, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_s
     )
   )
-  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
   
   inst_name <- instr_vars_d
   
@@ -155,12 +155,12 @@ for(s_col in c(cols_fitted_supply_npc)){
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_d, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_d, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_d
     )
   )
   
-  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
   
   

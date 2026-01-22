@@ -23,7 +23,7 @@ hd_cholesky <- readRDS( "hd_chol_log.rds")
 
 vars <- vars_demand
 mean_vector <- colMeans(vars_demand, na.rm = TRUE)
-vars_demand_demeaned <- sweep(vars_demand, 2, mean_vector, "-")
+vars_demeaned <- sweep(vars_demand, 2, mean_vector, "-")
 vars_demand_reconstructed <- sweep(vars_demand_demeaned, 2, mean_vector, "+")
 
 IV_data_log_esp <- IV_data_log_esp %>% 
@@ -51,6 +51,10 @@ vl_demand <- if (is.null(controls)) {
 } else {
   vars::VAR(x_demand, p, type = "none", exogen = controls)
 }
+coef = coef(vl_demand)
+bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
+res_demand = residuals(vl_demand)
+n_obs <- nrow(res_demand)
 
 
 ```
@@ -99,23 +103,13 @@ En plus, il y avait la dérive intuitée par Giovanni.
 
 ```{r}
 
-zero_errors <- matrix(0, nrow = dim(res)[1], ncol = dim(res)[2])
+zero_errors <- matrix(0, nrow = dim(res_demand)[1], ncol = dim(res_demand)[2])
 
 reconstruct_derive_without_errors_ter <- iterate_var_ter(x=x_demand,
                                                      initial_obs = x_demand[1:p, ],
                                                      errors = zero_errors,
                                                      var_model = vl_demand
 )
-
-T_use <- nrow(shock_sum)
-n_shocks <- dim(hd_cholesky)[3]
-
-hd_with_trend <- array(0, dim = c(T_use, n_vars_demand, n_shocks + 1))
-hd_with_trend[, , 1:n_shocks] <- hd_cholesky[1:T_use, , 1:n_shocks]
-
-# dernière composante = trend/baseline demeaned
-hd_with_trend[, , n_shocks + 1] <- trend_component
-dimnames(hd_with_trend)[[3]] <- c(paste0("shock_", 1:n_shocks), "trend (baseline - mean)")
 
 
 # Prepare data for plotting
@@ -197,6 +191,31 @@ ne_hd
 ```
 
 
+```{r}
+
+k <- 12  # horizon 12 mois
+
+pi_ann_series <- (IV_data_log_esp$HICP_log[(k+1):(T+p)] - IV_data_log_esp$HICP_log[1:((T+p)-k)]) 
+
+n_inf_12 <- plot_hd_inflation_glissante_12(series= n_serie)
+  
+pi_ann_series_demeaned <- pi_ann_series - mean(pi_ann_series)
+
+n_inf_12 <- n_inf_12+
+  geom_line(aes(x = as.Date(dates_formatted[-(1:p)]) , y =  pi_ann_series_demeaned))+
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
+n_inf_12
+
+```
+
 
 
 # IV partial Identification
@@ -207,10 +226,41 @@ Attention, ici les deux tableaux historical_decomp_iv_tibo[,,1] et historical_de
 
 supply_shock_legend
 
+
 ```{r}
 dates_formatted <- as.yearmon(time(x_demand))
-names <- c("Demand", "Supply")
-colors_shock <- rev(c( "red", "green"))
+names <- c("Supply", "Demand")
+colors_shock <- c( "blue", "red" )
+#colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
+historical_decomp_matrix <-  historical_decomp_iv_wedge
+n_serie = 1
+ne_iv_price <- plot_hd_demeaned(series = n_serie)+
+    labs(title=TeX(paste("")) ,
+         x="Time", y="Inflation Contribution")
+
+ne_iv_price
+
+```
+
+```{r}
+dates_formatted <- as.yearmon(time(x_demand))
+names <- c("Supply", "Demand")
+colors_shock <- c( "blue", "red" )
+#colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
+historical_decomp_matrix <-  historical_decomp_iv_wedge
+n_serie = 5
+ne_iv_wedge_inf <- plot_hd_demeaned(series = n_serie)+
+    labs(title=TeX(paste("")) ,
+         x="Time", y="Inflation Contribution")
+
+ne_iv_wedge_inf
+
+```
+
+```{r}
+dates_formatted <- as.yearmon(time(x_demand))
+names <- c("Supply", "Demand")
+colors_shock <- c( "blue", "red" )
 #colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
 historical_decomp_matrix <-  historical_decomp_iv_tibo
 n_serie = 5
@@ -223,28 +273,43 @@ ne_iv
 ```
 
 
+```{r}
+
+dates_formatted <- as.yearmon(time(x_demand))
+names <- c("Supply", "Demand")
+colors_shock <- c( "blue", "red" )
+#colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
+historical_decomp_matrix <-  historical_decomp_iv_wedge
+n_serie = 5
+ne_iv_inf_12 <- plot_hd_inflation_glissante_12(series = n_serie)+
+    labs(title=TeX(paste("")) ,
+         x="Time", y="Inflation Contribution")
+
+ne_iv_inf_12
+
+
+```
 
 
 
 ```{r}
 dates_formatted <- as.yearmon(time(x_demand))
-names <- c("Demand", "Supply")
-colors_shock <- rev(c( "red", "green"))
+names <- c("Supply", "Demand")
+colors_shock <- c( "blue", "red" )
 #colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
-historical_decomp_matrix <-  historical_decomp_iv_tibo
+historical_decomp_matrix <-  historical_decomp_iv_wedge
 n_serie = 5
-ne_iv <- plot_hd_demeaned(series = n_serie)+
+ne_iv_all <- plot_hd_inflation_glissante_12(series = n_serie)+
     labs(title=TeX(paste("")) ,
          x="Time", y="Inflation Contribution")
 
 pelec_12m = (IV_data_log_esp$spot_price - mean(IV_data_log_esp$spot_price))/1000
+ne_iv_all <- ne_iv_all +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):length(dates_formatted)]), y = pi_ann_series, color = "pi"), linetype = "dashed") +
+    geom_line(aes(x = as.Date(dates_formatted[(p+1):length(dates_formatted)]), y = pelec_12m[(p+1):(length(pelec_12m))], color = "Pelec"),  linetype = "dashed") 
 
-ne_iv <- ne_iv +
-    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = inflation_12m[(p+1):(length(inflation_12m)-p)], color = "HICP"), linetype = "dashed") +
-    geom_line(aes(x = as.Date(dates_formatted[(p+1):(length(dates_formatted)-p)]), y = pelec_12m[(p+1):(length(inflation_12m)-p)], color = "Pelec"),  linetype = "dashed") 
 
-
-ne_iv <- ne_iv +
+ne_iv_all <- ne_iv_all +
   scale_y_continuous(
     name = "HICP Contribution",
     sec.axis = sec_axis(
@@ -253,21 +318,22 @@ ne_iv <- ne_iv +
     )
   ) 
 
-ne_iv <- ne_iv +
+ne_iv_all <- ne_iv_all +
   scale_color_manual(
     name = "",
     values = c(
-      "HICP" = "black",
+      "pi"    = "black",
       "Pelec" = "darkgoldenrod"
     ),
-    labels = TeX(c(
-      "HICP",
-      "$P_{elec}$")
+    labels = c(
+      expression(pi),
+      expression(P[elec])
     )
   )
 
 
-ne_iv
+
+ne_iv_all
 
 ```
 
@@ -275,8 +341,8 @@ ne_iv
 
 ```{r}
 dates_formatted <- as.yearmon(time(x_demand))
-names <- c("Demand", "Supply")
-colors_shock <- rev(c( "red", "green"))
+names <- c("Supply", "Demand")
+colors_shock <- c( "blue", "red" )
 #colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
 historical_decomp_matrix <- historical_decomp_iv_tibo
 n_serie = 5
@@ -284,8 +350,8 @@ ne_compare<- plot_hd_demeaned(series = n_serie)+
   labs(title=TeX(paste("")) ,
        x="Time", y="Inflation Contribution")
 
-names <- c("Demand Wedge", "Supply Wedge")
-colors_shock <- rev(c( "darkred", "darkgreen"))
+names <- c("Supply Wedge", "Demand Wedge")
+colors_shock <- c( "darkblue", "darkred" )
 #colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
 historical_decomp_matrix <-   historical_decomp_iv_wedge
 ne_compare<- ne_compare+ plot_hd_demeaned(series = n_serie)
@@ -306,8 +372,11 @@ save_plot_path <- 'Z:/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("plot_hd_cholesky.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
-ggsave("plot_hd_iv.png", plot = ne_iv, width = 8, height = 6, dpi = 300)
-ggsave("plot_hd_iv_wedge.png", plot = ne_iv_wedge, width = 8, height = 6, dpi = 300)
+ggsave("plot_hd_ne_iv.png", plot = ne_iv_wedge_inf, width = 8, height = 6, dpi = 300)
+ggsave("plot_hd_iv_inflation.png", plot = ne_iv_inf_12, width = 8, height = 6, dpi = 300)
+ggsave("plot_hd_iv_all.png", plot = ne_iv_all, width = 8, height = 6, dpi = 300)
+
+
 # ggsave("ne_hd_demeaned_4v.png", plot = ne_hd, width = 8, height = 6, dpi = 300)
 # #ggsave("ne_hd_iv_4v.png", plot = ne_hd_iv, width = 8, height = 6, dpi = 300)
 # ggsave("ne_hd_12_4v.png", plot = ne_hd_12, width = 8, height = 6, dpi = 300)

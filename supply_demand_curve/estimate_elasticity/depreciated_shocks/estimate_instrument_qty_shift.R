@@ -60,7 +60,7 @@ price_indispo_merge <- price_indispo_merge %>%
 colnames(price_indispo_merge)
 
 col_names <- c("weekday" , "creneau", names_instruments, "price", "datetime", "delivery_date", "spot_gas",
-               colnames_with_capacity, "gen_tot_da","gen_tot_da_conso" , "gen_tot_da_net" ,
+               colnames_with_capacity, "load_tot","load_tot_conso" , "load_tot_net" ,
                "temperature_supply","precipitation_supply", "relative_humidity_supply" ,
                "intraday_forecast"  ,"unpredicted_renewables", "gen_tot"    ,                               
                "wind_solar_tot","price" ,"year"   ,"month" , "price_diff" ,   "log_price_diff"  )

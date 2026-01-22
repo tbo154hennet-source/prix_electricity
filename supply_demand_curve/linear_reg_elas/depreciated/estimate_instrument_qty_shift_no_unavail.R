@@ -89,9 +89,9 @@ price_indispo_merge_delta$delta_d_total <- rowSums(price_indispo_merge_delta[, c
 
 
 col_names <- c("weekday" , "creneau", names_instruments, "price", "datetime", "delivery_date", "spot_gas",
-               colnames_with_capacity, "gen_tot_da","gen_tot_da_conso" , "gen_tot_da_net" ,
+               colnames_with_capacity, "load_tot","load_tot_conso" , "load_tot_net" ,
                "temperature_supply","precipitation_supply", "relative_humidity_supply" ,
-               "intraday_forecast"  ,"unpredicted_renewables", "gen_tot_da"    ,                           
+               "intraday_forecast"  ,"unpredicted_renewables", "load_tot"    ,                           
                "wind_solar_tot","price" ,"year"   ,"month"  )
 
 price_indispo_merge_delta_clean <- price_indispo_merge_delta %>%
@@ -100,8 +100,8 @@ price_indispo_merge_delta_clean <- price_indispo_merge_delta %>%
   distinct()
 
 dep_var <- "log(price+1)"
-endog_vars <- c("log(gen_tot_da)")
-#endog_vars <- c("log(gen_tot_da)")
+endog_vars <- c("log(load_tot)")
+#endog_vars <- c("log(load_tot)")
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
                    "as.factor(weekday)", "as.factor(creneau)"
@@ -127,7 +127,7 @@ price_indispo_merge_delta_clean %>%
 
 
 ols_formula <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + "))))  
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + "))))  
 
 m_ols <- ivreg(ols_formula , data = price_indispo_merge_delta_clean)
 
@@ -144,14 +144,14 @@ exog_instr_d <- "delta_d_total"
 
 #iv_formula
 iv_formula_supply_str <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars, exog_instr_d ), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_vars, exog_instr_d ), collapse = " + ")),
   paste(paste(c(exog_instr_s, exog_instr_d , controls_vars), collapse = " + ")),
   sep = " | "
 ))
 
 #iv_formula
 iv_formula_demand_str <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c( "log(price+1)", controls_vars, exog_instr_s), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c( "log(price+1)", controls_vars, exog_instr_s), collapse = " + ")),
   paste(paste(c(exog_instr_d, exog_instr_s, controls_vars), collapse = " + ")),
   sep = " | "
 ))
@@ -185,7 +185,7 @@ controls_Bonte <- c(
 
 # Build the formula as a string
 Bonte_formula_str <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_Bonte), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_Bonte), collapse = " + ")),
   paste(paste(c("Fore_Wind", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
@@ -197,7 +197,7 @@ nw_coefs_Bonte  <- coeftest(m_Bonte , vcov. = nw_se_Bonte)
 controls_demand <- c(setdiff(controls_Bonte, "temperature_supply"), "Fore_Wind", "Fore_Solar")
 
 formula_demand_str <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + ")),
   paste(paste(c("cold_excess_demand", "heat_excess_demand", controls_vars), collapse = " + ")),
   sep = " | "
 ))
@@ -239,7 +239,7 @@ fstat_iv_demand <- diag_iv_demand$diagnostics["Weak instruments", "statistic"]
 #       round(fstat_iv_bronte, 2)                                # no F for Bonte
 #     )),
 #   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-#   keep = c("gen_tot_da", "price" )
+#   keep = c("load_tot", "price" )
 # )
 
 reg_table <- stargazer(
@@ -260,7 +260,7 @@ reg_table <- stargazer(
       round(fstat_iv_bronte, 2)
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 #summary(m_iv_s, diagnostics = TRUE)$diagnostics
 
@@ -288,14 +288,14 @@ exog_instr_s <- "delta_s_orth"
 exog_instr_d <- "delta_d_orth"
 
 iv_formula_supply_str_ortho <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars ), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_vars ), collapse = " + ")),
   paste(paste(c(exog_instr_s, controls_vars), collapse = " + ")),
   sep = " | "
 ))
 
 #iv_formula
 iv_formula_demand_str_ortho <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c( "log(price+1)", controls_vars), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c( "log(price+1)", controls_vars), collapse = " + ")),
   paste(paste(c(exog_instr_d,  controls_vars), collapse = " + ")),
   sep = " | "
 ))
@@ -343,12 +343,12 @@ reg_table <- stargazer(
       round(fstat_iv_s, 2),             # IV supply
       round(fstat_iv_s_ortho, 2)                                # no F for Bonte
     )),
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 
-# Extract estimate and standard error for 'gen_tot_da' from each model
-extract_coef_se <- function(model, variable = "log(gen_tot_da)") {
+# Extract estimate and standard error for 'load_tot' from each model
+extract_coef_se <- function(model, variable = "log(load_tot)") {
   s <- summary(model)
   est <- s$coefficients[variable, "Estimate"]
   se  <- s$coefficients[variable, "Std. Error"]
@@ -434,7 +434,7 @@ write.csv(df_clean, "df_clean_da_no_unavail.csv")
 
 # Build the formula as a string
 Bonte_formula_str_lag <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_Bonte, "lag(Fore_Wind)"), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_Bonte, "lag(Fore_Wind)"), collapse = " + ")),
   paste(paste(c("Fore_Wind", controls_Bonte, "lag(Fore_Wind)"), collapse = " + ")),
   sep = " | "
 ))
@@ -448,7 +448,7 @@ lag_instruments <- paste0("lag(Fore_Wind, ", 1:12, ")")
 
 Bonte_formula_str_lag_12 <- as.formula(paste(
   # équation structurelle
-  paste("log(gen_tot_da)", "~",  
+  paste("log(load_tot)", "~",  
         paste(c("log(price+1)", controls_Bonte, lag_instruments), collapse = " + ")),
   # instruments
   paste(paste(c("Fore_Wind", controls_Bonte, lag_instruments), collapse = " + ")),
@@ -486,7 +486,7 @@ reg_table <- stargazer(
       round(fstat_iv_bronte_lag_12, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 
@@ -495,7 +495,7 @@ reg_table <- stargazer(
 
 # Build the formula as a string
 demand_formula_str_lag <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_demand, "lag(cold_excess_supply)", "lag(heat_excess_supply)"), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_demand, "lag(cold_excess_supply)", "lag(heat_excess_supply)"), collapse = " + ")),
   paste(paste(c("cold_excess_supply","heat_excess_supply", controls_demand,"lag(cold_excess_supply)", "lag(heat_excess_supply)"), collapse = " + ")),
   sep = " | "
 ))
@@ -509,7 +509,7 @@ lag_instruments <- c(paste0("lag(cold_excess_supply, ", 1:12, ")"), paste0("lag(
 
 demand_formula_str_lag_12 <- as.formula(paste(
   # équation structurelle
-  paste("log(gen_tot_da)", "~",  
+  paste("log(load_tot)", "~",  
         paste(c("log(price+1)", controls_demand, lag_instruments), collapse = " + ")),
   # instruments
   paste(paste(c("cold_excess_supply","heat_excess_supply", controls_demand, lag_instruments), collapse = " + ")),
@@ -548,7 +548,7 @@ reg_table <- stargazer(
       round(fstat_iv_demand_lag_12, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 
@@ -560,7 +560,7 @@ exog_instr_d_lag <- paste0("lag(", exog_instr_d, ")")
 
 iv_formula_supply_lag <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars,exog_instr_d_lag, exog_instr_s_lag, exog_instr_d), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars,exog_instr_d_lag, exog_instr_s_lag, exog_instr_d), collapse = " + ")),
   # Instrument set (lagged exog_instr_s instead of contemporaneous)
   paste(paste(c( exog_instr_s, exog_instr_d_lag, exog_instr_s_lag, exog_instr_d,controls_vars), collapse = " + ")),
   sep = " | "
@@ -574,7 +574,7 @@ nw_coefs_s_lag <- coeftest(m_iv_s_lag, vcov. = nw_se_s_lag)
 
 iv_formula_demand_lag <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars, exog_instr_s, exog_instr_d_lag, exog_instr_s_lag), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars, exog_instr_s, exog_instr_d_lag, exog_instr_s_lag), collapse = " + ")),
   # Instrument set (lagged exog_instr_d instead of contemporaneous)
   paste(paste(c(exog_instr_d, exog_instr_d_lag, exog_instr_s, exog_instr_s_lag, controls_vars), collapse = " + ")),
   sep = " | "
@@ -591,7 +591,7 @@ lag_exog_d <- paste0("lag(", exog_instr_d, ", ", 1:12, ")")
 # Example for supply with lagged exog_instr_s
 iv_formula_supply_lag12 <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars,lag_exog_d, lag_exog_s, exog_instr_d), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars,lag_exog_d, lag_exog_s, exog_instr_d), collapse = " + ")),
   # Instrument set (lagged exog_instr_s instead of contemporaneous)
   paste(paste(c( exog_instr_s, lag_exog_d, lag_exog_s, exog_instr_d,controls_vars), collapse = " + ")),
   sep = " | "
@@ -604,7 +604,7 @@ nw_coefs_s_lag12 <- coeftest(m_iv_s_lag12, vcov. = nw_se_s_lag)
 
 iv_formula_demand_lag12 <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars, exog_instr_s, lag_exog_d, lag_exog_s), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars, exog_instr_s, lag_exog_d, lag_exog_s), collapse = " + ")),
   # Instrument set (lagged exog_instr_d instead of contemporaneous)
   paste(paste(c(exog_instr_d, lag_exog_d, exog_instr_s, lag_exog_s, controls_vars), collapse = " + ")),
   sep = " | "
@@ -656,7 +656,7 @@ reg_table <- stargazer(
       round(fstat_iv_d_lag_12, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 
@@ -676,7 +676,7 @@ reg_table <- stargazer(
       round(fstat_iv_s_lag_12, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 
@@ -695,14 +695,14 @@ exog_instr_d <- "delta_d_orth"
 
 #iv_formula
 iv_formula_supply_str_orth <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars ), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_vars ), collapse = " + ")),
   paste(paste(c(exog_instr_s , controls_vars), collapse = " + ")),
   sep = " | "
 ))
 
 #iv_formula
 iv_formula_demand_str_orth <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c( "log(price+1)", controls_vars), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c( "log(price+1)", controls_vars), collapse = " + ")),
   paste(paste(c(exog_instr_d, controls_vars), collapse = " + ")),
   sep = " | "
 ))
@@ -728,7 +728,7 @@ exog_instr_d_lag <- paste0("lag(", exog_instr_d, ")")
 
 iv_formula_supply_lag_orth <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars,exog_instr_d_lag, exog_instr_s_lag), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars,exog_instr_d_lag, exog_instr_s_lag), collapse = " + ")),
   # Instrument set (lagged exog_instr_s instead of contemporaneous)
   paste(paste(c( exog_instr_s, exog_instr_d_lag, exog_instr_s_lag,controls_vars), collapse = " + ")),
   sep = " | "
@@ -742,7 +742,7 @@ nw_coefs_s_lag_orth <- coeftest(m_iv_s_lag_orth, vcov. = nw_se_s_lag)
 
 iv_formula_demand_lag_orth <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars, exog_instr_d_lag, exog_instr_s_lag), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars, exog_instr_d_lag, exog_instr_s_lag), collapse = " + ")),
   # Instrument set (lagged exog_instr_d instead of contemporaneous)
   paste(paste(c(exog_instr_d, exog_instr_d_lag, exog_instr_s_lag, controls_vars), collapse = " + ")),
   sep = " | "
@@ -759,7 +759,7 @@ lag_exog_d <- paste0("lag(", exog_instr_d, ", ", 1:12, ")")
 # Example for supply with lagged exog_instr_s
 iv_formula_supply_lag12_orth <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars,lag_exog_d, lag_exog_s), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars,lag_exog_d, lag_exog_s), collapse = " + ")),
   # Instrument set (lagged exog_instr_s instead of contemporaneous)
   paste(paste(c( exog_instr_s, lag_exog_d, lag_exog_s,controls_vars), collapse = " + ")),
   sep = " | "
@@ -772,7 +772,7 @@ nw_coefs_s_lag12_orth <- coeftest(m_iv_s_lag12_orth, vcov. = nw_se_s_lag)
 
 iv_formula_demand_lag12_orth <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_vars, lag_exog_d, lag_exog_s), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_vars, lag_exog_d, lag_exog_s), collapse = " + ")),
   # Instrument set (lagged exog_instr_d instead of contemporaneous)
   paste(paste(c(exog_instr_d, lag_exog_d, lag_exog_s, controls_vars), collapse = " + ")),
   sep = " | "
@@ -824,7 +824,7 @@ reg_table <- stargazer(
       round(fstat_iv_d_lag_12, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 
@@ -844,7 +844,7 @@ reg_table <- stargazer(
       round(fstat_iv_s_lag_12, 2)                                # no F for Bonte
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 

@@ -144,7 +144,7 @@ estimate_coeff_shift_qty <- function(price_test, reconstruct_full_curve_shift,
 
   m_grid <- feols(fml = formula,
                   data = reg_data_test,
-                  NW(24) ~ datetime)
+                  DK(24) ~ datetime)
   reg_results <- m_grid$coeftable
   
   reg_results <- as.data.table(reg_results)

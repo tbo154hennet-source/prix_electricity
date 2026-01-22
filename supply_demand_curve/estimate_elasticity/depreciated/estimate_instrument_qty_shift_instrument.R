@@ -19,7 +19,7 @@ price_indispo_merge_delta$delta_q_total <- rowSums(price_indispo_merge_delta[, c
 
 dep_var <- "log(price)"
 endog_vars <- c("log(gen_tot)")
-#endog_vars <- c("log(gen_tot_da)")
+#endog_vars <- c("log(load_tot)")
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
                      "as.factor(weekday)", "as.factor(creneau)"

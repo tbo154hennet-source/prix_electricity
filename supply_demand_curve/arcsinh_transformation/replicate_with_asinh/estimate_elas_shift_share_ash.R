@@ -21,18 +21,18 @@ inst_name_d <- c("cold_excess_demand", "heat_excess_demand")
 
 iv_wind_controls <- paste0(setdiff(my_factors, "Fore_Wind"), collapse = " + ")
 iv_wind_ss_formula <-  as.formula(
-  paste0("gen_tot_da ~  year + month + creneau + spot_gas +wind_speed_100m_demand +", iv_wind_controls, " | price ~ wind_speed_100m_supply "))
-iv_wind_ss_m <- feols(iv_wind_ss_formula, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+  paste0("load_tot ~  year + month + creneau + weekday + weekday + spot_gas +wind_speed_100m_demand +", iv_wind_controls, " | price ~ wind_speed_100m_supply "))
+iv_wind_ss_m <- feols(iv_wind_ss_formula, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 
 iv_temp_ss_controls_bis <- "heat_excess_ss + cold_excess_ss+"  
 iv_temp_ss_controls <-setdiff(temp_factors, inst_name_d)
 iv_temp_controls <- paste0(setdiff(my_factors, temp_factors ), collapse = " + ")
 iv_temp_ss_formula <-  as.formula(
-  paste0("gen_tot_da ~  year + month + creneau + spot_gas +",iv_temp_controls, "+", paste0(iv_temp_ss_controls , collapse = " + "),
+  paste0("load_tot ~  year + month + creneau + weekday + weekday + spot_gas +",iv_temp_controls, "+", paste0(iv_temp_ss_controls , collapse = " + "),
          " | price ~ cold_excess_demand + heat_excess_demand"))
 
-iv_temp_ss_m <- feols(iv_temp_ss_formula, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+iv_temp_ss_m <- feols(iv_temp_ss_formula, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 
 
@@ -54,7 +54,7 @@ lag_controls_s <- paste0(c(inst_name_s, "wind_speed_100m_demand"), "_lag", 1, co
 
 iv_formula_s <- as.formula(
   paste0(
-    "gen_tot_da ~  year + month + creneau + spot_gas +",
+    "load_tot ~  year + month + creneau + weekday + weekday + spot_gas +",
     iv_wind_controls, " +wind_speed_100m_demand  + ", lag_controls_s," | price ~ ", inst_name_s
   )
 )
@@ -64,16 +64,16 @@ lag_controls_d <- paste0(c(inst_name_d, iv_temp_ss_controls), "_lag", 1, collaps
 
 iv_formula_d <- as.formula(
   paste0(
-    "gen_tot_da ~  year + month + creneau + spot_gas +",
+    "load_tot ~  year + month + creneau + weekday + weekday + spot_gas +",
     iv_temp_controls, "+", paste0(iv_temp_ss_controls , collapse = " + "), " + ", lag_controls_d,
     " | price ~ ", paste0(inst_name_d, collapse = " + ")
   )
 )
 
 
-iv_wind_lag_ss <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+iv_wind_lag_ss <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
-iv_temp_lag_ss <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+iv_temp_lag_ss <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 
 etable(

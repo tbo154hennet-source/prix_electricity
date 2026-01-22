@@ -295,8 +295,8 @@ price_indispo_merge_delta_clean <- price_indispo_merge_compare %>%
   distinct()
 
 dep_var <- "log(price+1)"
-endog_vars <- c("log(gen_tot_da)")
-#endog_vars <- c("log(gen_tot_da)")
+endog_vars <- c("log(load_tot)")
+#endog_vars <- c("log(load_tot)")
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
                    "as.factor(weekday)", "as.factor(creneau)"
@@ -350,7 +350,7 @@ controls_vec <- c("delivery_date", "creneau")
 controls_vec <- c("spot_gas",paste0( "factor(", controls_vec, ")"))
 
 ols_formula <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vec), collapse = " + "))))  
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_vec), collapse = " + "))))  
 
 m_ols <- ivreg(ols_formula , data = price_indispo_merge_delta_clean)
 summary(m_ols)
@@ -408,14 +408,14 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_s
+      "log(load_tot) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_s
     )
   )
   instr_vars_d <- paste(c(d_col), collapse = " + ")
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_d
+      "log(load_tot) ~ ", rhs_vars, " | log(price + 1) ~ ", instr_vars_d
     )
   )
   iv_supply <- feols(iv_formula_s, data = price_indispo_merge_feols)
@@ -512,14 +512,14 @@ for(s_col in c("delta_supply_orth",cols_fitted_supply_orth)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " | log(price + 1) ~ ", instr_vars_s
+      "log(load_tot) ~ ", rhs_vars_s, " | log(price + 1) ~ ", instr_vars_s
     )
   )
   instr_vars_d <- paste(c(d_col), collapse = " + ")
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_d, " | log(price + 1) ~ ", instr_vars_d
+      "log(load_tot) ~ ", rhs_vars_d, " | log(price + 1) ~ ", instr_vars_d
     )
   )
   iv_supply <- feols(iv_formula_s, data = price_indispo_merge_feols)

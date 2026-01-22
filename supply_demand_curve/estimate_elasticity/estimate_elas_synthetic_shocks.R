@@ -1,6 +1,7 @@
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final.parquet")
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
+
 
 #un faible nombre de duplicates
 price_indispo_merge_esp_npc %>%
@@ -22,6 +23,9 @@ select_fitted <- function(x, type) {
 cols_fitted_supply_npc <- select_fitted(price_indispo_merge_esp_npc, "supply")
 cols_fitted_demand_npc <- select_fitted(price_indispo_merge_esp_npc, "demand")
 
+price_indispo_merge_esp_npc %>% 
+  dplyr::select(cols_fitted_supply_npc, cols_fitted_demand_npc, "Fore_Wind") %>% 
+  cor(use = "complete.obs")
 
 
 
@@ -50,7 +54,7 @@ for(s_col in c(cols_fitted_supply_npc)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " | log(price + 1) ~ ", instr_vars_s
+      "log(load_tot) ~ ", rhs_vars_s, " | log(price + 1) ~ ", instr_vars_s
     )
   )
   
@@ -58,13 +62,13 @@ for(s_col in c(cols_fitted_supply_npc)){
   rhs_vars_d <- paste( paste(c(controls_vec,s_col), collapse = " + "), sep = " + ")
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_d, " | log(price + 1) ~ ", instr_vars_d
+      "log(load_tot) ~ ", rhs_vars_d, " | log(price + 1) ~ ", instr_vars_d
     )
   )
-  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
-  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
+  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
   
-  
+
   # Classic F-stat for the instruments
   fstat_s <- fitstat(summary(iv_supply, stage = 1), type = "ivf")
   fstat_d <- fitstat(summary(iv_demand, stage = 1), type = "ivf")
@@ -134,22 +138,22 @@ for(s_col in c(cols_fitted_supply_npc)){
   
   iv_formula_s <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_s, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_s, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_s
     )
   )
-  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+  iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
   
   inst_name <- instr_vars_d
   
   iv_formula_d <- as.formula(
     paste0(
-      "log(gen_tot_da) ~ ", rhs_vars_d, " + ", lag_controls,
+      "log(load_tot) ~ ", rhs_vars_d, " + ", lag_controls,
       " | log(price + 1) ~ ", instr_vars_d
     )
   )
   
-  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+  iv_demand <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
   # 
   # # Classic F-stat for the instruments
   # fstat_s <- fitstat(summary(iv_supply, stage = 1), type = "ivf")
@@ -181,7 +185,7 @@ all_models <- unlist(
 
 etable(all_models,
        keep = c("price"),
-       headers = c("Supply Unmatched","Demand Unmatched", "Supply Matched", "Demand Matched"),
+       headers = c("Supply Unmatched","Demand Unmatched"),
        fitstat = ~ ivf.stat +  r2+ n)
 
 iv_results_feols_all_lag_fe <- iv_results_feols_all_lag[!grepl("nfe", names(iv_results_feols_all_lag))]
@@ -194,7 +198,7 @@ all_models_lag <- unlist(
 
 etable(all_models_lag,
        keep = c("price"),
-       headers = c("Supply Unmatched","Demand Unmatched", "Supply Matched", "Demand Matched"),
+       headers = c("Supply Unmatched","Demand Unmatched"),
        fitstat = ~ ivf.stat +  r2+ n)
 #write.csv(coef_table_feols_all, "coef_table_feols_all.csv")
 
@@ -205,9 +209,9 @@ all_models_combined <- c(all_models, all_models_lag)
 
 # Extraire infos
 summary_table <- map_dfr(all_models_combined, ~ extract_coef_ivf(.x, "fit_log(price + 1)"))
-summary_table$Model <- rep(c("Supply", "Demand"), 4)
-summary_table$Matching <- rep(c(rep("Unmatched",2), rep("Matched",2)), 2)
-summary_table$Lag <-c(rep(0,4), rep(1,4))
+summary_table$Model <- rep(c("Supply", "Demand"), 2)
+summary_table$Matching <- rep(c(rep("Unmatched",2)), 2)
+summary_table$Lag <-c(rep(0,2), rep(1,2))
 summary_table
 
 

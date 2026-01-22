@@ -100,7 +100,7 @@ reconstruct_full_curve_shift_qty_supply_unmatched<- read_parquet( 'reconstruct_f
 
 price_indispo_merge_esp %>% 
   filter(delivery_date == selected_day) %>% 
-  dplyr::select(datetime, price, gen_tot_da)
+  dplyr::select(datetime, price, load_tot)
 
 # Convert to data.table if not already
 setDT(reconstruct_full_curve_shift_qty_supply_unmatched)

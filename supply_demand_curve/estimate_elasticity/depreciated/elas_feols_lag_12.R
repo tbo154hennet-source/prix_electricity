@@ -30,14 +30,14 @@ price_indispo_merge_delta_clean_panel <- price_indispo_merge_delta_clean %>%
   filter( n ==1)
 # Refit with panel index so NW knows what to use
 ss_supply <- feols(
-  log(gen_tot_da) ~ price_hat_supply + delta_d_total + spot_gas | delivery_date + creneau,
+  log(load_tot) ~ price_hat_supply + delta_d_total + spot_gas | delivery_date + creneau,
   data = price_indispo_merge_delta_clean_panel,
   panel.id = ~ delivery_date + creneau # <-- panel index (time, id)
 )
 
 # Demand elasticity (2SLS)
 ss_demand <- feols(
-  log(gen_tot_da) ~ price_hat_demand +delta_s_total  + spot_gas | delivery_date + creneau,
+  log(load_tot) ~ price_hat_demand +delta_s_total  + spot_gas | delivery_date + creneau,
   data = price_indispo_merge_delta_clean_panel,
   panel.id = ~ delivery_date + creneau
 )
@@ -119,7 +119,7 @@ price_indispo_merge_delta_clean$price_hat_demand_lag12[obs(fs_demand_lag12)] <- 
 
 # formule propre (juste un seul as.formula)
 iv_formula_supply_lag12_ss <- as.formula(paste(
-  "log(gen_tot_da) ~ price_hat_supply_lag12 + delta_d_total + spot_gas +",
+  "log(load_tot) ~ price_hat_supply_lag12 + delta_d_total + spot_gas +",
   paste(c(lag_exog_s, lag_exog_d), collapse = " + "), "| delivery_date + creneau"
 ))
 
@@ -133,7 +133,7 @@ ss_supply_lag12 <- feols(
 #coef_se_supply_lag12 <- coeftable(ss_supply_lag12, vcov = NW(24))
 
 iv_formula_demand_lag12_ss <- as.formula(paste(
-  "log(gen_tot_da) ~ price_hat_demand_lag12 + delta_s_total + spot_gas +",
+  "log(load_tot) ~ price_hat_demand_lag12 + delta_s_total + spot_gas +",
   paste(c(lag_exog_s, lag_exog_d), collapse = " + "
 ), "| delivery_date + creneau"))
 

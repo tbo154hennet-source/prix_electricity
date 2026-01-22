@@ -523,6 +523,7 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
   if (k == 1) {
     bootIRFs <- array(NA, dim = c(irhor, n, nboot))
     boot_structural_shocks <- matrix(NA_real_, nrow = nboot, ncol = T)  # 1 shock x T, répété nboot fois
+    bootres_s  <- array(NA, dim = c(T, n, nboot))
   }else{
     bootIRFs <- array(NA, dim = c(irhor, n, nboot,k))
   }
@@ -602,10 +603,10 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
     
     
     
-    
     if(k==1){
       bootIRFs[,,j] <- lambda_0_boot
       boot_structural_shocks[j, ] <- as.numeric(structural_shocks_IV_boot[1, ])  # stocke le DRAW j
+      bootres_s[,,j] <- bootres
     }else{
       bootIRFs[,,j,] <- lambda_0_boot
     }
@@ -614,6 +615,6 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
     # bootvarEst <- vars::VAR(bootData[(p+1):(T+p), ], p = p, type = "const")
     
   }
-  return(list(bootIRFs = bootIRFs, boot_structural_shocks = boot_structural_shocks))
+  return(list(bootIRFs = bootIRFs, boot_structural_shocks = boot_structural_shocks, bootres_s = bootres_s))
 }
 

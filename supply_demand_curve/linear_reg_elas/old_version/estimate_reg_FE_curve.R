@@ -16,7 +16,7 @@ reconstruct_full_curve_shift_qty_demand_matched<- reconstruct_full_curve_shift_q
 #fusion
 reconstruct_full_curve_shift_qty_demand_matched_local <- merge(
   reconstruct_full_curve_shift_qty_demand_matched,
-  price_indispo_merge_esp[, .(delivery_date, hour,  weekday, price, gen_tot, gen_tot_da)],
+  price_indispo_merge_esp[, .(delivery_date, hour,  weekday, price, gen_tot, load_tot)],
   by.x = c("DATE", "Hour"),
   by.y = c("delivery_date", "hour")
 )
@@ -50,7 +50,7 @@ reconstruct_full_curve_shift_qty_supply_matched<- reconstruct_full_curve_shift_q
 #fusion
 reconstruct_full_curve_shift_qty_supply_matched_local <- merge(
   reconstruct_full_curve_shift_qty_supply_matched,
-  price_indispo_merge_esp[, .(delivery_date, hour,  weekday, price, gen_tot, gen_tot_da)],
+  price_indispo_merge_esp[, .(delivery_date, hour,  weekday, price, gen_tot, load_tot)],
   by.x = c("DATE", "Hour"),
   by.y = c("delivery_date", "hour")
 )

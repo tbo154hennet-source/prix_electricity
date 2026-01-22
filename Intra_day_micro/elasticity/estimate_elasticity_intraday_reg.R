@@ -1,5 +1,9 @@
 library(AER)
 library(stargazer)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(arrow)
 
 # nota bene gen_da est une prédiction
 # alors que j'obtiens le day ahead réalisé avec mes auction data
@@ -15,8 +19,11 @@ auction_reg_renewable_data <- read_parquet( "auction_reg_renewable_data.parquet"
          `Wind Onshore`= `Wind Onshore`/1000,
          intraday_Wind = intraday_Wind /1000,
          update_wind = intraday_Wind - Fore_Wind,
-         unpredicted_wind = `Wind Onshore` -intraday_Wind
+         update_solar = intraday_Solar - Fore_Solar,
+         unpredicted_wind = `Wind Onshore` -intraday_Wind,
+         unpredicted_solar = Solar - intraday_Solar
   )
+
 
 #se débarrasser des jours avec des sessions d'enchère incomplètes
 auction_reg_renewable_data %>% 
@@ -35,6 +42,7 @@ auction_reg_renewable_data <- auction_reg_renewable_data %>%
   )%>% 
   distinct()
 
+
 # Créer une version "nettoyee
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
@@ -44,89 +52,120 @@ controls_clean <- c( "year", "month", "weekday", "creneau", "spot_gas")
 controls_others <- c("Fore_Solar", "Fore_Wind" ,
                      "temperature_supply" , "precipitation_supply",
                      "relative_humidity_supply", "price_da",
-                      "gen_exch_da"#, "gen_pred_da","gen_exch_spot"
+                      "load_tot_da"#, "gen_pred_da","gen_exch_spot"
                      )
 
-
 present_vars <- c(
-  "qty_1to5",                  # dependent variable
-  "price_diff_1to5",           # needed to build right_term
-  "gen_exch_da", "price_da",   # needed for right_term too
-  "QTY", "PRICE", "update_wind",
+  "qty_1to5",  "qty_5", "qty_first_1",   "price_first_1",            # dependent variable
+  "price_diff_0to1" , "price_diff_5",  "price_diff_1to5",           # needed to build right_term
+  "load_tot_da", "load_forecast_da", "price_da",   # needed for right_term too
+  "QTY", "PRICE", "update_wind", "update_solar",
   controls_clean,              # raw versions of controls_vars
-  setdiff(controls_others, c("price_da", "gen_exch_da")) # others
+  setdiff(controls_others, c("price_da", "load_tot_da", "load_forecast_da")) # others
 )
 
-# Build the formula as a string
-ols_formula_str_wind <- as.formula(
-  paste("qty_1to5", "~",  
-  paste(c("right_term",  controls_vars 
-          ,setdiff(controls_others, c("price_da",  "gen_exch_da"))
-          ),
-        collapse = " + ")),
-)
-m_ols_wind <- ivreg(
-  ols_formula_str_wind,
-  data = auction_reg_renewable_data %>%
-    dplyr::select(all_of(present_vars))%>%
-    filter(price_da >1) %>% 
-    mutate(right_term = price_diff_1to5*gen_exch_da/price_da) %>%
-    filter(complete.cases(.)) 
+library(fixest)
+library(dplyr)
+
+# données
+wind_reg_data <- auction_reg_renewable_data %>%
+  dplyr::select(all_of(c(present_vars, "datetime"))) %>%
+  filter(price_da > 1) %>%
+  mutate(right_term = price_diff_1to5 * load_tot_da / price_da) %>%
+  filter(complete.cases(.)) %>% 
+  mutate(year = factor(year), month = factor(month),
+         creneau = factor(creneau)
+         )
+
+# RHS OLS (tu enlèves price_da et load_tot_da comme tu faisais)
+rhs_ols <- c(
+  "right_term",
+  controls_vars,
+  setdiff(controls_others, c("price_da", "load_tot_da"))
 )
 
-# auction_reg_renewable_data %>%
-#   dplyr::select(all_of(rev(present_vars)))%>% 
-#   filter(price_da <= 0)
-# 
-# test = auction_reg_renewable_data %>%
-#   dplyr::select(all_of(present_vars))%>% 
-#   mutate(right_term = price_diff_1to5*gen_exch_da/price_da) %>%
-#   filter(complete.cases(.))
-# View(test)
 
-# Build the formula as a string
-iv_formula_str_wind <- as.formula(paste(
-  paste("qty_1to5", "~",  paste(c("right_term", controls_vars, controls_others), collapse = " + ")),
-  paste(paste(c("update_wind", controls_vars, controls_others), collapse = " + ")),
-  sep = " | "
+fml_ols <- as.formula(paste("qty_1to5 ~", paste(rhs_ols, collapse = " + ")))
+
+m_ols_wind_fx <- feols(
+  fml_ols,
+  data = wind_reg_data,
+  vcov = DK(24) ~ datetime
+)
+rhs_exog <- c(controls_clean, controls_others)
+
+fml_iv <- as.formula(paste(
+  "qty_1to5 ~",
+  paste(c(rhs_exog), collapse = " + "),
+  "| right_term ~ update_wind"   # <-- IV fixest
 ))
 
-m_iv_wind <- ivreg(iv_formula_str_wind , data = auction_reg_renewable_data %>%
-                  dplyr::select(all_of(present_vars))%>%
-                  filter(price_da >1) %>% 
-                  mutate(right_term = price_diff_1to5*gen_exch_da/price_da) %>%
-                  filter(complete.cases(.)))
-
-
-# Create LaTeX code with regression results
-reg_table_renwables_bis <- stargazer(
-  m_ols_wind,
-  m_iv_wind,
-  #m_renew_plant, 
-  type = "text",
-  title = "Regression Results",
-  column.labels = c("OLS",  "IV"),#,
-  #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("log_price", "right_term" )
+m_iv_wind_fx <- feols(
+  fml_iv,
+  data = wind_reg_data,
+  vcov = DK(24) ~ datetime
+)
+etable(
+  m_ols_wind_fx,
+  m_iv_wind_fx,
+  se = "standard",          # SE déjà définies via vcov DK
+  dict = c(right_term = "right_term"),
+  keep = "right_term",
+  headers = c("OLS (DK24)", "IV (DK24)")
 )
 
 
 
-extract_coef_se <- function(model, variable = "log(gen_tot)") {
-  s <- summary(model)
-  est <- s$coefficients[variable, "Estimate"]
-  se  <- s$coefficients[variable, "Std. Error"]
-  return(c(est = est, se = se))
+
+# Fonction pour extraire coef + IVF
+extract_coef_ivf <- function(model, var_name = "fit_log(price + 1)", IV = TRUE) {
+  # Si model est une liste (supply/demand), prendre le premier élément
+  if (is.list(model) && inherits(model[[1]], "fixest")) {
+    mod <- model[[1]]
+  } else if (inherits(model, "fixest")) {
+    mod <- model
+  } else {
+    stop("Model must be a fixest object or a list of fixest objects")
+  }
+  
+  # Coefficient
+  
+  if (IV){
+    coef_val <- mod$coefficients[paste0("fit_",var_name)]
+    se_val <-mod$se[paste0("fit_",var_name)]
+    # IV-F statistic
+    ivf_val <- fitstat(summary(mod, stage = 1), type = "ivf")
+    
+    # Retourne un tibble
+    return(tibble(
+      Model = deparse(substitute(model)),  # nom du modèle
+      Coef = coef_val,
+      Se = se_val,
+      IVF = ivf_val$ivf1$stat
+    ))
+    
+  }else{
+    
+    coef_val <- mod$coefficients[var_name]
+    se_val <-mod$se[var_name]
+    return(tibble(
+      Model = deparse(substitute(model)),  # nom du modèle
+      Coef = coef_val,
+      Se = se_val,
+      IVF = NA_real_
+    ))
+  }
+  
 }
 
-coef_se_ols_wind  <- extract_coef_se(model = m_ols_wind, variable="right_term")
-coef_se_iv_wind  <- extract_coef_se(m_iv_wind, "right_term")
+coef_se_ols_wind  <- extract_coef_ivf(model = m_ols_wind_fx, var_name ="right_term", IV = FALSE)
+coef_se_iv_wind  <- extract_coef_ivf(model =m_iv_wind_fx, var_name ="right_term")
 
 
 df_wind_id <- data.frame(
   Model = c("Intraday OLS", 'Intraday IV'),
-  Estimate = c(coef_se_ols_wind["est"], coef_se_iv_wind["est"] ),
-  StdError = c(coef_se_ols_wind["se"], coef_se_iv_wind["se"]  )
+  Estimate = c(coef_se_ols_wind["Coef"], coef_se_iv_wind["Coef"] ),
+  StdError = c(coef_se_ols_wind["Se"], coef_se_iv_wind["Se"]  )
 )
 
 df_wind_id$Elasticity_CI <- paste0(
@@ -147,75 +186,53 @@ df_wind_id <- df_wind_id %>%
 
 
 
-
-
-
 library(stringr)
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 write.csv(df_wind_id, "df_wind_intrday")
 
-df_clean_da <- read.csv("df_clean_da.csv") %>% 
-  filter(Type =="Demand") %>% 
-  mutate(Type = "Day-ahead")
-
-df_clean_macro <- read.csv("df_clean_macro.csv")%>% 
-  filter(Type =="Demand")%>% 
-  mutate(Type = "Monthly")
 
 
-# Step 1: Combine the three dataframes
-df_all <- bind_rows(df_wind_id, df_clean_da, df_clean_macro)
-
-# Step 2: Keep only OLS and IV instruments
-df_plot <- df_all %>%
-  filter(Instrument %in% c("OLS", "IV"))
-
-# Step 3: Ensure 'Type' is a factor with the desired order
-df_plot <- df_plot %>%
-  mutate(Type = factor(Type, levels = rev(c("Intraday", "Day-ahead", "Monthly"))))
-
-# Step 4: Extract numeric Elasticity and SE from Elasticity_CI
-df_plot <- df_plot %>%
-  mutate(
-    Elasticity = as.numeric(str_extract(Elasticity_CI, "^-?\\d+\\.?\\d*")),
-    SE = as.numeric(str_extract(Elasticity_CI, "(?<=\\()\\-?\\d+\\.?\\d*(?=\\))"))
-  )
-
-# Step 5: Plot
-plot_supply_elas <- ggplot(df_plot, aes(x = Type, y = Elasticity, color = Instrument)) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
-  geom_errorbar(aes(ymin = Elasticity - SE, ymax = Elasticity + SE),
-                width = 0.2, position = position_dodge(width = 0.5)) +
-  labs(
-    x = NULL,
-    y = "Elasticity",
-    #title = "Time Evolution of Supply Elasticities"
-  ) +
-  theme_minimal() +
-  scale_color_manual(values = c("OLS" = "blue", "IV" = "red"))+
-  theme(legend.text = element_text(size = 15),      # taille du texte
-        legend.title = element_text(size = 16),     # taille du titre
-        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
-        axis.title.x = element_text(size = 14),   # taille du titre axe x
-        axis.title.y = element_text(size = 14),   # taille du titre axe y
-        axis.text.x  = element_text(size = 16, angle = 45, hjust = 1),  # taille et rotation des ticks x
-        axis.text.y  = element_text(size = 16)    # taille des ticks y
-  )
-
-save_latex_path <- "Z:/Overleaf_elec/images/intra_day"
-setwd(save_latex_path)
-
-# Save the plot as a PDF (or PNG)
-ggsave(
-  filename = "plot_supply_elas.png",   # or "plot_supply_elas.png"
-  plot = plot_supply_elas,
-  width = 10,    # width in inches
-  height = 6,   # height in inches
-  units = "in",
-  device = "png" # or "png"
-)
+# Day ahead forecast 18:00 on day before delivery
+# That is between the first and second auction of the intraday market
+# 
+# Intraday forecast at 8.00: at least one update to be published at 8.00 Brussels time on the day of actual delivery for intra-day. 
+# This value is the most recent forecast at 8:00 the day of delivery
 
 
 
+library(fixest)
+
+# Dépendantes à estimer
+dep_vars <- c("price_diff_1to5", "price_diff_0to1", "price_diff_5")
+
+# RHS commun
+rhs_vars <- c("update_wind", controls_vars, controls_others)
+
+# time var pour DK (à adapter)
+time_var <- "datetime"  # ou "auction_date_plus_one" si c'est ta vraie dimension temps
+
+# (Optionnel) FE si tu en as: fe_vars <- c("creneau", "month", "weekday") etc.
+# Si pas de FE: fe_part <- ""
+# Si FE: fe_part <- paste(fe_vars, collapse = " + ")
+fe_part <- ""  # <- mets ici tes FE si tu veux: "creneau + weekday" etc.
+
+# Fonction pour faire une formule fixest
+make_feols_fml <- function(y, xvars, fe_part = "") {
+  rhs <- paste(xvars, collapse = " + ")
+  if (nzchar(fe_part)) {
+    as.formula(paste0(y, " ~ ", rhs, " | ", fe_part))
+  } else {
+    as.formula(paste0(y, " ~ ", rhs))
+  }
+}
+
+# Estimation en batch
+models_fs <- setNames(lapply(dep_vars, function(y) {
+  fml <- make_feols_fml(y, rhs_vars, fe_part = fe_part)
+  feols(fml, data = wind_reg_data, vcov = as.formula(paste0("DK(24) ~ ", time_var)))
+}), dep_vars)
+
+# Afficher un tableau
+etable(models_fs)
 
 

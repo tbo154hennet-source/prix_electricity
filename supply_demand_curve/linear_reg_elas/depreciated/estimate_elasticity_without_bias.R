@@ -55,14 +55,14 @@ exog_instr_s <- "delta_s_orth_ni"
 exog_instr_d <- "delta_d_orth_ni"
 
 iv_formula_supply_str_ortho_ni <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_var_ni ), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_var_ni ), collapse = " + ")),
   paste(paste(c(exog_instr_s, controls_var_ni), collapse = " + ")),
   sep = " | "
 ))
 
 #iv_formula
 iv_formula_demand_str_ortho_ni <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c( "log(price+1)", controls_var_ni), collapse = " + ")),
+  paste("log(load_tot)", "~",  paste(c( "log(price+1)", controls_var_ni), collapse = " + ")),
   paste(paste(c(exog_instr_d,  controls_var_ni), collapse = " + ")),
   sep = " | "
 ))
@@ -105,7 +105,7 @@ reg_table <- stargazer(
       round(fstat_iv_s_ortho_ni, 2)
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 
@@ -119,7 +119,7 @@ lag_exog_d <- paste0("lag(", exog_instr_d, ", ", 1:12, ")")
 # Example for supply with lagged exog_instr_s
 iv_formula_supply_lag12_orth_ni <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_var_ni,lag_exog_d, lag_exog_s), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_var_ni,lag_exog_d, lag_exog_s), collapse = " + ")),
   # Instrument set (lagged exog_instr_s instead of contemporaneous)
   paste(paste(c( exog_instr_s, lag_exog_d, lag_exog_s,controls_var_ni), collapse = " + ")),
   sep = " | "
@@ -132,7 +132,7 @@ nw_s_lag12_orth_ni <- coeftest(m_iv_s_lag12_orth_ni, vcov. = nw_se_s_lag12_orth_
 
 iv_formula_demand_lag12_orth_ni <- as.formula(paste(
   # Structural equation
-  paste("log(gen_tot_da)", "~", paste(c("log(price+1)", controls_var_ni, lag_exog_d, lag_exog_s), collapse = " + ")),
+  paste("log(load_tot)", "~", paste(c("log(price+1)", controls_var_ni, lag_exog_d, lag_exog_s), collapse = " + ")),
   # Instrument set (lagged exog_instr_d instead of contemporaneous)
   paste(paste(c(exog_instr_d, lag_exog_d, lag_exog_s, controls_var_ni), collapse = " + ")),
   sep = " | "
@@ -170,7 +170,7 @@ reg_table <- stargazer(
       round(fstat_iv_s_ortho_ni, 2)
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 

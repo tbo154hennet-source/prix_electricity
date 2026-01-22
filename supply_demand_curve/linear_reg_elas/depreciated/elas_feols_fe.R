@@ -30,14 +30,14 @@ price_indispo_merge_delta_clean_panel <- price_indispo_merge_delta_clean %>%
   filter( n ==1)
 # Refit with panel index so NW knows what to use
 ss_supply <- feols(
-  log(gen_tot_da) ~ price_hat_supply + delta_d_total + spot_gas | delivery_date + creneau,
+  log(load_tot) ~ price_hat_supply + delta_d_total + spot_gas | delivery_date + creneau,
   data = price_indispo_merge_delta_clean_panel,
   panel.id = ~ delivery_date + creneau # <-- panel index (time, id)
 )
 
 # Demand elasticity (2SLS)
 ss_demand <- feols(
-  log(gen_tot_da) ~ price_hat_demand +delta_s_total  + spot_gas | delivery_date + creneau,
+  log(load_tot) ~ price_hat_demand +delta_s_total  + spot_gas | delivery_date + creneau,
   data = price_indispo_merge_delta_clean_panel,
   panel.id = ~ delivery_date + creneau
 )
@@ -73,13 +73,13 @@ price_indispo_merge_delta_clean$price_hat_demand <- price_hat_demand
 
 # Supply elasticity (2SLS)
 ss_supply_orth <- feols(
-  log(gen_tot_da) ~ price_hat_supply   | delivery_date + creneau,
+  log(load_tot) ~ price_hat_supply   | delivery_date + creneau,
   data = price_indispo_merge_delta_clean
 )
 
 # Demand elasticity (2SLS)
 ss_demand_orth <- feols(
-  log(gen_tot_da) ~ price_hat_demand  | delivery_date + creneau,
+  log(load_tot) ~ price_hat_demand  | delivery_date + creneau,
   data = price_indispo_merge_delta_clean
 )
 summary(ss_demand_orth)
@@ -123,14 +123,14 @@ etable(
 # 
 # # Supply elasticity (2SLS)
 # ss_supply_orth <- feols(
-#   log(gen_tot_da) ~ price_hat_supply   | delivery_date + creneau,
+#   log(load_tot) ~ price_hat_supply   | delivery_date + creneau,
 #   data = price_indispo_merge_delta_tot_clean
 # )
 # 
 # 
 # # Demand elasticity (2SLS)
 # ss_demand_orth <- feols(
-#   log(gen_tot_da) ~ price_hat_demand  | delivery_date + creneau,
+#   log(load_tot) ~ price_hat_demand  | delivery_date + creneau,
 #   data = price_indispo_merge_delta_tot_clean
 # )
 # 

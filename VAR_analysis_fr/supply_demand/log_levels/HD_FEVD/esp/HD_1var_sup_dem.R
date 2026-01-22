@@ -27,7 +27,7 @@ vl_demand <- if (is.null(controls)) {
   vars::VAR(x_demand, p, type = "none", exogen = controls)
 }
 
-coef = coef(vl)
+coef = coef(vl_demand)
 bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
 res_demand = residuals(vl_demand)
 
@@ -67,7 +67,7 @@ structural_shocks <-   res_demand %*%  solve(P)
 
 # Compute historical decomposition for each variable
 # Initialize matrix_demand to store historical decomposition
-n_obs <- nrow(res)
+n_obs <- nrow(res_demand)
 hd_cholesky <-array(NA, dim = c(n_obs,  n_vars_demand, n_vars_demand))
 
 

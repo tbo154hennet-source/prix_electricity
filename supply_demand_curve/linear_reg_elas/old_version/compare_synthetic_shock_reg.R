@@ -33,14 +33,14 @@ price_indispo_merge_compare <- merge(price_indispo_merge_esp_sd %>%
                                        select(datetime,
                               cols_fitted_supply , cols_fitted_demand   ),
                                      price_indispo_merge_esp_delta %>% 
-                                       select(delta_s_total, delta_d_total, gen_tot, gen_tot_da, price, datetime)
+                                       select(delta_s_total, delta_d_total, gen_tot, load_tot, price, datetime)
 ) %>% distinct(datetime, .keep_all = TRUE)
 
 
 
 View(
   price_indispo_merge_compare %>% 
-    select(c("datetime", "gen_tot", "price", "gen_tot_da",  
+    select(c("datetime", "gen_tot", "price", "load_tot",  
              "delta_s_total", "delta_d_total",
              cols_fitted_supply,
              cols_fitted_demand)))
@@ -70,8 +70,8 @@ price_indispo_merge_delta_clean <- price_indispo_merge_compare %>%
   distinct()
 
 dep_var <- "log(price+1)"
-endog_vars <- c("log(gen_tot_da)")
-#endog_vars <- c("log(gen_tot_da)")
+endog_vars <- c("log(load_tot)")
+#endog_vars <- c("log(load_tot)")
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
                    "as.factor(weekday)", "as.factor(creneau)"
@@ -122,7 +122,7 @@ cols_fitted_bis <- setdiff(grep("^fit_", names(price_indispo_merge_delta_clean),
 
 library(AER)
 ols_formula <- as.formula(paste(
-  paste("log(gen_tot_da)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + "))))  
+  paste("log(load_tot)", "~",  paste(c("log(price+1)", controls_vars), collapse = " + "))))  
 
 m_ols <- ivreg(ols_formula , data = price_indispo_merge_delta_clean)
 
@@ -170,7 +170,7 @@ for(s_col in c("delta_supply_orth", cols_fitted_supply_orth)){
   
   # Formule IV pour supply
   iv_formula_s <- as.formula(paste(
-    paste("log(gen_tot_da) ~ log(price+1) +", paste(controls_vars, collapse = " + ")),
+    paste("log(load_tot) ~ log(price+1) +", paste(controls_vars, collapse = " + ")),
     paste(s_col, "+", paste(controls_vars, collapse = " + ")),
     sep = " | "
   ))
@@ -178,7 +178,7 @@ for(s_col in c("delta_supply_orth", cols_fitted_supply_orth)){
   
   # Formule IV pour demand
   iv_formula_d <- as.formula(paste(
-    paste("log(gen_tot_da) ~ log(price+1) +", paste(controls_vars, collapse = " + ")),
+    paste("log(load_tot) ~ log(price+1) +", paste(controls_vars, collapse = " + ")),
     paste(d_col, "+", paste(controls_vars, collapse = " + ")),
     sep = " | "
   ))
@@ -243,7 +243,7 @@ stargazer(
   #column.labels = column_labels_supply,
   column.labels = c("Delta","Unmatched FE", "Unmatched"),
   add.lines = list(c("First-stage F-stat", rep(F_stat_supply, each = 1))),
-  keep = c("gen_tot_da", "price")
+  keep = c("load_tot", "price")
 )
 
 
@@ -254,7 +254,7 @@ stargazer(
   #column.labels = column_labels_demand,
   column.labels = c("Delta","Unmatched FE", "Unmatched"),
   add.lines = list(c("First-stage F-stat", rep(F_stat_demand, each = 1))),
-  keep = c("gen_tot_da", "price")
+  keep = c("load_tot", "price")
 )
 
 
@@ -295,14 +295,14 @@ for(s_col in c("delta_supply_orth", cols_fitted_supply_orth)){
   
   # Formule IV supply
   iv_formula_s <- as.formula(paste(
-    paste("log(gen_tot_da) ~ log(price+1) +", paste(c(controls_vars, lag_exog_s), collapse = " + ")),
+    paste("log(load_tot) ~ log(price+1) +", paste(c(controls_vars, lag_exog_s), collapse = " + ")),
     paste(s_instruments, "+", paste(c(controls_vars, lag_exog_s), collapse = " + ")),
     sep = " | "
   ))
   
   # Formule IV demand
   iv_formula_d <- as.formula(paste(
-    paste("log(gen_tot_da) ~ log(price+1) +", paste(c(controls_vars, lag_exog_d), collapse = " + ")),
+    paste("log(load_tot) ~ log(price+1) +", paste(c(controls_vars, lag_exog_d), collapse = " + ")),
     paste(d_instruments, "+", paste(c(controls_vars, lag_exog_d), collapse = " + ")),
     sep = " | "
   ))
@@ -362,7 +362,7 @@ stargazer(
   #column.labels = column_labels_supply,
   column.labels = c("Delta","Unmatched FE", "Unmatched"),
   add.lines = list(c("First-stage F-stat", rep(F_stat_supply_lag, each = 1))),
-  keep = c("gen_tot_da", "price")
+  keep = c("load_tot", "price")
 )
 
 
@@ -373,7 +373,7 @@ stargazer(
   #column.labels = column_labels_demand,
   column.labels = c("Delta","Unmatched FE", "Unmatched"),
   add.lines = list(c("First-stage F-stat", rep(F_stat_demand_lag, each = 1))),
-  keep = c("gen_tot_da", "price")
+  keep = c("load_tot", "price")
 )
 
 

@@ -1,7 +1,7 @@
 
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final.parquet")
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 colnames(price_indispo_merge_esp_npc)
 # price_indispo_merge_esp_npc  <- price_indispo_merge_esp_npc  %>%
 #   left_join(wind_solar_openmeteo_data , by=c('datetime' = 'date'))
@@ -21,18 +21,18 @@ inst_name_d <- c("cold_excess_demand", "heat_excess_demand")
 
 iv_wind_controls <- paste0(setdiff(my_factors, "Fore_Wind"), collapse = " + ")
 iv_wind_supply_formula <-  as.formula(
-  paste0("log(gen_tot_da) ~  year + month + creneau + spot_gas +wind_speed_100m_demand +", iv_wind_controls, " | log(price + 1) ~ wind_speed_100m_supply "))
-iv_wind_supply_m <- feols(iv_wind_supply_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+  paste0("log(load_tot) ~  year + month + creneau + weekday + spot_gas +wind_speed_100m_demand +", iv_wind_controls, " | log(price + 1) ~ wind_speed_100m_supply "))
+iv_wind_supply_m <- feols(iv_wind_supply_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 
 iv_temp_supply_controls_bis <- "heat_excess_supply + cold_excess_supply+"  
 iv_temp_supply_controls <-setdiff(temp_factors, inst_name_d)
 iv_temp_controls <- paste0(setdiff(my_factors, temp_factors ), collapse = " + ")
 iv_temp_supply_formula <-  as.formula(
-  paste0("log(gen_tot_da) ~  year + month + creneau + spot_gas +",iv_temp_controls, "+", paste0(iv_temp_supply_controls , collapse = " + "),
+  paste0("log(load_tot) ~  year + month + creneau + weekday + spot_gas +",iv_temp_controls, "+", paste0(iv_temp_supply_controls , collapse = " + "),
          " | log(price + 1) ~ cold_excess_demand + heat_excess_demand"))
 
-iv_temp_supply_m <- feols(iv_temp_supply_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+iv_temp_supply_m <- feols(iv_temp_supply_formula, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 
 
@@ -55,7 +55,7 @@ lag_controls_s <- paste0(c(inst_name_s, "wind_speed_100m_demand"), "_lag", 1, co
 
 iv_formula_s <- as.formula(
   paste0(
-    "log(gen_tot_da) ~  year + month + creneau + spot_gas +",
+    "log(load_tot) ~  year + month + creneau + weekday + spot_gas +",
     iv_wind_controls, " +wind_speed_100m_demand  + ", lag_controls_s," | log(price + 1) ~ ", inst_name_s
   )
 )
@@ -63,7 +63,7 @@ iv_formula_s <- as.formula(
 # 
 # iv_formula_d <- as.formula(
 #   paste0(
-#     "log(gen_tot_da) ~  year + month + creneau + spot_gas +",
+#     "log(load_tot) ~  year + month + creneau + weekday + spot_gas +",
 #     iv_temp_supply_controls,iv_temp_controls," | log(price + 1) ~ ", paste0(inst_name_d, collapse = " + ")
 #   )
 # )
@@ -72,16 +72,16 @@ lag_controls_d <- paste0(c(inst_name_d, iv_temp_supply_controls), "_lag", 1, col
 
 iv_formula_d <- as.formula(
   paste0(
-    "log(gen_tot_da) ~  year + month + creneau + spot_gas +",
+    "log(load_tot) ~  year + month + creneau + weekday + spot_gas +",
     iv_temp_controls, "+", paste0(iv_temp_supply_controls , collapse = " + "), " + ", lag_controls_d,
     " | log(price + 1) ~ ", paste0(inst_name_d, collapse = " + ")
   )
 )
 
 
-iv_wind_lag_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+iv_wind_lag_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
-iv_temp_lag_supply <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), NW(24) ~ datetime)
+iv_temp_lag_supply <- feols(iv_formula_d, data = price_indispo_merge_esp_npc %>% filter(price >=10), DK(24) ~ datetime)
 
 
 etable(

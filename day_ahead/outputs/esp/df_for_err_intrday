@@ -1,0 +1,3 @@
+"","Model","Elasticity_CI","Instrument","Type"
+"1","Intraday OLS","-0.00158 (0.00827)","OLS","Intraday"
+"2","Intraday IV","0.03441 (0.07353)","IV","Intraday"

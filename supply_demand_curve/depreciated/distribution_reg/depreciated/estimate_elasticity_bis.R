@@ -75,7 +75,7 @@ demand_FE <- feols(log(QTY) ~ log(PRICE) | Hour + DATE + month +year,
 #fusion
 reconstruct_full_curve_shift_qty_demand_unmatched_local <- merge(
   reconstruct_full_curve_shift_qty_demand_unmatched,
-  price_indispo_merge_esp[, .(delivery_date, hour, price, gen_tot, gen_tot_da)],
+  price_indispo_merge_esp[, .(delivery_date, hour, price, gen_tot, load_tot)],
   by.x = c("DATE", "Hour"),
   by.y = c("delivery_date", "hour")
 )
@@ -84,7 +84,7 @@ reconstruct_full_curve_shift_qty_demand_unmatched_local <- merge(
 reconstruct_full_curve_shift_qty_demand_unmatched_local <- reconstruct_full_curve_shift_qty_demand_unmatched_local[
   , .SD[
     PRICE >= price - 20 & PRICE <= price + 20&
-      QTY   >= gen_tot_da - 2000 & QTY   <= gen_tot_da + 2000
+      QTY   >= load_tot - 2000 & QTY   <= load_tot + 2000
   ],
   by = .(DATE, Hour)
 ]
@@ -135,7 +135,7 @@ supply_FE <- feols(log(QTY) ~ log(PRICE) | Hour + DATE + month +year,
 #fusion
 reconstruct_full_curve_shift_qty_supply_unmatched_local <- merge(
   reconstruct_full_curve_shift_qty_supply_unmatched,
-  price_indispo_merge_esp[, .(delivery_date, hour, price, gen_tot, gen_tot_da)],
+  price_indispo_merge_esp[, .(delivery_date, hour, price, gen_tot, load_tot)],
   by.x = c("DATE", "Hour"),
   by.y = c("delivery_date", "hour")
 )
@@ -144,7 +144,7 @@ reconstruct_full_curve_shift_qty_supply_unmatched_local <- merge(
 reconstruct_full_curve_shift_qty_supply_unmatched_local <- reconstruct_full_curve_shift_qty_supply_unmatched_local[
   , .SD[
     PRICE >= price - 20& PRICE <= price + 20&
-      QTY   >= gen_tot_da - 2000 & QTY   <= gen_tot_da + 2000
+      QTY   >= load_tot - 2000 & QTY   <= load_tot + 2000
   ],
   by = .(DATE, Hour)
 ]

@@ -1,6 +1,6 @@
 library(data.table)
 
-setwd("Z:/code_supply_demand/code_intraday")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/code_intraday")
 #reconstruct_full_curve_shift_supply <- read_parquet( 'reconstruct_full_curve_shift_qty_intraday_supply_unmatched.parquet')
 reconstruct_full_curve_shift_supply_matched <- as.data.table(read_parquet( 'reconstruct_full_curve_shift_qty_intraday_supply_matched.parquet')
 )
@@ -19,7 +19,7 @@ auction_summary <- reconstruct_full_curve_shift_supply_matched[
 
 write_parquet(auction_summary, 'auction_summary_intraday.parquet')
 
-setwd("Z:/code_supply_demand/code_intraday")
+setwd("Z:/prix_electricite_gitlab/supply_demand_curve/code_intraday")
 auction_summary <-  read_parquet( 'auction_summary_intraday.parquet')
 #get day ahead exchanged quantity
 auction_summary <- auction_summary %>%
@@ -30,13 +30,13 @@ auction_summary <- auction_summary %>%
   ungroup()
 
 
+View(auction_summary %>% 
+       filter( DATE == as.Date("2020-03-15") & Hour ==1 ))
 #estimate elasticity
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
-setwd(save_path_entsoe_output)
-#write_parquet(first_stage_data_clean, "first_stage_data_clean")
-
-first_stage_data <- read_parquet( "first_stage_data_OMIE.parquet")
+output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+setwd(output_dir)
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 
 
 colnames_with_capacity <- colnames(first_stage_data)[grepl("Capacity", colnames(first_stage_data))]
@@ -81,30 +81,20 @@ colnames(first_stage_data_clean)
 #   group_by(auction) %>% 
 #   summarise(n = n())
 
-variables <- c("day_ahead_renewable_forecast"    ,"intraday_forecast",
-               "unpredicted_renewables" ,  "intraday_update_renewables" ,
-               "Fore_Solar", "Fore_Wind"  , "Wind Onshore",
-               "intraday_Solar"  , "intraday_Wind", "auction_before",
-               "Published.Unavailable.Capacity",  "Published.Unavailable.Nuclear.Capacity" ,   
-               "Published.Predicted.Unavailable.Capacity",   "Unpublished.Unavailable.Capacity",          
-               "Unpublished.Unavailable.Nuclear.Capacity",   "Unpublished.Predicted.Unavailable.Capacity",
-               "Uneffective.Unavailable.Capacity" ,          "Uneffective.Unavailable.Nuclear.Capacity"  ,
-               "Uneffective.Predicted.Unavailable.Capacity",
-               "temperature_supply" , "precipitation_supply" , "auction_date_plus_one", "creneau"  ,      
-               "price_diff", "log_price_diff",   "spot_gas", 
-               "relative_humidity_supply", "year", "month", "weekday", "creneau"
-)
 
 
+output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+setwd(output_dir)
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 
-  
-  
+
 auction_reg_data <- left_join(first_stage_data_clean %>% 
                                 distinct(),
-                              price_indispo_merge_esp%>%
-                                dplyr::select(datetime, price, gen_tot_da, spot_gas) %>%
+                              price_indispo_merge_esp_npc %>%
+                                dplyr::select(datetime, price, load_tot, load_forecast, spot_gas) %>%
                                 rename(price_da = price,
-                                       gen_pred_da = gen_tot_da
+                                       load_tot_da = load_tot,
+                                       load_forecast_da = load_forecast
                                        )%>% 
                                 distinct(),
                               by = "datetime"
@@ -114,11 +104,7 @@ auction_reg_data$hour <- hour(auction_reg_data$datetime)+1
 
 
 auction_reg_data <- left_join(
-  auction_reg_data %>% 
-    dplyr::select(datetime, delivery_date, hour, auction,
-                  datetime, price_da, gen_tot, gen_pred_da,
-                  variables
-    ),
+  auction_reg_data,
   auction_summary,
   by = c("delivery_date" = "DATE",
          "hour" = "Hour",
@@ -126,48 +112,39 @@ auction_reg_data <- left_join(
 ) %>% 
   filter(!is.na(PRICE))
 
-# 
-# auction_reg_data %>% 
-#   group_by(auction) %>% 
-#   summarize(n = n())
 
-
-
-
-#prepare renewable
-
-#on remarque une diff?rence avec le gen_tot_da
-
-# View(price_indispo_merge_esp%>%
-#        dplyr::select(datetime, delivery_date, price, gen_tot, gen_tot_da) %>%
-#        filter(delivery_date == "2021-09-27"))
-# View(auction_summary %>%
-#        filter(AUCTION == 0 & DATE == as.Date("2021-09-27")))
-# View(first_stage_data_clean %>%
-#        filter(auction_before ==0 & delivery_date== "2021-09-27") %>%
-#        mutate(price_da = as.numeric(price) - as.numeric(price_diff) )%>% 
-#        dplyr::select(datetime, auction,price_da, price, price_diff, log_price_diff, auction_before, auction_after))
-# View(first_stage_data_clean %>%
-#        filter( Published.Unavailable.Capacity > 0 ) %>%
-#        dplyr::select(datetime, auction, price, price_diff, log_price_diff, auction_before, auction_after, Published.Unavailable.Capacity))
-
-
-#colnames(auction_reg_renewable_data)
-
-auction_reg_renewable_data <- auction_reg_data  %>%
+auction_reg_renewable_data <- auction_reg_data %>%
+  mutate(
+    price    = as.numeric(price),
+    price_da = as.numeric(price_da),
+    QTY      = as.numeric(QTY)
+  ) %>%
   group_by(auction_date_plus_one, creneau) %>%
   summarise(
+    #Separate for auction before 0 to 1
+    price_first_1 = if (any(auction_before == 0, na.rm = TRUE)) {
+      first(price[auction_before == 0])
+    } else {
+      NA_real_
+    },
+    qty_first_1 = if (any(auction_before == 0, na.rm = TRUE)) {
+      first(QTY[auction_before == 0])
+    } else {
+      NA_real_
+    },
+    price_diff_0to1 = price_first_1 - price_da,
+    
     # Aggregate over auction_before 1 to 5
-    price_diff_1to5 = sum(price_diff[auction_before < 5], na.rm = TRUE),
-    log_price_diff_1to5 = sum(log_price_diff[auction < 5], na.rm = TRUE),
-    qty_1to5 = sum(QTY[auction_before < 5], na.rm = TRUE),
+    price_diff_1to5 = sum(price_diff[ auction_before >= 1 & auction_before < 5], na.rm = TRUE),
+    log_price_diff_1to5 = sum(log_price_diff[auction_before >= 1 & auction < 5], na.rm = TRUE),
+    qty_1to5 = sum(QTY[auction_before >= 1 & auction_before < 5], na.rm = TRUE),
     
     # Separate variable for auction_before == 6
     price_diff_5 = sum(price_diff[auction == 5], na.rm = TRUE),
     log_price_diff_5 = sum(log_price_diff[auction_before == 5], na.rm = TRUE),
     qty_5 = sum(QTY[auction_before ==5 ], na.rm = TRUE),
     
-    gen_exch_spot = gen_exch_da + sum(QTY, na.rm = TRUE),
+    #gen_exch_spot = gen_exch_da + sum(QTY, na.rm = TRUE),
     
     # Count auctions
     number_auctions = n(),
@@ -182,12 +159,12 @@ auction_reg_renewable_data <- auction_reg_data  %>%
   )%>% 
   arrange(auction_date_plus_one, as.numeric(creneau))
 
+View(auction_reg_data  %>% 
+       filter(datetime == as.POSIXct("2020-03-15 00:00:00")))
+View(auction_reg_renewable_data  %>% 
+       filter(datetime == as.POSIXct("2020-03-15 00:00:00")) %>% 
+       dplyr::select(datetime, auction, price_da, price_diff_0to1, price_diff_1to5, price_diff_5))
 
-
-# View(auction_reg_renewable_data %>% 
-#        select(datetime, gen_tot, 
-#               gen_pred_da, gen_exch_da,
-#               gen_exch_spot))
 
 save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
@@ -202,7 +179,7 @@ auction_reg_renewable_data_bis <- auction_reg_data  %>%
     price_diff_1to5 = sum(price_diff[auction_before < 6], na.rm = TRUE),
     log_price_diff_1to5 = sum(log_price_diff[auction < 6], na.rm = TRUE),
     qty_1to5 = sum(QTY[auction_before < 6], na.rm = TRUE),
-    gen_exch_spot = gen_exch_da + sum(QTY, na.rm = TRUE),
+    load_tot_spot = load_tot_da + sum(QTY, na.rm = TRUE),
     # Separate variable for auction_before == 6
     # price_diff_5 = sum(price_diff[auction == 5], na.rm = TRUE),
     # log_price_diff_5 = sum(log_price_diff[auction_before == 5], na.rm = TRUE),

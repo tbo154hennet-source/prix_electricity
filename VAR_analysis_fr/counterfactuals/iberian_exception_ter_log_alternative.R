@@ -77,16 +77,72 @@ lambda_0_log_supply_wedge <- get_lambda_0(C, theta_0_supply_wedge)
 
 
 
+# d: effet observé (T×1) = observed - counterfactual, sur la variable cible
+# psi: IRF (H×1) de cette variable au choc policy, horizon 0..H-1
+# Renvoie eps_policy (T×1)
 
-# Matrice T x 4 remplie de 0
-dim(eps_policy_hat)
-class(eps_policy_hat)
+recover_policy_shock <- function(d, psi) {
+  d <- as.numeric(d)
+  psi <- as.numeric(psi)
+  T <- length(d)
+  H <- length(psi)
+  
+  # Matrice Toeplitz triangulaire: d_t = sum_{h=0}^{min(H-1,t-1)} psi[h+1] * eps[t-h]
+  K <- matrix(0, nrow = T, ncol = T)
+  for (t in 1:T) {
+    hmax <- min(H - 1, t - 1)
+    for (h in 0:hmax) {
+      K[t, t - h] <- psi[h + 1]
+    }
+  }
+  
+  # Solve (least squares in case of noise / non-invertibility)
+  eps_hat <- qr.solve(K, d)
+  eps_hat
+}
 
 
-counterfactual_residuals <- res - contrib[-(1:p),] 
+# Example: target = electricity price gap
+d_price <-IV_data_log_esp_counterfactual$spot_price_log - IV_data_log_esp_counterfactual$counterfactual_spot_price_log 
+
+# psi: IRF of price to policy shock (from your identified supply shock channel)
+psi <- lambda_0_log_supply_wedge  # length H, starting at h=0
+
+eps_policy_hat <- recover_policy_shock(d_price, psi)
+IV_data_log_esp_counterfactual$eps_policy_hat <- eps_policy_hat
+ggplot()+
+  geom_line(data = IV_data_log_esp_counterfactual, aes(x= observation_date, y = eps_policy_hat, color = "Policy"))+
+  geom_line( aes(x= IV_data_fr$observation_date, y = IV_data_fr$spot_price/100, color = "FR"))
+
+
+
+# Contribution du choc policy aux innovations VAR (T-p x n)
+u_policy <- eps_policy_hat[-(1:p)] %o% theta_0_supply_wedge
+
+
+# Créer une matrice de zéros
+# eps_mat <- matrix(0, nrow = T, ncol = n)
+# # Mettre le choc uniquement dans la 1ère colonne
+# eps_mat[, 1] <- as.numeric(eps_policy_hat[-(1:p)])
+# Résidus contrefactuels
+counterfactual_residuals <- res - u_policy
+
+
 
 counterfactual_prediction <- iterate_var_ter(x= x_supply, initial_obs = vars_supply[1:p,], 
-                                    errors =counterfactual_residuals , var_model = vl)
+                                             errors =counterfactual_residuals , var_model = vl)
+dim(counterfactual_prediction)
+colnames(counterfactual_prediction)
+
+ggplot()+
+  geom_line(data = IV_data_log_esp, aes(x= observation_date, y= spot_price_log, color = "Original"))+
+  geom_line(data = IV_data_log_esp_counterfactual, aes(x= observation_date, y= counterfactual_spot_price_log, color = "Target"))+
+  geom_line( aes(x= IV_data_log_esp$observation_date, y= counterfactual_prediction$spot_price_log, color = "Counterfactual"))
+# 
+ggplot()+
+  geom_line(data = IV_data_log_esp, aes(x= observation_date, y= exp(spot_price_log), color = "Original"))+
+  geom_line(data = IV_data_log_esp_counterfactual, aes(x= observation_date, y= counterfactual_spot_price, color = "Target"))+
+  geom_line( aes(x= IV_data_log_esp$observation_date, y= exp(counterfactual_prediction$spot_price_log), color = "Counterfactual"))
 
 
 HICP_pred  <- counterfactual_prediction[, 5]
@@ -96,20 +152,24 @@ inflation_pred[(T_gas+p):(T_gas+h+p)]
 inflation_obs[(T_gas+p):(T_gas+h+p)]
 
 
-counterfactual_prediction[, 1]
+ggplot()+
+  geom_line(data = IV_data_log_esp, aes(x= observation_date, y= inflation_obs, color = "Original"))+
+  geom_line( aes(x= IV_data_log_esp$observation_date, y= inflation_pred, color = "Counterfactual"))
+
+
+
+
+HICP_pred  <- counterfactual_prediction[, 5]
+HICP_diff_pred<- c(NA, diff(HICP_pred))
+inflation_pred<- slide_dbl(HICP_diff_pred, sum, .before = 11, .complete = TRUE)
+inflation_pred[(T_gas+p):(T_gas+h+p)]
+inflation_obs[(T_gas+p):(T_gas+h+p)]
+
+
 # View(IV_data_esp_sim %>% 
 #        dplyr::select(counterfactual_spot_price, counterfactual_spot_price_sim, spot_price, policy_shock_sim, year, month))
 #a chaque fois il faut que je tire une trajectoire de policy shock
 nboot = 100
-policy_shock_samples <- vector("list", nboot)
-#get confidence interval by using bootstrap
-
-bet = do.call(cbind, lapply(1:n, function(x) coef(vl)[[x]][,1]))
-coef_hat <- as.vector(bet)
-# Covariance des coefficients
-coef_sample <- mvrnorm(n = nboot, mu = coef_hat, Sigma = vcov(vl))  # tirage
-
-counterfactual_scenario <- vector("list", nboot)
 
 bootIRFs_supply_counterfactual <- gamma_bootstrap_mbb_corrected_counterfactual(x= x_supply, nboot, theta_0 = theta_0_supply_wedge ,
                                                         proxies = proxies, controls = NULL, elas = 0,
@@ -118,80 +178,43 @@ bootIRFs_supply_counterfactual <- gamma_bootstrap_mbb_corrected_counterfactual(x
 
 bootIRFs_supply <- bootIRFs_supply_counterfactual$bootIRFs
 bootss_supply <-  bootIRFs_supply_counterfactual$boot_structural_shocks
-
+bootres_supply <-  bootIRFs_supply_counterfactual$bootres_s
 
 
 # dernière valeur observée en niveau avant la prévision
 boot_counterfactual_HICP <- array(NA, dim = c((T+p), nboot))
+boot_counterfactual_spot <- array(NA, dim = c((T+p), nboot))
 #boot_counterfactual_level_HICP <- array(NA, dim = c((T+p), nboot))
 
 for (i in 1:nboot) {
     theta_0_i <- bootIRFs_supply[,,i]
     # Matrice T x 4 remplie de 0
     
-    policy_res_i <- matrix(eps_policy_hat, nrow = T, ncol = n) * 
-      matrix(theta_0_i, nrow = T, ncol = n, byrow = TRUE)
+    IV_data_esp_sim <- IV_data_log_esp_counterfactual %>%
+      mutate(
+        counterfactual_spot_price_sim = rnorm(n = n(), mean = counterfactual_spot_price, sd = se_pred_month),
+        counterfactual_spot_price_log_sim = log(counterfactual_spot_price_sim),
+        counterfactual_spot_price_log_sim = ifelse(is.na(counterfactual_spot_price_log_sim), spot_price_log, counterfactual_spot_price_log_sim)
+      )
     
-    counterfactual_residuals_i <- res + policy_res_i
+    # Example: target = electricity price gap
+    d_price_sim <-IV_data_esp_sim$spot_price_log - IV_data_esp_sim$counterfactual_spot_price_log_sim 
     
-    counterfactual_prediction_i <- iterate_var_ter(x= x_supply, initial_obs = vars_supply[1:p,], 
-                                                 errors =counterfactual_residuals_i , var_model = vl)
+
+    eps_policy_hat_sim <- recover_policy_shock(d_price_sim, lambda_0_log_supply_wedge)
+    u_policy_sim <- eps_policy_hat_sim[-(1:p)] %o% theta_0_i[1,]
+    counterfactual_residuals_sim <- res - u_policy_sim
+    counterfactual_prediction_sim <- iterate_var_ter(x= x_supply, initial_obs = vars_supply[1:p,], 
+                                                 errors =counterfactual_residuals_sim , var_model = vl)
     
-    boot_counterfactual_HICP[,i] <- counterfactual_prediction_i[, 5]
-    # policy_res_sim <- matrix(policy_shock_sim[-(1:p)], nrow = T, ncol = n) * 
-    #   matrix(theta_0_i, nrow = T, ncol = n, byrow = TRUE)
-    # 
-    # counterfactual_residuals_i <- res + policy_res_sim
-    # 
-    # # counterfactual_prediction_i <- iterate_var_ter(x= x, initial_obs = vars[1:p,], 
-    # #                                              errors = counterfactual_residuals_i , var_model =  vl_sim)
-    # counterfactual_prediction_i <- iterate_var_ter(x= x_supply, initial_obs = vars[1:p,], 
-    #                                                errors = counterfactual_residuals_i , var_model =  vl)
-    # 
-    # counterfactual_scenario[i] <- counterfactual_prediction_i
-    # 
-    # HICP_pred_i  <- counterfactual_prediction_i[, 5]
-    # boot_counterfactual_HICP[,i] <- HICP_pred_i
+    boot_counterfactual_HICP[,i] <- counterfactual_prediction_sim[, 5]
+    boot_counterfactual_spot[,i] <- counterfactual_prediction_sim[, 1]
 }
 
 
 setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(boot_counterfactual_HICP, "boot_counterfactual_HICP.csv")
-
-
-boot_counterfactual_HICP <- read.csv( "boot_counterfactual_HICP.csv")
-
-
-
-
-# ---- Extraire série originale (colonne 4) ----
-price_obs <- vars[, 1]
-hicp_obs <- vars[, 4]
-
-# ---- Extraire prévisions et IC (colonne 4) ----
-price_pred  <- counterfactual_prediction[, 1]
-#price_pred  <- IV_data_log_esp_counterfactual$counterfactual_spot_price
-sigma <-IV_data_log_esp_counterfactual$se_pred_month
-price_lower_90 <-price_pred - 1.6*sigma               # fcst - 1 sigma
-price_upper_90 <- price_pred + 1.6*sigma               # fcst + 1 sigma
-
-price_lower_68 <-price_pred - sigma               # fcst - 1 sigma
-price_upper_68 <- price_pred + sigma               # fcst + 1 sigma
-
-
-
-df_price <- data.frame(
-  date = c(IV_data_log_esp$observation_date),
-  value = price_pred,
-  type = "Forecast",
-  #type = c(rep("Observed", T+p-1), rep("Forecast", h+1)),
-  lower_68 = price_lower_68,
-  upper_68 =  price_upper_68,
-  lower_90 = price_lower_90,
-  upper_90 =  price_upper_90,
-  grandeur = "spot_price"
-) 
-
+write.csv(boot_counterfactual_spot, "boot_counterfactual_spot.csv")
 
 
 
@@ -235,8 +258,6 @@ inflation_obs[(T_gas+p):(T_gas+h+p)]
 quantiles_50_inflation[(T_gas):(T_gas+h)]
 
 
-
-
 inflation_lower_90 <- t(quantiles_90_inflation   )[,1]            # fcst - 1 sigma
 inflation_upper_90 <- t(quantiles_90_inflation   )[,2]               # fcst + 1 sigma
 inflation_lower_68 <- t(quantiles_68_inflation   )[,1]             # fcst - 1 sigma
@@ -257,13 +278,40 @@ df_inflation <- data.frame(
 ) 
 
 
-#
+# ---- Extraire série originale (colonne 4) ----
+price_obs <- x_supply[, 1]
+hicp_obs <- x_supply[, 5]
+
+quantiles_90_spot <- apply(exp(boot_counterfactual_spot[(p+1):(T+p),]),
+                                c(1), function(x) quantile(x, probs = quantile_probs_90))
+
+quantiles_68_spot<- apply(exp(boot_counterfactual_spot[(p+1):(T+p),]),
+                               c(1), function(x) quantile(x, probs = quantile_probs_68))
+
+quantiles_50_spot <- apply(exp(boot_counterfactual_spot[(p+1):(T+p),]),
+                               c(1), function(x) quantile(x, probs = quantile_probs_50))[1,]
+
+quantiles_50_spot[(T_gas):(T_gas+h)]
+IV_data_log_esp$spot_price[(T_gas+p):(T_gas+h+p)]
+
+
+df_price <- data.frame(
+  date = c(IV_data_log_esp$observation_date),
+  value = c(rep(NA, p),price_pred),
+  type = "Forecast",
+  #type = c(rep("Observed", T+p-1), rep("Forecast", h+1)),
+  lower_68 =  c(rep(NA, p),t(quantiles_68_spot  )[,1]) ,
+  upper_68 =  c(rep(NA, p),t(quantiles_68_spot  )[,2]) ,
+  lower_90 = c(rep(NA, p),t(quantiles_90_spot  )[,1] ),
+  upper_90 =  c(rep(NA, p),t(quantiles_90_spot  )[,2]) ,
+  grandeur = "spot_price"
+) 
+
 #   mutate(lower =ifelse(date <= as.Date("2022-06-01"), NA, lower),
 #          upper =ifelse(date <= as.Date("2022-06-01"), NA, upper)
 #          )
 # ---- Combiner les deux séries ----
 df_plot_all <- rbind(df_price, df_inflation)
-
 
 # ---- Construire dataframe Observed pour spot_price ----
 df_obs_price <- data.frame(
@@ -305,11 +353,6 @@ df_plot_all <- rbind(df_plot_all, df_obs_price, df_obs_HICP)
 # Créer une colonne transformée pour HICP
 df_plot_all_scaled <- df_plot_all %>%
   mutate(
-    value_plot = ifelse(grandeur == "HICP", value * 1000, value),
-    lower_68_plot = ifelse(grandeur == "HICP", lower_68 * 1000, lower_68),
-    upper_68_plot = ifelse(grandeur == "HICP", upper_68 * 1000, upper_68),
-    lower_90_plot = ifelse(grandeur == "HICP", lower_90 * 1000, lower_90),
-    upper_90_plot = ifelse(grandeur == "HICP", upper_90 * 1000, upper_90),
     value_plot = ifelse(grandeur == "inflation", value * 1000, value),
     #median_plot = ifelse(grandeur == "inflation", median * 1000, median),
     lower_68_plot = ifelse(grandeur == "inflation", lower_68 * 1000, lower_68),
@@ -319,8 +362,12 @@ df_plot_all_scaled <- df_plot_all %>%
   )
 
 
-
-
+# View(df_plot_all %>% 
+#   filter(grandeur == "spot_price" & type == "Forecast"))
+View(df_plot_all_scaled  %>%
+       filter(grandeur == "spot_price" & type == "Forecast"))
+View(df_plot_all_scaled  %>%
+       filter(grandeur == "spot_price" & type == "Observed"))
 
 # ---- Plot avec axe secondaire ----
 counterfactual <- ggplot() +
@@ -353,7 +400,12 @@ counterfactual <- ggplot() +
   scale_fill_manual(
     values = c(
       "spot_price 68% CI" = "red",
-      "inflation 68% CI" = "blue")
+      "inflation 68% CI"  = "blue"
+    ),
+    labels = c(
+      "spot_price 68% CI" = expression(P[elec]~"68% CI"),
+      "inflation 68% CI"  = expression(pi~"68% CI")
+    )
   )+
   # Axe secondaire pour HICP
   scale_y_continuous(
@@ -380,10 +432,22 @@ ggsave("iberian_exception_plot_inflation_counterfactual.png", plot = counterfact
 
 #De combien a réduit l'inflation sur 2022
 
+
 df_plot_all%>% filter(grandeur == "inflation" & date == as.Date("2022-12-01")) %>% 
   dplyr::select(date, value, lower_68, upper_68)
-0.08986621 - 0.05288838
+diff(df_plot_all%>% filter(grandeur == "inflation" & date == as.Date("2022-12-01")) %>% 
+       dplyr::select(date, value, lower_68, upper_68) %>% 
+       pull(value))
 
 df_plot_all%>% filter(grandeur == "inflation" & date == as.Date("2023-06-01")) %>% 
   dplyr::select(date, value, lower_68, upper_68)
-0.04255027 - 0.01589382
+diff(df_plot_all%>% filter(grandeur == "inflation" & date == as.Date("2023-06-01")) %>% 
+       dplyr::select(date, value, lower_68, upper_68) %>% 
+       pull(value))
+
+
+#3,8 points d'inflation sur l'année 2022
+# 2,9 sur la période d'iberian exception même si pas binding vers la fin
+
+
+

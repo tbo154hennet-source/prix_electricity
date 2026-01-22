@@ -40,31 +40,31 @@ my_factors <- c(general_factors, control_factors, temp_factors)
 
 ################### OLS
 
-ols_m <- feols(gen_tot_da ~ price + year + month + creneau + spot_gas ,
-               data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+ols_m <- feols(load_tot ~ price + year + month + creneau + weekday + weekday + spot_gas ,
+               data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 my_controls <- paste( paste(c(my_factors), collapse = " + "), sep = " + ")
 
 ols_formula <- as.formula(
-  paste0("gen_tot_da ~ price + year + month + creneau + spot_gas +", my_controls))
+  paste0("load_tot ~ price + year + month + creneau + weekday + weekday + spot_gas +", my_controls))
 
-ols_mc <- feols(ols_formula, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+ols_mc <- feols(ols_formula, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 
 ####################### IV using standard Instruments
 
 iv_wind_controls <- paste0(setdiff(my_factors, "Fore_Wind"), collapse = " + ")
 iv_wind_formula <-  as.formula(
-  paste0("gen_tot_da ~  year + month + creneau + spot_gas +", iv_wind_controls, " | price ~ Fore_Wind "))
+  paste0("load_tot ~  year + month + creneau + weekday + weekday + spot_gas +", iv_wind_controls, " | price ~ Fore_Wind "))
 
-iv_wind_m <- feols(iv_wind_formula, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+iv_wind_m <- feols(iv_wind_formula, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 
 iv_temp_controls <- paste0(setdiff(my_factors, temp_factors ), collapse = " + ")
 iv_temp_formula <-  as.formula(
-  paste0("gen_tot_da ~  year + month + creneau + spot_gas +", iv_temp_controls, " | price ~ cold_excess_demand + heat_excess_demand"))
+  paste0("load_tot ~  year + month + creneau + weekday + weekday + spot_gas +", iv_temp_controls, " | price ~ cold_excess_demand + heat_excess_demand"))
 
-iv_temp_m <- feols(iv_temp_formula, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+iv_temp_m <- feols(iv_temp_formula, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 
 ####################### IV using lag of standard instruments
@@ -88,7 +88,7 @@ lag_controls_s <- paste0(inst_name_s, "_lag", 1, collapse = " + ")
 
 iv_formula_s <- as.formula(
   paste0(
-    "gen_tot_da ~  year + month + creneau + spot_gas +",
+    "load_tot ~  year + month + creneau + weekday + weekday + spot_gas +",
     iv_wind_controls, " + ", lag_controls_s," | price ~ ", inst_name_s
   )
 )
@@ -98,15 +98,15 @@ lag_controls_d <- paste0(inst_name_d, "_lag", 1, collapse = " + ")
 
 iv_formula_d <- as.formula(
   paste0(
-    "gen_tot_da ~  year + month + creneau + spot_gas +",
+    "load_tot ~  year + month + creneau + weekday + weekday + spot_gas +",
     iv_temp_controls, " + ", lag_controls_d," | price ~ ", paste0(inst_name_d, collapse = " + ")
   )
 )
 
 
-iv_wind_lag <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+iv_wind_lag <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
-iv_temp_lag <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, NW(24) ~ datetime)
+iv_temp_lag <- feols(iv_formula_d, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
 
 #fitstat(show_types = TRUE)
 etable(ols_m,ols_mc,

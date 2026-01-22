@@ -79,13 +79,13 @@ plot_shift_with_hist <- function(coef_data, variables, type, matched){
 
   if (matched == "matched"){
     # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
-    scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$gen_tot_da, plot = FALSE)$counts)
+    scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$load_tot, plot = FALSE)$counts)
   
     my_plot <- my_plot + 
     # Histogramme mis à l'échelle
     geom_histogram(
       data = price_indispo_merge_esp,
-      mapping = aes(x = gen_tot_da, y = ..count.. * scale_factor),
+      mapping = aes(x = load_tot, y = ..count.. * scale_factor),
       bins = 60,
       color = "black",
       fill = NA
@@ -187,7 +187,7 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched){
   #   filter(price_test >= -100)
   
   # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
-  scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$gen_tot_da, plot = FALSE)$counts)
+  scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge_esp$load_tot, plot = FALSE)$counts)
   
   my_plot <- ggplot(data = plot_data) +
     # Courbe principale avec bande de confiance

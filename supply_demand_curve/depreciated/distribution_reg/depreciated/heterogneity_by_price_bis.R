@@ -64,7 +64,7 @@ price_indispo_merge_feols_all <- read_parquet("price_indispo_merge_feols_all.par
 estimate_eta_components <- function(data, Z_vars) {
   local_slopes_reg <- merge(data,
                             price_indispo_merge_feols_all %>% 
-                              select(price, gen_tot_da, delivery_date, Hour,
+                              select(price, load_tot, delivery_date, Hour,
                                      year, month, weekday,
                                      cols_fitted_bis),
                             by.x = c("DATE", "Hour"), by.y = c("delivery_date", "Hour")
@@ -92,7 +92,7 @@ estimate_eta_components <- function(data, Z_vars) {
                           fitted(FE_coarse_fit),
                           NA_real_),
       FE_diff = intercept - FE_coarse,
-      eps = log(gen_tot_da) - intercept - slope * log_price
+      eps = log(load_tot) - intercept - slope * log_price
     )
   
   
@@ -101,7 +101,7 @@ estimate_eta_components <- function(data, Z_vars) {
   #   mutate(
   #     FE_coarse = fitted(FE_coarse_fit),
   #     FE_diff = intercept - FE_coarse,
-  #     eps = log(gen_tot_da) - intercept - slope * log_price
+  #     eps = log(load_tot) - intercept - slope * log_price
   #   )
   # 
   cov_slope_part <- cov(local_slopes_reg$P_hat, local_slopes_reg$slope * local_slopes_reg$log_price, use = "complete.obs")

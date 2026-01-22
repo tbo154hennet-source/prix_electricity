@@ -94,9 +94,9 @@ price_indispo_merge_delta$delta_d_total <- rowSums(price_indispo_merge_delta[, c
 
 
 col_names <- c("weekday" , "creneau", names_instruments, "price", "datetime", "delivery_date", "spot_gas",
-               colnames_with_capacity, "gen_tot_da","gen_tot_da_conso" , "gen_tot_da_net" ,
+               colnames_with_capacity, "load_tot","load_tot_conso" , "load_tot_net" ,
                "temperature_supply","precipitation_supply", "relative_humidity_supply" ,
-               "intraday_forecast"  ,"unpredicted_renewables", "gen_tot_da"    ,                           
+               "intraday_forecast"  ,"unpredicted_renewables", "load_tot"    ,                           
                "wind_solar_tot","price" ,"year"   ,"month"  )
 
 price_indispo_merge_delta_clean <- price_indispo_merge_delta %>%
@@ -105,8 +105,8 @@ price_indispo_merge_delta_clean <- price_indispo_merge_delta %>%
   distinct()
 
 dep_var <- "price"
-endog_vars <- c("gen_tot_da")
-#endog_vars <- c("gen_tot_da")
+endog_vars <- c("load_tot")
+#endog_vars <- c("load_tot")
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
                    "as.factor(weekday)", "as.factor(creneau)"
@@ -132,7 +132,7 @@ price_indispo_merge_delta_clean %>%
 
 
 ols_formula <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_vars), collapse = " + "))))  
+  paste("load_tot", "~",  paste(c("price", controls_vars), collapse = " + "))))  
 
 m_ols <- ivreg(ols_formula , data = price_indispo_merge_delta_clean)
 
@@ -149,14 +149,14 @@ exog_instr_d <- "delta_d_total"
 
 #iv_formula
 iv_formula_supply_str <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_vars, exog_instr_d ), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_vars, exog_instr_d ), collapse = " + ")),
   paste(paste(c(exog_instr_s, exog_instr_d , controls_vars), collapse = " + ")),
   sep = " | "
 ))
 
 #iv_formula
 iv_formula_demand_str <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c( "price", controls_vars, exog_instr_s), collapse = " + ")),
+  paste("load_tot", "~",  paste(c( "price", controls_vars, exog_instr_s), collapse = " + ")),
   paste(paste(c(exog_instr_d, exog_instr_s, controls_vars), collapse = " + ")),
   sep = " | "
 ))
@@ -190,7 +190,7 @@ controls_Bonte <- c(
 
 # Build the formula as a string
 Bonte_formula_str <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_Bonte), collapse = " + ")),
   paste(paste(c("Fore_Wind", controls_Bonte), collapse = " + ")),
   sep = " | "
 ))
@@ -202,7 +202,7 @@ nw_Bonte  <- coeftest(m_Bonte , vcov. = nw_se_Bonte)
 controls_demand <- c(setdiff(controls_Bonte, "temperature_supply"), "Fore_Wind", "Fore_Solar")
 
 formula_demand_str <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_demand), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_demand), collapse = " + ")),
   paste(paste(c("cold_excess_demand", "heat_excess_demand", controls_demand), collapse = " + ")),
   sep = " | "
 ))
@@ -253,14 +253,14 @@ exog_instr_s <- "delta_s_orth"
 exog_instr_d <- "delta_d_orth"
 
 iv_formula_supply_str_ortho <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c("price", controls_vars ), collapse = " + ")),
+  paste("load_tot", "~",  paste(c("price", controls_vars ), collapse = " + ")),
   paste(paste(c(exog_instr_s, controls_vars), collapse = " + ")),
   sep = " | "
 ))
 
 #iv_formula
 iv_formula_demand_str_ortho <- as.formula(paste(
-  paste("gen_tot_da", "~",  paste(c( "price", controls_vars), collapse = " + ")),
+  paste("load_tot", "~",  paste(c( "price", controls_vars), collapse = " + ")),
   paste(paste(c(exog_instr_d,  controls_vars), collapse = " + ")),
   sep = " | "
 ))
@@ -304,7 +304,7 @@ reg_table <- stargazer(
       round(fstat_iv_bronte, 2)
     )),
   #add.lines = list(c("Adjusted F-stat",  NULL, fstat_adj))
-  keep = c("gen_tot_da", "price" )
+  keep = c("load_tot", "price" )
 )
 
 # # Create LaTeX code with regression results
@@ -331,12 +331,12 @@ reg_table <- stargazer(
 #       round(fstat_iv_s, 2),             # IV supply
 #       round(fstat_iv_s_ortho, 2)                                # no F for Bonte
 #     )),
-#   keep = c("gen_tot_da", "price" )
+#   keep = c("load_tot", "price" )
 # )
 
 
-# Extract estimate and standard error for 'gen_tot_da' from each model
-extract_coef_se <- function(model, variable = "gen_tot_da") {
+# Extract estimate and standard error for 'load_tot' from each model
+extract_coef_se <- function(model, variable = "load_tot") {
   s <- summary(model)
   est <- s$coefficients[variable, "Estimate"]
   se  <- s$coefficients[variable, "Std. Error"]
@@ -457,9 +457,9 @@ library(systemfit)
 exog_instr_s <- "delta_s_total"
 exog_instr_d <- "delta_d_total"
 
-eq1 <- gen_tot_da ~ price + spot_gas + as.factor(year) + as.factor(month) + 
+eq1 <- load_tot ~ price + spot_gas + as.factor(year) + as.factor(month) + 
   as.factor(weekday) + as.factor(creneau) + delta_d_total
-eq2 <- gen_tot_da ~ price + spot_gas + as.factor(year) + as.factor(month) + 
+eq2 <- load_tot ~ price + spot_gas + as.factor(year) + as.factor(month) + 
   as.factor(weekday) + as.factor(creneau) + delta_s_total
 # Put equations in a list with names
 system <- list(supply = eq1, demand = eq2)
@@ -505,14 +505,14 @@ print(coefs_logprice)
 # 
 # #iv_formula
 # iv_formula_supply_str_robust <- as.formula(paste(
-#   paste("gen_tot_da", "~",  paste(c("price", controls_vars, exog_instr_d ), collapse = " + ")),
+#   paste("load_tot", "~",  paste(c("price", controls_vars, exog_instr_d ), collapse = " + ")),
 #   paste(paste(c(exog_instr_s, exog_instr_d , controls_vars), collapse = " + ")),
 #   sep = " | "
 # ))
 # 
 # #iv_formula
 # iv_formula_demand_str_robust <- as.formula(paste(
-#   paste("gen_tot_da", "~",  paste(c( "price", controls_vars, exog_instr_s), collapse = " + ")),
+#   paste("load_tot", "~",  paste(c( "price", controls_vars, exog_instr_s), collapse = " + ")),
 #   paste(paste(c(exog_instr_d, exog_instr_s, controls_vars), collapse = " + ")),
 #   sep = " | "
 # ))
@@ -534,6 +534,6 @@ print(coefs_logprice)
 #   title = "Regression Results",
 #   column.labels = c("Demand Ortho", "Demand Robust",
 #                     "Supply Ortho", "Supply Robust"),
-#   keep = c("gen_tot_da", "price")
+#   keep = c("load_tot", "price")
 # )
 # 
