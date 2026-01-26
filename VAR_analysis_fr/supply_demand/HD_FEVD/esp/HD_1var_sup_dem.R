@@ -22,9 +22,9 @@ l <- 1
 
 # Fit the VAR model
 vl_demand <- if (is.null(controls)) {
-  vars::VAR(x_demand, p, type = "none")
+  vars::VAR(x_demand, p, type = "const")
 } else {
-  vars::VAR(x_demand, p, type = "none", exogen = controls)
+  vars::VAR(x_demand, p, type = "const", exogen = controls)
 }
 
 coef = coef(vl_demand)
@@ -140,9 +140,9 @@ lambda_0_log_demand <- get_lambda_0(C, theta_0_demand, irhor=hori)
 
 # Fit the VAR model
 vl_supply <- if (is.null(controls)) {
-  vars::VAR(x_supply, p, type = "none")
+  vars::VAR(x_supply, p, type = "const")
 } else {
-  vars::VAR(x_supply, p, type = "none", exogen = controls)
+  vars::VAR(x_supply, p, type = "const", exogen = controls)
 }
 
 coef = coef(vl_supply)

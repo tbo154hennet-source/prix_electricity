@@ -22,7 +22,7 @@ k<-2
 #nbre d'instruments
 l <- ncol(proxies_double)
 
-vl_double = vars::VAR(x_double, p, type = "none")#, exogen = controls)
+vl_double = vars::VAR(x_double, p, type = "const")#, exogen = controls)
 coef_double =coef(vl_double)
 bet_double = do.call(cbind, lapply(1:n_vars, function(x) coef_double[[x]][,1]))
 res_double = residuals(vl_double)

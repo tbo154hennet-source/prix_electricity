@@ -24,8 +24,8 @@ hd_cholesky <- readRDS( "hd_chol_log.rds")
 vars <- vars_demand
 mean_vector <- colMeans(vars_demand, na.rm = TRUE)
 vars_demeaned <- sweep(vars_demand, 2, mean_vector, "-")
-vars_demand_reconstructed <- sweep(vars_demand_demeaned, 2, mean_vector, "+")
-
+vars_demand_reconstructed <- sweep(vars_demeaned, 2, mean_vector, "+")
+n_vars_demand <- ncol(vars_demand)
 IV_data_log_esp <- IV_data_log_esp %>% 
   mutate(
     HICP_log_diff = HICP_log - lag(HICP_log),
@@ -47,9 +47,9 @@ l <- 1
 
 # Fit the VAR model
 vl_demand <- if (is.null(controls)) {
-  vars::VAR(x_demand, p, type = "none")
+  vars::VAR(x_demand, p, type = "const")
 } else {
-  vars::VAR(x_demand, p, type = "none", exogen = controls)
+  vars::VAR(x_demand, p, type = "const", exogen = controls)
 }
 coef = coef(vl_demand)
 bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
@@ -103,19 +103,24 @@ En plus, il y avait la dérive intuitée par Giovanni.
 
 ```{r}
 
+colors_shock <- c(  "purple", "yellow",  "blue", "green", "red", "orange", "pink", "grey")
+names <- c( "Load" ,"$P_{elec}$", "Generation", 
+            "IPI",  "$HICP$", "ECB rate","$P_{gas}$", "Trend")
+
+T_controls <- nrow(x_demand)   # ou nrow(res_demand)
+
+controls <- matrix(1, nrow = T_controls, ncol = 1)
+colnames(controls) <- "const"
+
+
 zero_errors <- matrix(0, nrow = dim(res_demand)[1], ncol = dim(res_demand)[2])
 
 reconstruct_derive_without_errors_ter <- iterate_var_ter(x=x_demand,
-                                                     initial_obs = x_demand[1:p, ],
-                                                     errors = zero_errors,
-                                                     var_model = vl_demand
+                                                         initial_obs = x_demand[1:p, ],
+                                                         errors = zero_errors,
+                                                         var_model = vl_demand,
+                                                         controls = controls
 )
-
-
-# Prepare data for plotting
-# baseline <- reconstruct_derive_without_errors_ter  # ensure this is T x n_vars_demand
-# y_hat <- baseline + shock_sum
-
 
 alpha_chosen = 1
 historical_decomp_matrix <- hd_cholesky
@@ -297,7 +302,7 @@ dates_formatted <- as.yearmon(time(x_demand))
 names <- c("Supply", "Demand")
 colors_shock <- c( "blue", "red" )
 #colnames(historical_decomp_iv_tibo) <- c("Demand", "Supply")
-historical_decomp_matrix <-  historical_decomp_iv_wedge
+historical_decomp_matrix <-  historical_decomp_iv_tibo
 n_serie = 5
 ne_iv_all <- plot_hd_inflation_glissante_12(series = n_serie)+
     labs(title=TeX(paste("")) ,

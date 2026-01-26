@@ -20,8 +20,8 @@ vars_demeaned <- as.data.frame(apply(vars, 2, function(x) x - mean(x)))
 x = ts(vars_demeaned  , start=c(2015,1), end=c(2023,12), frequency=12)
 y_demeaned = vars_demeaned[-1:-p, ]
 
-#vl = vars::VAR(x, p, type = "none", exogen = controls)
-vl = vars::VAR(x, p, type = "none")#, exogen = controls)
+#vl = vars::VAR(x, p, type = "const", exogen = controls)
+vl = vars::VAR(x, p, type = "const")#, exogen = controls)
 
 
 coef =coef(vl)
@@ -100,7 +100,7 @@ k <-1
 #nbre d'instruments
 l <- ncol(proxies_gen)
 
-vl_gen = vars::VAR(x_gen, p, type = "none")#, exogen = controls)
+vl_gen = vars::VAR(x_gen, p, type = "const")#, exogen = controls)
 coef_gen =coef(vl_gen)
 bet_gen = do.call(cbind, lapply(1:n_vars, function(x) coef_gen[[x]][,1]))
 res_gen = residuals(vl_gen)
@@ -155,7 +155,7 @@ k <-1
 #nbre d'instruments
 l <- ncol(proxies_spot)
 
-vl_spot = vars::VAR(x_spot, p, type = "none")#, exogen = controls)
+vl_spot = vars::VAR(x_spot, p, type = "const")#, exogen = controls)
 coef_spot =coef(vl_spot)
 bet_spot = do.call(cbind, lapply(1:n_vars, function(x) coef_spot[[x]][,1]))
 res_spot = residuals(vl_spot)

@@ -27,7 +27,7 @@ k<-2
 #nbre d'instruments
 l <- ncol(proxies_double_gas)
 
-vl_double_gas = vars::VAR(x_double_gas, p, type = "none", exogen = controls)
+vl_double_gas = vars::VAR(x_double_gas, p, type = "const", exogen = controls)
 coef_double_gas =coef(vl_double_gas)
 bet_double_gas = do.call(cbind, lapply(1:n, function(x) coef_double_gas[[x]][,1]))
 res_double_gas = residuals(vl_double_gas)

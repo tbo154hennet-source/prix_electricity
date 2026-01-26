@@ -6,9 +6,9 @@ IV_data_log_esp[, c("delta_s_orth", "delta_d_orth","delta_supply", "delta_supply
 controls = NULL
 # Fit the VAR model
 vl <- if (is.null(controls)) {
-  vars::VAR(x_demand, p, type = "none")
+  vars::VAR(x_demand, p, type = "const")
 } else {
-  vars::VAR(x_demand, p, type = "none", exogen = controls)
+  vars::VAR(x_demand, p, type = "const", exogen = controls)
 }
 
 

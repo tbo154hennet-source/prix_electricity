@@ -17,8 +17,8 @@ vars_reconstructed <- sweep(vars_demeaned, 2, mean_vector, "+")
 vars<- ts(IV_data_log_diff_esp[, c(headers_var_gen_first_mp)], frequency=12)
 
 x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
-#vl = vars::VAR(x, p, type = "none", exogen = controls)
-vl = vars::VAR(x, p, type = "none", exogen = controls)
+#vl = vars::VAR(x, p, type = "const", exogen = controls)
+vl = vars::VAR(x, p, type = "const", exogen = controls)
 res = residuals(vl)
 ```
 

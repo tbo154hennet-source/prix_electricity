@@ -198,7 +198,7 @@ plot_full_irf <- function(VAR_data, shock, plot_irf) {
   }else{
     q<- n
   }
-
+# i=7
   plots <- lapply(seq_len(q), function(i) {
     plot_irf_msw(
       i = i,
@@ -231,7 +231,7 @@ plot_full_irf <- function(VAR_data, shock, plot_irf) {
 
 
 # bootIRFs = bootIRFs_double_original
-dim(bootIRFs)
+
 plot_full_irf_mbb <- function(bootIRFs, shock, plot_irf, lambda_0, double = FALSE) {
   
 
@@ -382,3 +382,65 @@ plot_irf_mbb_double <- function(
           axis.text.y  = element_text(size = 12)    # taille des ticks y
     )
 }
+
+
+irf_list <- list_irfs
+dim(irf_list)
+irf_list[[1]]
+irf_list[[1]][1:20, i]
+
+compare_irf <- function(irf_list, variable_names, shock = "price") {
+  n_irf <- length(irf_list)
+  names(irf_list)
+  if (shock == "supply"){
+    shock_label = "Supply shock"
+  }else if (shock == "demand"){
+    shock_label = "Demand shock"
+  }else{
+    return("Invalid shock type. Please use 'price' or 'quantity'.")
+  }
+  
+  #solution <-gen_benchmark
+  plot_irf <- function(i=1) {
+    #i=3
+    #trick I just put 0.5 twice
+    #main_IV <- lambda_0[, i, "lower"]
+    # Combine all IRFs into one data frame
+    #irf_list[[4]][1:20, i, 1]
+    time_horizon <- c(1:20)
+    # j =2
+    df_all <- lapply(seq_along(irf_list), function(j) {
+      data.frame(
+        time = time_horizon,
+        value = irf_list[[j]][1:20, i],
+        model = names(irf_list)[j]
+      )
+    }) %>% bind_rows()
+    
+    ggplot(df_all, aes(x = time, y = value, color = model)) +
+      geom_line(linetype = "solid") +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+      labs(
+        title = TeX(variable_names[i]),
+        x = "Time",
+        y = "Unit Points"
+      ) +
+      scale_color_manual(
+        values = c("Cholesky" ="blue" ,   "IV MR"="red" ,      "IV SD" = "green" ,     "Joint IV SD"= "darkgreen"),
+        drop = FALSE
+      ) +
+      guides(color = "none")+
+      theme(plot.title = element_text(size = 16))
+    
+  }
+
+  # Generate plots
+  plots_list <- lapply(1:n,plot_irf)
+  grid_plots <- do.call("grid.arrange", c(plots_list, nrow = 2))
+  
+  legend_plot <- plot_grid(grid_plots, custom_legend , ncol = 1, rel_heights = c(1, 0.1))
+  return(legend_plot)
+  
+}
+
+

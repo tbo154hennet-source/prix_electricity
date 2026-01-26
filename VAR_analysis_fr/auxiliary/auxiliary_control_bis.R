@@ -412,7 +412,7 @@ irf_computation <- function(b11iSig, b21iSig, SigmaTSigmaTp, conf){ #ordering
 }
 
 #theta_0 = theta_0_log_diff
-
+#x=1
 get_lambda_0 <-function(C, theta_0, irhor=20){
   
   theta_0<- as.matrix(theta_0)

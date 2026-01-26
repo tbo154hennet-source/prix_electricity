@@ -64,10 +64,10 @@ plot_hetero_by_month <- ggplot() +
 
 plot_hetero_by_month
 
-save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
-setwd(save_latex_path)
-ggsave(plot_hetero_by_month,
-       filename = "elas_hetero_hour.png" , width = 12, height = 6, dpi = 300)
+# save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+# setwd(save_latex_path)
+# ggsave(plot_hetero_by_month,
+#        filename = "elas_hetero_month.png" , width = 20, height = 6, dpi = 300)
 
 #on ne voit pas grand chose par mois
 
@@ -114,7 +114,7 @@ plot_hetero_by_hour <- ggplot() +
         axis.title.y = element_text(size = 14),   # taille du titre axe y
         axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
         axis.text.y  = element_text(size = 12)    # taille des ticks y
-  )+ guides(color = "none")
+  )
 
 
 
@@ -124,7 +124,7 @@ plot_hetero_by_hour
 save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
 setwd(save_latex_path)
 ggsave(plot_hetero_by_hour,
-       filename = "elas_hetero_hour.png" , width = 12, height = 6, dpi = 300)
+       filename = "elas_hetero_hour_long.png" , width = 12, height = 4, dpi = 300)
 
 ############# HEterogeneity by price
 
@@ -176,7 +176,7 @@ plot_hetero_by_quantile <- ggplot() +
         axis.title.y = element_text(size = 14),   # taille du titre axe y
         axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
         axis.text.y  = element_text(size = 12)    # taille des ticks y
-  )+ guides(color = "none")
+  )+ guides(fill = "none")
 
 
 plot_hetero_by_quantile
@@ -185,7 +185,7 @@ plot_hetero_by_quantile
 save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
 setwd(save_latex_path)
 ggsave(plot_hetero_by_quantile,
-       filename = "elas_hetero_price.png" , width = 12, height = 6, dpi = 300)
+       filename = "elas_hetero_price_long.png" , width = 12, height = 4, dpi = 300)
 
 slopes_demand_by_quantile <- local_slopes_demand%>%
   mutate(price_quantile = ntile(mean_log_price, 100) ,

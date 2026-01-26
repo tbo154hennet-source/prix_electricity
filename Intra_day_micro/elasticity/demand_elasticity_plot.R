@@ -156,7 +156,15 @@ my_plot <- ggplot(df_2020 %>%
     y = "MW",
     color = ""
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
 
 my_plot
 
@@ -164,7 +172,7 @@ my_plot
 save_plot_path <- 'Z:/Overleaf_elec/images/intra_day'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
-ggsave("covid_elec_forecast_error.png", plot = my_plot, width = 8, height = 6, dpi = 300)
+ggsave("covid_elec_forecast_error.png", plot = my_plot, width = 12, height = 6, dpi = 300)
 
 
 
@@ -240,8 +248,16 @@ my_plot_seuil <- ggplot(
     x = "",
     y = "MW",
     color = ""
-  ) +
-  theme_minimal()
+  )+
+  theme_minimal(base_size = 14) +
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
 my_plot_seuil
 
 

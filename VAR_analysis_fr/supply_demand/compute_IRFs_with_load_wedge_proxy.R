@@ -73,11 +73,11 @@ theta_0_supply_wedge <- first_var_estimation_bis(y, res, p, proxies_wedge, irhor
 lambda_0_log_supply_wedge <- get_lambda_0(C, theta_0_supply_wedge)
 
 theta_0_supply
-theta_0_supply_control
+theta_0_supply_ng
 theta_0_supply_wedge
 
 lambda_0_log_supply
-lambda_0_log_supply_control
+lambda_0_log_supply_ng
 lambda_0_log_supply_wedge
 
 VAR_supply_pc_wedge <-SVARIV(ydata = x_supply, z = IV_data_log_esp$delta_supply_incorpo,p,

@@ -42,6 +42,7 @@ custom_colors_base <- c(
     "Excess Heat PV (°C)" = "darkred",                          # Light Red
     "Excess Cold Th (°C)"= "blue",
     "Excess Heat Th (°C)" = "red",
+    "Local Temperature Deviation"= "red",
     "Local PV Temperature Deviation (°C)" = "gold",
     "Local Supply Temperature Deviation (°C)" = "cyan",
     "Local Demand Temperature Deviation (°C)" = "red",
@@ -91,7 +92,7 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom
       variable == "heat_excess_demand" ~ "Excess Heat Demand (°C)",
       variable == "temperature_discomfort_ss" ~ "Local PV Temperature Deviation (°C)",
       variable == "temperature_discomfort_sth" ~ "Local Th Temperature Deviation (°C)",
-      variable == "temperature_discomfort_demand" ~ "Local Temperature Deviation Supply Effect",
+      variable == "temperature_discomfort_demand" ~ "Local Temperature Deviation",
       variable == "temperature_discomfort_demand_bis" ~ "Local Temperature Deviation Demand Effect",
       variable =="temp_spatial_mismatch_supply"~ "Spatial Mismatch Temperature Supply Effect",
       variable =="temp_spatial_mismatch_supply_bis"~ "Spatial Mismatch Temperature Demand Effect",
@@ -505,6 +506,7 @@ ggsave("natural_renewables.png", plot = supply_wind_sun , width = 12, height = 6
 ggsave("renewable_sum_up.png", plot = renewable_sum_up , width = 12, height = 6, dpi = 300)
 ggsave("indispo_supply.png", plot = supply_indispo , width = 12, height = 6, dpi = 300)
 ggsave("indispo_demand.png", plot = demand_indispo , width = 12, height = 6, dpi = 300)
+ggsave("temp_mismatch_plot.png", plot = temp_mismatch_plot , width = 12, height = 6, dpi = 300)
 
 
 ```

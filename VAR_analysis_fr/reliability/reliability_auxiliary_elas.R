@@ -271,7 +271,7 @@ get_table <- function(my_IV_data, headers_var, headers_proxies ,p , title){
 }
 
 
-run_iv_analysis <- function(my_IV_data, headers_var, headers_proxies,
+run_iv_analysis_new <- function(my_IV_data, headers_var, headers_proxies,
                             start_time = c(2015, 1), end_time = c(2023, 12),
                             p = 4, irhor = 20, k = 2, dependent = "spot_price_log",
                             headers_controls = NULL, cov_type = "EHW") {
@@ -386,7 +386,7 @@ run_iv_analysis <- function(my_IV_data, headers_var, headers_proxies,
     dep_var_price  <- colnames(data)[grepl("res_spot_price", colnames(data))][1]
     
     #dep_var_demand <- headers_var[grepl("gen", headers_var)][1]
-    dep_var_demand <- colnames(data)[grepl("res_gen_tot", colnames(data))][1]
+    dep_var_demand <- colnames(data)[grepl("res_load_tot", colnames(data))][1]
     if (is.na(dep_var_demand)) {
       dep_var_demand <- colnames(data)[grepl("res_spot_gas", colnames(data))][1]
     }

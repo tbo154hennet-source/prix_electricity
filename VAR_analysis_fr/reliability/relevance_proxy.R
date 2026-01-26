@@ -24,11 +24,13 @@ source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_control_bis.R")
 source("bootstrap_auxiliary_control_ter.R")
+setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability")
+source("reliability_auxiliary_elas.R")
 
 
 save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
-IV_data_log_esp <-  read_parquet('IV_data_esp_log_elas_sd_2026.parquet')
+IV_data_log_esp <-  read_parquet('IV_data_esp_log_elas_sd_2026_pc.parquet')
 
 # correct for the Iberian exception
 colnames(IV_data_log_esp)
@@ -45,36 +47,32 @@ headers_proxies_supply_orth = c(
 headers_proxies_demand_orth = c(
   "delta_d_orth"
 )
-headers_var_spot_first <- c("spot_price_log",
-                            "gen_tot_log",
-                            "IPI_log",
-                            "HICP_log")
 
-headers_var_spot_first_mp = c(
-  "spot_price_log",
-  "gen_tot_log",
-  "IPI_log",
-  "HICP_log",
-  "ffr"
+headers_var_spot_first_mp <- c("spot_price_log",
+                               "load_tot_log",
+                               "gen_tot_log",
+                               "IPI_log",
+                               "HICP_log",
+                               "ffr")
+headers_var_spot_first_mp_gas = c(
+  headers_var_spot_first_mp,
+  "spot_gas_log"
 )
 
-headers_var_gen_first <- c(
-  "gen_tot_log",
-  "spot_price_log",
-  "IPI_log",
-  "HICP_log")
 
 headers_var_gen_first_mp = c(
-  
-  "gen_tot_log",
+  "load_tot_log",
   "spot_price_log",
+  "gen_tot_log",
   "IPI_log",
   "HICP_log",
   "ffr"
 )
+headers_var_gen_first_mp_gas <- c(headers_var_gen_first_mp,
+                                  "spot_gas_log")
 
 IV_data_log_esp %>% 
-  dplyr::select(delta_s_tot, delta_d_tot) %>% 
+  dplyr::select(delta_s_tot, delta_d_tot, delta_supply, delta_demand) %>% 
   cor(use = "complete.obs")
 
 vars_supply <- ts(IV_data_log_esp[, c(headers_var_spot_first_mp)], frequency=12)
@@ -83,90 +81,75 @@ vars_demand <- ts(IV_data_log_esp[, c(headers_var_gen_first_mp)], frequency=12)
 x_supply =ts(vars_supply, start=c(2015,1), end=c(2025,9), frequency=12)
 x_demand =ts(vars_demand, start=c(2015,1), end=c(2025,9), frequency=12)
 
-X <- scale(cbind(s = IV_data_log_esp$delta_s_tot , d = IV_data_log_esp$delta_d_tot), center = TRUE, scale = FALSE)
-
-pca <- prcomp(X)
-
-# Valeurs propres (variances) des composantes principales
-eigenvalues <- pca$sdev^2
-
-# Variance expliquée par chaque composante
-variance_explained <- eigenvalues / sum(eigenvalues)
-variance_explained
-
-loadings <- pca$rotation
-
-# Reconstruction
-IV_data_log_esp$delta_supply <- pca$x[, 1]
-IV_data_log_esp$delta_demand <- pca$x[, 2]
 
 IV_data_log_esp$delta_s_orth_bis <- resid(lm(delta_s_tot ~delta_d_tot, data = IV_data_log_esp))
 IV_data_log_esp$delta_d_orth_bis <- resid(lm(delta_d_tot ~delta_s_tot, data = IV_data_log_esp))
 
 
-result_esp <- run_iv_analysis(my_IV_data = IV_data_log_esp, 
-                              headers_var_spot_first_mp, 
-                              headers_proxies_esp, p = 12,   start_time = c(2015, 1), end_time = c(2025,9),
+result_esp <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
+                                   headers_var = headers_var_spot_first_mp_gas, 
+                                  headers_proxies= headers_proxies_esp, p = 12,  
+                                  start_time = c(2015, 1), end_time = c(2025,9),
                                 dependent = "", k = 2)
 
-result_esp_pc <- run_iv_analysis(my_IV_data = IV_data_log_esp,
-                                 headers_var_spot_first_mp, 
+result_esp_pc <- run_iv_analysis_new(my_IV_data = IV_data_log_esp,
+                                 headers_var_spot_first_mp_gas, 
                                  c("delta_supply", "delta_demand"),
                                  p = 12,   start_time = c(2015, 1), end_time = c(2025,9), dependent = "", k = 2)
 
 summary(result_esp_pc$m_demand_summary)
 summary(result_esp_pc$m_price_summary)
 
-result_esp_sd_price_supply <- run_iv_analysis(my_IV_data = IV_data_log_esp, 
-                                                   headers_var_spot_first_mp, headers_proxies = "delta_s_tot", p =12, 
+result_esp_sd_price_supply <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
+                                                   headers_var_spot_first_mp_gas, headers_proxies = "delta_s_tot", p =12, 
                                               start_time = c(2015, 1), end_time = c(2025,9),
-                                                   dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                                   dependent = "spot_price_log", k = 1, cov_type = "NW")
 
 
-result_esp_sd_price_supply_orth <- run_iv_analysis(my_IV_data = IV_data_log_esp, 
-                                              headers_var_spot_first_mp, headers_proxies = "delta_s_orth", p =12,
+result_esp_sd_price_supply_orth <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
+                                              headers_var_spot_first_mp_gas, headers_proxies = "delta_s_orth", p =12,
                                               start_time = c(2015, 1), end_time = c(2025,9),
-                                              dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                              dependent = "spot_price_log", k = 1, cov_type = "NW")
 
-result_esp_sd_price_supply_orth_bis <- run_iv_analysis(my_IV_data = IV_data_log_esp, 
-                                                   headers_var_spot_first_mp, headers_proxies = "delta_s_orth_bis", p =12, 
+result_esp_sd_price_supply_orth_bis <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
+                                                   headers_var_spot_first_mp_gas, headers_proxies = "delta_s_orth_bis", p =12, 
                                                    start_time = c(2015, 1), end_time = c(2025,9),
-                                                   dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                                   dependent = "spot_price_log", k = 1, cov_type = "NW")
 
 
-result_esp_sd_price_supply_pc <- run_iv_analysis(my_IV_data = IV_data_log_esp, 
-                                       headers_var_spot_first_mp, headers_proxies = "delta_supply", p =12, 
+result_esp_sd_price_supply_pc <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
+                                       headers_var_spot_first_mp_gas, headers_proxies = "delta_supply", p =12, 
                                        start_time = c(2015, 1), end_time = c(2025,9),
-                                       dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                       dependent = "spot_price_log", k = 1, cov_type = "NW")
 
 
 
-result_esp_sd_gen_demand <- run_iv_analysis(my_IV_data = IV_data_log_esp,
-                                                 headers_var_gen_first_mp , "delta_d_tot", p = 12,  
+result_esp_sd_gen_demand <- run_iv_analysis_new(my_IV_data = IV_data_log_esp,
+                                                 headers_var_gen_first_mp_gas , "delta_d_tot", p = 12,  
                                             start_time = c(2015, 1), end_time = c(2025,9),
-                                                 dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                                 dependent = "load_tot_log", k = 1, cov_type = "NW")
 
-result_esp_sd_gen_demand_orth <- run_iv_analysis(my_IV_data = IV_data_log_esp,
-                                     headers_var_gen_first_mp , "delta_d_orth", p = 12, 
+result_esp_sd_gen_demand_orth <- run_iv_analysis_new(my_IV_data = IV_data_log_esp,
+                                     headers_var_gen_first_mp_gas , "delta_d_orth", p = 12, 
                                      start_time = c(2015, 1), end_time = c(2025,9),
-                                       dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                       dependent = "load_tot_log", k = 1, cov_type = "NW")
 
-result_esp_sd_gen_demand_orth_bis <- run_iv_analysis(my_IV_data = IV_data_log_esp,
-                                                 headers_var_gen_first_mp , "delta_d_orth_bis", p = 12, 
+result_esp_sd_gen_demand_orth_bis <- run_iv_analysis_new(my_IV_data = IV_data_log_esp,
+                                                 headers_var_gen_first_mp_gas , "delta_d_orth_bis", p = 12, 
                                                  start_time = c(2015, 1), end_time = c(2025,9),
-                                                 dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                                 dependent = "load_tot_log", k = 1, cov_type = "NW")
 
 
-result_esp_sd_gen_demand_pc <- run_iv_analysis(my_IV_data = IV_data_log_esp,
-                                            headers_var_gen_first_mp , "delta_demand", p = 12,   
+result_esp_sd_gen_demand_pc <- run_iv_analysis_new(my_IV_data = IV_data_log_esp,
+                                            headers_var_gen_first_mp_gas , "delta_demand", p = 12,   
                                             start_time = c(2015, 1), end_time = c(2025,9),
-                                            dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                            dependent = "load_tot_log", k = 1, cov_type = "NW")
 
 
-result_esp_sd_price_wind <- run_iv_analysis(my_IV_data = IV_data_log_esp, 
-                                            headers_var_gen_first_mp, headers_proxies = c("wind_forecast_log"), p =12,  
+result_esp_sd_price_wind <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
+                                            headers_var_gen_first_mp_gas, headers_proxies = c("wind_forecast_log"), p =12,  
                                             start_time = c(2015, 1), end_time = c(2025,9),
-                                              dependent = "gen_tot_log", k = 1, cov_type = "NW")
+                                              dependent = "spot_price_log", k = 1, cov_type = "NW")
 colnames(IV_data_log_esp)
 
 
@@ -340,15 +323,15 @@ IV_data_log_fr <- IV_data_log_fr %>%
     delta_d_total_diff = if_else(is.na(delta_d_total_diff), 0, delta_d_total_diff)
   )
 
-result_fr <- run_iv_analysis(my_IV_data =  IV_data_log_fr, headers_var_gen_first , headers_proxies = headers_proxies_fr,
+result_fr <- run_iv_analysis_new(my_IV_data =  IV_data_log_fr, headers_var_gen_first , headers_proxies = headers_proxies_fr,
                               p =12, dependent = "", k = 2)
 
 dim(IV_data_log_fr)
 
 # Access outputs
 
-result_fr_sd_price <- run_iv_analysis(my_IV_data = IV_data_log_fr, 
-                                       headers_var_spot_first_mp, headers_proxies_fr, p =12, 
+result_fr_sd_price <- run_iv_analysis_new(my_IV_data = IV_data_log_fr, 
+                                       headers_var_spot_first_mp_gas, headers_proxies_fr, p =12, 
                                        dependent = "spot_price_log", k = 1)
 
 result_fr$result_HICP_log$gmin_generalized
@@ -362,11 +345,11 @@ headers_var_gen_first_mp <- c("gen_tot_log",
                               "ffr_diff")
 
 
-result_esp_mp_gas <- run_iv_analysis(IV_data_log_esp, headers_var_gen_first_mp, headers_proxies_esp, p = 12,   start_time = c(2015, 1), end_time = c(2025,9),
+result_esp_mp_gas <- run_iv_analysis_new(IV_data_log_esp, headers_var_gen_first_mp, headers_proxies_esp, p = 12,   start_time = c(2015, 1), end_time = c(2025,9),
                               dependent = "", k = 2)
 # Access outputs
 
-result_fr_mp_gas <- run_iv_analysis(IV_data_log_fr, headers_var_gen_first_mp, headers_proxies_fr, p =12,
+result_fr_mp_gas <- run_iv_analysis_new(IV_data_log_fr, headers_var_gen_first_mp, headers_proxies_fr, p =12,
                              dependent = "", k = 2)
 # Access outputs
 

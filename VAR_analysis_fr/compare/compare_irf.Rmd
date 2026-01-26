@@ -12,119 +12,24 @@ library(abind)
 
 
 ```{r}
-
-#pour tous je mets le supply shock devant
-
-
-
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
-setwd(save_rds_path)
-irf_cholesky_esp <- readRDS("irf_cholesky_esp_spot_first_log_diff.rds")
-# Convert to 20 x 5 x 5
-irf_cholesky_esp <- abind(irf_cholesky_esp, along = 3)
-
-#normalize cholesky
-#irf_cholesky_esp <- irf_cholesky_esp[1:20, c(2,1,3,4), c(2,1,3,4)]
-# Normalize so that the first time step = 1 for each (variable, shock) pair
-irf_cholesky_esp_norm <- irf_cholesky_esp
-
-for (var in 1:dim(irf_cholesky_esp)[2]) {
-  for (shock in 1:dim(irf_cholesky_esp)[3]) {
-    first_val <- irf_cholesky_esp[1, var,  var]
-    irf_cholesky_esp_norm[, var, shock] <- irf_cholesky_esp[, var, shock] / first_val
-  }
-}
-
-
-
-save_rds_path_bench <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
-setwd(save_rds_path_bench)
-gen_benchmark_esp_mr <- readRDS( "gen_benchmark_esp.rds")
-
-irf_mr <- gen_benchmark_esp_mr$lambda_0
-irf_mr <- irf_mr[1:20, c(2,1,3,4), c(2,1)]
-
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
-setwd(save_rds_path)
-gen_benchmark_esp_supply <- readRDS(  "gen_benchmark_esp_supply.rds")
-
-irf_supply <- gen_benchmark_esp_supply$lambda_0
-
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
-setwd(save_rds_path)
-gen_benchmark_esp_double <- readRDS(  "gen_benchmark_esp_double.rds")
-
-irf_double <- gen_benchmark_esp_double$lambda_0
-irf_double <- irf_double[1:20, c(2,1,3,4), c(2,1)]
-
+plot_full_irf_mbb(bootIRFs = bootIRFs_supply, shock = 1, plot_irf= plot_irf_mbb, lambda_0 =lambda_0_log_supply)
 ```
-
 
 
 ```{r}
 
-list_irfs <- list(irf_cholesky_esp_norm , irf_mr , irf_supply, irf_double )
+# lambda_0_log_supply
+# lambda_0_log_double_supply 
+# irf_cholesky_supply
+dim(lambda_0_log_supply)
+dim(lambda_0_log_double_supply)
+list_irfs <- list(irf_cholesky_supply, lambda_0_log_supply[,,1]  , lambda_0_log_double_supply)
 # Step 1: Put into a list with names
-names(list_irfs) <- c("Cholesky" ,   "IV MR" ,      "IV SD"  ,     "Joint IV SD")
+names(list_irfs) <- c("Cholesky" ,   "IV MR" ,     "IV SD")
 
 ```
 
-```{r}
-irf_list <- list_irfs
-compare_irf <- function(irf_list, variable_names, shock = "price") {
-  n_irf <- length(irf_list)
-  names(irf_list)
-  if (shock == "price"){
-   shock_label = "$P_{elec}$ shock IRF"
-  }else if (shock == "gen"){
-    shock_label = "$Q_{elec}$ shock IRF"
-  }else{
-    return("Invalid shock type. Please use 'price' or 'quantity'.")
-  }
 
-  #solution <-gen_benchmark
-  plot_irf <- function(i=1) {
-    #i=3
-    #trick I just put 0.5 twice
-    #main_IV <- lambda_0[, i, "lower"]
-    # Combine all IRFs into one data frame
-    #irf_list[[4]][1:20, i, 1]
-    time_horizon <- c(1:20)
-    df_all <- lapply(seq_along(irf_list), function(j) {
-      data.frame(
-        time = time_horizon,
-        value = irf_list[[j]][1:20, i, 1],
-        model = names(irf_list)[j]
-      )
-    }) %>% bind_rows()
-    
-    ggplot(df_all, aes(x = time, y = value, color = model)) +
-      geom_line(linetype = "solid") +
-      geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-      labs(
-        title = TeX(variable_names[i]),
-        x = "Time",
-        y = "Unit Points"
-      ) +
-      scale_color_manual(
-    values = c("Cholesky" ="blue" ,   "IV MR"="red" ,      "IV SD" = "green" ,     "Joint IV SD"= "darkgreen"),
-    drop = FALSE
-  ) +
-      guides(color = "none")+
-      theme(plot.title = element_text(size = 16))
-  
-  }
-
-  # Generate plots
-  plots_list <- lapply(1:n_irf, plot_irf)
-  grid_plots <- do.call("grid.arrange", c(plots_list, nrow = 2))
-  
-  legend_plot <- plot_grid(grid_plots, custom_legend , ncol = 1, rel_heights = c(1, 0.1))
-  return(legend_plot)
-  
-}
-#plot_irf(i=1)
-```
 
 Take care of the legend
 
@@ -132,9 +37,9 @@ Take care of the legend
 # Exemple simulé si tu n’as pas défini `simul_data`
 set.seed(123)
 simul_data <- data.frame(
-  x = rnorm(100),
-  y = rnorm(100),
-  colored = rep(names(list_irfs), each = 50)
+  x = rnorm(90),
+  y = rnorm(90),
+  colored = rep(names(list_irfs), each = 30)
   # ,
   # `Identification` = rep(c("Cholesky", "IV"), 50)
 )
@@ -148,7 +53,7 @@ plot_legend <- ggplot(data = simul_data, aes(x = x)) +
   geom_line(aes(y = y, color = colored))+#, bins = 30, alpha = 0.6) +
   #geom_line(aes(y = y)) +#, linetype = `Identification`)) +
   scale_color_manual(
-    values = c("Cholesky" ="blue" ,   "IV MR"="red" ,      "IV SD" = "green" ,     "Joint IV SD"= "darkgreen"),
+    values = c("Cholesky" ="blue" ,   "IV MR"="red" ,      "IV SD" = "green" ),
     drop = FALSE
   ) +
   # scale_linetype_manual(
@@ -178,54 +83,84 @@ custom_legend <- get_legend(plot_legend)
 
 
 
-# Transmission of Demand shocks
+# Transmission of Supply shocks
 
 
 
 ```{r}
 # Step 1: Put into a list with names
-names(list_irfs) <- c("Cholesky" ,   "IV MR" ,      "IV SD"  ,     "Joint IV SD")
+names(list_irfs) <- c("Cholesky" ,   "IV MR" ,      "IV SD"  )
 
 #Plot the IRFs
 irf_price_shock_esp <- compare_irf(
-  
   irf_list = list_irfs,
-  variable_names = c('$P_{elec}$', '$Q_{elec}$',  "IPI", '$HICP$', 'ECB rate'),
-  shock = "price"
+  variable_names = names,
+  shock = "supply"
 )
 irf_price_shock_esp
 ```
 
 # Transmission of Demand shocks
 
-
-
 ```{r}
 
-
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
-setwd(save_rds_path)
-gen_benchmark_esp_demand <- readRDS(  "gen_benchmark_esp_demand.rds")
-
-irf_demand <- gen_benchmark_esp_demand$lambda_0
-
-list_irfs_demand <- list(irf_cholesky_esp_norm[1:20, c(2,1,3,4), c(2,1)] , irf_mr[1:20, c(2,1,3,4), c(2,1)] , irf_demand, irf_double[1:20, c(2,1,3,4), c(2,1)] )
+list_irfs_demand <- list(irf_cholesky_demand, lambda_0_log_demand[,,1]  , lambda_0_log_double_demand)
 # Step 1: Put into a list with names
-names(list_irfs_demand ) <- c("Cholesky" ,   "IV MR" ,      "IV SD"  ,     "Joint IV SD")
+names(list_irfs_demand) <- c("Cholesky" ,   "IV MR" ,     "IV SD")
 
+
+#Plot the IRFs
+irf_demand_shock_esp <- compare_irf(
+  irf_list = list_irfs_demand,
+  variable_names = names_demand,
+  shock = "demand"
+)
+irf_demand_shock_esp
+
+```
+
+
+
+```{r}
+supply_msw_wind_plot_fr <- plot_full_irf(VAR_data =VAR_wind_fr, shock = 1, plot_irf = plot_irf_msw)
+supply_msw_wind_plot_fr
+```
+
+
+
+
+```{r}
+
+list_irfs_supply_fr <- list(irf_cholesky_supply_fr, lambda_0_log_double_fr_supply)
+# Step 1: Put into a list with names
+names(list_irfs_supply_fr) <- c("Cholesky" ,   "IV MR" )
+
+#Plot the IRFs
+irf_supply_shock_fr <- compare_irf(
+  irf_list = list_irfs_supply_fr,
+  variable_names = names,
+  shock = "supply"
+)
+irf_supply_shock_fr
 ```
 
 
 ```{r}
+
+list_irfs_demand_fr <- list(irf_cholesky_demand_fr, lambda_0_log_double_fr_demand)
+# Step 1: Put into a list with names
+names(list_irfs_demand_fr) <- c("Cholesky" ,   "IV MR" )
+
 #Plot the IRFs
-irf_gen_shock_esp <- compare_irf(
-  
-  irf_list = list_irfs_demand ,
-  variable_names = c('$Q_{elec}$', '$P_{elec}$',   "IPI", '$HICP$', 'ECB rate'),
-  shock = "gen"
+irf_demand_shock_fr <- compare_irf(
+  irf_list = list_irfs_demand_fr,
+  variable_names = names_demand,
+  shock = "supply"
 )
-irf_gen_shock_esp
+irf_demand_shock_fr
 ```
+
+
 
 
 ```{r}
@@ -235,7 +170,11 @@ setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 #ggsave("qty_shock_spain_mp.png", plot = irf_gen_shock_esp, width = 10, height = 6, dpi = 300)
 ggsave("supply_shock_spain_irf_compare.png", plot = irf_price_shock_esp, width = 10, height = 6, dpi = 300)
-ggsave("demand_shock_spain_irf_compare.png", plot = irf_gen_shock_esp, width = 10, height = 6, dpi = 300)
+ggsave("demand_shock_spain_irf_compare.png", plot = irf_demand_shock_esp, width = 10, height = 6, dpi = 300)
+ggsave("supply_shock_france_irf_compare.png", plot = irf_supply_shock_fr, width = 10, height = 6, dpi = 300)
+ggsave("demand_shock_france_irf_compare.png", plot = irf_demand_shock_fr, width = 10, height = 6, dpi = 300)
+ggsave("wind_supply_shock_fr.png", plot = supply_msw_wind_plot_fr, width = 10, height = 6, dpi = 300)
+
 
 ```
 

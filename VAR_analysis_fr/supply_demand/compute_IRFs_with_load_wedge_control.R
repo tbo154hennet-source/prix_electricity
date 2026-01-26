@@ -26,9 +26,9 @@ l <- 1
 controls <- ts(IV_data_log_esp[, c("wedge_iber_exception")[[1]]], frequency=12)
 # Fit the VAR model
 vl <- if (is.null(controls)) {
-  vars::VAR(x_demand, p, type = "none")
+  vars::VAR(x_demand, p, type = "const")
 } else {
-  vars::VAR(x_demand, p, type = "none", exogen = controls)
+  vars::VAR(x_demand, p, type = "const", exogen = controls)
 }
 
 coef = coef(vl)
@@ -63,9 +63,9 @@ lambda_0_log_demand_control <- get_lambda_0(C, theta_0_demand_control)
 controls  <- ts(IV_data_log_esp[, c("wedge_iber_exception")[[1]]], frequency=12)
 # Fit the VAR model
 vl <- if (is.null(controls)) {
-  vars::VAR(x_supply, p, type = "none")
+  vars::VAR(x_supply, p, type = "const")
 } else {
-  vars::VAR(x_supply, p, type = "none", exogen = controls)
+  vars::VAR(x_supply, p, type = "const", exogen = controls)
 }
 
 coef = coef(vl)

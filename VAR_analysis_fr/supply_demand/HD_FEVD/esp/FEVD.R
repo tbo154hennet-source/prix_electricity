@@ -1,6 +1,6 @@
 # vars<- ts(IV_data_log_esp[, c(headers_var)], frequency=12)
 # x =ts(vars , start=c(2015,1), end=c(2023,12), frequency=12)
-# vl = vars::VAR(x, p, type = "none")
+# vl = vars::VAR(x, p, type = "const")
 # k  = ncol(proxies)
 # n = ncol(y)
 # coef = coef(vl)

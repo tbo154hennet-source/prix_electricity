@@ -232,7 +232,56 @@ models_fs <- setNames(lapply(dep_vars, function(y) {
   feols(fml, data = wind_reg_data, vcov = as.formula(paste0("DK(24) ~ ", time_var)))
 }), dep_vars)
 
+etable(
+  models_fs,
+  keep = "update_wind",
+  headers = c("DA + Auction 1", "Auction 2–5", "Auction 6"),
+  fitstat = c("n", "r2", "f")
+)
+
+# Save to LaTeX
+save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+setwd(save_latex_path)
+
 # Afficher un tableau
-etable(models_fs)
+latex_tab <- etable(
+  models_fs,
+  keep = "update_wind",
+  headers = c("DA + Auction 1", "Auction 2–5", "Auction 6"),
+  fitstat = c("n", "r2", "f"),
+  tex = TRUE
+)
+
+# Sauvegarde dans un fichier .tex
+writeLines(latex_tab, "first_stage_wind_DK24.tex")
+
+
+
+save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+setwd(save_path_entsoe_output)
+auction_reg_data <- read_parquet( "auction_reg_data.parquet")
+
+colnames(auction_reg_data )
+#on s'intéresse maintenant aux indispo de centrales
+# RHS commun
+
+rhs_vars <- c("Published.Unavailable.Capacity"  , "Unpublished.Unavailable.Capacity",
+              "Published.Unavailable.Nuclear.Capacity"  , "Unpublished.Unavailable.Nuclear.Capacity",
+                controls_vars, controls_others)
+
+fml <- make_feols_fml("price_diff", rhs_vars, fe_part = "auction_before")
+model_indispo <- feols( fml, data = auction_reg_data, vcov = as.formula(paste0("DK(24) ~ ", time_var)))
+
+
+etable(
+  model_indispo,
+  keep = c("Published.Unavailable.Capacity"  , "Published.Unavailable.Nuclear.Capacity"  , "Unpublished.Unavailable.Nuclear.Capacity", "Unpublished.Unavailable.Capacity"),
+  headers = c("Indispo"),
+  fitstat = c("n", "r2", "f")
+)
+
+
+
+
 
 

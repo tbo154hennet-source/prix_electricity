@@ -5,9 +5,9 @@
 
 # # Fit the VAR model
 # vl <- if (is.null(controls)) {
-#   vars::VAR(x, p, type = "none")
+#   vars::VAR(x, p, type = "const")
 # } else {
-#   vars::VAR(x, p, type = "none", exogen = controls)
+#   vars::VAR(x, p, type = "const", exogen = controls)
 # }
 # 
 # #k  = ncol(proxies)
@@ -119,7 +119,7 @@ gamma_bootstrap_mbb_corrected <- function(x,nboot,  theta_0, proxies, controls=N
     }else{
       bootProxy <-rbind( proxies[1:p, , drop = FALSE],  bootProxy)
     }
-
+    
     theta_0_boot <- first_var_estimation_bis(x, bootres, p, 
                                              bootProxy ,
                 irhor, controls = NULL, elas = elas)$theta_0
@@ -142,98 +142,6 @@ gamma_bootstrap_mbb_corrected <- function(x,nboot,  theta_0, proxies, controls=N
 
 
 
-gamma_bootstrap_mbb_corrected_bis <- function(x,nboot, BlockSize, theta_0, proxies, controls=NULL, elas = 0,
-                                              start_ts = c(2015,1), end_ts =c(2023,12), irhor=irhor){
-  T_bis <- nrow(x) - p
-  
-  BlockSize <- round(5 * T_bis**0.25)
-  nBlock <- ceiling((T_bis) / BlockSize)
-  
-  
-  # Center VAR residuals
-  VARcentering <- sapply(1:BlockSize, function(j) {
-    colMeans(res[j:(T - BlockSize + j), ])
-  })
-  VARcentering <- matrix(rep(VARcentering, each = nBlock), nrow = T, ncol = n, byrow = TRUE)
-  centered_res <- res - VARcentering
-  
-  # Create blocks for residuals
-  VARBlocks <- array(NA, dim = c(BlockSize, n, T - BlockSize + 1))
-  for (j in 1:(T - BlockSize + 1)) {
-    VARBlocks[,,j] <- centered_res[j:(j + BlockSize - 1), ]
-  }
-  
-  # Proxy blocks
-  if (k==1){
-    proxies_short <- proxies[(p+1):length(proxies)]
-    Proxycentering <- sapply(1:BlockSize, function(j) {
-      subProxy <- proxies[j:(T - BlockSize + j)]
-      mean(subProxy[subProxy != 0]) - mean(proxies[proxies[1] != 0])
-    })
-    Proxycentering <- matrix(rep(Proxycentering, each = nBlock), nrow = T, ncol = 1, byrow = TRUE)
-  } else{
-    proxies_short <- proxies[(p+1):nrow(proxies), ]
-    # Center proxy variables
-    Proxycentering <- sapply(1:BlockSize, function(j) {
-      subProxy <- proxies[j:(T - BlockSize + j), 1]
-      mean(subProxy[subProxy != 0]) - mean(proxies[proxies[,1] != 0, 1])
-    })
-    Proxycentering <- matrix(rep(Proxycentering, each = nBlock), nrow = T, ncol = ncol(proxies), byrow = TRUE)
-    
-  }
-  centered_proxies <- proxies_short - Proxycentering
-  
-  ProxyBlocks <- array(NA, dim = c(BlockSize, k, T - BlockSize + 1))
-  for (j in 1:(T - BlockSize + 1)) {
-    if (k==1){
-      ProxyBlocks[,,j] <- proxies_short[j:(j + BlockSize - 1)]
-    } else{
-      ProxyBlocks[,,j] <- proxies_short[j:(j + BlockSize - 1),]
-    }
-    
-  }
-  
-  if(k==1){
-    bootIRFs <- array(NA, dim = c(irhor, n, nboot))
-  }else{
-    bootIRFs <- array(NA, dim = c(irhor, n, nboot,k))
-  }
-  # bootDatas <- array(0, dim = c(T + p, n, nboot))
-  # ProxyCount <- matrix(0, nrow = nboot, ncol = ncol(proxies))
-  
-  set.seed(123)
-  j =1
-  block_index_list <- replicate(
-    nboot,
-    sample(1:(T - BlockSize + 1), nBlock, replace = TRUE),
-    simplify = FALSE
-  )
-  
-  for (j in 1:nboot) {
-    index <- block_index_list[[j]]
-    # Reconstruct bootstrap residuals
-    bootres <- do.call(rbind, lapply(index, function(ii) VARBlocks[,,ii]))
-    bootres <- bootres[(p+1):nrow(bootres),]
-    bootProxy <- do.call(rbind, lapply(index, function(ii) ProxyBlocks[,,ii]))
-    # Rassembler les blocs dans l’ordre
-    if(k==1){
-      bootProxy <- unlist(lapply(index, function(ii) ProxyBlocks[, ,ii]))
-    }
-    theta_0_boot <- first_var_estimation_double_bis(y, bootres, p, bootProxy, irhor, controls = NULL, elas = elas)$theta_0
-    
-    lambda_0_boot <- get_lambda_0(C, theta_0_boot, irhor=irhor)
-    if(k==1){
-      bootIRFs[,,j] <- lambda_0_boot
-    }else{
-      bootIRFs[,,j,] <- lambda_0_boot
-    }
-    
-    # Re-estimate VAR (in R you can use vars::VAR)
-    # bootvarEst <- vars::VAR(bootData[(p+1):(T+p), ], p = p, type = "const")
-    
-  }
-  return(bootIRFs)
-}
 
 
 gamma_bootstrap_mbb_corrected_final <- function(x,nboot,  theta_0, proxies, controls=NULL, elas = 0,
@@ -320,13 +228,18 @@ gamma_bootstrap_mbb_corrected_final <- function(x,nboot,  theta_0, proxies, cont
     }
     bootProxy <- bootProxy[1:T, drop = FALSE]
     
-    bootData <- iterate_var_ter(x, x[1:p,], bootres, vl, controls)
+    T_controls <- nrow(x)   # ou nrow(res_demand)
+    
+    boot_controls <-  matrix(1, nrow = T_controls, ncol = 1)
+    colnames(boot_controls) <- "const"
+    
+    bootData <- iterate_var_ter(x, x[1:p,], bootres, vl, boot_controls)
     
     # Fit the VAR model
     vboot <- if (is.null(controls)) {
-      vars::VAR(bootData, p, type = "none")
+      vars::VAR(bootData, p, type = "const")
     } else {
-      vars::VAR(bootData, p, type = "none", exogen = controls)
+      vars::VAR(bootData, p, type = "const", exogen = controls)
     }
     AL_boot <- do.call(cbind, lapply(coef(vboot), function(df) df[, 1]))
 
@@ -335,7 +248,7 @@ gamma_bootstrap_mbb_corrected_final <- function(x,nboot,  theta_0, proxies, cont
     C_boot  <- MARep(t(AL_boot), p, hori)
     
     if (k ==1){
-      theta_0_boot <- first_var_estimation_bis(x, res =bootres, p, proxies =bootProxy,# c(proxies[1:p],bootProxy),
+      theta_0_boot <- first_var_estimation_bis(x, res =bootres, p, proxies =c(proxies[1:p],bootProxy),
                                                irhor, controls = NULL, elas = elas)$theta_0
     }else{
       theta_0_boot <- first_var_estimation_bis(x, res =bootres, p, proxies = rbind(proxies[1:p,],bootProxy),
@@ -522,7 +435,7 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
   
   if (k == 1) {
     bootIRFs <- array(NA, dim = c(irhor, n, nboot))
-    boot_structural_shocks <- matrix(NA_real_, nrow = nboot, ncol = T)  # 1 shock x T, répété nboot fois
+    counterfactual_prediction_boots <- array(NA, dim = c(T + p, n, nboot))  # 1 shock x T, répété nboot fois
     bootres_s  <- array(NA, dim = c(T, n, nboot))
   }else{
     bootIRFs <- array(NA, dim = c(irhor, n, nboot,k))
@@ -558,9 +471,9 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
     
     # Fit the VAR model
     vboot <- if (is.null(controls)) {
-      vars::VAR(bootData, p, type = "none")
+      vars::VAR(bootData, p, type = "const")
     } else {
-      vars::VAR(bootData, p, type = "none", exogen = controls)
+      vars::VAR(bootData, p, type = "const", exogen = controls)
     }
     AL_boot <- do.call(cbind, lapply(coef(vboot), function(df) df[, 1]))
     
@@ -576,25 +489,22 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
       gamma_boot  <- boot_estimation$gamma
       phi_boot <- boot_estimation$phi
       lambda_0_boot <- get_lambda_0(C_boot, theta_0_boot, irhor=irhor)
+
+      IRF_boot <- as.matrix(lambda_0_boot[,,1])
       
+      psi_boot <- as.numeric(IRF_boot[, 1])                  # longueur H, h=0..H-1
       
+      d_price_boot <- bootData[,1] - IV_data_log_esp_counterfactual$counterfactual_spot_price_log
+      eps_policy_boot <- recover_policy_shock_exact(d=d_price_boot, psi = psi_boot)
       
-      Sigma_eta_boot = cov(bootres)
-      #calculate sigma_aa
-      Sigma_a_boot <- gamma_boot %*%  ginv(t(gamma_boot) %*% ginv(Sigma_eta_boot) %*% gamma_boot) %*% t(gamma_boot)
+      path_policy_boot <- matrix(0, nrow = Tp, ncol = n)
+      for (alpha in 1:n) {
+        tmp <- stats::filter(eps_policy_boot, filter = IRF_boot[, alpha],
+                             method = "convolution", sides = 1)
+        path_policy_boot[, alpha] <- replace(as.numeric(tmp), is.na(tmp), 0)
+      }
       
-      Sigma_theta_boot <- t(theta_0_boot) %*% theta_0_boot
-      D_boot <- solve(Sigma_theta_boot)  %*% t(theta_0_boot) %*%  Sigma_a_boot %*% theta_0_boot %*% solve(Sigma_theta_boot)
-      
-      #almost diagonal matrix_supply
-      right_term_boot <- t(gamma_boot) %*% ginv(Sigma_eta_boot) %*% t(bootres)
-      D_inv_boot <- try(solve(D_boot), silent = TRUE); if (inherits(D_inv_boot, "try-error")) D_inv_boot <- ginv(D_boot)
-      
-      left_matrix_supply <- t(phi_boot) %*% D_inv_boot
-      # with this strategy the system is undertemined,
-      #I impose additional assumptions
-      
-      structural_shocks_IV_boot <- solve(t(left_matrix_supply) %*% left_matrix_supply) %*% t(left_matrix_supply) %*% right_term_boot
+      counterfactual_prediction_boot  <- x - path_policy_boot
       
     }else{
       theta_0_boot <- first_var_estimation_bis(x, res =bootres, p, proxies = rbind(proxies[1:p,],bootProxy),
@@ -605,7 +515,7 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
     
     if(k==1){
       bootIRFs[,,j] <- lambda_0_boot
-      boot_structural_shocks[j, ] <- as.numeric(structural_shocks_IV_boot[1, ])  # stocke le DRAW j
+      counterfactual_prediction_boots[,,j] <- counterfactual_prediction_boot # stocke le DRAW j
       bootres_s[,,j] <- bootres
     }else{
       bootIRFs[,,j,] <- lambda_0_boot
@@ -615,6 +525,6 @@ gamma_bootstrap_mbb_corrected_counterfactual <- function(x,nboot,  theta_0, prox
     # bootvarEst <- vars::VAR(bootData[(p+1):(T+p), ], p = p, type = "const")
     
   }
-  return(list(bootIRFs = bootIRFs, boot_structural_shocks = boot_structural_shocks, bootres_s = bootres_s))
+  return(list(bootIRFs = bootIRFs, counterfactual_prediction_boot = counterfactual_prediction_boots, bootres_s = bootres_s))
 }
 

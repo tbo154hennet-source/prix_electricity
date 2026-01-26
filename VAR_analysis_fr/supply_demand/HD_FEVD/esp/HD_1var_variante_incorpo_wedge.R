@@ -4,9 +4,9 @@
 
 # Fit the VAR model
 vl_supply_incorpo <- if (is.null(controls)) {
-  vars::VAR(x_supply, p, type = "none")
+  vars::VAR(x_supply, p, type = "const")
 } else {
-  vars::VAR(x_supply, p, type = "none", exogen = controls)
+  vars::VAR(x_supply, p, type = "const", exogen = controls)
 }
 
 coef = coef(vl_supply_incorpo)
@@ -14,7 +14,7 @@ bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
 res_supply_incorpo = residuals(vl_supply_incorpo)
 Sigma_eta_supply_incorpo = cov(res_supply_incorpo)
 
-supply_estimation <- first_var_estimation_bis(y, res_supply_incorpo, p, proxies_supply_incorpo, irhor, controls = NULL, elas = 0)
+supply_estimation <- first_var_estimation_bis(y, res_supply_incorpo, p, proxies_wedge, irhor, controls = NULL, elas = 0)
 theta_0_supply_incorpo <- supply_estimation$theta_0
 gamma_supply_incorpo  <- supply_estimation$gamma
 phi_supply_incorpo  <- supply_estimation$phi
@@ -50,10 +50,11 @@ data_IV_incorpo <- as.data.frame(t(rbind(structural_shocks_IV_supply_incorpo, st
 colnames(data_IV_incorpo) <- c(  "supply_incorpo", "demand")
 dates_formatted <- as.yearmon(time(x_supply))
 dates_formatted <- dates_formatted[(p+1):length(dates_formatted)]
-data_IV_incorpo_all$observation_date <- dates_formatted
 
 data_IV_incorpo_all <- cbind(data_IV, data_IV_incorpo$supply_incorpo)
-colnames(data_IV_incorpo_all) <- c(  "supply", "demand",  "supply_incorpo")
+data_IV_incorpo_all$observation_date <- dates_formatted
+
+colnames(data_IV_incorpo_all) <- c(  "supply", "demand",  "supply_incorpo", "date")
 
 
 my_stru_shock_simple <- ggplot()+
@@ -74,12 +75,13 @@ my_stru_shock_simple
 
 
 data_IV_incorpo_all %>% 
+  dplyr::select(all_of(c(  "supply", "demand",  "supply_incorpo"))) %>% 
   cor()
 
-# save_plot_path <- 'Z:/Overleaf_elec/images/macro'
-# setwd(save_plot_path)
-# # Assume your ggplot object is called 'p'
-# ggsave("structural_shocks_simple.png", plot = my_stru_shock_simple , width = 12, height = 6, dpi = 300)
+save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("structural_shocks_simple.png", plot = my_stru_shock_simple , width = 12, height = 6, dpi = 300)
 
 
 #question sur la maniere de normaliser les chocs
