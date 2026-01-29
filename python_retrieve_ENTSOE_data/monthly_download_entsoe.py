@@ -6,7 +6,7 @@ import os
 
 # Define start and end dates
 client = EntsoePandasClient(api_key='e8c7f878-ba9e-4b59-b7f1-7476e5e4f526')
-country_code = 'FR'
+country_code = 'ES'
 #country_code_to = 'FR'   
 # Define start and end dates
 start_date = pd.Timestamp('20240101', tz='Europe/Brussels')
@@ -35,7 +35,7 @@ for date in monthly_dates:
 
     #generation_per_plant = client.query_generation_per_plant(country_code, 
     #      start=start_month, end=end_month, psr_type=None, include_eic=False)
-
+    
     #gen_unavailabilities= client.query_unavailability_of_generation_units(
      #   country_code, start=start_month, end=end_month, docstatus=None, periodstartupdate=None, periodendupdate=None)
     #wind_and_solar_forecast = client.query_wind_and_solar_forecast(country_code, start=start_year, end=end_year, psr_type=None)
@@ -74,3 +74,11 @@ for date in monthly_dates:
 table.to_pandas().tail()
 
 #2024-10-07
+start_date = pd.Timestamp('20150101', tz='Europe/Brussels')
+#end_date = pd.Timestamp('20170101', tz='Europe/Brussels')
+end_date = pd.Timestamp('20260101', tz='Europe/Brussels')
+test = client.query_installed_generation_capacity(country_code, start=start_date, end = end_date, psr_type=None)
+path = r'Z:\prix_electricite_gitlab'
+os.chdir(path)
+test.to_csv('installed_generation_capacity_ES_2015_2025.csv')
+test

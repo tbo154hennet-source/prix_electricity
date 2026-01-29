@@ -86,14 +86,14 @@ IV_data_log_fr %>%
 unique(VAR_wind_fr$irfs$type)
 colnames(VAR_wind_fr$irfs)
 
-theta_0_wind <- VAR_wind_fr$irfs %>% 
+theta_0_wind_fr <- VAR_wind_fr$irfs %>% 
   filter(confi_type == "msw" & horizon==1 & type == "point" & confi_level == 0.68)
 
 #pour normaliser par rapport à la demand
 
 controls = NULL
 # Fit the VAR model
-vl <- if (is.null(controls)) {
+vl_fr <- if (is.null(controls)) {
   vars::VAR(x_demand_fr, p, type = "const")
 } else {
   vars::VAR(x_demand_fr, p, type = "const", exogen = controls)
@@ -101,21 +101,21 @@ vl <- if (is.null(controls)) {
 
 
 
-coef = coef(vl)
+coef = coef(vl_fr)
 bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
-res = residuals(vl)
+res_fr = residuals(vl_fr)
 
 
 
 proxies <- ts(IV_data_log_fr[, c("Fore_Wind_log", "temperature_discomfort" )], frequency=12)
 k=2
 l=2
-theta_0_double_fr <- first_var_estimation_bis( x= x_demand_fr, res, p, proxies, irhor, controls = NULL, elas = theta_0_wind$value[2])$theta_0
+theta_0_double_fr <- first_var_estimation_bis( x= x_demand_fr, res_fr, p, proxies, irhor, controls = NULL, elas = theta_0_wind_fr$value[2])$theta_0
 
 
-AL <- do.call(cbind, lapply(coef(vl), function(df) df[, 1]))
+AL <- do.call(cbind, lapply(coef(vl_fr), function(df) df[, 1]))
 # Optionally, set column names if needed
-names(AL) <- names(coef(vl))
+names(AL) <- names(coef(vl_fr))
 p <- 12  # Number of lags in the VAR model
 hori <- 20 # Forecast horizon
 
@@ -133,7 +133,7 @@ theta_0_double_fr
 lambda_0_log_double_fr
 
 
-irf_cholesky_fr <- irf(vl, impulse = colnames(x_demand_fr), response = colnames(x_demand_fr),
+irf_cholesky_fr <- irf(vl_fr, impulse = colnames(x_demand_fr), response = colnames(x_demand_fr),
                     n.ahead = (irhor - 1), ortho = TRUE, boot = TRUE)
 
 lambda_0_log_double_fr_supply <- lambda_0_log_double_fr[,c(c(2,1),3:n),2]

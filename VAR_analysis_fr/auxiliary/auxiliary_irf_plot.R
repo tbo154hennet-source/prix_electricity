@@ -384,10 +384,10 @@ plot_irf_mbb_double <- function(
 }
 
 
-irf_list <- list_irfs
-dim(irf_list)
-irf_list[[1]]
-irf_list[[1]][1:20, i]
+# irf_list <- list_irfs
+# dim(irf_list)
+# irf_list[[1]]
+# irf_list[[1]][1:20, i]
 
 compare_irf <- function(irf_list, variable_names, shock = "price") {
   n_irf <- length(irf_list)

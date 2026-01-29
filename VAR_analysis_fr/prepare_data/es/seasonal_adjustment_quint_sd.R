@@ -16,8 +16,9 @@ IV_data <- read_parquet('IV_data_esp_elas_sd_2026.parquet')
 IV_data <- IV_data %>%
   mutate(across(contains("spot"), ~ . / HICP*100 )) %>% 
 #pour l'instant IPI Esp va jusqu'à 2025-10-01  
-  filter(observation_date <= as.Date("2025-09-01") ) %>% 
-  select(-IPI_FRED, - Spot_gas)
+  filter(observation_date <= as.Date("2025-09-01") ) 
+  # %>% 
+  # select(-IPI_FRED, - Spot_gas)
   
 
 #grep("spot", colnames(IV_data), value = TRUE, ignore.case = TRUE)
