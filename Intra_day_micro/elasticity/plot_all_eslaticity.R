@@ -1,5 +1,5 @@
 
-
+library(stringr)
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
 
 df_wind_id <- read.csv( "df_wind_intrday")
@@ -78,7 +78,19 @@ plot_supply_elas <- ggplot(df_all, aes(x = Type, y = Coef, color = Instrument)) 
     #title = "Time Evolution of Supply Elasticities"
   ) +
   theme_minimal() +
-  scale_color_manual(values = c("OLS" = "black", "IV Supply" = "blue", "IV Demand" = "red"))+
+  scale_color_manual(
+    values = c(
+      "OLS" = "black",
+      "IV Supply" = "blue",
+      "IV Demand" = "red"
+    ),
+    labels = c(
+      "OLS" = "OLS",
+      "IV Supply" = "Supply Elasticity",
+      "IV Demand" = "Demand Elasticity"
+    )
+  )+
+
   theme(legend.text = element_text(size = 15),      # taille du texte
         legend.title = element_text(size = 16),     # taille du titre
         legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,

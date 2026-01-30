@@ -7,31 +7,46 @@ ggplot(price_indispo_merge_esp_npc %>%
          filter(year==2020), aes(x=datetime))+
   geom_line(aes(y=(load_tot - load_forecast), color= "Load Forecast Error"))
 
-df_2020 <- price_indispo_merge_esp_npc %>%
-  filter(year == 2020) %>%
+df_2020 <- price_indispo_merge_esp_npc %>% 
+  filter(year == 2020) %>% 
   arrange(datetime) %>%
+  mutate( load_error = load_tot - load_forecast, 
+          gen_error = gen_tot - gen_forecast_net, 
+          # variance glissante sur 30 jours,
+          load_error_var_10d = rollapply( load_error, width = 10, FUN = stats::var, align = "right", fill = NA, na.rm = TRUE ),
+          gen_error_var_10d = rollapply( gen_error, width = 10, FUN = stats::var, align = "right", fill = NA, na.rm = TRUE )
+)
+
+df_2020 <- merge(df_2020,
+                 wind_reg_data %>% 
+                   dplyr::select(datetime, price_diff_0to5, right_term_demand_0to5, qty_0to5),
+                 by = "datetime")
+
+
+colnames(df_2020)
+
+df_2020_daily_var <- price_indispo_merge_esp_npc %>%
+  filter(year == 2020) %>%
   mutate(
+    date = as.Date(datetime),
+    hour = hour(datetime),
     load_error = load_tot - load_forecast,
-    gen_error = gen_tot - gen_forecast_net,
-    
-    # variance glissante sur 30 jours
-    load_error_var_10d = rollapply(
-      load_error,
-      width = 10,
-      FUN = stats::var,
-      align = "right",
-      fill = NA,
-      na.rm = TRUE
-    ),
-    gen_error_var_10d = rollapply(
-      gen_error,
-      width = 10,
-      FUN = stats::var,
-      align = "right",
-      fill = NA,
-      na.rm = TRUE
-    )
-  )
+    gen_error  = gen_tot - gen_forecast_net
+    # slot = if_else(hour < 5 | hour >= 23, "night", "day")  # ex: nuit 20h–7h59
+  ) %>%
+  group_by(date) %>%
+  summarise(
+    load_error_var = var(load_error, na.rm = TRUE),
+    gen_error_var  = var(gen_error,  na.rm = TRUE),
+    n_obs = sum(!is.na(load_error) & !is.na(gen_error)),
+    .groups = "drop"
+  ) %>%
+  # tidyr::pivot_wider(
+  #   names_from = slot,
+  #   values_from = c(load_error_var, gen_error_var, n_obs),
+  #   names_glue = "{.value}"
+  # ) %>%
+  arrange(date)
 
 
 # Changes in testing criteria for COVID-19.
@@ -118,9 +133,8 @@ lockdowns$phase <- factor(
   )
 )
 
-
-my_plot <- ggplot(df_2020 %>% 
-                    filter(as.numeric(month) >= 2 & as.numeric(month) <= 5), aes(x = datetime)) +
+colnames(df_2020_daily_var)
+my_plot <- ggplot() +
   
   # bandes de confinement
   geom_rect(
@@ -138,11 +152,34 @@ my_plot <- ggplot(df_2020 %>%
   
   
   # séries
-  geom_line(aes(y = abs(load_error), color = "Load Forecast Error")) +
-  geom_line(
-    aes(y = sqrt(load_error_var_10d), color = "10-day Rolling Std Dev"),
-    linewidth = 1
-  ) +
+  geom_line(data = df_2020 %>% 
+              filter(as.numeric(month) >= 2 & as.numeric(month) <= 5) %>% 
+              group_by(date) %>% 
+              summarise(datetime = first(datetime),
+                        load_error = mean(load_error, na.rm = TRUE)
+                        ), 
+            aes(x = datetime, y = load_error, color = "Load Forecast Error")) +
+  
+  # geom_line(data = df_2020 %>%
+  #             filter(as.numeric(month) >= 2 & as.numeric(month) <= 5) %>%
+  #             group_by(date) %>%
+  #             summarise(datetime = first(datetime),
+  #                       qty_0to5 = mean(qty_0to5, na.rm = TRUE)
+  #             ),
+  #           aes(x = datetime, y = qty_0to5 - mean(qty_0to5), color = "Delta Price DA/ID")) +
+  
+  geom_line(data = df_2020_daily_var %>% 
+              mutate(month = month(date),
+                     datetime = as.POSIXct(date)) %>% 
+              filter(as.numeric(month) >= 2 & as.numeric(month) <= 5), 
+            aes(x = datetime, y = 2*sqrt(load_error_var), color = "Std Load Forecast Error
+                ")) +
+  # geom_line(data = df_2020_daily_var %>% 
+  #             mutate(month = month(date),
+  #                    datetime = as.POSIXct(date)
+  #                    ) %>% 
+  #             filter(as.numeric(month) >= 2 & as.numeric(month) <= 5),
+  #           aes(x = datetime, y = 2*sqrt(load_error_var), color = "Std Load Forecast Error Night")) +
   # geom_line(aes(y = -abs(gen_error )/10, color = "Generation Forecast Error")) +
   # 
   # geom_line(
@@ -167,7 +204,6 @@ my_plot <- ggplot(df_2020 %>%
   )
 
 my_plot
-
 
 save_plot_path <- 'Z:/Overleaf_elec/images/intra_day'
 setwd(save_plot_path)

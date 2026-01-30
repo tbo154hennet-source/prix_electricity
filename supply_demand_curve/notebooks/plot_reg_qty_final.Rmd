@@ -168,6 +168,7 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom
       color = "Variable",
       fill = "Variable"
     ) +
+  theme_minimal()+
   theme(legend.text = element_text(size = 15),      # taille du texte
         legend.title = element_text(size = 16),     # taille du titre
         legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,

@@ -203,7 +203,7 @@ write.csv(df_wind_id, "df_wind_intrday")
 library(fixest)
 
 # Dépendantes à estimer
-dep_vars <- c("price_diff_1to5", "price_diff_0to1", "price_diff_5")
+dep_vars <- c("price_diff_0to1", "price_diff_1to5", "price_diff_5")
 
 # RHS commun
 rhs_vars <- c("update_wind", controls_vars, controls_others)
@@ -234,10 +234,15 @@ models_fs <- setNames(lapply(dep_vars, function(y) {
 
 etable(
   models_fs,
-  keep = "update_wind",
+  keep = c("Wind day-ahead forecast", "Wind update"),
+  dict = c(
+    Fore_Wind = "Wind day-ahead forecast",
+    update_wind = "Wind update"
+  ),
   headers = c("DA + Auction 1", "Auction 2–5", "Auction 6"),
   fitstat = c("n", "r2", "f")
 )
+
 
 # Save to LaTeX
 save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
@@ -246,7 +251,11 @@ setwd(save_latex_path)
 # Afficher un tableau
 latex_tab <- etable(
   models_fs,
-  keep = "update_wind",
+  keep = c("Wind day-ahead forecast", "Wind update"),
+  dict = c(
+    Fore_Wind = "Wind day-ahead forecast",
+    update_wind = "Wind update"
+  ),
   headers = c("DA + Auction 1", "Auction 2–5", "Auction 6"),
   fitstat = c("n", "r2", "f"),
   tex = TRUE

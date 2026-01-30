@@ -2,6 +2,10 @@
 library(MASS)
 library(slider)
 
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+setwd(source_path)
+source("auxiliary_policy.R")
+
 setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
 pred_post_df <- read_parquet( "prediction_gas_price_counterfactual_monthly.parquet")
 
@@ -109,34 +113,72 @@ IRF <- as.matrix(IRF)
 psi <- as.numeric(IRF[, 1])                  # longueur H, h=0..H-1
 
 
-recover_policy_shock_exact <- function(d, psi) {
-  d <- as.numeric(d)
-  psi <- as.numeric(psi)
-  T <- length(d)
-  H <- length(psi)
-  
-  if (abs(psi[1]) < 1e-12) stop("psi[1] (impact h=0) est nul -> non identifiable.")
-  
-  eps <- numeric(T)
-  for (t in 1:T) {
-    hmax <- min(H - 1, t - 1)
-    rhs <- d[t]
-    if (hmax >= 1) {
-      rhs <- rhs - sum(psi[2:(hmax+1)] * eps[(t-1):(t-hmax)])
-    }
-    eps[t] <- rhs / psi[1]
-  }
-  eps
-}
+
 
 d_price <- IV_data_log_esp_counterfactual$spot_price_log - IV_data_log_esp_counterfactual$counterfactual_spot_price_log
-eps_policy <- recover_policy_shock_exact(d_price, psi)
+out <- recover_policy_shock_ridge_ls(d_price, psi, lambda = 1e-3)
+eps_policy <- out$eps
 IV_data_log_esp_counterfactual$eps_policy <- eps_policy
 
-ggplot()+
-  geom_line(data = IV_data_log_esp_counterfactual, aes(x= observation_date, y = eps_policy, color = "Policy"))+
-  #geom_line(data = IV_data_log_esp_counterfactual, aes(x= observation_date, y = eps_policy_hat_lambda, color = "Policy"))+
-  geom_line( aes(x= IV_data_fr$observation_date, y = IV_data_fr$spot_price/100, color = "FR"))
+library(ggplot2)
+
+iberian_shock <- ggplot() +
+  
+  geom_line(
+    data = IV_data_log_esp_counterfactual,
+    aes(x = observation_date,
+        y = eps_policy,
+        color = "Shock")
+  ) +
+  
+  geom_line(
+    data = IV_data_log_esp_counterfactual,
+    aes(x = observation_date,
+        y = exp(spot_price_log)/100,
+        color = "P_ES")
+  ) +
+  
+  geom_line(
+    data = IV_data_fr,
+    aes(x = observation_date,
+        y = spot_price/100,
+        color = "P_FR")
+  ) +
+  
+  scale_color_manual(
+    name = NULL,
+    values = c(
+      "Shock" = "black",        # very distinct
+      "P_ES"  = "#1f77b4",      # blue
+      "P_FR"  = "#4fa3d9"       # lighter blue (close but distinguishable)
+    ),
+    labels = c(
+      "Shock" = expression(epsilon[t]^{policy}),
+      "P_ES"  = expression(P[elec]^{ES}),
+      "P_FR"  = expression(P[elec]^{FR})
+    )
+  ) +
+  
+  labs(
+    x = NULL,
+    y = expression("Price (€ × 100)")
+  )+
+  
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    legend.text = element_text(size = 13),
+    panel.grid.minor = element_blank()
+  )
+
+iberian_shock
+
+
+save_plot_path <- 'Z:/Overleaf_elec/images/policy'
+setwd(save_plot_path)
+ggsave("iberian_shock.png", plot = iberian_shock, width = 14 , height = 6, dpi = 300)
+
+
 
 # reconstruit d_hat via convolution
 d_hat <- as.numeric(stats::filter(eps_policy, filter = psi,
@@ -168,7 +210,7 @@ ggplot()+
 # 
 
 
-
+h <-7
 # ---- Extraire série originale (colonne 4) ----
 price_obs <- x_supply[, 1]
 hicp_obs <- x_supply[, 5]
@@ -224,29 +266,34 @@ boot_counterfactual_HICP <- array(NA, dim = c((T+p), nboot))
 boot_counterfactual_spot <- array(NA, dim = c((T+p), nboot))
 #boot_counterfactual_level_HICP <- array(NA, dim = c((T+p), nboot))
 
-for (i in 1:nboot) {
-    # Matrice T x 4 remplie de 0
 
-    
-    IRF_sim <- as.matrix(bootIRFs_supply[,,i])
-    
-    psi_sim <- as.numeric(IRF_sim[, 1])                  # longueur H, h=0..H-1
-    
-    eps_policy_sim <- recover_policy_shock_exact(d_price, psi_sim)
-    
-    path_policy_sim <- matrix(0, nrow = Tp, ncol = n)
-    for (j in 1:n) {
-      tmp <- stats::filter(eps_policy_sim, filter = IRF_sim[, j],
-                           method = "convolution", sides = 1)
-      path_policy_sim[, j] <- replace(as.numeric(tmp), is.na(tmp), 0)
-    }
-    
-    counterfactual_prediction_sim  <- x_supply - path_policy_sim
-    
-    
-    
-    boot_counterfactual_HICP[,i] <- counterfactual_prediction_sim[, 5]
-    boot_counterfactual_spot[,i] <- counterfactual_prediction_sim[, 1]
+for (i in 1:nboot) {
+  # Matrice T x 4 remplie de 0
+  
+  
+  IRF_sim <- as.matrix(bootIRFs_supply[,,i])
+  
+  psi_sim <- as.numeric(IRF_sim[, 1])                  # longueur H, h=0..H-1
+  
+  eps_policy_sim <- recover_policy_shock_exact(d_price, psi_sim)
+  
+  out_sim <- recover_policy_shock_ridge_ls(d_price, psi_sim , lambda = 1e-3)
+  eps_policy_sim  <- out_sim$eps
+  
+  
+  path_policy_sim <- matrix(0, nrow = Tp, ncol = n)
+  for (j in 1:n) {
+    tmp <- stats::filter(eps_policy_sim, filter = IRF_sim[, j],
+                         method = "convolution", sides = 1)
+    path_policy_sim[, j] <- replace(as.numeric(tmp), is.na(tmp), 0)
+  }
+  
+  counterfactual_prediction_sim  <- x_supply - path_policy_sim
+  
+  
+  
+  boot_counterfactual_HICP[,i] <- counterfactual_prediction_sim[, 5]
+  boot_counterfactual_spot[,i] <- counterfactual_prediction_sim[, 1]
 }
 
 
@@ -282,19 +329,24 @@ quantiles_50_inflation<- apply(boot_counterfactual_HICP_inflation_12[(p+1):(T+p)
                                c(1), function(x) quantile(x, probs = quantile_probs_50))[1,]
 
 inflation_pred[(T_gas+p):(T_gas+h+p)]
+
 inflation_obs[(T_gas+p):(T_gas+h+p)]
 quantiles_90_inflation[,(T_gas):(T_gas+h)]
+quantiles_50_inflation[(T_gas):(T_gas+h)]
 
 inflation_lower_90 <- t(quantiles_90_inflation   )[,1]            # fcst - 1 sigma
 inflation_upper_90 <- t(quantiles_90_inflation   )[,2]               # fcst + 1 sigma
 inflation_lower_68 <- t(quantiles_68_inflation   )[,1]             # fcst - 1 sigma
 inflation_upper_68 <- t(quantiles_68_inflation   )[,2]
 
+length(quantiles_50_inflation)
+length(inflation_pred)
+
 
 df_inflation <- data.frame(
   date = c(IV_data_log_esp$observation_date),
   #value = inflation_pred,
-  value = inflation_pred,
+  value = c(inflation_pred[1:p], quantiles_50_inflation),
   type = "Forecast",
   lower_68 = c(rep(NA, p),inflation_lower_68),
   upper_68 =  c(rep(NA, p),inflation_upper_68),
@@ -402,13 +454,21 @@ counterfactual <- ggplot() +
             size = 0.5) +
   
   # HICP (multiplié par 100)
-  geom_ribbon(data = df_plot_all_scaled %>% filter(grandeur == "inflation", type == "Forecast"),
-              aes(x = date, ymin = lower_68_plot, ymax = upper_68_plot,
-                  fill = "inflation 68% CI"), alpha = 0.2) +
-  # geom_ribbon(data = df_plot_all_scaled %>% filter(grandeur == "inflation", type == "Forecast"),
-  #             aes(x = date, ymin = lower_90_plot, ymax = upper_90_plot,
-  #                 fill = "inflation 90% CI"), alpha = 0.2) +
-  geom_line(data = df_plot_all_scaled %>% filter(grandeur == "inflation"),
+  # ---- Inflation ribbons ----
+  geom_ribbon(
+    data = df_plot_all_scaled %>% filter(grandeur == "inflation", type == "Forecast"),
+    aes(x = date,
+        ymin = lower_90_plot, ymax = upper_90_plot,
+        fill = "inflation", alpha = "90% CI")
+  ) +
+    
+    geom_ribbon(
+      data = df_plot_all_scaled %>% filter(grandeur == "inflation", type == "Forecast"),
+      aes(x = date,
+          ymin = lower_68_plot, ymax = upper_68_plot,
+          fill = "inflation", alpha = "68% CI")
+    ) +
+    geom_line(data = df_plot_all_scaled %>% filter(grandeur == "inflation"),
             aes(x = date, y = value_plot, linetype = type, color = grandeur),
             size = 0.5) +
   # Vertical line for T_gas
@@ -421,17 +481,25 @@ counterfactual <- ggplot() +
     y = expression(paste("Price (", "\u20AC","/Mwh)"))
   ) +
   scale_linetype_manual(values = c("Observed" = "solid", "Forecast" = "dashed")) +
-  scale_color_manual(values = c("spot_price" = "red", "inflation" = "blue")) +
+  scale_color_manual(values = c("spot_price" = "red", "inflation" = "darkblue"),
+                     labels = c(
+                       "spot_price" = expression(P[elec]),
+                       "inflation" = expression(pi)
+                     )
+                     ) +
   scale_fill_manual(
-    values = c(
-      "spot_price 90% CI" = "red",
-      "inflation 68% CI"  = "blue"
-    ),
+    values = c("inflation" = "darkblue"),
+    labels = c("inflation" = expression(pi))
+  ) +
+  
+  scale_alpha_manual(
+    name = NULL,
+    values = c("90% CI" = 0.15, "68% CI" = 0.35),
     labels = c(
-      "spot_price 90% CI" = expression(P[elec]~"90% CI"),
-      "inflation 68% CI"  = expression(pi~"68% CI")
+      "90% CI" = expression(pi~"90% CI"),
+      "68% CI" = expression(pi~"68% CI")
     )
-  )+
+  )  +
   # Axe secondaire pour HICP
   scale_y_continuous(
     sec.axis = sec_axis(~./100, name = "")
@@ -443,7 +511,8 @@ counterfactual <- ggplot() +
         axis.title.y = element_text(size = 14),   # taille du titre axe y
         axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
         axis.text.y  = element_text(size = 12)    # taille des ticks y
-  )
+  )+
+  guides(fill = "none")
 
 counterfactual
 
@@ -497,22 +566,27 @@ boot_counterfactual_HICP_diff_iberic_exception_inf_points <- apply(
   2,
   function(x) 100 * (exp(x[T_gas+p+h]- x[T_gas+p] - (HICP_obs[T_gas + p + h] - HICP_obs[T_gas + p])) - 1)
 )
-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.05, na.rm = TRUE)
-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.95, na.rm = TRUE)
-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.16, na.rm = TRUE)
-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.84, na.rm = TRUE)
-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.50, na.rm = TRUE)
+inf_05 <-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.05, na.rm = TRUE)
+inf_95 <-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.95, na.rm = TRUE)
+inf_16 <-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.16, na.rm = TRUE)
+inf_84 <-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.84, na.rm = TRUE)
+inf_50 <-quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.50, na.rm = TRUE)
 
 # 
-# quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.16, na.rm = TRUE)
-# 16%
-# 1.971137
-# > quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.84, na.rm = TRUE)
-# 84%
-# 3.762433
-# > quantile(boot_counterfactual_HICP_diff_iberic_exception_inf_points, 0.50, na.rm = TRUE)
-# 50%
-# 3.108533
+# 5% 
+# 0.213605 
+# > inf_95
+# 95% 
+# 4.156941 
+# > inf_16
+# 16% 
+# 1.951935 
+# > inf_84
+# 84% 
+# 3.556511 
+# > inf_50
+# 50% 
+# 2.964912 
 
 df_plot_all%>% filter(grandeur == "inflation" & date == as.Date("2022-12-01")) %>% 
   dplyr::select(date, value, lower_68, upper_68)

@@ -69,7 +69,8 @@ plot_supply_demand_curve <- ggplot() +
   geom_line(data = demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Theoretical")) +
   geom_line(data = matched_supply_curve, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Matched")) +
   geom_line(data = matched_demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Matched")) +
-  labs(x= "Quantity", y = "Price")
+  labs(x= "Quantity", y = "Price")+
+  theme_minimal()+
   theme(legend.text = element_text(size = 15),      # taille du texte
         legend.title = element_text(size = 16),     # taille du titre
         legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,

@@ -69,6 +69,7 @@ plot_NTC_fr_esp <-  ggplot(data = plot_example, aes(x = datetime))+
     name = "NTC & Exchanges",
     sec.axis = sec_axis(~ . / 20, name = "Price (€/MWh)") # Ajuste l'échelle inverse
   ) +
+  theme_minimal()+
   theme(legend.text = element_text(size = 15),      # taille du texte
         legend.title = element_text(size = 16),     # taille du titre
         legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,

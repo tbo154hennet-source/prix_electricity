@@ -232,7 +232,7 @@ library(gt)
 # --- 5. GT table ---
 gt_table <- variance_table %>%
   gt() %>%
-  fmt_number(columns = c(Hourly, Monthly), decimals = 4) %>%
+  fmt_number(columns = c(Hourly, Monthly), decimals = 2) %>%
   tab_header(
     title = "Log Price Variance") %>% 
   cols_label(

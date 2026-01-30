@@ -1,3 +1,68 @@
+recover_policy_shock_exact <- function(d, psi) {
+  d <- as.numeric(d)
+  psi <- as.numeric(psi)
+  T <- length(d)
+  H <- length(psi)
+  
+  if (abs(psi[1]) < 1e-12) stop("psi[1] (impact h=0) est nul -> non identifiable.")
+  
+  eps <- numeric(T)
+  for (t in 1:T) {
+    hmax <- min(H - 1, t - 1)
+    rhs <- d[t]
+    if (hmax >= 1) {
+      rhs <- rhs - sum(psi[2:(hmax+1)] * eps[(t-1):(t-hmax)])
+    }
+    eps[t] <- rhs / psi[1]
+  }
+  eps
+}
+
+recover_policy_shock_ridge_ls <- function(d, psi, lambda = 1e-3) {
+  # d      : série observée (T x 1)
+  # psi    : IRF (H x 1), psi[1] = impact contemporain
+  # lambda : pénalité ridge (>=0)
+  
+  d   <- as.numeric(d)
+  psi <- as.numeric(psi)
+  
+  T <- length(d)
+  H <- length(psi)
+  
+  if (H < 1) stop("psi must have length >= 1")
+  if (abs(psi[1]) < 1e-12) stop("psi[1] ~ 0 -> non identifiable")
+  
+  # --- Construire la matrice de convolution X (T x T)
+  # d = X %*% eps
+  X <- matrix(0, nrow = T, ncol = T)
+  
+  for (t in 1:T) {
+    for (h in 0:(H - 1)) {
+      j <- t - h
+      if (j >= 1) {
+        X[t, j] <- X[t, j] + psi[h + 1]
+      }
+    }
+  }
+  
+  # --- Ridge LS : (X'X + lambda I) eps = X'd
+  XtX <- crossprod(X)
+  Xtd <- crossprod(X, d)
+  
+  eps_hat <- solve(XtX + lambda * diag(T), Xtd)
+  eps_hat <- as.numeric(eps_hat)
+  
+  # --- Reconstruction pour diagnostic
+  d_hat <- as.numeric(X %*% eps_hat)
+  
+  list(
+    eps   = eps_hat,   # chocs estimés
+    d_hat = d_hat,     # reconstruction
+    X     = X          # matrice de convolution (utile debug)
+  )
+}
+
+
 
 recover_policy_shocks_joint <- function(d, psi, K = NULL, ridge = 1e-4) {
   d   <- as.numeric(d)

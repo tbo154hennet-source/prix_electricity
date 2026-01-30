@@ -182,21 +182,21 @@ rf_plot_data <- rf_indispo %>%
 
 
 ```{r}
-plot_data <- plot_data %>% 
-  mutate(plant_type = ifelse(plant_type == "Fossil Brown coal/Lignite", "Coal/Lignite", plant_type))
-rf_plot_data <- rf_plot_data %>% 
-  mutate(plant_type = ifelse(plant_type == "Fossil Brown coal/Lignite", "Coal/Lignite", plant_type))
-# Premier graphique: Unavailable Capacity par Fuel Type
 plot1 <- ggplot() +
   geom_col(data = plot_data, aes(x = as.factor(plant_type), y = Unavailable.Capacity.mean, fill = plant_type), alpha=0.4) +
-  labs(y = "Unavailable Capacity") +
+  labs( x= NULL, y = "Unavailable Capacity") +
   geom_col(data = rf_plot_data, aes(x = plant_type, y = -predicted_real_unavailability, fill = plant_type), 
            stat = "identity", position = "dodge") +
-theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
-        axis.text.x = element_blank(),
-      axis.title.y = element_text(size = 14),   # taille du titre axe y
-        axis.text.y  = element_text(size = 12), 
-        legend.position = "none")  # Désactiver les ticks de l'axe des x
+  guides(fill = "none")+
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x  = element_text(size = 12, angle = 20, hjust = 1),
+    #axis.ticks.x = element_line(size = 12, angle = 20, hjust = 1),   # enlève les ticks
+    axis.title.y = element_text(size = 14),
+    axis.text.y  = element_text(size = 14),
+    legend.position = "none"
+  ) # Désactiver les ticks de l'axe des x
 
 
 # plot1 <-plot1 +
@@ -204,29 +204,35 @@ theme(axis.title.x = element_blank(), # Désactiver le titre de l'axe des x
 #   
 # Deuxième graphique: Nombre d'indisponibilités (n_indispo)
 plot2 <- ggplot() +
- geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Declared unavailability")) +
+  geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Declared unavailability")) +
   geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Effective unavailability"), 
            stat = "identity", position = "dodge") +
-  labs( y = "Event count", fill = "Fuel type") +
+  labs(x = NULL,  y = "Event count", fill = "Fuel type") +
   theme(
     #legend.key.size = unit(1.5, "cm") , 
-        legend.text = element_text(size = 15),
-        axis.text.x = element_text(size = 14, angle = 30, hjust =1),
-        axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 14),   # taille du titre axe y
-        axis.text.y  = element_text(size = 12) )+
+    legend.text = element_text(size = 15),
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 14),   # taille du titre axe y
+    axis.text.y  = element_text(size = 14) )+
   scale_alpha_manual(name = "Unavailability", 
                      values = c("Effective unavailability" = 1, 
-                                "Declared unavailability" = 0.4)) 
+                                "Declared unavailability" = 0.4)) +
+  theme_minimal()
+
 custom_legend <- cowplot::get_legend(plot2)
 
 plot2 <-plot2 +
-  theme(legend.position = "none")
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x  = element_blank(),
+    axis.ticks.x = element_blank(),  
+    legend.position = "none"
+  ) 
 
-
-  # Ajouter un titre personnalisé comme annotation
-  #+annotate("text", x = Inf, y = -Inf, label = "Number of Power Outages", 
-           #hjust = 1.4, vjust = -1.5, size = 5)
+# Ajouter un titre personnalisé comme annotation
+#+annotate("text", x = Inf, y = -Inf, label = "Number of Power Outages", 
+#hjust = 1.4, vjust = -1.5, size = 5)
 # Assembler les deux graphiques verticalement avec patchwork
 combined_plot <- plot1 / plot2 #+ draw_plot(custom_legend, x = 0.8, y = 0.5, width = 0.2, height = 0.5)
 # Combine the grid with the legend
@@ -410,6 +416,7 @@ renew_plot <- ggplot(data = dayahead_price_indispo_data,
       "Solar" = "#7570b3"
     )
   ) +
+  theme_minimal()+
   theme(legend.text = element_text(size = 15),      # taille du texte
         legend.title = element_text(size = 16),     # taille du titre
         legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
