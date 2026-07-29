@@ -33,13 +33,13 @@ market_shares <- ggplot(market_data, aes(x = "", y = Volume_TWh, fill = Label)) 
     legend.title = element_blank(),
     plot.title = element_text(hjust = 0.5)
   )+
-  theme(legend.text = element_text(size = 15)    # taille du texte
+  theme(legend.text = element_text(size = 30)    # taille du texte
         
   )
-
+market_shares
 save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
 setwd(save_plot_path)
-ggsave("market_shares.png", plot = market_shares, width = 10 , height = 6, dpi = 300)
+ggsave("market_shares.png", plot = market_shares, width = 10 , height = 10, dpi = 300)
 
 
 

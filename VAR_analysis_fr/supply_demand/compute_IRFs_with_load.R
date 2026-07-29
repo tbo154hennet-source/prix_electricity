@@ -98,6 +98,8 @@ var_by_var_pc <- sweep(loadings^2, 2, eigenvalues, `*`) / total_var
 
 var_by_var_pc
 
+var_by_var_pc[1,1]/(var_by_var_pc[1,1] + var_by_var_pc[1,2])
+var_by_var_pc[2,2]/(var_by_var_pc[2,1] + var_by_var_pc[2,2])
 # Variance expliquée par chaque composante
 variance_explained <- eigenvalues / sum(eigenvalues)
 variance_explained

@@ -1,0 +1,121 @@
+
+
+
+
+
+```{r}
+library(latex2exp)
+library(abind)
+
+source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+setwd(source_path)
+source("auxiliary_irf_plot.R")
+
+```
+
+
+
+
+
+
+
+
+Take care of the legend
+
+```{r}
+# Exemple simulé si tu n’as pas défini `simul_data`
+set.seed(123)
+simul_data <- data.frame(
+  x = rnorm(90),
+  y = rnorm(90),
+  colored = rep(names(list_irfs_demand), each = 30)
+  # ,
+  # `Identification` = rep(c("Cholesky", "IV"), 50)
+)
+
+# Définir le mapping manuel pour les types de traits
+#linetype <- c("Cholesky" = "dashed", "IV" = "solid")
+
+# Plot avec légende uniquement
+# Plot avec légende uniquement
+plot_legend <- ggplot(data = simul_data, aes(x = x)) +
+  geom_line(aes(y = y, color = colored))+#, bins = 30, alpha = 0.6) +
+  #geom_line(aes(y = y)) +#, linetype = `Identification`)) +
+  scale_color_manual(
+    values = c("Raw" ="blue" ,   "Residualized"="red" ,      "PCA" = "green" ),
+    drop = FALSE
+  ) +
+  # scale_linetype_manual(
+  #   values = linetype,
+  #   name = "Identification",
+  #   drop = FALSE
+  # ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.box = "horizontal",
+    legend.key.size = unit(1.5, "cm"),
+    legend.text = element_text(size = 15),
+        axis.text.x = element_text(size = 16),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16),   # taille du titre axe y
+        axis.text.y  = element_text(size = 16)
+  )
+# Extraire la légende personnalisée
+#custom_legend <- cowplot::get_legend(plot_legend)
+#custom_legend <- get_plot_component(plot_legend, "guide-box", return_all = TRUE)[[3]]
+custom_legend <- get_legend(plot_legend)
+#custom_legend[[3]]
+
+```
+
+
+
+# Transmission of Supply shocks
+
+
+
+```{r}
+
+#Plot the IRFs
+irf_supply_shock_variation <- compare_irf_bis(
+  irf_list = list_irfs_supply,
+  variable_names = names,
+  shock = "supply"
+)
+irf_supply_shock_variation
+```
+
+# Transmission of Demand shocks
+
+```{r}
+
+#Plot the IRFs
+irf_demand_shock_variation <- compare_irf_bis(
+  irf_list = list_irfs_demand,
+  variable_names = names,
+  shock = "demand"
+)
+irf_demand_shock_variation
+
+```
+
+
+
+
+
+
+```{r}
+save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+setwd(save_plot_path)
+
+# Assume your ggplot object is called 'p'
+#ggsave("qty_shock_spain_mp.png", plot = irf_gen_shock_esp, width = 10, height = 6, dpi = 300)
+ggsave("supply_shock_spain_compare_proxy.png", plot = irf_supply_shock_variation, width = 10, height = 6, dpi = 300)
+ggsave("demand_shock_spain_compare_proxy.png", plot = irf_demand_shock_variation, width = 10, height = 6, dpi = 300)
+
+
+```
+
+
