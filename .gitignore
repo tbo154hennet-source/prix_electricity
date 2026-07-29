@@ -14,3 +14,10 @@
 *.rds
 
 *.ssh
+.Rproj.user/
+.Renviron
+data/
+*.zip
+.httr-oauth
+.DS_Store
+.quarto
