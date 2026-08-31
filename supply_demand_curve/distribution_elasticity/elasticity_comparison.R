@@ -1,19 +1,33 @@
+#install.packages("ggbrace")
 library(ggplot2)
 library(ggpubr)
 library(ggbrace)
+library(arrow)
+library(data.table)
+library(dplyr)
+library(lubridate)
 
 setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
 
-local_slopes_demand  <- read_parquet("local_slopes_demand_10.parquet") %>% 
-  filter(mean_log_price >= 10)
-local_slopes_supply  <- read_parquet("local_slopes_supply_10.parquet") %>% 
-  filter(mean_log_price >= 10)
+local_slopes_demand <- as.data.table(
+  read_parquet('local_slopes_demand_matched_FE.parquet')
+)
+local_slopes_supply <- as.data.table(
+  read_parquet('local_slopes_supply_matched_FE.parquet')
+)
+benchmark_table <- as.data.table(
+  read_parquet('local_elasticity_FE_benchmarks.parquet')
+)
+benchmark_demand <- benchmark_table[curve == 'Demand']
+benchmark_supply <- benchmark_table[curve == 'Supply']
+local_slopes_demand[, mean_log_price := mean_price]
+local_slopes_supply[, mean_log_price := mean_price]
 
 #enlever les fit parfaits
 local_slopes_demand <- local_slopes_demand %>% 
-  filter(se_slope >= 10**(-5))
+  filter(is.finite(slope))
 local_slopes_supply <- local_slopes_supply %>% 
-  filter(se_slope >= 10**(-5))
+  filter(is.finite(slope))
 
 
 local_slopes_demand <- local_slopes_demand %>%
@@ -52,7 +66,8 @@ local_slopes_demand[, slope_w := pmin(pmax(slope, q_low), q_high)]
 
 # On calcule la moyenne pond?r?e des pentes
 #w_mean_demand <- my_demand$w_mean + my_demand$alpha
-w_mean_demand <- weighted.mean(local_slopes_demand$slope, local_slopes_demand$mean_log_price**2, na.rm= TRUE)
+w_mean_demand <- benchmark_demand$weighted_local[[1]]
+mean_demand <- benchmark_demand$mean_local[[1]]
 # w_mean_demand <- weighted.mean(local_slopes_demand$slope, local_slopes_demand$price_residualized**2, na.rm= TRUE)
 # w_mean_demand <- mean(local_slopes_demand$slope, na.rm= TRUE)
 
@@ -66,7 +81,8 @@ local_slopes_supply[, slope_w := pmin(pmax(slope, q_low), q_high)]
 #my_supply <- describe_local_slopes(local_slopes_supply)
 mean(local_slopes_supply$slope, na.rm= TRUE)
 #w_mean_supply <- my_supply$w_mean + my_supply$alpha
-w_mean_supply <- weighted.mean(local_slopes_supply$slope, local_slopes_supply$mean_log_price**2, na.rm= TRUE)
+w_mean_supply <- benchmark_supply$weighted_local[[1]]
+mean_supply <- benchmark_supply$mean_local[[1]]
 # w_mean_supply <- weighted.mean(local_slopes_supply$slope, local_slopes_supply$price_residualized**2, na.rm= TRUE)
 # w_mean_supply <- mean(local_slopes_supply$slope, na.rm= TRUE)
 
@@ -93,8 +109,8 @@ summary_table<- summary_standard[2:nrow(summary_standard),] %>%
 )
 
 summary_table<-rbind(summary_table ,
-                     summary_synthetic %>% 
-                       filter(Matching == "Unmatched" & Lag ==0) %>% 
+                     summary_synthetic_npc %>% 
+                       filter(Matching == "Unmatched" & Lag ==1) %>% 
                        mutate(
                          Methodology = "Synthetic",
                          Elasticity = case_when(
@@ -152,6 +168,16 @@ x_max <- max(local_slopes_supply$slope_w, na.rm = TRUE) - 0.5
 summary_table$x <- rep(0.95, nrow(summary_table))
 summary_table$y <- seq(from = 1.5, to = 2.5, length.out = nrow(summary_table))
 
+benchmark_lines <- data.frame(
+  Elasticity = rep(c('Demand', 'Supply'), each = 2),
+  Benchmark = rep(
+    c('Mean local slope', 'Weighted local (= DATE x Hour FE)'),
+    times = 2
+  ),
+  value = c(mean_demand, w_mean_demand, mean_supply, w_mean_supply),
+  label_y = rep(c(-0.8, -0.35), times = 2)
+)
+
 
 #enlever le Synthetic too much uncertainty
 # summary_table <- summary_table %>% 
@@ -165,6 +191,23 @@ my_elas <- ggplot(summary_table, aes(x=x, y=y)) +
   theme_classic() +
   theme(legend.position="none")+ 
   stat_brace(aes(x = x - 0.2),rotate = 270, width = 0.1)+
+  geom_segment(
+    data = benchmark_lines,
+    aes(
+      x = value, xend = value, y = 0, yend = 5,
+      color = Elasticity, linetype = Benchmark
+    ),
+    inherit.aes = FALSE,
+    linewidth = 1
+  ) +
+  geom_text(
+    data = benchmark_lines[benchmark_lines$Benchmark == 'Weighted local (= DATE x Hour FE)', ],
+    aes(x = value, y = label_y, label = round(value, 2), color = Elasticity),
+    inherit.aes = FALSE,
+    show.legend = FALSE,
+    hjust = 0,
+    size = 4
+  ) +
   geom_histogram(
     data = local_slopes_demand,
     aes(x = slope_w, y = ..count../sum(..count..)*10, fill = "Demand"),  # <-- proportion
@@ -173,6 +216,7 @@ my_elas <- ggplot(summary_table, aes(x=x, y=y)) +
     alpha = 0.7
   )+ 
   geom_segment(
+    alpha = 0,
     aes(x = w_mean_demand, xend = w_mean_demand, y = 0, yend = 5),  # yend = hauteur max souhait?e
     lineMethodology = "dashed",
     color = "red",
@@ -184,17 +228,17 @@ my_elas <- ggplot(summary_table, aes(x=x, y=y)) +
   #   color = "red",
   #   size = 1
   # ) +
-  annotate(
-    "text",
-    x = w_mean_demand - 0.2,
-    y = -0.5,
-    #y = max(table(cut(local_slopes_demand$slope_w, breaks = 50)))/sum(table(cut(local_slopes_demand$slope_w, breaks = 50))) - 0.02,  # proportion
-    label = round(w_mean_demand, 2),#paste0("w_mean = ", round(w_mean_demand, 3)),
-    color = "red",
-    vjust = -0.5,
-    hjust = 0,
-    size = 5   # augmente ou r?duit la taille du texte
-  ) +
+  # annotate(
+  #   "text",
+  #   x = w_mean_demand - 0.2,
+  #   y = -0.5,
+  #   #y = max(table(cut(local_slopes_demand$slope_w, breaks = 50)))/sum(table(cut(local_slopes_demand$slope_w, breaks = 50))) - 0.02,  # proportion
+  #   label = round(w_mean_demand, 2),#paste0("w_mean = ", round(w_mean_demand, 3)),
+  #   color = "red",
+  #   vjust = -0.5,
+  #   hjust = 0,
+  #   size = 5   # augmente ou r?duit la taille du texte
+  # ) +
   geom_histogram(
     data = local_slopes_supply,
     aes(x = slope_w, y = ..count../sum(..count..)*10, fill = "Supply"),  # <-- proportion
@@ -203,22 +247,23 @@ my_elas <- ggplot(summary_table, aes(x=x, y=y)) +
     alpha = 0.7
   )+ 
   geom_segment(
+    alpha = 0,
     aes(x = w_mean_supply, xend = w_mean_supply, y = 0, yend = 5),  # yend = hauteur max souhait?e
     lineMethodology = "dashed",
     color = "blue",
     size = 1
   )+
-  annotate(
-    "text",
-    x = w_mean_supply - 0.2,
-    y = -0.5,
-    #y = max(table(cut(local_slopes_supply$slope_w, breaks = 50)))/sum(table(cut(local_slopes_supply$slope_w, breaks = 50))) - 0.02,  # proportion
-    label = round(w_mean_supply, 2),#label = paste0("w_mean = ", round(w_mean_supply, 3)),
-    color = "blue",
-    vjust = -0.5,
-    hjust = 0,
-    size = 5   # augmente ou r?duit la taille du texte
-  ) +
+  # annotate(
+  #   "text",
+  #   x = w_mean_supply - 0.2,
+  #   y = -0.5,
+  #   #y = max(table(cut(local_slopes_supply$slope_w, breaks = 50)))/sum(table(cut(local_slopes_supply$slope_w, breaks = 50))) - 0.02,  # proportion
+  #   label = round(w_mean_supply, 2),#label = paste0("w_mean = ", round(w_mean_supply, 3)),
+  #   color = "blue",
+  #   vjust = -0.5,
+  #   hjust = 0,
+  #   size = 5   # augmente ou r?duit la taille du texte
+  # ) +
   geom_point(data = summary_table, aes(x = Coef, y = y_numeric, color = Elasticity), size = 3) +
   geom_errorbarh(data = summary_table, 
                  aes(xmin = Coef - Se, xmax = Coef + Se, y = y_numeric, color = Elasticity),
@@ -253,6 +298,13 @@ my_elas <- ggplot(summary_table, aes(x=x, y=y)) +
     ),
     guide = "none"  # supprime la l?gende pour le fill
   )+ 
+  scale_linetype_manual(
+    values = c(
+      'Mean local slope' = 'solid',
+      'Weighted local (= DATE x Hour FE)' = 'dashed'
+    ),
+    name = 'Benchmark'
+  ) +
   coord_cartesian(xlim = c(NA, 2))
 
 

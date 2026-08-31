@@ -1,7 +1,8 @@
 output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
-price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all.parquet")
-
+price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")%>%
+filter( datetime <= as.POSIXct("2025-09-30 23:00:00", tz = "UTC"))
+tail(price_indispo_merge_esp_npc %>%select(datetime) )
 #un faible nombre de duplicates
 price_indispo_merge_esp_npc %>%
   group_by(datetime) %>% 
@@ -120,7 +121,7 @@ for(s_col in c(cols_fitted_supply_npc)){
   # Generate 12 lags
   price_indispo_merge_esp_npc <- price_indispo_merge_esp_npc %>%
     mutate(across(
-      all_of(inst_name),
+      all_of(c(instr_vars_s, instr_vars_d)),
       list(
         lag1 = ~dplyr::lag(.x, 1)
       ),
@@ -128,7 +129,7 @@ for(s_col in c(cols_fitted_supply_npc)){
     )) 
   
   # Build the formula dynamically
-  lag_controls <- paste0(inst_name, "_lag", 1, collapse = " + ")
+  lag_controls <- paste0(c(instr_vars_s, instr_vars_d), "_lag", 1, collapse = " + ")
   
   iv_formula_s <- as.formula(
     paste0(
@@ -139,19 +140,6 @@ for(s_col in c(cols_fitted_supply_npc)){
   iv_supply <- feols(iv_formula_s, data = price_indispo_merge_esp_npc, DK(24) ~ datetime)
   
   inst_name <- instr_vars_d
-  
-  # Generate 12 lags
-  price_indispo_merge_esp_npc <- price_indispo_merge_esp_npc %>%
-    mutate(across(
-      all_of(inst_name),
-      list(
-        lag1 = ~dplyr::lag(.x, 1)
-      ),
-      .names = "{.col}_{.fn}"
-    )) 
-  
-  # Build the formula dynamically
-  lag_controls <- paste0(inst_name, "_lag", 1, collapse = " + ")
   
   iv_formula_d <- as.formula(
     paste0(
@@ -210,10 +198,10 @@ all_models_lag <- unlist(
 
 etable(all_models_lag,
        keep = c("price"),
-       headers = c("Supply Unmatched","Demand Unmatched", "Supply Matched", "Demand Matched"),
+       headers = c("Supply Unmatched","Demand Unmatched"),
        fitstat = ~ ivf.stat +  r2+ n)
 #write.csv(coef_table_feols_all, "coef_table_feols_all.csv")
-
+# names(all_models_lag)
 
 
 # Liste combinée
@@ -221,9 +209,10 @@ all_models_combined <- c(all_models, all_models_lag)
 
 # Extraire infos
 summary_table <- map_dfr(all_models_combined, ~ extract_coef_ivf(.x, "fit_log(price + 1)"))
-summary_table$Model <- rep(c("Supply", "Demand"), 4)
-summary_table$Matching <- rep(c(rep("Unmatched",2), rep("Matched",2)), 2)
-summary_table$Lag <-c(rep(0,4), rep(1,4))
+summary_table$Model <- rep(c("Supply", "Demand"), 2)
+summary_table$Matching <- rep(c("Unmatched"),4)
+# summary_table$Matching <- rep(c(rep("Unmatched",2), rep("Matched",1)), 2)
+summary_table$Lag <-c(rep(0,2), rep(1,2))
 summary_table
 
 

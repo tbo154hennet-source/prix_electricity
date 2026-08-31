@@ -6,18 +6,23 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 
-# setwd(save_path_data)
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
-price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
-setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
-
-price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp $delivery_date)
+# Source commune avec les estimations IV.
+output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+setwd(output_dir)
+price_indispo_merge_esp <- read_parquet(
+  "price_indispo_merge_esp_npc_all_final_2026.parquet"
+) %>%
+  filter(
+    datetime <= as.POSIXct("2025-09-30 23:00:00", tz = "UTC")
+  ) %>%
+  as.data.table()
+price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp$date)
 price_indispo_merge_esp$creneau <- hour(price_indispo_merge_esp$datetime)
 
 price_indispo_merge_esp$global_tilted_irradiance <- price_indispo_merge_esp$global_tilted_irradiance/1000
 # PrÃ©traitement sur l'autre table
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
-  mutate(Hour = creneau + 1)
+  mutate(Hour = as.character(creneau + 1))
 
 # Remplir les NAs dans la colonne 'spot_gas' avec la derni?re valeur non manquante pr?c?dente
 price_indispo_merge_esp[, spot_gas := nafill(spot_gas, "locf")]
@@ -44,9 +49,9 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(cold_excess_mismatch = cold_excess_demand - cold_excess_supply,
          heat_excess_mismatch = heat_excess_demand - heat_excess_supply,
-         precipitation_mismatch = precipitation_demand - precipitation_supply,
-         relative_humidity_mismatch = relative_humidity_demand - relative_humidity_supply,
-         temperature_mismatch = temperature_demand - temperature_supply
+         precipitation_mismatch = precipitation_demand - precipitation_ss,
+         relative_humidity_mismatch = relative_humidity_2m_demand - relative_humidity_2m_ss,
+         temperature_mismatch = temperature_demand - temperature_ss
   )
 
 
@@ -55,6 +60,7 @@ reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_ful
 
 # Convert to data.table if not already
 setDT(reconstruct_full_curve_shift_qty_demand_matched)
+reconstruct_full_curve_shift_qty_demand_matched[, Hour := as.character(Hour)]
 
 test <- reconstruct_full_curve_shift_qty_demand_matched[0:10000,]
 # Add year column
@@ -75,9 +81,9 @@ demand_FE <- feols(log(QTY) ~ log(PRICE) | Hour+ DATE + month + year,
 #fusion
 reconstruct_full_curve_shift_qty_demand_matched_local <- merge(
   reconstruct_full_curve_shift_qty_demand_matched,
-  price_indispo_merge_esp[, .(delivery_date, hour, price, gen_tot, load_tot)],
+  price_indispo_merge_esp[, .(date, Hour, price, gen_tot, load_tot)],
   by.x = c("DATE", "Hour"),
-  by.y = c("delivery_date", "hour")
+  by.y = c("date", "Hour")
 )
 
 
@@ -85,31 +91,103 @@ reconstruct_full_curve_shift_qty_demand_matched_local <- merge(
 reconstruct_full_curve_shift_qty_demand_matched_local <- reconstruct_full_curve_shift_qty_demand_matched_local[
   , .SD[
     PRICE >= price - 20 & PRICE <= price  &
-      QTY   >= load_tot - 2000 & QTY   <= load_tot + 2000
+      QTY   >= load_tot - 2000 & QTY   <= load_tot + 2000 &
+      price >= 10
   ],
   by = .(DATE, Hour)
 ]
 
 
+estimate_grouped_log_benchmark <- function(dt, curve) {
+  estimation_sample <- copy(
+    dt[is.finite(PRICE) & is.finite(QTY) & PRICE > 0 & QTY > 0]
+  )
+
+  slopes <- estimation_sample[
+    , tryCatch({
+      x <- log(PRICE)
+      y <- log(QTY)
+      if (.N <= 1 || uniqueN(x) <= 1) {
+        stop('Insufficient within-group price variation')
+      }
+      fit <- lm(y ~ x)
+      .(
+        slope = unname(coef(fit)['x']),
+        se_slope = unname(summary(fit)$coefficients['x', 'Std. Error']),
+        intercept = unname(coef(fit)['(Intercept)']),
+        mean_price = mean(PRICE),
+        aggregation_weight = sum((x - mean(x))^2),
+        n_obs = .N
+      )
+    }, error = function(e) {
+      .(
+        slope = NA_real_,
+        se_slope = NA_real_,
+        intercept = NA_real_,
+        mean_price = mean(PRICE, na.rm = TRUE),
+        aggregation_weight = NA_real_,
+        n_obs = .N
+      )
+    }),
+    by = .(DATE, Hour)
+  ]
+
+  valid_slopes <- slopes[
+    is.finite(slope) & is.finite(aggregation_weight) &
+      aggregation_weight > 0
+  ]
+  model <- feols(
+    log(QTY) ~ log(PRICE) | DATE^Hour,
+    data = estimation_sample
+  )
+  fe_coefficient <- unname(coef(model)['log(PRICE)'])
+  weighted_local <- weighted.mean(
+    valid_slopes$slope,
+    valid_slopes$aggregation_weight
+  )
+  recovery_difference <- fe_coefficient - weighted_local
+  tolerance <- 1e-10 * max(1, abs(fe_coefficient))
+
+  if (!isTRUE(abs(recovery_difference) <= tolerance)) {
+    stop(sprintf(
+      '%s: FE and weighted local slopes differ by %.3e',
+      curve, recovery_difference
+    ))
+  }
+
+  benchmark <- data.table(
+    curve = curve,
+    specification = 'log-log',
+    mean_local = mean(valid_slopes$slope),
+    weighted_local = weighted_local,
+    fe_coefficient = fe_coefficient,
+    recovery_difference = recovery_difference,
+    n_groups = nrow(valid_slopes),
+    n_obs = nrow(estimation_sample)
+  )
+
+  list(
+    sample = estimation_sample,
+    slopes = slopes,
+    model = model,
+    benchmark = benchmark
+  )
+}
+
 local_demand <- feols(log(QTY) ~ log(PRICE),
                       data = reconstruct_full_curve_shift_qty_demand_matched_local)
 
-# Global model with fixed effects
-local_demand_FE <- feols(log(QTY) ~ log(PRICE) | Hour+ month + year, 
-                         data = reconstruct_full_curve_shift_qty_demand_matched_local)
-
-local_slopes_demand <- reconstruct_full_curve_shift_qty_demand_matched_local[
-  , {
-    if (.N > 1) {  # need at least 2 points to fit a line
-      fit <- lm(log(QTY) ~ log(PRICE))
-      .(slope = coef(fit)["log(PRICE)"], intercept = coef(fit)["(Intercept)"])
-    } else {
-      .(slope = NA_real_, intercept = NA_real_)
-    }
-  },
-  by = .(DATE, Hour)
-]
-mean(local_slopes_demand$slope, na.rm= TRUE)
+# Standardized objects used by elasticity_comparison.R.
+demand_local_results <- estimate_grouped_log_benchmark(
+  reconstruct_full_curve_shift_qty_demand_matched_local,
+  curve = 'Demand'
+)
+local_slopes_demand <- demand_local_results$slopes
+local_demand_FE <- demand_local_results$model
+write_parquet(
+  local_slopes_demand,
+  'local_slopes_demand_matched_FE.parquet'
+)
 # rm(reconstruct_full_curve_shift_qty_demand_matched)
 # gc()
 
@@ -118,6 +196,7 @@ reconstruct_full_curve_shift_qty_supply_matched<- read_parquet( 'reconstruct_ful
 
 # Convert to data.table if not already
 setDT(reconstruct_full_curve_shift_qty_supply_matched)
+reconstruct_full_curve_shift_qty_supply_matched[, Hour := as.character(Hour)]
 
 test <- reconstruct_full_curve_shift_qty_supply_matched[0:10000,]
 # Add year column
@@ -131,16 +210,16 @@ reconstruct_full_curve_shift_qty_supply_matched<- reconstruct_full_curve_shift_q
 supply <- feols(log(QTY) ~ log(PRICE), data = reconstruct_full_curve_shift_qty_supply_matched)
 
 # Global model with fixed effects
-supply_FE <- feols(log(QTY) ~ log(PRICE) | Hour + DATE + month + year, 
+supply_FE <- feols(log(QTY) ~ log(PRICE) | Hour^DATE,
                    data = reconstruct_full_curve_shift_qty_supply_matched)
 
 length(unique(reconstruct_full_curve_shift_qty_supply_matched$DATE))
 #fusion
 reconstruct_full_curve_shift_qty_supply_matched_local <- merge(
   reconstruct_full_curve_shift_qty_supply_matched,
-  price_indispo_merge_esp[, .(delivery_date, hour, price, gen_tot, load_tot)],
+  price_indispo_merge_esp[, .(date, Hour, price, gen_tot, load_tot)],
   by.x = c("DATE", "Hour"),
-  by.y = c("delivery_date", "hour")
+  by.y = c("date", "Hour")
 )
 
 # Filtrage par groupe
@@ -161,30 +240,31 @@ reconstruct_full_curve_shift_qty_supply_matched_local_bis <- reconstruct_full_cu
 local_supply <- feols(log(QTY) ~ log(PRICE),
                       data = reconstruct_full_curve_shift_qty_supply_matched_local)
 
-reconstruct_full_curve_shift_qty_supply_matched_local$Hour_Date <- 
-  reconstruct_full_curve_shift_qty_supply_matched_local$DATE + reconstruct_full_curve_shift_qty_supply_matched_local$Hour
-# Global model with fixed effects
-local_supply_FE <- feols(log(QTY) ~ log(PRICE) | Hour_Date , 
-                         data = reconstruct_full_curve_shift_qty_supply_matched_local)
+# Same definition and aggregation rule for supply.
+supply_local_results <- estimate_grouped_log_benchmark(
+  reconstruct_full_curve_shift_qty_supply_matched_local,
+  curve = 'Supply'
+)
+local_slopes_supply <- supply_local_results$slopes
+local_supply_FE <- supply_local_results$model
+write_parquet(
+  local_slopes_supply,
+  'local_slopes_supply_matched_FE.parquet'
+)
+
+local_elasticity_FE_benchmarks <- rbind(
+  demand_local_results$benchmark,
+  supply_local_results$benchmark
+)
+write_parquet(
+  local_elasticity_FE_benchmarks,
+  'local_elasticity_FE_benchmarks.parquet'
+)
+print(local_elasticity_FE_benchmarks)
 
 
-local_slopes <- reconstruct_full_curve_shift_qty_supply_matched_local[
-  , {
-    if (.N > 1) {  # need at least 2 points to fit a line
-      fit <- lm(log(QTY) ~ log(PRICE))
-      .(slope = coef(fit)["log(PRICE)"], intercept = coef(fit)["(Intercept)"])
-    } else {
-      .(slope = NA_real_, intercept = NA_real_)
-    }
-  },
-  by = .(DATE, Hour)
-]
-class(local_slopes)
-mean(local_slopes$slope, na.rm= TRUE)
 
-
-
-#avoir une élast
+#avoir une Ã©last
 
 etable(demand, demand_FE,
        local_demand, local_demand_FE,
@@ -193,7 +273,7 @@ etable(demand, demand_FE,
                 "log(PRICE)" = "log Price"),
        title = "Elasticity Estimates of demand")
 
-#avoir une élast
+#avoir une Ã©last
 
 etable(supply, supply_FE,
        local_supply, local_supply_FE,
@@ -238,9 +318,9 @@ subset_data <- reconstruct_full_curve_shift_qty_supply_matched_local[
 ggplot(subset_data, aes(x = QTY, y = PRICE,  color = factor(Hour))) +#, color = factor(DATE))) +
   geom_line() +
   labs(
-    title = "Nuage de points : Prix vs Quantité (5 journées, heures 10 et 14)",
+    title = "Nuage de points : Prix vs QuantitÃ© (5 journÃ©es, heures 10 et 14)",
     
-    x = "Quantité",
+    x = "QuantitÃ©",
     y = "Prix",
     color = "Hour"
   ) +
@@ -254,8 +334,8 @@ subset_data <- reconstruct_full_curve_shift_qty_supply_matched[
 ggplot(subset_data, aes(x = QTY, y = PRICE,  color = factor(Hour))) +#, color = factor(DATE))) +
   geom_line() +
   labs(
-    title = "Nuage de points : Prix vs Quantité (5 journées, heures 10 et 14)",
-    x = "Quantité",
+    title = "Nuage de points : Prix vs QuantitÃ© (5 journÃ©es, heures 10 et 14)",
+    x = "QuantitÃ©",
     y = "Prix",
     
     color = "Date"
@@ -278,9 +358,9 @@ subset_data <- reconstruct_full_curve_shift_qty_demand_matched_local[
 ggplot(subset_data, aes(x = PRICE, y = QTY, color = factor(DATE))) +
   geom_point(alpha = 0.6) +
   labs(
-    title = "Nuage de points : Prix vs Quantité (5 journées)",
+    title = "Nuage de points : Prix vs QuantitÃ© (5 journÃ©es)",
     x = "Prix",
-    y = "Quantité",
+    y = "QuantitÃ©",
     color = "Date"
   ) +
   theme_minimal()
@@ -290,5 +370,3 @@ m_select <- feols(log(QTY) ~ log(PRICE) | Hour + DATE + month +year,
                   data = subset_data)
 
 coef(m_select)
-
-
