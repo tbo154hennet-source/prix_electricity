@@ -55,7 +55,7 @@ for date in monthly_dates:
 
         # Convert the pandas dataframe to a pyarrow table and write to Parquet file
         generation_table = pa.Table.from_pandas(generation_data)
-        pq.write_table(generation_table, file_name)
+        # pq.write_table(generation_table, file_name)
 
         # Print a success message
         print(f"Data queried successfully for the {label}: {start.strftime('%Y-%m')}")
