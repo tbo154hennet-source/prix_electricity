@@ -13,10 +13,25 @@ simul_data <- data.frame(
   ,
   `Linetype` = rep(c("Main Estimate", "Bootstrap Median"), 50)
 )
-names_supply <- c("Pelec"   ,    "Qelec"   ,    "IPI"    ,     "CPI"    ,     "Policy rate", "Pgas") 
-names_demand <- c(   "Qelec"   , "Pelec"   ,    "IPI"    ,     "CPI"    ,     "Policy rate", "Pgas") 
+names_supply <- c("Elec Price", "Elec Load", "Output", "HICP", "Policy rate", "Gas price")
+names_demand <- c("Elec Load", "Elec Price", "Output", "HICP", "Policy rate", "Gas price")
 
-names <- c("Pelec", "Qelec", "IPI", "CPI", "Policy rate", "Pgas")
+names <- c("Elec Price", "Elec Load", "Output", "HICP", "Policy rate", "Gas price")
+irf_variable_labels <- c(
+  load_tot_log = 'Elec Load',
+  spot_price_log = 'Elec Price',
+  gen_tot_log = 'Elec Generation',
+  IPI_log = 'Output',
+  HICP_log = 'HICP',
+  ffr = 'Policy rate',
+  spot_gas_log = 'Gas price'
+)
+get_irf_labels <- function(variables) {
+  variables <- as.character(variables)
+  labels <- unname(irf_variable_labels[variables])
+  labels[is.na(labels)] <- variables[is.na(labels)]
+  labels
+}
 # Définir le mapping manuel pour les types de traits
 linetype <- c("Bootstrap Median"= "dashed", "Main Estimate" = "solid")
 
@@ -41,7 +56,7 @@ plot_legend <- ggplot(data = simul_data, aes(x = x)) +
   )
 
 # Extraire la légende personnalisée
-custom_legend <- cowplot::get_legend(plot_legend)
+custom_legend <- suppressWarnings(cowplot::get_legend(plot_legend))
 
 plot_legend_msw <- ggplot(data = simul_data, aes(x = x)) +
   geom_histogram(aes(fill = `Confidence.Bands`), bins = 30, alpha = 0.6) +
@@ -58,7 +73,7 @@ plot_legend_msw <- ggplot(data = simul_data, aes(x = x)) +
   )
 
 # Extraire la légende personnalisée
-custom_legend_msw <- cowplot::get_legend(plot_legend_msw)
+custom_legend_msw <- suppressWarnings(cowplot::get_legend(plot_legend_msw))
 
 #custom_legend <- get_plot_component(plot_legend, "guide-box", return_all = TRUE)[[3]]
 
@@ -107,10 +122,42 @@ compute_quantile_bands <- function(boot_array, probs) {
   apply(boot_array, c(1, 2), function(x) quantile(x, probs = probs, na.rm = TRUE))
 }
 
+# Common vertical scale for a pair of otherwise identical supply/demand VARs.
+# Limits are computed response by response from every displayed MSW estimate
+# and confidence band. Zero is always included.
+shared_irf_limits <- function(..., confi_type = 'msw', padding = 0.05) {
+  var_objects <- list(...)
+  if (!length(var_objects)) stop('At least one VAR object is required.')
+  irfs <- lapply(var_objects, function(x) {
+    if (is.null(x$irfs)) stop('Each VAR object must contain an irfs table.')
+    x$irfs
+  }) %>% bind_rows()
+  if (!is.null(confi_type) && 'confi_type' %in% names(irfs)) {
+    irfs <- irfs %>% filter(.data$confi_type == .env$confi_type)
+  }
+  limits <- irfs %>%
+    filter(is.finite(value)) %>%
+    group_by(variable) %>%
+    summarise(ymin = min(0, value), ymax = max(0, value), .groups = 'drop')
+  spans <- limits$ymax - limits$ymin
+  fallback <- pmax(abs(limits$ymin), abs(limits$ymax), 1e-8)
+  margins <- padding * ifelse(spans > 0, spans, fallback)
+  setNames(Map(c, limits$ymin - margins, limits$ymax + margins),
+           limits$variable)
+}
+
+get_irf_limit <- function(y_limits, variable) {
+  if (is.null(y_limits)) return(NULL)
+  if (is.numeric(y_limits) && length(y_limits) == 2L) return(y_limits)
+  if (!is.null(names(y_limits)) && variable %in% names(y_limits))
+    return(y_limits[[variable]])
+  NULL
+}
+
 plot_irf_msw <- function(i, shock, band_lower_68,
                          band_upper_68,band_lower_90, band_upper_90,
                          names = names,main_IV_irf= main_IV_irf,
-                         irhor = irhor) {
+                         irhor = irhor, y_limits = NULL) {
   #trick I just put 0.5 twice
   
   # main_chol <- lambda_0_chol[,i,index]
@@ -126,6 +173,17 @@ plot_irf_msw <- function(i, shock, band_lower_68,
   band_upper_90 <- band_upper_90[, i]
   
   main_IV <- unlist(main_IV_irf[,i])
+  n_points <- min(length(main_IV), length(band_lower_68),
+                  length(band_upper_68), length(band_lower_90),
+                  length(band_upper_90))
+  if (n_points < 1L) stop('No IRF observations available for this response.')
+  keep <- seq_len(n_points)
+  time_horizon <- keep
+  main_IV <- main_IV[keep]
+  band_lower_68 <- band_lower_68[keep]
+  band_upper_68 <- band_upper_68[keep]
+  band_lower_90 <- band_lower_90[keep]
+  band_upper_90 <- band_upper_90[keep]
   # length(time_horizon)
   # length(band_lower_68)
   ggplot() +
@@ -147,10 +205,11 @@ plot_irf_msw <- function(i, shock, band_lower_68,
           axis.title.y = element_text(size = 14),   # taille du titre axe y
           axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
           axis.text.y  = element_text(size = 12)    # taille des ticks y
-    )
+    ) +
+    coord_cartesian(ylim = y_limits)
 }
 
-plot_full_irf <- function(VAR_data, shock, plot_irf) {
+plot_full_irf <- function(VAR_data, shock, plot_irf, y_limits = NULL) {
   
   irf_data <- VAR_data$irfs
   
@@ -191,16 +250,18 @@ plot_full_irf <- function(VAR_data, shock, plot_irf) {
       values_from = value
     ) %>% 
     dplyr::select(-horizon)
+  variable_order <- names(main_IV_irf)
+  my_names <- get_irf_labels(variable_order)
  
   vars_wedge <- grep("wedge", unique(irf_data_cum$variable), value = TRUE)
   if (length(vars_wedge)>=1){
-    q <- n-1
+    q <- ncol(main_IV_irf)-1
   }else{
-    q<- n
+    q <- ncol(main_IV_irf)
   }
 # i=7
   plots <- lapply(seq_len(q), function(i) {
-    plot_irf_msw(
+    plot_irf(
       i = i,
       shock = shock,
       band_lower_68 = lower_68,
@@ -209,7 +270,8 @@ plot_full_irf <- function(VAR_data, shock, plot_irf) {
       band_upper_90 = upper_90,
       names = my_names,
       main_IV_irf= main_IV_irf,
-      irhor = irhor
+      irhor = irhor,
+      y_limits = get_irf_limit(y_limits, variable_order[i])
     )
   })
   if(shock == 1){
@@ -227,6 +289,25 @@ plot_full_irf <- function(VAR_data, shock, plot_irf) {
   final_plot <- cowplot::plot_grid(title, legend_plot, ncol = 1, rel_heights = c(0.1, 1))
   
   return(final_plot)
+}
+
+# Plot a matched supply/demand pair with one scale per response variable.
+# The returned individual plots can be saved separately; combined puts them
+# side by side. Example: pair <- plot_full_irf_pair(VAR_supply_pc, VAR_demand_pc)
+plot_full_irf_pair <- function(VAR_supply, VAR_demand,
+                               plot_irf = plot_irf_msw,
+                               padding = 0.05) {
+  limits <- shared_irf_limits(VAR_supply, VAR_demand, padding = padding)
+  supply_plot <- plot_full_irf(VAR_supply, shock = 1,
+    plot_irf = plot_irf, y_limits = limits)
+  demand_plot <- plot_full_irf(VAR_demand, shock = 2,
+    plot_irf = plot_irf, y_limits = limits)
+  list(
+    supply = supply_plot,
+    demand = demand_plot,
+    combined = cowplot::plot_grid(supply_plot, demand_plot, ncol = 2),
+    y_limits = limits
+  )
 }
 
 

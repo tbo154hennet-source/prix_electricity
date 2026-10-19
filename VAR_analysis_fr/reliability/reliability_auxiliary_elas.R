@@ -311,7 +311,12 @@ run_iv_analysis_new <- function(my_IV_data, headers_var, headers_proxies,
     
     # OLS regression with residuals
     
-    data <- data.frame(cbind(res[, dependent], Z))
+    dependent_index <- match(dependent, colnames(res))
+    if (is.na(dependent_index)) {
+      stop("The dependent variable is not included in headers_var: ", dependent)
+    }
+
+    data <- data.frame(cbind(res[, dependent_index], Z))
     res_var <- paste0("res_",dependent)
     colnames(data) <- c(res_var, headers_proxies)
     # Create formula
@@ -321,12 +326,20 @@ run_iv_analysis_new <- function(my_IV_data, headers_var, headers_proxies,
     
     # Run gweakivtest for each endogenous variable in res (excluding the dependent)
     results <- list()
-    var_names <- colnames(res)[(k + 1):n]
+    outcome_indices <- setdiff(seq_len(n), dependent_index)
+    var_names <- colnames(res)[outcome_indices]
     
     for (i in seq_along(var_names)) {
-      y_col <- res[, k + i]  # outcome: variable i
-      X_cols <- res[, setdiff((k + 1):n, k + i)]  # exclude y_col from X
-      result <- gweakivtest(y = y_col, Y = res[, 1], X = X_cols, Z = Z, cov_type = cov_type)
+      outcome_index <- outcome_indices[i]
+      y_col <- res[, outcome_index]
+      X_cols <- res[, setdiff(outcome_indices, outcome_index), drop = FALSE]
+      result <- gweakivtest(
+        y = y_col,
+        Y = res[, dependent_index],
+        X = X_cols,
+        Z = Z,
+        cov_type = cov_type
+      )
       results[[paste0("result_", var_names[i])]] <- result
     }
     
@@ -415,7 +428,7 @@ run_iv_analysis_new <- function(my_IV_data, headers_var, headers_proxies,
       print(v)
       y <- res[, paste0("res_", v)]
       x <- res[, paste0("res_", setdiff(endog_vars, v))]
-      result <- gweakivtest(y = y, Y = X, X = x, Z = Z)
+      result <- gweakivtest(y = y, Y = X, X = x, Z = Z, cov_type = cov_type)
       gweakiv_results[[paste0("result_", toupper(v))]] <- result
     }
     

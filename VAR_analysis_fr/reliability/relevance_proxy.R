@@ -82,8 +82,16 @@ x_supply =ts(vars_supply, start=c(2015,1), end=c(2025,9), frequency=12)
 x_demand =ts(vars_demand, start=c(2015,1), end=c(2025,9), frequency=12)
 
 
-IV_data_log_esp$delta_s_orth_bis <- resid(lm(delta_s_tot ~delta_d_tot, data = IV_data_log_esp))
-IV_data_log_esp$delta_d_orth_bis <- resid(lm(delta_d_tot ~delta_s_tot, data = IV_data_log_esp))
+IV_data_log_esp$delta_s_orth_bis <- resid(lm(
+  delta_s_tot ~ delta_d_tot,
+  data = IV_data_log_esp,
+  na.action = na.exclude
+))
+IV_data_log_esp$delta_d_orth_bis <- resid(lm(
+  delta_d_tot ~ delta_s_tot,
+  data = IV_data_log_esp,
+  na.action = na.exclude
+))
 
 
 result_esp <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
@@ -147,27 +155,38 @@ result_esp_sd_gen_demand_pc <- run_iv_analysis_new(my_IV_data = IV_data_log_esp,
 
 
 result_esp_sd_price_wind <- run_iv_analysis_new(my_IV_data = IV_data_log_esp, 
-                                            headers_var_gen_first_mp_gas, headers_proxies = c("wind_forecast_log"), p =12,  
+                                            headers_var_spot_first_mp_gas, headers_proxies = c("wind_forecast_log"), p =12,
                                             start_time = c(2015, 1), end_time = c(2025,9),
                                               dependent = "spot_price_log", k = 1, cov_type = "NW")
 colnames(IV_data_log_esp)
 
+
+extract_gmin <- function(result, variable) {
+  result_name <- paste0("result_", variable)
+  result_index <- which(tolower(names(result)) == tolower(result_name))
+
+  if (length(result_index) != 1L) {
+    stop("Could not find a unique result for ", variable)
+  }
+
+  result[[result_index]]$gmin_generalized
+}
 
 extract_stats <- function(result, label, k = 1) {
   if (k == 1) {
     tibble::tibble(
       Model = label,
       Fstat = result$fstat,
-      Gmin_IPI = result$result_IPI$gmin_generalized,
-      Gmin_HICP = result$result_HICP$gmin_generalized
+      Gmin_IPI = extract_gmin(result, "IPI_log"),
+      Gmin_HICP = extract_gmin(result, "HICP_log")
     )
   } else if (k == 2) {
     tibble::tibble(
       Model = label,
       Fstat_price = result$fstat_price,
       Fstat_gen   = result$fstat_gen,
-      Gmin_IPI = result$result_IPI$gmin_generalized,
-      Gmin_HICP = result$result_HICP$gmin_generalized
+      Gmin_IPI = extract_gmin(result, "IPI_log"),
+      Gmin_HICP = extract_gmin(result, "HICP_log")
     )
   } else {
     stop("k must be either 1 or 2")
@@ -197,8 +216,8 @@ extract_stats_bis <- function(result, label) {
     tibble::tibble(
       Model = label,
       Fstat = result$fstat,
-      Gmin_IPI = result$result_IPI$gmin_generalized,
-      Gmin_HICP = result$result_HICP$gmin_generalized
+      Gmin_IPI = extract_gmin(result, "IPI_log"),
+      Gmin_HICP = extract_gmin(result, "HICP_log")
     )
   } else if (!is.null(result$fstat_price) && !is.null(result$fstat_gen)) {
     # k = 2 case
@@ -206,8 +225,8 @@ extract_stats_bis <- function(result, label) {
       Model = label,
       Fstat_price = result$fstat_price,
       Fstat_gen   = result$fstat_gen,
-      Gmin_IPI = result$result_IPI$gmin_generalized,
-      Gmin_HICP = result$result_HICP$gmin_generalized
+      Gmin_IPI = extract_gmin(result, "IPI_log"),
+      Gmin_HICP = extract_gmin(result, "HICP_log")
     )
   } else {
     stop("Could not detect whether k=1 or k=2: check the result structure")
@@ -216,34 +235,48 @@ extract_stats_bis <- function(result, label) {
 
 results_list_ortho <- list(
   price_supply      = result_esp_sd_price_supply,  # k = 1
-  gen_demand     = result_esp_sd_gen_demand,  # k = 1
-  price_supply_pc       = result_esp_sd_price_supply_pc,    # k = 1
-  gen_demand_pc        = result_esp_sd_gen_demand_pc,           # k = 1
-  price_wind        = result_esp_sd_price_wind,    # k = 1
-  initial = result_esp                # k = 2
+  gen_demand        = result_esp_sd_gen_demand,  # k = 1
+  price_supply_orth = result_esp_sd_price_supply_orth,  # k = 1
+  gen_demand_orth   = result_esp_sd_gen_demand_orth,  # k = 1
+  price_supply_orth_bis = result_esp_sd_price_supply_orth_bis,  # k = 1
+  gen_demand_orth_bis   = result_esp_sd_gen_demand_orth_bis,  # k = 1
+  price_supply_pc   = result_esp_sd_price_supply_pc,  # k = 1
+  gen_demand_pc     = result_esp_sd_gen_demand_pc,  # k = 1
+  price_wind        = result_esp_sd_price_wind,  # k = 1
+  initial           = result_esp,  # k = 2
+  initial_pc        = result_esp_pc  # k = 2
 )
 
 stats_table <- purrr::imap_dfr(results_list_ortho, extract_stats_bis)
 stats_table <- stats_table %>% 
-  mutate(Fstat = ifelse(is.na(Fstat),paste(round(Fstat_gen,1), " , ",round(Fstat_price,1)) ,round(Fstat,1)))
+  mutate(Fstat = if_else(
+    is.na(Fstat),
+    paste0(round(Fstat_price, 1), ", ", round(Fstat_gen, 1)),
+    format(round(Fstat, 1), nsmall = 1)
+  ))
 
 
 model_labels <- c(
-
-  "gen_supply"        = "Supply",
-  "gen_demand"        = "Demand",
-  "gen_wind"        = "Wind",
-  "initial"  = "Exogenous",
-  "supply_demand"     = "Supply & Demand"
+  "price_supply"          = "Supply proxy: benchmark",
+  "gen_demand"            = "Demand proxy: benchmark",
+  "price_supply_orth"     = "Supply proxy: orthogonalized",
+  "gen_demand_orth"       = "Demand proxy: orthogonalized",
+  "price_supply_orth_bis" = "Supply proxy: OLS residual",
+  "gen_demand_orth_bis"   = "Demand proxy: OLS residual",
+  "price_supply_pc"       = "Supply proxy: PCA",
+  "gen_demand_pc"         = "Demand proxy: PCA",
+  "price_wind"            = "Supply proxy: wind",
+  "initial"               = "Joint proxies: benchmark",
+  "initial_pc"            = "Joint proxies: PCA"
 )
 
 spain_relevance <- stats_table %>%
   #filter(Model != "price_supply" & Model != "price_demand") %>%
-  #mutate(Model = dplyr::recode(Model, !!!model_labels)) %>%
+  mutate(Model = dplyr::recode(Model, !!!model_labels)) %>%
   dplyr::select(-Fstat_price, -Fstat_gen) %>%
   gt() %>%
   fmt_number(
-    columns = c(Fstat, Gmin_IPI, Gmin_HICP),
+    columns = c(Gmin_IPI, Gmin_HICP),
     decimals = 2
   ) %>%
   cols_label(
@@ -410,12 +443,12 @@ iv_table <- summary_table %>%
 # )
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
-setwd(save_latex_path)
-gtsave(
-  iv_table,
-  filename = "relevance_international_macro.tex"
-)
+# save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+# setwd(save_latex_path)
+# gtsave(
+#   iv_table,
+#   filename = "relevance_international_macro.tex"
+# )
 
 
 

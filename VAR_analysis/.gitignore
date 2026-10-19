@@ -1,0 +1,8 @@
+output/models/*
+output/logs/*
+output/figures/*
+output/tables/*
+!output/models/.gitkeep
+!output/logs/.gitkeep
+!output/figures/.gitkeep
+!output/tables/.gitkeep

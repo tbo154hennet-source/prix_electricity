@@ -160,7 +160,7 @@ gen_benchmark_esp <- readRDS( "gen_benchmark_esp.rds")
 irf_price_shock_esp <- plot_irf_from_gen_benchmark(
   solution = gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "price"
 )
 irf_price_shock_esp
@@ -172,7 +172,7 @@ irf_price_shock_esp
 irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
   gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "gen"
 )
 irf_gen_shock_esp
@@ -211,7 +211,7 @@ gen_benchmark_esp <- readRDS( "gen_benchmark_esp_gas_mp.rds")
 irf_price_shock_esp <- plot_irf_from_gen_benchmark(
   solution = gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "price"
 )
 irf_price_shock_esp
@@ -225,7 +225,7 @@ irf_price_shock_esp
 irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
   gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "gen"
 )
 irf_gen_shock_esp
@@ -268,7 +268,7 @@ gen_benchmark_esp <- readRDS( "gen_benchmark_esp_gas.rds")
 irf_price_shock_esp <- plot_irf_from_gen_benchmark(
   solution = gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "price"
 )
 irf_price_shock_esp
@@ -279,7 +279,7 @@ irf_price_shock_esp
 irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
   gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "gen"
 )
 irf_gen_shock_esp
@@ -391,7 +391,7 @@ plot_irf_from_gen_benchmark_gas <- function(solution, irf_cholesky,
 irf_gas_shock_esp <- plot_irf_from_gen_benchmark_gas(
   solution = gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{gas}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Gas price", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "gas"
 )
 irf_gas_shock_esp
@@ -402,7 +402,7 @@ irf_gas_shock_esp
 irf_price_shock_esp <- plot_irf_from_gen_benchmark_gas(
   solution = gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{gas}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Gas price", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "price"
 )
 irf_price_shock_esp
@@ -415,7 +415,7 @@ irf_price_shock_esp
 irf_gen_shock_esp <- plot_irf_from_gen_benchmark(
   gen_benchmark_esp,
   irf_cholesky = irf_cholesky_esp,
-  variable_names = c('$Q_{elec}$','$P_{elec}$',  "IPI", '$HCPI$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "gen"
 )
 irf_gen_shock_esp

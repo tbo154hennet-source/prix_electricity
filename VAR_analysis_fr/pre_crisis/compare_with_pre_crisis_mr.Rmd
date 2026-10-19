@@ -161,7 +161,7 @@ names(list_irfs_compare) <- c("ESP" ,  "FR"  ,
 irf_price_shock_compare <- compare_irf(
   
   irf_list = list_irfs_compare,
-  variable_names = c( '$Q_{elec}$','$P_{elec}$',  "IPI", '$HICP$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "price"
 )
 irf_price_shock_compare
@@ -187,7 +187,7 @@ names(list_irfs_compare_bis) <- c("ESP" ,  "FR"  ,
 irf_price_shock_compare <- compare_irf(
   
   irf_list = list_irfs_compare_bis,
-  variable_names = c( '$Q_{elec}$', '$P_{elec}$', "IPI", '$HICP$', 'ECB rate'),
+  variable_names = c("Elec Generation", "Elec Price", "Output", "HICP", "Policy rate"),
   shock = "price"
 )
 irf_price_shock_compare

@@ -331,13 +331,77 @@ ne_iv_all <- ne_iv_all +
       "Pelec" = "darkgoldenrod"
     ),
     labels = c(
-      expression(pi),
-      expression(P[elec])
+      expression(P[elec]),
+      expression(pi)
     )
   )
 
 
 
+plot_ne_iv_all <- function(
+    specification = 'Including Gas',
+    price_scale = 1000,
+    root = 'Z:/prix_electricite_gitlab') {
+  model_file <- file.path(root, 'VAR_analysis_fr', 'VAR_output',
+    'plot_irfs_rds', '1var', 'hd',
+    'hd_supply_demand_with_without_gas.rds')
+  data_file <- file.path(root, 'VAR_analysis_fr', 'VAR_output',
+    'IV_data_esp_log_elas_sd_2026.parquet')
+  pipeline_models <- readRDS(model_file)
+  if (!specification %in% names(pipeline_models))
+    stop('Unknown specification: ', specification)
+  model <- pipeline_models[[specification]]
+  variable <- 'HICP_log'
+  pipeline_data <- arrow::read_parquet(data_file) |>
+    dplyr::arrange(observation_date)
+
+  contribution_data <- as.data.frame(
+    model[['hd']][, variable, c('Supply', 'Demand'), drop = FALSE][, 1, ]
+  ) |>
+    dplyr::mutate(Date = as.Date(model[['dates']])) |>
+    tidyr::pivot_longer(c('Supply', 'Demand'),
+      names_to = 'Shock', values_to = 'Monthly_contribution') |>
+    dplyr::group_by(Shock) |>
+    dplyr::arrange(Date, .by_group = TRUE) |>
+    dplyr::mutate(Contribution = slider::slide_dbl(
+      Monthly_contribution, sum, .before = 11, .complete = TRUE)) |>
+    dplyr::ungroup()
+
+  observed_data <- pipeline_data |>
+    dplyr::transmute(
+      Date = as.Date(observation_date),
+      Inflation_12m = HICP_log - dplyr::lag(HICP_log, 12),
+      Electricity_price = exp(spot_price_log),
+      Price_scaled = (Electricity_price -
+        mean(Electricity_price, na.rm = TRUE)) / price_scale) |>
+    dplyr::filter(Date %in% model[['dates']])
+
+  ggplot() +
+    geom_col(data = contribution_data,
+      aes(Date, Contribution, fill = Shock),
+      position = 'stack', width = 25, na.rm = TRUE) +
+    geom_line(data = observed_data,
+      aes(Date, Inflation_12m, color = 'Inflation'),
+      linewidth = 0.7, linetype = 'dashed', na.rm = TRUE) +
+    geom_line(data = observed_data,
+      aes(Date, Price_scaled, color = 'Electricity price'),
+      linewidth = 0.7, linetype = 'dashed', na.rm = TRUE) +
+    scale_fill_manual(values = c(Supply = 'blue', Demand = 'red'),
+      breaks = c('Supply', 'Demand'), name = NULL) +
+    scale_color_manual(values = c(Inflation = 'black',
+      'Electricity price' = 'darkgoldenrod'), name = NULL) +
+    scale_y_continuous(
+      name = '12-month HICP contribution (log-points)',
+      sec.axis = sec_axis(~ . * price_scale,
+        name = 'Electricity price deviation (euros)')) +
+    labs(title = specification, x = 'Time') +
+    theme_minimal() +
+    theme(legend.position = 'top',
+      axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+# Benchmark plot, fully aligned with the contribution pipeline.
+ne_iv_all <- plot_ne_iv_all('Including Gas')
 ne_iv_all
 
 ```
