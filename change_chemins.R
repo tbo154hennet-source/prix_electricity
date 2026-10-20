@@ -13,7 +13,7 @@ files <- list.files(
 old_text <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 new_text <- "Z:/prix_electricite_gitlab"
 
-files <- c("Z:/prix_electricite_gitlab/VAR_analysis_fr/supply_demand/irf_plot_esp_1var_bis.Rmd" )
+files <- c("Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/supply_demand/irf_plot_esp_1var_bis.Rmd" )
 
 # Remplacement dans tous les fichiers
 for (f in files) {

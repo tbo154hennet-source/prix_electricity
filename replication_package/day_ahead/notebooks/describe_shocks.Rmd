@@ -1,0 +1,466 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(arrow)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+# Charger le package patchwork pour combiner les graphiques
+library(patchwork)
+library(cowplot)
+library(gridExtra)
+library(grid)
+library(latex2exp)
+
+
+
+save_path_data <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp")
+setwd(save_path_data)
+price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")%>% 
+  mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+         # Planned.Unavailable.Capacity = Planned.Unavailable.Capacity - Planned.Unavailable.Nuclear.Capacity,
+         Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity
+)
+
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/cross_border"))
+price_merge_CBF <- read_parquet("price_merge_CBF.parquet")
+
+```
+
+One focusing on the different modalities I have for Unavailabilities
+
+```{r}
+
+dayahead_price_indispo_data <- price_indispo_merge %>% 
+  mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
+         Unpublished.Unavailable.Capacity = Unpublished.Unavailable.Capacity - Unpublished.Unavailable.Nuclear.Capacity,
+
+  ) %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Published = ifelse(all(Published.Unavailable.Capacity <= 0 | is.na(Published.Unavailable.Capacity)), 
+                       0, 
+                       mean(Published.Unavailable.Capacity[Published.Unavailable.Capacity > 0], na.rm = TRUE)),
+
+    Unpublished = ifelse(all(Unpublished.Unavailable.Capacity <= 0 | is.na(Unpublished.Unavailable.Capacity)), 
+                         0, 
+                         mean(Unpublished.Unavailable.Capacity[Unpublished.Unavailable.Capacity > 0], na.rm = TRUE))
+    )
+
+
+predict_dayahead_price_indispo_data <- price_indispo_merge %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Published = ifelse(all(Published.Predicted.Unavailable.Capacity <= 0 | is.na(Published.Predicted.Unavailable.Capacity)), 
+                       0, 
+                       mean(Published.Predicted.Unavailable.Capacity[Published.Predicted.Unavailable.Capacity > 0], na.rm = TRUE)),
+
+    Unpublished = ifelse(all(Unpublished.Predicted.Unavailable.Capacity <= 0 | is.na(Unpublished.Predicted.Unavailable.Capacity)), 
+                         0, 
+                         mean(Unpublished.Predicted.Unavailable.Capacity[Unpublished.Predicted.Unavailable.Capacity > 0], na.rm = TRUE))
+  )
+
+unavail_plot <- ggplot()+
+  #geom_line(data = predict_dayahead_price_indispo_data, aes(x= Date, y = -Planned, color = "Planned"))+
+  #geom_line(data = predict_dayahead_price_indispo_data, aes(x= Date,y = -Uneffective, color = "Uneffective"))+
+  geom_line(data = predict_dayahead_price_indispo_data, aes(x= delivery_date,y = -Unpublished, color = "Unpublished"))+
+  geom_line(data = predict_dayahead_price_indispo_data, aes(x= delivery_date,y = -Published, color = "Published"))+
+  #geom_line(data = dayahead_price_indispo_data, aes(x= delivery_date, y = Planned, color = "Planned"))+
+  #geom_line(data = dayahead_price_indispo_data, aes(x= delivery_date,y = Uneffective, color = "Uneffective"))+
+  geom_line(data = dayahead_price_indispo_data, aes(x= delivery_date,y = Unpublished, color = "Unpublished"))+
+  geom_line(data = dayahead_price_indispo_data, aes(x= delivery_date,y = Published, color = "Published"))+
+  labs(x= "Time", y = "Plants Unavailabilities")+
+  theme_minimal()
+
+unavail_plot 
+```
+
+```{r}
+nuclear_dayahead_price_indispo_data <- price_indispo_merge %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    Published = ifelse(all(Published.Unavailable.Nuclear.Capacity <= 0 | is.na(Published.Unavailable.Nuclear.Capacity)), 
+                       0, 
+                       mean(Published.Unavailable.Nuclear.Capacity[Published.Unavailable.Nuclear.Capacity > 0], na.rm = TRUE)),
+    
+    Unpublished = ifelse(all(Unpublished.Unavailable.Nuclear.Capacity <= 0 | is.na(Unpublished.Unavailable.Nuclear.Capacity)), 
+                         0, 
+                         mean(Unpublished.Unavailable.Nuclear.Capacity[Unpublished.Unavailable.Nuclear.Capacity > 0], na.rm = TRUE))#,
+
+  )
+  
+
+unavail_plot <- ggplot(data = nuclear_dayahead_price_indispo_data, aes(x= delivery_date))+
+  #geom_line(aes(y = Planned, color = "Planned"))+
+  #geom_line( aes(y = Uneffective, color = "Uneffective"))+
+  geom_line(aes(y = Unpublished, color = "Published"))+
+  geom_line(aes(y = Published, color = "Published"))+
+  labs(x= "Time", y = "Plants Unavailabilities")+
+  theme_minimal()
+
+unavail_plot 
+```
+
+
+```{r}
+
+save_path_entsoe_output <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/rf")
+setwd(save_path_entsoe_output)
+rf_predictions_data <- read_parquet( 'rf_predictions_data_xgb_esp.parquet')
+
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp"))
+filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE.parquet")
+
+# 
+# save_path_data <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp")
+# setwd(save_path_data)
+# publi_bout_indispo <- read_parquet( "save_indispo_with_pub_status_esp.parquet") %>% 
+#   distinct()
+
+save_path_data <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp")
+setwd(save_path_data)
+#write_parquet(res, "save_pub_status.parquet")
+publi_all_matched_indispo <- read_parquet( "day_ahead_indispo_formatted.parquet")
+
+non_duplicated_indispo <- merge(filtered_indispo, publi_all_matched_indispo, 
+                                by = c("mrid", "start_datetime", "end_datetime"))
+indispo_rf  <- merge(
+  non_duplicated_indispo,
+      rf_predictions_data,
+      by.x =  c('datetime_slot', 'production_resource_name'),
+      by.y = c('__index_level_0__', 'centrale')
+)
+
+colnames(indispo_rf)
+
+```
+
+
+```{r}
+
+#non_duplicated_indispo$year <- year(non_duplicated_indispo$electricity_delivery_date)
+
+plot_data <- non_duplicated_indispo %>% 
+  mutate(electricity_delivery_date = as.Date(datetime_slot)) %>% 
+  group_by(mrid) %>% 
+  summarise(plant_type = first(plant_type),
+            duration = first(duration),
+            Unavailable.Capacity = mean(Unavailable.Capacity, na.rm = TRUE),
+            electricity_delivery_date = first(electricity_delivery_date),
+            production_resource_name = first(production_resource_name)
+            ) %>% 
+  group_by(plant_type) %>% 
+  summarise(Unavailable.Capacity.mean = mean(as.numeric(Unavailable.Capacity)),
+         n_indispo = n()) 
+
+
+rf_indispo <- indispo_rf  %>% 
+  mutate(electricity_delivery_date = as.Date(datetime_slot)) %>% 
+  group_by(mrid) %>% 
+  summarise(plant_type = first(plant_type),
+            duration = first(duration),
+            predicted_real_unavailability = mean(predicted_real_unavailability, na.rm = TRUE),
+            duration_rf = n(),
+            electricity_delivery_date = first(electricity_delivery_date),
+            production_resource_name = first(production_resource_name)
+            ) %>% 
+  ungroup()
+
+rf_plot_data <- rf_indispo %>% 
+  filter(predicted_real_unavailability < -50) %>% 
+  dplyr::select(electricity_delivery_date, predicted_real_unavailability, plant_type, duration_rf) %>% 
+  group_by(plant_type) %>% 
+  summarise(predicted_real_unavailability = mean(predicted_real_unavailability, na.rm = TRUE),
+            duration_rf = mean(as.numeric(duration_rf, na.rm = TRUE) ),
+         n_indispo = n())
+```
+
+
+
+```{r}
+plot1 <- ggplot() +
+  geom_col(data = plot_data, aes(x = as.factor(plant_type), y = Unavailable.Capacity.mean, fill = plant_type), alpha=0.4) +
+  labs( x= NULL, y = "Unavailable Capacity") +
+  geom_col(data = rf_plot_data, aes(x = plant_type, y = -predicted_real_unavailability, fill = plant_type), 
+           stat = "identity", position = "dodge") +
+  guides(fill = "none")+
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x  = element_text(size = 12, angle = 20, hjust = 1),
+    #axis.ticks.x = element_line(size = 12, angle = 20, hjust = 1),   # enlÃ¨ve les ticks
+    axis.title.y = element_text(size = 14),
+    axis.text.y  = element_text(size = 14),
+    legend.position = "none"
+  ) # DÃ©sactiver les ticks de l'axe des x
+
+
+# plot1 <-plot1 +
+#   theme(legend.position = "none")
+#   
+# DeuxiÃ¨me graphique: Nombre d'indisponibilitÃ©s (n_indispo)
+plot2 <- ggplot() +
+  geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Declared unavailability")) +
+  geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Effective unavailability"), 
+           stat = "identity", position = "dodge") +
+  labs(x = NULL,  y = "Event count", fill = "Fuel type") +
+  theme(
+    #legend.key.size = unit(1.5, "cm") , 
+    legend.text = element_text(size = 15),
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 14),   # taille du titre axe y
+    axis.text.y  = element_text(size = 14) )+
+  scale_alpha_manual(name = "Unavailability", 
+                     values = c("Effective unavailability" = 1, 
+                                "Declared unavailability" = 0.4)) +
+  theme_minimal()
+
+custom_legend <- cowplot::get_legend(plot2)
+
+plot2 <-plot2 +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x  = element_blank(),
+    axis.ticks.x = element_blank(),  
+    legend.position = "none"
+  ) 
+
+# Ajouter un titre personnalisÃ© comme annotation
+#+annotate("text", x = Inf, y = -Inf, label = "Number of Power Outages", 
+#hjust = 1.4, vjust = -1.5, size = 5)
+# Assembler les deux graphiques verticalement avec patchwork
+combined_plot <- plot1 / plot2 #+ draw_plot(custom_legend, x = 0.8, y = 0.5, width = 0.2, height = 0.5)
+# Combine the grid with the legend
+final_plot <- plot_grid(combined_plot, custom_legend ,
+                        ncol = 2, rel_heights = c(2, 0.1))
+
+
+
+# Afficher le graphique combinÃ©
+final_plot
+```
+
+
+```{r}
+save_plot_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "data_description")
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("day_ahead_indispo_predicted.png", plot = final_plot, width = 8, height = 6, dpi = 300)
+
+
+```
+
+
+
+```{r}
+
+count <- dayahead_price_indispo_data %>%
+  ungroup() %>%
+  summarise(
+    #count_Planned = sum(Planned >0, na.rm = TRUE),
+    count_published = sum(Published >0, na.rm = TRUE),
+    count_unpublished = sum(Unpublished >0, na.rm = TRUE)
+    #count_Uneffective = sum(Uneffective >0, na.rm = TRUE)
+    
+    )
+
+mean <- dayahead_price_indispo_data %>%
+  ungroup() %>% 
+  summarise(
+    #Planned = mean(Planned[Planned > 0], na.rm = TRUE),
+    Published = mean(Published[Published > 0], na.rm = TRUE),
+    Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE)
+    #Uneffective = mean(Uneffective[Uneffective > 0], na.rm = TRUE)
+  )
+
+
+
+predict_count <- predict_dayahead_price_indispo_data %>% 
+  ungroup() %>% 
+  summarise(
+    # count_Planned = sum(Planned >0, na.rm = TRUE),
+    count_published = sum(Published >0, na.rm = TRUE),
+    count_unpublished = sum(Unpublished >0, na.rm = TRUE)
+    #count_Uneffective = sum(Uneffective >0, na.rm = TRUE)
+   )
+
+predict_mean <- predict_dayahead_price_indispo_data %>% 
+  ungroup() %>% 
+  summarise(
+   # Mean only for nonzero values
+    #Planned = mean(Planned[Planned > 0], na.rm = TRUE),
+    Published = mean(Published[Published > 0], na.rm = TRUE),
+    Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE)
+    #Uneffective = mean(Uneffective[Uneffective > 0], na.rm = TRUE)
+    
+  )
+
+nuclear_count <- nuclear_dayahead_price_indispo_data %>% 
+  ungroup() %>% 
+  summarise(
+    #count_Planned = sum(Planned >0, na.rm = TRUE),
+    count_published = sum(Published >0, na.rm = TRUE),
+    count_unpublished = sum(Unpublished >0, na.rm = TRUE)
+    #count_Uneffective = sum(Uneffective >0, na.rm = TRUE)
+    
+
+  )
+
+nuclear_mean <- nuclear_dayahead_price_indispo_data %>%
+  ungroup() %>% 
+  summarise(
+    #Planned = mean(Planned[Planned > 0], na.rm = TRUE),
+    Published = mean(Published[Published > 0], na.rm = TRUE),
+    Unpublished = mean(Unpublished[Unpublished > 0], na.rm = TRUE)
+    #Uneffective = mean(Uneffective[Uneffective > 0], na.rm = TRUE)
+    
+  )
+
+```
+
+
+
+```{r}
+sum_unavail <- price_indispo_merge %>% 
+  dplyr::select(
+    Published.Unavailable.Capacity, Unpublished.Unavailable.Capacity,
+    Published.Unavailable.Nuclear.Capacity, Unpublished.Unavailable.Nuclear.Capacity,
+    Published.Predicted.Unavailable.Capacity, Unpublished.Predicted.Unavailable.Capacity
+  ) %>% 
+  summarise(across(everything(), ~ mean(.x[.x != 0], na.rm = TRUE)))
+
+
+mean <- sum_unavail[1,1:2]
+nuclear_mean <- sum_unavail[1,3:4]
+predict_mean <- sum_unavail[1,5:6]
+
+
+```
+
+
+```{r}
+
+library(gt)
+
+data_dayahead_data <- data.frame(
+  cbind(
+    t(round(count)), t(round(mean, 1)),
+    t(round(predict_count)), t(round(predict_mean, 1)), 
+    t(round(nuclear_count)), t(round(nuclear_mean,1))
+  )
+)
+rownames(data_dayahead_data) <- c("Published",  "Unpublished")
+# Create a gt table with styling
+# Convert data to a data frame and transpose it
+gt_table <- as.data.frame(t(data_dayahead_data)) %>%
+  mutate(
+    Row_Label = c("Nbre", "Avg Unavailability", "Nbre", "Avg Unavailability", "Nbre", "Avg Unavailability") # Adding row labels
+  ) %>%
+  gt(rowname_col = "Row_Label") %>%  # Set row labels
+  tab_row_group(
+    group = "All Declared",
+    rows = 1:2  # Rows 1 and 2 for Predicted
+  ) %>%
+  tab_row_group(
+    group = "Predicted",
+    rows = 3:4  # Rows 1 and 2 for Predicted
+  ) %>%
+  tab_row_group(
+    group = "Nuclear",
+    rows = 5:6  # Rows 3 and 4 for Nuclear
+  ) %>%
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "gray", weight = px(2)),
+    locations = cells_row_groups(groups = everything())
+  ) %>%
+  tab_options(
+    table.width = pct(100)
+  )
+
+gt_table
+```
+
+
+Get the numbers
+
+
+```{r}
+
+dayahead_price_indispo_data <- price_indispo_merge %>% 
+  group_by(year, month) %>% 
+  summarise(
+    Solar = mean(Solar, na.rm = TRUE)/1000,
+    Wind_Onshore = mean(`Wind Onshore`, na.rm = TRUE)/1000,
+    Renewable_Generation = mean(day_ahead_forecast, na.rm = TRUE)/1000,
+    delivery_date = first(delivery_date)
+    #Wind_Onshore = mean(`Wind Onshore`, na.rm = TRUE),
+  )
+#class(dayahead_price_indispo_data$delivery_date)
+renew_plot <- ggplot(data = dayahead_price_indispo_data, 
+                     # %>%filter(delivery_date <=as.Date("2023-01-01")),
+                     aes(x = delivery_date)) +
+  geom_line(aes(y = Renewable_Generation, color = "Renewable Total")) +
+  geom_line(aes(y = Wind_Onshore, color = "Wind Onshore")) +
+  geom_line(aes(y = Solar, color = "Solar")) +
+  labs(x = "Time", y = "Power (GW)") +
+  scale_color_manual(
+    name = "Energy",  # Legend title
+    values = c(
+      "Renewable Total" = "#1b9e77",
+      "Wind Onshore" = "#d95f02",
+      "Solar" = "#7570b3"
+    )
+  ) +
+  theme_minimal()+
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
+
+renew_plot
+```
+
+
+```{r}
+save_plot_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "data_description")
+setwd(save_plot_path)
+# Assume your ggplot object is called 'p'
+ggsave("renewable_description.png", plot = renew_plot, width = 12, height = 6, dpi = 300)
+
+
+```
+
+
+
+
+
+```{r}
+
+NTC_data <- price_merge_CBF %>% 
+  group_by(delivery_date) %>% 
+  summarise(
+    NTC_ESP_FR= mean(NTC_ESP_FR, na.rm = TRUE),
+    NTC_FR_ESP = mean(NTC_FR_ESP, na.rm = TRUE),
+  )
+
+NTC_plot <- ggplot(data = NTC_data, aes(x= delivery_date))+
+  geom_line(aes(y = NTC_ESP_FR, color = "ESP_FR"))+
+  geom_line(aes(y = NTC_FR_ESP, color = "FR_ESP"))+
+  labs(x= "Time", y = "NTC")+
+  theme_minimal()
+NTC_plot
+
+```
+
+
+

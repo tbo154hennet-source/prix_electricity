@@ -1,0 +1,22 @@
+\begin{tabular}{lcc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{2}{c}{log(resid\_sq+1e-12)}\\
+                                                                              & Baseline       & Controls \\   
+   Model:                                                                     & (1)            & (2)\\  
+   \midrule
+   \emph{Variables}\\
+   log(wind\_onshore\_capacity)                                               & -0.0265        & -3.304$^{***}$\\   
+                                                                              & (0.5519)       & (0.6257)\\   
+   log(wind\_speed\_100m\_supply)                                             & -26.98$^{***}$ & -34.86$^{***}$\\   
+                                                                              & (1.919)        & (1.861)\\   
+   log(wind\_onshore\_capacity) $\times$ log(wind\_speed\_100m\_supply)       & 2.712$^{***}$  & 3.536$^{***}$\\   
+                                                                              & (0.1892)       & (0.1833)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                                                               & 87,892         & 87,892\\  
+   R$^2$                                                                      & 0.14532        & 0.24864\\  
+   Adjusted R$^2$                                                             & 0.14529        & 0.24817\\  
+   \midrule \midrule
+   \multicolumn{3}{l}{\emph{IID standard-errors in parentheses}}\\
+   \multicolumn{3}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}

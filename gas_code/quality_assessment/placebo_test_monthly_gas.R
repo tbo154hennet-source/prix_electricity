@@ -15,7 +15,7 @@ library(gridExtra)
 library(grid)
 library(latex2exp)
 
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("reliability_auxiliary.R")
 
@@ -41,7 +41,7 @@ my_instrumented_days <- my_instrumented_days %>%
 colnames(my_instrumented_days)
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_esp <-  read_parquet('IV_data_esp_log.parquet')
 IV_data_log_esp$observation_date <- as.Date(IV_data_log_esp$observation_date)

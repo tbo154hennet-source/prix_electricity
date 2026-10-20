@@ -14,7 +14,7 @@ make_config <- function(root_dir) {
   list(
     root = root_dir,
     pipeline_dir = pipeline_dir,
-    legacy_data_dir = file.path(root_dir, "VAR_analysis_fr", "VAR_output"),
+    legacy_data_dir = file.path(root_dir, "VAR_analysis", "data"),
     output_dir = output_dir,
     model_dir = file.path(output_dir, "models"),
     table_dir = file.path(output_dir, "tables"),
@@ -28,7 +28,7 @@ make_config <- function(root_dir) {
     ),
     data = list(
       spain = file.path(
-        root_dir, "VAR_analysis_fr", "VAR_output",
+        root_dir, "VAR_analysis", "data",
         "IV_data_esp_log_elas_sd_2026.parquet"
       ),
       spain_high_frequency_proxies = file.path(
@@ -37,14 +37,14 @@ make_config <- function(root_dir) {
         "price_indispo_merge_esp_npc_all_final_2026.parquet"
       ),
       france = file.path(
-        root_dir, "VAR_analysis_fr", "VAR_output",
+        root_dir, "VAR_analysis", "data",
         "IV_data_fr_log_elas_sd_2026.parquet"
       ),
       micro_elasticity = file.path(
         root_dir, "day_ahead", "outputs", "esp", "df_clean_da.csv"
       ),
       spain_counterfactual_proxy = file.path(
-        root_dir, "VAR_analysis_fr", "VAR_output",
+        root_dir, "VAR_analysis", "data",
         "IV_data_esp_log_elas_sd_2026_pc.parquet"
       ),
       gas_supply_shocks = Sys.getenv(
@@ -60,7 +60,7 @@ make_config <- function(root_dir) {
         "price_variance_counterfactual_esp_ter.parquet"
       ),
       france_price_level = file.path(
-        root_dir, "Data_Structuring", "output", "IV_data_fr_elas.parquet"
+        root_dir, "Data_structuring", "output", "IV_data_fr_elas.parquet"
       )
     ),
     p = as.integer(Sys.getenv("VAR_LAGS", "12")),

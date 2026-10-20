@@ -1,0 +1,516 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+
+temp_main_effects <- c("temp_spatial_mismatch_supply","temperature_discomfort_demand" )
+
+temp_detailed <-  c("cold_spatial_mismatch_supply", "heat_spatial_mismatch_supply",
+                  "cold_excess_demand", "heat_excess_demand")
+  # DÃ©finir les couleurs pour chaque pretty_variable
+custom_colors_base <- c(
+    "Plant Unavailability (MWh)" = "deeppink"	, # Blue
+    "Placebo Unavailability (MWh)" = "pink",           # Transparent Blue (unpublished)
+    "Nuclear Unavailability (MWh)" = "darkgrey",       # Orange	
+    "Placebo Nuclear Unavailability (MWh)" = "lightgrey",   # Transparent Orange
+    "Effective Unavailability (MWh)" = "darkgoldenrod",  
+    "Placebo Effective Unavailability (MWh)" = "lightgoldenrod", # Transparent Green
+    "CBF (MWh)" = "purple",                                # Red
+        # Purple
+    "Solar Irradiance (W/m2)" = "gold",                     # Brown
+    "Wind Speed (m/s)" = "green",   # Gray
+    "Supply Solar Irradiance (W/m2)" = "gold",                     # Brown
+    "Supply Wind Speed (m/s)" = "green",   # Gray
+    "Demand Solar Irradiance (W/m2)" = "darkgoldenrod",                     # Brown
+    "Demand Wind Speed (m/s)" = "darkgreen",   # Gray
+    # Brown
+    "Wind Day-ahead Forecast (MWh)" = "green",   # Gray
+    "Solar Day-ahead Forecast (MWh)" = "gold",   # Gray                      # Pink
+    "Unpredicted Renewables (MWh)" = "lightgreen",
+    "Renewable Day-ahead Forecast (MWh)" = "green",   # Gray
+    "Intraday Update Renewables (MWh)" = "darkgreen",         # Olive
+    "Unpredicted Wind (MWh)" = "lightgreen",
+    "Intraday Update Wind (MWh)" = "darkgreen",         # Olive
+    "Intraday Update Solar (MWh)" = "darkgoldenrod",  
+    "Unpredicted Solar (MWh)" = "lightgoldenrod", # Transparent Green
+    "Excess Cold Demand (Â°C)" = "#17becf",                         # Cyan
+    "Excess Heat Demand (Â°C)" = "indianred",                          # Light Red
+    "Excess Cold PV (Â°C)" = "darkblue",                         # Cyan
+    "Excess Heat PV (Â°C)" = "darkred",                          # Light Red
+    "Excess Cold Th (Â°C)"= "blue",
+    "Excess Heat Th (Â°C)" = "red",
+    "Local Temperature Deviation"= "red",
+    "Local PV Temperature Deviation (Â°C)" = "gold",
+    "Local Supply Temperature Deviation (Â°C)" = "cyan",
+    "Local Demand Temperature Deviation (Â°C)" = "red",
+   "Local Temperature Deviation Supply Effect" = "blue",
+    "Local Temperature Deviation Demand Effect"= "red",
+    "Spatial Mismatch Temperature Supply Effect"= "darkblue",
+    "Spatial Mismatch Temperature Demand Effect"= "darkred"
+  )
+
+```
+
+
+```{r}
+
+
+plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom_colors){
+  
+
+  plot_data <- coef_data %>% 
+    filter(variable %in% variables) %>% 
+    mutate(#estimate = ifelse(variable == "global_tilted_irradiance", estimate*10, estimate)
+           pretty_variable = case_when(
+      variable == "renewable_day_ahead_forecast" ~ "Renewable Day-ahead Forecast (MWh)",
+      variable == "global_tilted_irradiance_supply" ~ "Solar Irradiance (W/m2)",
+      variable == "wind_speed_100m_supply" ~ "Wind Speed (m/s)",
+      variable == "global_tilted_irradiance_supply" ~ "Solar Irradiance (W/m2)",
+      variable == "wind_speed_100m_supply_bis" ~ "Supply Wind Speed (m/s)",
+      variable == "global_tilted_irradiance_supply_bis" ~ "Supply Solar Irradiance (W/m2)",
+      variable == "wind_speed_100m_demand" ~ "Demand Wind Speed (m/s)",
+      variable == "global_tilted_irradiance_demand" ~ "Demand Solar Irradiance (W/m2)",
+      # variable == "unpredicted_renewables" ~ "Unpredicted Renewables (MWh)",
+      # variable == "intraday_update_renewables" ~ "Intraday Update Renewables (MWh)",
+      variable == "intraday_update_wind" ~ "Intraday Update Wind (MWh)",
+      variable == "intraday_update_sun" ~ "Intraday Update Solar (MWh)",
+      variable == "unpredicted_wind" ~ "Unpredicted Wind (MWh)",
+      variable == "unpredicted_sun" ~ "Unpredicted Solar (MWh)",
+      variable == "cbf_es" ~ "CBF (MWh)",
+      variable == "Fore_Wind" ~ "Wind Day-ahead Forecast (MWh)",
+      variable == "Fore_Solar" ~ "Solar Day-ahead Forecast (MWh)",
+      variable == "cold_excess_supply" ~ "Excess Cold (Â°C)",
+      variable == "heat_excess_supply" ~ "Excess Heat (Â°C)",
+      variable == "cold_excess_ss" ~ "Excess Cold PV (Â°C)",
+      variable == "heat_excess_ss" ~ "Excess Heat PV (Â°C)",
+      variable == "cold_excess_sth" ~ "Excess Cold Th (Â°C)",
+      variable == "heat_excess_sth" ~ "Excess Heat Th (Â°C)",
+      variable == "cold_excess_demand" ~ "Excess Cold Demand (Â°C)",
+      variable == "heat_excess_demand" ~ "Excess Heat Demand (Â°C)",
+      variable == "temperature_discomfort_ss" ~ "Local PV Temperature Deviation (Â°C)",
+      variable == "temperature_discomfort_sth" ~ "Local Th Temperature Deviation (Â°C)",
+      variable == "temperature_discomfort_demand" ~ "Local Temperature Deviation",
+      variable == "temperature_discomfort_demand_bis" ~ "Local Temperature Deviation Demand Effect",
+      variable =="temp_spatial_mismatch_supply"~ "Spatial Mismatch Temperature Supply Effect",
+      variable =="temp_spatial_mismatch_supply_bis"~ "Spatial Mismatch Temperature Demand Effect",
+      variable == "temperature_discomfort_supply" ~ "Local Temperature Deviation Supply Effect",
+      variable == "temperature_discomfort_supply_bis" ~ "Local Temperature Deviation Demand Effect",
+      variable =="temp_spatial_mismatch_demand"~ "Spatial Mismatch Temperature Supply Effect",
+      variable =="temp_spatial_mismatch_demand_bis"~ "Spatial Mismatch Temperature Demand Effect",
+      variable == "Published.Unavailable.Capacity" ~ "Plant Unavailability (MWh)",
+      variable == "Published.Unavailable.Nuclear.Capacity" ~ "Nuclear Unavailability (MWh)",
+      variable == "Published.Predicted.Unavailable.Capacity" ~ "Effective Unavailability (MWh)",
+      variable == "Unpublished.Unavailable.Capacity" ~ "Placebo Unavailability (MWh)",
+      variable == "Unpublished.Unavailable.Nuclear.Capacity" ~ "Placebo Nuclear Unavailability (MWh)",
+      variable == "Unpublished.Predicted.Unavailable.Capacity" ~ "Placebo Effective Unavailability (MWh)",
+      TRUE ~ variable  # fallback
+    ),
+    )
+  # %>% 
+  #   filter(price_test >= -100)
+  
+  # DÃ©finir un facteur de mise Ã  l'Ã©chelle pour que l'histogramme rentre dans l'Ã©chelle principale
+  scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge$gen_tot_da, plot = FALSE)$counts)
+  
+  #si on prend simplement le std
+  #il y a une variabilitÃ© factice de la part des renouvelables
+  #parce que varie significativement durant la journÃ©Ã©
+  
+  # sd_price_indispo_merge <- price_indispo_merge %>%
+  # group_by(creneau) %>% 
+  # dplyr::select(all_of(variables)) %>%
+  # summarise(across(everything(), ~sd(., na.rm = TRUE))) %>%
+  # dplyr::select(-creneau) %>% 
+  # ungroup() %>% 
+  # summarise(across(everything(), ~mean(., na.rm = TRUE)))
+  
+  sd_price_indispo_merge <- price_indispo_merge %>%
+  dplyr::select(all_of(variables)) %>%
+  summarise(across(everything(), ~sd(., na.rm = TRUE)))
+
+  
+  
+  sd_price_indispo_merge <- data.frame(
+  variable = names(sd_price_indispo_merge),
+  sd_value = as.numeric(sd_price_indispo_merge))
+  
+  plot_data <- merge(plot_data, 
+                   sd_price_indispo_merge, 
+                   by = "variable")
+  
+  plot_data <- plot_data %>% 
+    mutate(estimate_shock = estimate * sd_value,
+           std_error_shock = std_error * sd_value)
+  
+
+  my_plot <- ggplot(data = plot_data) +
+    geom_line(aes(x = price_test, y = estimate_shock, color = pretty_variable)) +
+    geom_point(aes(x = price_test, y = estimate_shock, color = pretty_variable)) +
+    geom_line(aes(x = price_test, y = 0), linetype = "dashed") +
+    geom_ribbon(
+      aes(
+        x = price_test, 
+        ymin = estimate_shock - 1.96 * std_error_shock, 
+        ymax = estimate_shock + 1.96 * std_error_shock,
+        fill = pretty_variable
+      ), 
+      alpha = 0.2
+    ) + 
+    scale_color_manual(values = custom_colors) +
+    scale_fill_manual(values = custom_colors) +
+    labs(
+      #title = paste0("Shift of the ", type, " Curve"),
+      x = "Price (â‚¬)",
+      y = "Quantity (MWh)",
+      color = "Variable",
+      fill = "Variable"
+    ) +
+  theme_minimal()+
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
+
+  if (matched == "matched"){
+    # DÃ©finir un facteur de mise Ã  l'Ã©chelle pour que l'histogramme rentre dans l'Ã©chelle principale
+    scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge$price, plot = FALSE)$counts)
+  
+    my_plot <- my_plot + 
+    # Histogramme mis Ã  l'Ã©chelle
+    geom_histogram(
+      data = price_indispo_merge,
+      mapping = aes( x = price,  y = ..count.. * scale_factor),
+      bins = 60,
+      color = "black",
+      fill = NA
+    )
+    
+    # Axe secondaire
+    # scale_y_continuous(
+    #   name = "Price (â‚¬/GWh)",
+    #   sec.axis = sec_axis(~ . / scale_factor, name = "FrÃ©quence de gen_tot")
+    # )
+  }
+  my_plot <- my_plot +
+  coord_flip(xlim = c(-20, 165))
+
+  return(my_plot)
+}
+
+```
+
+
+
+
+```{r}
+
+
+renewable_factors <- c("Fore_Wind" ,  "intraday_update_wind",  "unpredicted_wind"   ,
+                       "Fore_Solar" ,  "intraday_update_sun",  "unpredicted_sun"  
+                       )
+# international_exchanges_factors <- c("NTC_ES_FR" ,"NTC_FR_ES",                                 
+#                              "NTC_ES_PT", "NTC_PT_ES"
+#                              )
+
+international_exchanges_factors <- c("cbf_es")
+
+
+temperature_factors <- c("cold_excess_ss", "heat_excess_ss",
+                           "cold_excess_sth", "heat_excess_sth",
+                           "cold_excess_demand", "heat_excess_demand")
+temp_factors <- c("temperature_discomfort_ss"  ,   
+                  "temperature_discomfort_sth", 
+                  "temperature_discomfort_demand")
+
+other_weather_factors <- c("precipitation_supply", "relative_humidity_supply",
+                           "precipitation_demand","relative_humidity_demand")
+indispo_factors <- c("Published.Unavailable.Capacity", "Uneffective.Unavailable.Capacity", 
+                     "Unpublished.Unavailable.Capacity",
+                     "Published.Unavailable.Nuclear.Capacity", 
+                     "Uneffective.Unavailable.Nuclear.Capacity",
+                     "Unpublished.Unavailable.Nuclear.Capacity",
+                     "Published.Predicted.Unavailable.Capacity", "Uneffective.Predicted.Unavailable.Capacity", 
+                     "Unpublished.Predicted.Unavailable.Capacity"
+                     )
+
+
+
+# save_path_data <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp")
+# setwd(save_path_data)
+# price_indispo_merge<- read_parquet( "price_indispo_merge_esp
+output_dir <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs/coef_reg_no_conditioning")
+setwd(output_dir)
+price_indispo_merge<- read_parquet( "price_indispo_merge_esp_npc_all_final.parquet") %>%
+  fill(spot_gas, .direction = "up")  %>%
+mutate(temp_spatial_mismatch_demand=
+      residuals(lm(temperature_discomfort_demand ~ temperature_discomfort_supply, data = .))
+  )
+
+
+colnames_with_capacity <- colnames(price_indispo_merge)[grepl("Capacity", colnames(price_indispo_merge))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity, "cbf_es", 
+    "renewable_day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables"
+    
+    )
+# price_indispo_merge[colnames_with_capacity] <- lapply(price_indispo_merge[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+# #
+
+#price_indispo_merge$creneau <- hour(price_indispo_merge$datetime)
+#price_indispo_merge <- read_parquet("price_indispo_merge_delta.parquet")
+
+
+
+```
+
+```{r}
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
+coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv.rds")
+coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
+
+coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv.rds")
+coef_demand_unmatched_data <- rbindlist(coef_demand_unmatched)
+
+```
+
+
+# Supply side
+
+
+
+
+```{r}
+#unique(coef_supply_unmatched_data$variable)
+sum_up_factors_supply <- c(
+  "Published.Predicted.Unavailable.Capacity" ,"Fore_Wind", "Fore_Solar", 
+  "cbf_es","temperature_discomfort_demand"
+)
+
+supply_sum_up <- plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = sum_up_factors_supply,
+   type = "Supply", matched = "unmatched", custom_colors = custom_colors_base)
+
+supply_sum_up
+```
+
+
+# Demand side
+
+
+```{r}
+sum_up_factor_demand <- c(
+  "Published.Predicted.Unavailable.Capacity" ,"Fore_Wind", "Fore_Solar", 
+  "cbf_es","temperature_discomfort_demand"
+)
+
+demand_sum_up <-plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data, 
+   variables = sum_up_factor_demand,
+   type = "Demand", matched = "unmatched", custom_colors = custom_colors_base)
+demand_sum_up
+```
+
+# Variations
+
+## Looking at predicted and unpredicted components
+
+
+
+
+```{r}
+#unique(coef_supply_unmatched_data$variable)
+renewable_factors <- c("Fore_Wind" ,  "intraday_update_wind",  "unpredicted_wind"   ,
+                       "Fore_Solar" ,  "intraday_update_sun",  "unpredicted_sun"  
+                       )
+#renewable_factors %in% unique(coef_supply_unmatched_data$variable)
+renewable_factors %in% colnames(price_indispo_merge)
+renewable_sum_up <- plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data, 
+   variables = renewable_factors,
+   type = "Supply", matched = "unmatched", custom_colors = custom_colors_base)
+
+renewable_sum_up
+```
+
+
+
+
+
+## Using wind and solar irradiation directly for renwables
+
+
+
+
+```{r}
+
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
+coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_natural.rds")
+coef_supply_unmatched_data_natural <- rbindlist(coef_supply_unmatched)
+
+coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv_natural.rds")
+coef_demand_unmatched_data_natural <- rbindlist(coef_demand_unmatched)
+
+# unique(coef_supply_unmatched_data_natural$variable)
+# colnames(coef_supply_unmatched_data_natural)
+# colnames(coef_demand_unmatched_data_natural)
+new_renewable_factors <- c("wind_speed_100m_supply_bis" , "global_tilted_irradiance_supply_bis", 
+                           "wind_speed_100m_demand" , "global_tilted_irradiance_demand")
+coef_supply_combined <- rbind(coef_supply_unmatched_data_natural%>% 
+                                mutate(variable =ifelse(variable == "wind_speed_100m_supply", "wind_speed_100m_supply_bis", variable),
+                                       variable =ifelse(variable == "global_tilted_irradiance_supply", 
+                                                        "global_tilted_irradiance_supply_bis", variable)
+                                       ),
+                              coef_demand_unmatched_data_natural %>% 
+                                mutate(variable =ifelse(variable == "wind_speed_100m_supply", "wind_speed_100m_demand", variable),
+                                       variable =ifelse(variable == "global_tilted_irradiance_supply", "global_tilted_irradiance_demand", variable)
+                                       )) %>% 
+  filter(variable %in%new_renewable_factors)
+
+unique(coef_supply_combined$variable)
+  # DÃ©finir les couleurs pour chaque pretty_variable
+custom_colors_wind_sun <- c(
+    "Supply Solar Irradiance (W/m2)" = "gold",                     # Brown
+    "Supply Wind Speed (m/s)" = "green",   # Gray
+    "Demand Solar Irradiance (W/m2)" = "darkgoldenrod",                     # Brown
+    "Demand Wind Speed (m/s)" = "darkgreen")
+    
+price_indispo_merge$wind_speed_100m_supply_bis <- price_indispo_merge$wind_speed_100m_supply
+price_indispo_merge$global_tilted_irradiance_supply_bis <- price_indispo_merge$global_tilted_irradiance_supply
+supply_wind_sun <- plot_shift_with_hist_qty(coef_data = coef_supply_combined, 
+   variables = new_renewable_factors,
+   type = "Supply", matched = "unmatched", custom_colors = custom_colors_wind_sun)
+
+supply_wind_sun
+```
+
+
+
+
+
+## Using different indispo types
+
+
+```{r}
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
+coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_indispo.rds")
+coef_supply_unmatched_predicted_indispo_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
+
+coef_demand_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv_indispo.rds")
+coef_demand_unmatched_predicted_indispo_data <- rbindlist(coef_demand_unmatched_predicted_indispo)
+
+coef_supply_combined <- rbind(
+  coef_supply_unmatched_data %>%
+    filter(grepl("Unavailable", variable)),
+  coef_supply_unmatched_predicted_indispo_data %>%
+    filter(grepl("Unavailable", variable))
+)
+coef_demand_combined <- rbind(
+  coef_demand_unmatched_data %>%
+    filter(grepl("Unavailable", variable)),
+  coef_demand_unmatched_predicted_indispo_data %>%
+    filter(grepl("Unavailable", variable))
+)
+
+
+
+
+```
+
+
+Je veux rajouter les indispo
+
+
+```{r}
+
+new_indispo_factors <- indispo_factors[!grepl("effective", indispo_factors, ignore.case = TRUE)]
+
+supply_indispo <- plot_shift_with_hist_qty(coef_data = coef_supply_combined, 
+   variables = new_indispo_factors,
+   type = "Supply", matched = "unmatched", custom_colors = custom_colors_base)
+
+supply_indispo 
+```
+
+```{r}
+demand_indispo <- plot_shift_with_hist_qty(coef_data = coef_demand_combined, 
+   variables = new_indispo_factors,
+   type = "Demand", matched = "unmatched", custom_colors = custom_colors_base)
+
+demand_indispo 
+```
+
+
+
+## Looking at temperature shift share
+
+
+
+```{r}
+
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
+coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_mismatch.rds")
+coef_supply_unmatched_mismatch_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
+
+coef_demand_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv_mismatch.rds")
+coef_demand_unmatched_mismatch_indispo_data <- rbindlist(coef_demand_unmatched_predicted_indispo)
+
+
+              
+coef_combined <- rbind(coef_supply_unmatched_mismatch_data,
+                coef_demand_unmatched_mismatch_indispo_data %>% 
+                  mutate(variable =ifelse(variable == "temp_spatial_mismatch_demand", "temp_spatial_mismatch_demand_bis", variable),
+                         variable =ifelse(variable == "temperature_discomfort_supply", "temperature_discomfort_supply_bis", variable)
+                  ))
+
+
+
+temp_mismatch_plot_factors <- c("temp_spatial_mismatch_demand", "temp_spatial_mismatch_demand_bis", 
+                                "temperature_discomfort_supply", "temperature_discomfort_supply_bis")
+
+
+
+temp_mismatch_plot_factors %in% colnames(price_indispo_merge)
+
+price_indispo_merge$temperature_discomfort_supply_bis <- price_indispo_merge$temperature_discomfort_supply
+price_indispo_merge$temp_spatial_mismatch_demand_bis <- price_indispo_merge$temp_spatial_mismatch_demand
+
+
+
+temp_mismatch_plot <- plot_shift_with_hist_qty(coef_data = coef_combined, 
+                                            variables = temp_mismatch_plot_factors,
+                                            type = "Supply", matched = "unmatched", custom_colors = custom_colors_base)
+
+# supply_temp_mismatch
+temp_mismatch_plot
+```
+
+
+
+
+
+
+```{r}
+save_plot_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "supply_demand_curve")
+setwd(save_plot_path)
+
+# Assume your ggplot object is called 'p'
+ggsave("supply_sum_up.png", plot = supply_sum_up , width = 12, height = 6, dpi = 300)
+ggsave("demand_sum_up.png", plot = demand_sum_up , width = 12, height = 6, dpi = 300)
+ggsave("natural_renewables.png", plot = supply_wind_sun , width = 12, height = 6, dpi = 300)
+ggsave("renewable_sum_up.png", plot = renewable_sum_up , width = 12, height = 6, dpi = 300)
+ggsave("indispo_supply.png", plot = supply_indispo , width = 12, height = 6, dpi = 300)
+ggsave("indispo_demand.png", plot = demand_indispo , width = 12, height = 6, dpi = 300)
+ggsave("temp_mismatch_plot.png", plot = temp_mismatch_plot , width = 12, height = 6, dpi = 300)
+
+
+```
+
+
+

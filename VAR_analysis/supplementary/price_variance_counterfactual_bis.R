@@ -8,7 +8,7 @@ library(data.table)
 library(arrow)
 library(readxl)
 
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs/coef_reg_no_conditioning")
 setwd(output_dir)
 price_indispo_merge_fit <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")%>% 
   mutate(
@@ -17,10 +17,10 @@ price_indispo_merge_fit <- read_parquet("price_indispo_merge_esp_npc_all_final_2
   )
 
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals/output")
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "VAR_analysis/data"))
 all_variance_data <- read_parquet( "all_variance_data.parquet")
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals")
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "VAR_analysis/data"))
 carbon_price_data <- read_excel("D2E_carbone.xlsx") %>% 
   rename(carbon_price = value) %>% 
   mutate(time = as.Date(time))
@@ -29,16 +29,16 @@ carbon_price_data <- read_excel("D2E_carbone.xlsx") %>%
 # mutate(Date = as.Date(Date))
 
 #pour l'instant carbon price ne va que jusqu'en 2018
-#Une seule année de données puisque données micro Espagne commencent en 2018
+#Une seule annÃ©e de donnÃ©es puisque donnÃ©es micro Espagne commencent en 2018
 
 all_dates <- seq.Date(min(carbon_price_data$time),
                       max(carbon_price_data$time),
                       by = "day")
 
 carbon_price_data_complete <- carbon_price_data %>%
-  # Créer toutes les dates
+  # CrÃ©er toutes les dates
   complete(time = all_dates) %>%
-  # Remplir les NA par la dernière valeur connue (backfill)
+  # Remplir les NA par la derniÃ¨re valeur connue (backfill)
   fill(carbon_price , .direction = "up")
 
 price_indispo_merge_fit <- merge(price_indispo_merge_fit,
@@ -49,7 +49,7 @@ price_indispo_merge_fit <- merge(price_indispo_merge_fit,
 
 #Add wind capacity part
 
-path = 'Z:/prix_electricite_gitlab'
+path = Sys.getenv("REPLICATION_ROOT", ".")
 setwd(path)
 
 installed_generation_capacity <- read.csv('installed_generation_capacity_ES_2015_2025.csv')
@@ -166,7 +166,7 @@ latex_tab <- etable(var_reg, var_reg2,
                     keep = "wind",
                     tex = TRUE
 )
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "latex_tables")
 setwd(save_latex_path)
 # Sauvegarde dans un fichier .tex
 writeLines(latex_tab, "log_res_variance.tex")
@@ -247,7 +247,7 @@ gt_table <- variance_table %>%
 
 gt_table
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "latex_tables")
 setwd(save_latex_path)
 gtsave(
   gt_table,
@@ -287,7 +287,7 @@ wind_counterfactuals <- ggplot(monthly_mean, aes(x = date)) +
 
 wind_counterfactuals
 
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "macro")
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("wind_counterfactuals.png", plot = wind_counterfactuals  , width = 12, height = 6, dpi = 300)
@@ -296,9 +296,10 @@ ggsave("wind_counterfactuals.png", plot = wind_counterfactuals  , width = 12, he
 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs"))
 write_parquet(monthly_mean ,
 			  "price_variance_counterfactual_esp_ter.parquet")
+
 
 
 

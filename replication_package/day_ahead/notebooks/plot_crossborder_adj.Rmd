@@ -1,0 +1,239 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(arrow)
+library(lubridate)
+library(data.table)
+library(ggplot2)
+```
+
+
+I want to illustrate the mechanism of cross border saturation.
+On 2018-01-02, French and Spanish prices are equal and comove perfectly,
+until the Cross border capacity is saturated (to about 3000),
+then there are separate prices.
+
+
+
+```{r}
+setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/cross_border"))
+price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")
+
+price_merge_CBF <-price_merge_CBF %>% 
+  mutate(SCH_EX_DA_FR_ES = as.numeric(SCH_EX_DA_FR_ES),
+         SCH_EX_DA_ES_FR = as.numeric(SCH_EX_DA_ES_FR),
+         SCH_EX_TOT_FR_ES = as.numeric(SCH_EX_TOT_FR_ES),
+         SCH_EX_TOT_ES_FR = as.numeric(SCH_EX_TOT_ES_FR),
+        SCH_EX_Spread_FR_ES = SCH_EX_TOT_FR_ES - SCH_EX_DA_FR_ES ,
+         SCH_EX_Spread_ES_FR = SCH_EX_TOT_ES_FR - SCH_EX_DA_ES_FR,
+         price_diff_fr_esp = price_fr - price_esp,
+         #contrary to CBF I allow for negative CBF
+         # with the convention that ESP to FR is >0
+         CBF_DA = SCH_EX_DA_ES_FR - SCH_EX_DA_FR_ES
+         )
+
+colnames_with_capacity <- colnames(price_merge_CBF)[grepl("Capacity", colnames(price_merge_CBF))]
+#get monthly avg of unavailabilities
+capacity_fields <- 
+  c(colnames_with_capacity,
+    "day_ahead_forecast_esp",  "unpredicted_renewables_esp", "intraday_update_renewables_esp",
+  "day_ahead_forecast_fr",  "unpredicted_renewables_fr", "intraday_update_renewables_fr")
+
+price_merge_CBF[colnames_with_capacity] <- lapply(price_merge_CBF[colnames_with_capacity], function(x) ifelse(is.na(x), 0, x))
+
+price_merge_CBF$weekday <- weekdays(price_merge_CBF$delivery_date)
+
+
+```
+
+
+
+```{r}
+plot_example <- price_merge_CBF %>% 
+  filter(delivery_date == "2019-01-02" | delivery_date =="2019-01-03")
+
+plot_NTC_fr_esp <-  ggplot(data = plot_example, aes(x = datetime))+
+  geom_line(aes(y = price_fr*20, color = "FR"))+
+  geom_line(aes(y = price_esp*20, color = "ES"))+
+  geom_line(aes(y = NTC_ESP_FR, color = "ES -> FR"), linetype ="dashed")+
+  geom_line(aes(y = NTC_FR_ESP, color = "FR -> ES"), linetype ="dashed")+
+  geom_line(aes(y = SCH_EX_DA_ES_FR, color = "ES -> FR"))+
+  geom_line(aes(y = SCH_EX_DA_FR_ES, color = "FR -> ES"))+
+    # Mise en place de l'Ã©chelle secondaire pour les prix
+  scale_y_continuous(
+    name = "NTC & Exchanges",
+    sec.axis = sec_axis(~ . / 20, name = "Price (â‚¬/MWh)") # Ajuste l'Ã©chelle inverse
+  ) +
+  theme_minimal()+
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
+plot_NTC_fr_esp
+```
+
+
+
+```{r}
+save_plot_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "cross_border")
+setwd(save_plot_path)
+ggsave("plot_price_comovements_fr_esp.png", plot = plot_NTC_fr_esp, width = 14 , height = 6, dpi = 300)
+
+
+```
+
+
+
+Faire apparaÃ®tre le seuil de saturation
+
+
+
+
+```{r}
+library(latex2exp)
+price_merge_CBF <- price_merge_CBF %>% 
+       mutate(
+         Taux_Sat_ES_FR = SCH_EX_DA_ES_FR/NTC_ESP_FR,
+         Taux_Sat_FR_ES = SCH_EX_DA_FR_ES/NTC_FR_ESP) %>% 
+  filter(Taux_Sat_FR_ES<1.1 & Taux_Sat_ES_FR<1.1) %>%
+  mutate(
+         saturation_bin_ES_FR = ntile(Taux_Sat_ES_FR, 100),
+         saturation_bin_FR_ES = ntile(Taux_Sat_FR_ES, 100)
+       )
+
+plot_data_ES_FR <- price_merge_CBF %>%
+  group_by(saturation_bin_ES_FR) %>%
+  summarize(
+    taux_saturation_moyen = mean(SCH_EX_DA_ES_FR/NTC_ESP_FR, na.rm = TRUE),
+    price_diff_moyen = mean(price_diff_fr_esp, na.rm = TRUE)
+  ) %>% 
+  filter(price_diff_moyen >=0)
+
+plot_data_FR_ES <- price_merge_CBF %>%
+  group_by(saturation_bin_FR_ES) %>%
+  summarize(
+    taux_saturation_moyen = -mean(SCH_EX_DA_FR_ES/NTC_FR_ESP, na.rm = TRUE),
+    price_diff_moyen = mean(price_diff_fr_esp, na.rm = TRUE)
+  ) %>% 
+  filter(price_diff_moyen <=0)
+
+ggplot() +
+geom_point(data =plot_data_ES_FR, aes(x = taux_saturation_moyen, y = price_diff_moyen, color = "ES -> FR")) +
+  geom_point(data =plot_data_FR_ES, aes(x = taux_saturation_moyen, y = price_diff_moyen, color = "FR -> ES")) +
+labs(x = "Taux de saturation", y = TeX('$\\Delta p$')) +
+theme_minimal()
+```
+
+
+```{r}
+
+plot_data_CBF <- price_merge_CBF %>% 
+  filter(gen_tot_fr > 25000) %>% 
+  na.omit()
+
+
+m_reg <- lm(price_fr ~ Planned.Predicted.Unavailable.Capacity_fr+
+    Published.Predicted.Unavailable.Capacity_fr +
+    Unpublished.Predicted.Unavailable.Capacity_fr+ 
+    Uneffective.Predicted.Unavailable.Capacity_fr + 
+     day_ahead_forecast_fr+ unpredicted_renewables_fr +intraday_update_renewables_fr + spot_gas_esp+
+    as.factor(year) + as.factor(month) + as.factor(weekday),
+   data = plot_data_CBF)
+
+plot_data_CBF$price_res <- residuals(m_reg)
+
+plot_data_FR <- plot_data_CBF %>%
+  mutate(saturation = (price_diff_fr_esp != 0),
+         generation_bin_FR = ntile(gen_tot_fr, 100)
+       )  %>%
+group_by(generation_bin_FR, saturation) %>%
+  summarize(
+    price_moyen = mean(price_fr, na.rm = TRUE),
+    price_res = mean(price_res, na.rm = TRUE)
+  ) 
+plot_data_ES <- plot_data_CBF %>%
+  mutate(saturation = (price_diff_fr_esp != 0),
+         generation_bin_ES = ntile(gen_tot_esp, 100)
+       )  %>%
+group_by(generation_bin_ES, saturation) %>%
+  summarize(
+    price_moyen = mean(price_esp, na.rm = TRUE),
+    price_res = mean(price_res, na.rm = TRUE)
+  )
+         
+ggplot()+
+  geom_line(data = plot_data_FR, aes(x = generation_bin_FR, y = price_res, color = "FR", linetype  = as.factor(saturation)))+
+  geom_line(data = plot_data_ES, aes(x = generation_bin_ES, y = price_res, color = "ES", linetype  = as.factor(saturation)))+
+  labs(title = "Residuals of the regression model", x = "Generation bin", y = "Price residuals")+
+  theme_minimal()
+
+
+```
+
+```{r}
+plot_data_FR <- plot_data_CBF %>%
+   mutate(generation_bin_FR = ntile(gen_tot_fr, 100),
+          crossborder = case_when(
+    Taux_Sat_FR_ES > 0.9 ~ "Saturated FR -> ES",
+    Taux_Sat_ES_FR > 0.9 ~ "Saturated ES -> FR",
+    (Taux_Sat_ES_FR <0.1) & (Taux_Sat_FR_ES <0.1) ~ "Unused",
+    TRUE ~ "Used"
+     )) %>% 
+group_by(generation_bin_FR, crossborder) %>%
+  summarize(
+    price_moyen = mean(price_fr, na.rm = TRUE),
+    price_res = mean(price_res, na.rm = TRUE)
+  ) 
+
+
+ggplot()+
+  geom_line(data = plot_data_FR, aes(x = generation_bin_FR, y = price_res, color =  crossborder))+
+  # geom_line(data = plot_data_ES, aes(x = generation_bin_ES, y = price_res, color = "ES", linetype  = as.factor(saturation)))+
+  labs(title = "Residuals of the regression model", x = "Generation bin", y = "Price residuals")+
+  theme_minimal()
+
+```
+
+
+Cette reprÃ©sentation laisse entendre que chaque point reprÃ©sente autant de points de donnÃ©es.
+Donc, que la situation de saturation apparaÃ®t autant lorsque la demande est trÃ¨s grande ou trÃ¨s faible.
+
+
+
+
+Illustration de l'exception ibÃ©rique
+
+```{r}
+exception_start_date <- as.POSIXct("15-06-2022 00:00:00", 
+                             format = "%d-%m-%Y %H:%M:%S", tz= "Europe/Brussels")
+exception_end_date <- as.POSIXct("01-03-2023 00:00:00", 
+                                   format = "%d-%m-%Y %H:%M:%S", tz= "Europe/Brussels")
+#exclure une valeur aberrante qui rend le graphique moins lisible
+
+plot_data <- price_merge_CBF %>% 
+  filter(price_fr < 1500)
+library(ggplot2)
+ggplot(plot_data)+
+  geom_line(aes(x=datetime, y=price_fr, color = "France")) +
+  geom_line(aes(x=datetime, y=price_esp, color = "Espagne")) +
+  geom_vline(xintercept = exception_start_date, linetype = "dashed", color = "red") +
+  geom_vline(xintercept = exception_end_date, linetype = "dashed", color = "red") +
+  labs(title = "Day-ahead electricity prices in France and Spain",
+       x = "Date", y = "Price (â‚¬/MWh)") +
+  theme_minimal()
+
+
+```
+
+
+

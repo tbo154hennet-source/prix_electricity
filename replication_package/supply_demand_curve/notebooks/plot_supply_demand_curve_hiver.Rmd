@@ -1,0 +1,307 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(tidyr)
+
+
+curve_path <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "data/omie/Supply_demand_curves")
+setwd(curve_path)
+# my_files <- list.files()
+# # Obtenez la liste des fichiers .parquet
+# parquet_files <- my_files[grep("\\.parquet$", my_files)]
+# 
+# # Supprimez les fichiers .parquet de la liste des fichiers
+# my_files <- setdiff(my_files, parquet_files)
+# 
+# file <- my_files[1]
+
+curve = "curva_pbc_20210927.1"
+csv_file <- read.csv2(curve, header = FALSE,
+                      skip = 1)
+colnames(csv_file) <- as.character(csv_file[1, ]) 
+csv_file <- csv_file %>% 
+  filter(Pais == "ES" | Pais == "MI")
+csv_file <- csv_file[-1, c(1:2, 5:8)]  # Supprimer la premiÃ¨re ligne devenue superflue
+colnames(csv_file) <- c('Hour', 'DATE', 'OFFER_TYPE','ENERGY', 'PRICE', 'MATCHED' )
+  
+
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+plot_data <- csv_file %>% 
+  filter(Hour == 19) %>%
+  mutate(ENERGY = gsub("\\.", "", ENERGY)) %>% 
+  mutate(ENERGY = as.numeric(gsub(",", ".", ENERGY)),
+         PRICE = as.numeric(gsub(",", ".", PRICE)))
+
+
+    # Remplace les virgules par des points et convertit en numÃ©rique
+
+# Filtrer les courbes d'offre et de demande
+supply_curve <- plot_data %>%
+  filter(OFFER_TYPE == 'V' & MATCHED == 'O') %>%
+  arrange(PRICE) %>%
+  mutate(cum_energy = cumsum(as.numeric(ENERGY)))
+
+demand_curve <- plot_data %>%
+  filter(OFFER_TYPE == 'C' & MATCHED == 'O') %>%
+  arrange(desc(PRICE)) %>%
+  mutate(cum_energy = cumsum(as.numeric(ENERGY)))
+
+# Filtrer les offres et demandes qui ont Ã©tÃ© "matched"
+matched_supply_curve <- plot_data %>%
+  filter(OFFER_TYPE == 'V' & MATCHED == 'C') %>%
+  arrange(PRICE) %>%
+  mutate(cum_energy = cumsum(as.numeric(ENERGY)))
+
+matched_demand_curve <- plot_data %>%
+  filter(OFFER_TYPE == 'C' & MATCHED == 'C') %>%
+  arrange(desc(PRICE)) %>%
+  mutate(cum_energy = cumsum(as.numeric(ENERGY)))
+
+# Tracer les courbes
+plot_supply_demand_curve <- ggplot() +
+  geom_line(data = supply_curve, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Theoretical")) +
+  geom_line(data = demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Theoretical")) +
+  geom_line(data = matched_supply_curve, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Matched")) +
+  geom_line(data = matched_demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Matched")) +
+  labs(x= "Quantity", y = "Price")+ 
+  theme_minimal()+
+  coord_cartesian(ylim = c(-200, 300))+
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
+plot_supply_demand_curve
+```
+
+
+
+```{r}
+save_plot_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "supply_demand_curve")
+setwd(save_plot_path)
+
+# Assume your ggplot object is called 'p'
+ggsave("supply_demand_curve_plot.png", plot = plot_supply_demand_curve , width = 12, height = 6, dpi = 300)
+
+```
+
+
+
+```{r}
+
+# Tracer les courbes
+plot_supply_demand_curve_bis <- ggplot() +
+  geom_line(data = supply_curve, aes(x = cum_energy, y = PRICE, color = "Supply curve")) +
+  geom_line(data = demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve")) +
+  labs(x= "Quantity", y = "Price")+ 
+  theme_minimal()+
+  coord_cartesian(ylim = c(-200, 300))+
+  theme(legend.text = element_text(size = 15),      # taille du texte
+        legend.title = element_text(size = 16),     # taille du titre
+        legend.key.size = unit(1.5, "cm") ,          # taille des symboles/rectangles,
+        axis.title.x = element_text(size = 14),   # taille du titre axe x
+        axis.title.y = element_text(size = 14),   # taille du titre axe y
+        axis.text.x  = element_text(size = 12, angle = 45, hjust = 1),  # taille et rotation des ticks x
+        axis.text.y  = element_text(size = 12)    # taille des ticks y
+  )
+
+plot_supply_demand_curve_bis
+```
+
+
+
+```{r}
+save_plot_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "supply_demand_curve")
+setwd(save_plot_path)
+
+# Assume your ggplot object is called 'p'
+ggsave("supply_demand_curve_plot_bis.png", plot = plot_supply_demand_curve_bis , width = 12, height = 6, dpi = 300)
+
+```
+
+```{r}
+# matched_eq_price <- (matched_supply_curve[nrow(matched_supply_curve), "PRICE"] + matched_demand_curve[nrow(matched_demand_curve), "PRICE"])/2
+
+# matched_eq_energy <- (matched_supply_curve[nrow(matched_supply_curve), "cum_energy"] + matched_demand_curve[nrow(matched_demand_curve), "cum_energy"])/2
+
+matched_eq_price <- matched_supply_curve[nrow(matched_supply_curve), "PRICE"] 
+matched_eq_energy <- matched_supply_curve[nrow(matched_supply_curve), "cum_energy"]
+print(matched_eq_price)
+print(matched_eq_energy)
+```
+
+
+```{r}
+
+library(latex2exp)
+
+# Fonction pour trouver l'intersection
+find_intersection <- function(supply_curve, demand_curve) {
+  intersection <- NULL
+  
+  # Pour chaque point dans la courbe d'offre
+  for (i in 1:nrow(supply_curve)) {
+    # Trouver le point de la courbe de demande le plus proche en cum_energy
+    closest_idx <- which.min(abs(demand_curve$cum_energy - supply_curve$cum_energy[i]))
+    
+    # VÃ©rifier si l'offre dÃ©passe ou Ã©gale la demande Ã  ce point
+    if (supply_curve$PRICE[i] >= demand_curve$PRICE[closest_idx]) {
+      intersection <- data.frame(
+        cum_energy = supply_curve$cum_energy[i],
+        price = supply_curve$PRICE[i]
+      )
+      break
+    }
+  }
+  
+  return(intersection)
+}
+
+```
+
+
+```{r}
+# Filtrer les offres et demandes qui ont Ã©tÃ© "matched"
+supply_curve_adj <- plot_data %>%
+  filter(OFFER_TYPE == 'V' ) %>%
+  filter(MATCHED == 'C' | PRICE > matched_eq_price ) %>% 
+  arrange(PRICE) %>%
+  mutate(cum_energy = cumsum(as.numeric(ENERGY)))
+
+demand_curve_adj  <- plot_data %>%
+  filter(OFFER_TYPE == 'C')%>%
+  filter(MATCHED == 'C' | PRICE < matched_eq_price ) %>% 
+  arrange(desc(PRICE)) %>%
+  mutate(cum_energy = cumsum(as.numeric(ENERGY)))
+
+# Appliquer la fonction pour trouver l'intersection
+intersection_point_adj <- find_intersection(supply_curve_adj, demand_curve_adj)
+
+ggplot() +
+  geom_step(data = supply_curve, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Theoretical"), direction = "hv") +
+  geom_step(data = demand_curve, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Theoretical"), direction = "hv") +
+  geom_step(data = supply_curve_adj, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Adj"), direction = "hv") +
+  geom_step(data = demand_curve_adj, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Adj"), direction = "hv") +
+    geom_line(data = matched_supply_curve, aes(x = cum_energy, y = PRICE, color = "Matched",)) +
+  geom_line(data = matched_demand_curve, aes(x = cum_energy, y = PRICE, color = "Matched")) +
+  theme_minimal()
+
+```
+Je fais l'expÃ©rience de pensÃ©e qu'il n'y a pas d'interconnexion.
+Donc j'ai besoinde combler avec de la production nationale.
+
+export espagne vers France de 207 MWh
+Donc, il faut que j'ai de l'Ã©nergie en trop.
+
+
+```{r}
+
+my_datetime_slot = "2021-12-12 20:00:00"
+CBF_ESP_FR <- price_merge_CBF %>% 
+  filter(datetime == my_datetime_slot) %>%
+  pull(CBF_ESP_FR)
+CBF_FR_ESP<- price_merge_CBF %>% 
+  filter(datetime == my_datetime_slot) %>%
+  pull(CBF_FR_ESP)
+CBF <- ifelse(CBF_ESP_FR == 0 ,  -CBF_FR_ESP, CBF_ESP_FR)
+
+cross_border_exchanges <- data.frame(Hour = 19, DATE = "2023-09-28 19:00:00", OFFER_TYPE = "V",
+           ENERGY = CBF, PRICE = 0.0, MATCHED = "O")
+
+new_supply_curve_adj <- plot_data %>%
+  rbind(cross_border_exchanges) %>% 
+  filter(OFFER_TYPE == 'V' ) %>%
+  filter(MATCHED == 'C' | PRICE > matched_eq_price ) %>% 
+  arrange(PRICE) %>%
+  mutate(cum_energy = cumsum(as.numeric(ENERGY)))
+
+# Appliquer la fonction pour trouver l'intersection
+new_intersection_point_adj <- find_intersection(new_supply_curve_adj, demand_curve_adj)
+
+
+# Extraire les coordonnÃ©es du point d'Ã©quilibre
+new_equilibrium_energy <- round(new_intersection_point_adj$cum_energy, 0)
+new_equilibrium_price <- round(new_intersection_point_adj$price, 2)
+
+delta_price <- round(new_equilibrium_price - matched_eq_price, 2)
+delta_energy <- round(new_equilibrium_energy - matched_eq_energy, 0)
+
+equilibrium_energy_str <- paste(as.character(delta_energy), "MWh", sep = " ")
+equilibrium_price_str <- paste(as.character(delta_price), "\u20AC", sep = " ")
+
+# # Create the labels for matched supply and demand with the rounded price
+# energy_label <- expression(paste("q[eq] = ", equilibrium_energy_str))
+# price_label <- expression(paste("p[eq] = ", equilibrium_price_str))
+# 
+
+# Tracer les courbes avec l'Ã©quilibre
+ggplot() +
+  geom_step(data = new_supply_curve_adj, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Without CBF"), direction = "hv") +
+  geom_step(data = demand_curve_adj, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Original"), direction = "hv") +
+  geom_step(data = supply_curve_adj, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Original"), direction = "hv") +
+  #Indiquez le point d'Ã©quilibre
+  geom_segment(aes(x = 0, y = matched_eq_price, 
+                   xend = matched_eq_energy, yend = matched_eq_price, color = "Equilibrium_demand"), 
+               linetype = "dashed") +
+  # Ajouter une ligne horizontale pointillÃ©e rouge limitÃ©e au segment [0, equilibrium_price]
+  geom_segment(aes(x = matched_eq_energy, y = 0, 
+                   xend = matched_eq_energy, yend = matched_eq_price, color = "Equilibrium_price"), 
+               linetype = "dashed") + 
+  geom_segment(aes(x = 0, y = new_equilibrium_price, 
+                   xend = new_equilibrium_energy, yend = new_equilibrium_price, color = "Equilibrium_demand"),
+               linetype = "dashed") +
+  # Ajouter une ligne horizontale pointillÃ©e rouge limitÃ©e au segment [0, equilibrium_price]
+  geom_segment(aes(x =new_equilibrium_energy, y = 0, 
+                   xend = new_equilibrium_energy, yend = new_equilibrium_price, color = "Equilibrium_price"), 
+               linetype = "dashed") + 
+#geom_point(data = matched_supply_curve, aes(x = cum_energy, y = PRICE, color = "Matched supply"), size = 3) +
+#geom_point(data = matched_demand_curve, aes(x = cum_energy, y = PRICE, color = "Matched demand"), size = 3) +
+  scale_color_manual(
+    values = c("Supply curve" = "blue", "Demand curve" = "green", 
+               "Equilibrium_demand" = "red", "Equilibrium_price" = "red"),
+    labels = c(
+      "Demand curve",
+     paste0("Î”q = ", equilibrium_energy_str),
+      paste0("Î”p = ", equilibrium_price_str),
+      "Supply curve"
+    )
+  ) +
+  theme(legend.title = element_text(size = 12),
+        legend.text = element_text(size = 10))
+  labs(title = "Supply-Demand Curve with Equilibrium") +
+  theme_minimal()
+```
+Estimation du bÃ©nÃ©fice Ã  l'import 
+
+
+```{r}
+benefits <- matched_eq_energy * delta_price
+rebound_effect <- matched_eq_price * delta_energy
+net_benefits <- benefits - rebound_effect
+
+# CrÃ©er le tableau
+mini_tableau <- data.frame(
+  "Benefits" = benefits,
+  "Rebound Cost" = rebound_effect,
+  "Net Benefits" = net_benefits
+)
+mini_tableau 
+```
+
+
+
+

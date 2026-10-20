@@ -1,0 +1,8 @@
+_data_staging/
+!data/
+data/*
+!data/CHECKSUMS.txt
+output/
+!DATA_MANIFEST.csv
+!FIGURE_MANIFEST.csv
+!vendor/varexternal-master.zip

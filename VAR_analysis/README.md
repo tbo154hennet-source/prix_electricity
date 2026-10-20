@@ -1,9 +1,9 @@
 # VAR analysis
 
-Chaîne reproductible centrée sur le benchmark espagnol. Ce répertoire est
-indépendant de VAR_analysis_fr : les anciens scripts ne sont ni déplacés ni
-modifiés. Les fichiers historiques servent uniquement de sources de données et
-de référence méthodologique.
+Chaîne reproductible centrée sur le benchmark espagnol. VAR_analysis/ contient
+le pipeline macro maintenu, les deux producteurs de tableaux supplémentaires dans
+supplementary/, et leurs entrées propres dans data/. L’ancienne arborescence
+VAR_analysis_fr/ est archivée sous depreciated/VAR_analysis_fr/.
 
 ## Exécution
 

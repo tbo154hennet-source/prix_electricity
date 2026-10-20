@@ -1,0 +1,43 @@
+# R packages used by retained figure/table producers
+AER
+arrow
+broom
+cowplot
+data.table
+dplyr
+expm
+fixest
+future
+future.apply
+ggbrace
+ggplot2
+ggpubr
+gridExtra
+gt
+knitr
+latex2exp
+lmtest
+lubridate
+MASS
+patchwork
+pracma
+progress
+progressr
+purrr
+readr
+readxl
+remotes
+reshape2
+sandwich
+stargazer
+stringr
+tibble
+tidyr
+tidyverse
+vars
+xgboost
+xts
+zoo
+
+# Bundled source dependency used by the default macro inference:
+# vendor/varexternal-master.zip (varexternal 0.2.0, GPL-2)

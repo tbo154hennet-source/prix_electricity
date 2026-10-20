@@ -332,7 +332,7 @@ ggsave("gas_elec_prices.png", plot = my_gas_plot, width = 18, height = 6, dpi = 
 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff.parquet')
 
