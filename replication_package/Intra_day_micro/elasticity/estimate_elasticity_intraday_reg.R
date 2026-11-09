@@ -164,8 +164,8 @@ coef_se_iv_wind  <- extract_coef_ivf(model =m_iv_wind_fx, var_name ="right_term"
 
 df_wind_id <- data.frame(
   Model = c("Intraday OLS", 'Intraday IV'),
-  Estimate = c(coef_se_ols_wind["Coef"], coef_se_iv_wind["Coef"] ),
-  StdError = c(coef_se_ols_wind["Se"], coef_se_iv_wind["Se"]  )
+  Estimate = c(coef_se_ols_wind[["Coef"]], coef_se_iv_wind[["Coef"]] ),
+  StdError = c(coef_se_ols_wind[["Se"]], coef_se_iv_wind[["Se"]]  )
 )
 
 df_wind_id$Elasticity_CI <- paste0(
@@ -189,6 +189,10 @@ df_wind_id <- df_wind_id %>%
 library(stringr)
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp"))
 write.csv(df_wind_id, "df_wind_intrday")
+
+# utilise par demand_elasticity_plot.R
+setwd(save_path_entsoe_output)
+write_parquet(wind_reg_data, "wind_reg_data.parquet")
 
 
 

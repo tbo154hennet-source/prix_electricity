@@ -210,6 +210,12 @@ Donc, il faut que j'ai de l'Ã©nergie en trop.
 
 ```{r}
 
+price_merge_CBF <- arrow::read_parquet(
+  file.path(
+    Sys.getenv("REPLICATION_ROOT", "."),
+    "day_ahead/outputs/cross_border/price_merge_CBF.parquet"
+  )
+)
 my_datetime_slot = "2021-12-12 20:00:00"
 CBF_ESP_FR <- price_merge_CBF %>% 
   filter(datetime == my_datetime_slot) %>%

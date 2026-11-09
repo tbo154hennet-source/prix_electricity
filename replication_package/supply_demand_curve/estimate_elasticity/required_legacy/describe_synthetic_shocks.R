@@ -1,6 +1,6 @@
 
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp"))
-price_indispo_merge_esp_delta <- read_parquet( "price_indispo_merge_esp_delta_supply_demand_exo.parquet")
+price_indispo_merge_esp_delta <- arrow::read_parquet( "price_indispo_merge_delta_supply_demand_exo.parquet")
 
 cols_supply <- colnames(price_indispo_merge_esp_delta)[grepl("delta_s", colnames(price_indispo_merge_esp_delta))]
 cols_demand <- colnames(price_indispo_merge_esp_delta)[grepl("delta_d", colnames(price_indispo_merge_esp_delta))]
@@ -143,9 +143,10 @@ contrib_demand_cond <- contrib_variance_cond(
 )
 
 
-instruments_tot <- c("Wind"  ,"Solar" ,                             
-                    "Unavailabilities", "CBF"   ,                               
-                     "Temperature" )
+instruments_tot <- c(
+  "Wind", "Solar", "Nuclear unavailabilities",
+  "CBF", "Unavailabilities", "Temperature"
+)
 # Pour l'offre
 
 
@@ -187,7 +188,7 @@ variation_matrix <- monthly_shocks %>%
 
 # 1?????? Transformer la matrice en dataframe tidy
 var_df <- as.data.frame(variation_matrix) %>%
-  rownames_to_column(var = "Instrument") %>%
+  tibble::rownames_to_column(var = "Instrument") %>%
   dplyr::select(Instrument) %>%
   mutate(
     Contribution = diag(variation_matrix),  # diagonale = variance de chaque variable
@@ -200,10 +201,10 @@ var_df <- as.data.frame(variation_matrix) %>%
 
 
 # 1?????? Renommer les instruments
-var_df$Instrument <- rep(c("Solar", "Wind", "Unavailabilities", "CBF", "Temperature", "Synthetic"), 2)
+var_df$Instrument <- rep(c("Solar", "Wind", "Unavailabilities", "Nuclear unavailabilities", "CBF", "Temperature", "Synthetic"), 2)
 
 # 2?????? Fixer l'ordre comme facteur pour ggplot
-instrument_order <- c("Solar", "Wind", "Unavailabilities", "CBF", "Temperature", "Synthetic")
+instrument_order <- c("Solar", "Wind", "Unavailabilities", "Nuclear unavailabilities", "CBF", "Temperature", "Synthetic")
 var_df$Instrument <- factor(var_df$Instrument, levels = instrument_order)
 
 

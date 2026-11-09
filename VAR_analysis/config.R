@@ -73,6 +73,11 @@ make_config <- function(root_dir) {
     seed = as.integer(Sys.getenv("VAR_SEED", "20260914")),
     counterfactual_bootstrap = as.integer(Sys.getenv("VAR_CF_BOOT", "200")),
     counterfactual_block_size = as.integer(Sys.getenv("VAR_CF_BLOCK", "0")),
+    bvar = list(
+      draws = as.integer(Sys.getenv("VAR_BVAR_DRAWS", "5000")),
+      horizon = as.integer(Sys.getenv("VAR_BVAR_HORIZON", "24")),
+      stable_only = bool_env("VAR_BVAR_STABLE_ONLY", FALSE)
+    ),
     wind_capacity_2030_mw = 62000,
     windows = list(
       inflation = as.Date(c("2021-04-01", "2022-09-01")),
@@ -85,6 +90,10 @@ make_config <- function(root_dir) {
     plot_names = list(
       spain_supply = "supply_msw_main_plot.png",
       spain_demand = "demand_msw_main_plot.png",
+      spain_supply_bvar = "supply_bvar_main_plot.png",
+      spain_demand_bvar = "demand_bvar_main_plot.png",
+      spain_supply_bvar_ols = "supply_bvar_vs_ols_spain.png",
+      spain_demand_bvar_ols = "demand_bvar_vs_ols_spain.png",
       spain_wind = "supply_msw_wind_plot.png",
       spain_wedge = "supply_msw_wedge_plot.png",
       spain_proxy_compare = "irf_wind_delta_supply_demand_spain.png",

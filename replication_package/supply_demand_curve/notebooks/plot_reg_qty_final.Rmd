@@ -248,7 +248,7 @@ indispo_factors <- c("Published.Unavailable.Capacity", "Uneffective.Unavailable.
 # price_indispo_merge<- read_parquet( "price_indispo_merge_esp
 output_dir <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs/coef_reg_no_conditioning")
 setwd(output_dir)
-price_indispo_merge<- read_parquet( "price_indispo_merge_esp_npc_all_final.parquet") %>%
+price_indispo_merge<- arrow::read_parquet( "price_indispo_merge_esp_npc_all_final.parquet") %>%
   fill(spot_gas, .direction = "up")  %>%
 mutate(temp_spatial_mismatch_demand=
       residuals(lm(temperature_discomfort_demand ~ temperature_discomfort_supply, data = .))
@@ -275,10 +275,10 @@ capacity_fields <-
 ```{r}
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
 coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv.rds")
-coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
+coef_supply_unmatched_data <- data.table::rbindlist(coef_supply_unmatched)
 
 coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv.rds")
-coef_demand_unmatched_data <- rbindlist(coef_demand_unmatched)
+coef_demand_unmatched_data <- data.table::rbindlist(coef_demand_unmatched)
 
 ```
 
@@ -352,10 +352,10 @@ renewable_sum_up
 
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
 coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_natural.rds")
-coef_supply_unmatched_data_natural <- rbindlist(coef_supply_unmatched)
+coef_supply_unmatched_data_natural <- data.table::rbindlist(coef_supply_unmatched)
 
 coef_demand_unmatched <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv_natural.rds")
-coef_demand_unmatched_data_natural <- rbindlist(coef_demand_unmatched)
+coef_demand_unmatched_data_natural <- data.table::rbindlist(coef_demand_unmatched)
 
 # unique(coef_supply_unmatched_data_natural$variable)
 # colnames(coef_supply_unmatched_data_natural)
@@ -400,10 +400,10 @@ supply_wind_sun
 ```{r}
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
 coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_indispo.rds")
-coef_supply_unmatched_predicted_indispo_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
+coef_supply_unmatched_predicted_indispo_data <- data.table::rbindlist(coef_supply_unmatched_predicted_indispo)
 
 coef_demand_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv_indispo.rds")
-coef_demand_unmatched_predicted_indispo_data <- rbindlist(coef_demand_unmatched_predicted_indispo)
+coef_demand_unmatched_predicted_indispo_data <- data.table::rbindlist(coef_demand_unmatched_predicted_indispo)
 
 coef_supply_combined <- rbind(
   coef_supply_unmatched_data %>%
@@ -456,10 +456,10 @@ demand_indispo
 
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
 coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_mismatch.rds")
-coef_supply_unmatched_mismatch_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
+coef_supply_unmatched_mismatch_data <- data.table::rbindlist(coef_supply_unmatched_predicted_indispo)
 
 coef_demand_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_lv_mismatch.rds")
-coef_demand_unmatched_mismatch_indispo_data <- rbindlist(coef_demand_unmatched_predicted_indispo)
+coef_demand_unmatched_mismatch_indispo_data <- data.table::rbindlist(coef_demand_unmatched_predicted_indispo)
 
 
               

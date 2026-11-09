@@ -1,86 +1,11 @@
+library(dplyr)
 
-
-
-
-colnames(price_merge_CBF_max)
-class(price_merge_CBF_max$year)
-price_merge_CBF_max$year <- as.numeric(price_merge_CBF_max$year)
-price_merge_CBF_max$month <- as.factor(price_merge_CBF_max$month)
-price_merge_CBF_max$creneau <- as.factor(price_merge_CBF_max$creneau)
-
-# Loop through each NET_FLOW column
-for (flow in net_flow_col) {
-  print(flow)
-  
-  predictors <- paste(c(gen_col, renew_col), collapse = " + ")
-  
-  # Create the formula: flow ~ predictors
-  formula <- as.formula(paste(flow, "~", predictors, "+ year + as.factor(month) + as.factor(weekday) + as.factor(creneau)"))
-  
-  # Example: use formula in a linear model
-  model <- lm(formula, data = price_merge_CBF_max %>% 
-                filter(as.numeric(year) <= 2020))
-  
-  cat(flow, " RÂ² ", round(summary(model)$r.squared, 3), "\n")
-  
-  price_merge_CBF_max[[paste0(flow, "_pred")]] <- predict(model, price_merge_CBF_max)
-  ntc_col_export <- sub("NET_FLOW", "NTC", flow)
-  
-  # Split the string and reorder the country codes
-  split_parts <- unlist(strsplit(ntc_col_export, "_"))
-  ntc_col_import <- paste0(split_parts[1], "_", split_parts[3], "_", split_parts[2])
-  
-  #ntc_col %in% colnames(price_merge_CBF_max)
-  
-  price_merge_CBF_max[[paste0(flow, "_pred_sat")]] <-
-    ifelse(price_merge_CBF_max[[paste0(flow, "_pred")]] > price_merge_CBF_max[[ntc_col_import]],
-           price_merge_CBF_max[[ntc_col_import]], price_merge_CBF_max[[paste0(flow, "_pred")]])
-  price_merge_CBF_max[[paste0(flow, "_pred_sat")]] <-
-    ifelse(price_merge_CBF_max[[paste0(flow, "_pred")]] < -price_merge_CBF_max[[ntc_col_import]],
-           -price_merge_CBF_max[[ntc_col_import]], price_merge_CBF_max[[paste0(flow, "_pred")]])
-  
-  price_merge_CBF_max[[paste0(flow, "_pred_sat")]] <-
-    ifelse(price_merge_CBF_max[[paste0(flow, "_pred")]] < -price_merge_CBF_max[[ntc_col_export]],
-           -price_merge_CBF_max[[ntc_col_export]], price_merge_CBF_max[[paste0(flow, "_pred")]])
-  price_merge_CBF_max[[paste0(flow, "_pred_sat")]] <-
-    ifelse(price_merge_CBF_max[[paste0(flow, "_pred")]] > price_merge_CBF_max[[ntc_col_export]],
-           price_merge_CBF_max[[ntc_col_export]], price_merge_CBF_max[[paste0(flow, "_pred")]])
-  
-  # View(price_merge_CBF_max %>%
-  #        dplyr::select(datetime, flow, paste0(flow, "_pred"), paste0(flow, "_pred_sat"),
-  #               ntc_col_export, ntc_col_import)  %>% 
-  #   filter(datetime == "2015-07-05 12:00:00"))
-  
-  # 
-  pred <- price_merge_CBF_max[[flow]]
-  obs <- price_merge_CBF_max[[paste0(flow, "_pred_sat")]]
-  
-  # Compute RÂ² manually
-  r2_sat <- 1 - sum((obs - pred)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
-  
-  
-  cat(flow, " Pseudo saturated RÂ² ", r2_sat, "\n")
-  
-}
-
-price_merge_CBF_max <- price_merge_CBF_max %>% 
-  mutate(CBF_ES_pred = rowSums(dplyr::select(., starts_with("NET_FLOW_ES") & ends_with("pred"))),
-         CBF_FR_pred = rowSums(dplyr::select(., starts_with("NET_FLOW_FR")& ends_with("pred"))),
-         CBF_ES_pred_sat = rowSums(dplyr::select(., starts_with("NET_FLOW_ES") & ends_with("pred_sat"))),
-         CBF_FR_pred_sat = rowSums(dplyr::select(., starts_with("NET_FLOW_FR")& ends_with("pred_sat"))),
+price_merge_CBF_max <- arrow::read_parquet(
+  file.path(
+    Sys.getenv("REPLICATION_ROOT", "."),
+    "day_ahead/outputs/cross_border/price_merge_CBF_max_out_of_sample_lin.parquet"
   )
-
-
-setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/cross_border"))
-price_merge_CBF_max$year <- as.numeric(as.character(price_merge_CBF_max$year))
-price_merge_CBF_max$month <- as.numeric(as.character(price_merge_CBF_max$month))
-price_merge_CBF_max$creneau <- as.numeric(as.character(price_merge_CBF_max$creneau))
-
-
-write_parquet(price_merge_CBF_max, 
-              "price_merge_CBF_max_out_of_sample_lin.parquet")
-
-price_merge_CBF_max <- read_parquet("price_merge_CBF_max_out_of_sample_lin.parquet")
+)
 #colnames(import_data_reg)
 price_merge_CBF_max_monthly <- price_merge_CBF_max %>% 
   mutate(year = as.numeric(year), month = as.numeric(month)) %>%

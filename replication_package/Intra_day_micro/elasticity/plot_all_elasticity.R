@@ -2,8 +2,8 @@
 library(stringr)
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp"))
 
-df_wind_id <- read.csv( "df_wind_intrday")
-df_err_id <- read.csv( "df_for_err_intrday")
+df_wind_id <- read.csv( "df_wind_intrday") %>% dplyr::select(-X)
+df_err_id <- read.csv( "df_for_err_intrday") %>% dplyr::select(-X)
 
 df_id <- bind_rows(df_wind_id %>% 
                      mutate(Elasticity = "Demand"),

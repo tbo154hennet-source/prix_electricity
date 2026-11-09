@@ -51,12 +51,15 @@ From this directory:
 Rscript main.R --check-only
 Rscript main.R --stage=all
 ```
+<!-- cd Z:\prix_electricite_gitlab\replication_package
+& "C:\INSEE\R\R-4.6.1\bin\Rscript.exe" main.R --stage=all -->
 
 Available stages are `descriptive`, `elasticity`, `intraday`, and `macro`.
 Several stages can be comma-separated. Generated artifacts are written below
 `output/`; no Overleaf directory is required.
 
-The active map is retained as `day_ahead/daily_temp/wind_solar_plants.ipynb`.
+The active map is retained as `day_ahead/daily_temp/
+wind_solar_plants.ipynb`.
 Two active supplementary tables retain their direct producers under
 `VAR_analysis/supplementary/`; these two producers are marked
 `generated-manual` in `FIGURE_MANIFEST.csv`. Two static manuscript images have
@@ -86,10 +89,6 @@ should be revoked and replaced because it was committed in plain text.
 
 ## Scope decisions
 
-- `VAR_analysis/` is the authoritative macro workflow. It contains the maintained
-  macro pipeline and the only two legacy scripts retained because they directly
-  produce active supplementary tables. The rest of `VAR_analysis_fr/` is deprecated
-  and intentionally excluded from this minimal package.
 - Robustness plots actively referenced by the manuscript are kept. Slide-only,
   exploratory, and deprecated outputs are excluded unless they are an input to
   a retained producer.

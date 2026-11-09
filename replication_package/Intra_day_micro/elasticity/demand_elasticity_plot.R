@@ -3,6 +3,13 @@ output_dir <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curv
 setwd(output_dir)
 price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 
+wind_reg_data <- read_parquet(file.path(Sys.getenv("REPLICATION_ROOT", "."), "Intra_day_micro/outputs/wind_reg_data.parquet")) %>%
+  mutate(
+    price_diff_0to5        = price_diff_0to1 + price_diff_1to5,
+    right_term_demand_0to5 = price_diff_0to5 * load_tot_da / price_da,
+    qty_0to5               = qty_1to5 + qty_first_1
+  )
+
 ggplot(price_indispo_merge_esp_npc %>% 
          filter(year==2020), aes(x=datetime))+
   geom_line(aes(y=(load_tot - load_forecast), color= "Load Forecast Error"))
