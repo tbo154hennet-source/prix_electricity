@@ -37,7 +37,7 @@ market_shares <- ggplot(market_data, aes(x = "", y = Volume_TWh, fill = Label)) 
         
   )
 market_shares
-save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
 setwd(save_plot_path)
 ggsave("market_shares.png", plot = market_shares, width = 10 , height = 10, dpi = 300)
 

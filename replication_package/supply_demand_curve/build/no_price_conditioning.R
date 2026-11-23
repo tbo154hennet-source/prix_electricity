@@ -67,8 +67,8 @@ price_indispo_merge_esp$Wind_Total <-
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(intraday_update_wind = intraday_Wind - Fore_Wind,
-         unpredicted_wind = intraday_Solar - Fore_Solar,
-         intraday_update_sun = Wind_Total - intraday_Wind,
+         unpredicted_wind = Wind_Total - intraday_Wind,
+         intraday_update_sun = intraday_Solar - Fore_Solar,
          unpredicted_sun = Solar -intraday_Solar
   )%>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,

@@ -3,7 +3,7 @@
 suppressPackageStartupMessages({
   library(arrow); library(dplyr); library(MASS); library(vars)
 })
-root <- "Z:/prix_electricite_gitlab"
+root <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 out <- file.path(root, "VAR_analysis_fr", "VAR_output")
 save_dir <- file.path(out, "plot_irfs_rds", "wind_supply")
 dir.create(save_dir, recursive = TRUE, showWarnings = FALSE)

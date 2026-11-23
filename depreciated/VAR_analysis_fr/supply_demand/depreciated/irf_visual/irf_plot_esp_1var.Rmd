@@ -246,7 +246,7 @@ plot_irf_from_gen_benchmark_1var <- function(solution,  #irf_cholesky,
 
 ```{r}
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS(  "gen_benchmark_esp_supply.rds")
 
@@ -265,7 +265,7 @@ irf_price_shock_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -280,7 +280,7 @@ With Monetary Policy
 ```{r}
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_mp_supply.rds")
 
@@ -300,7 +300,7 @@ irf_price_shock_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -320,7 +320,7 @@ ggsave("supply_shock_spain_mp_1var.png", plot = irf_price_shock_esp, width = 10,
 
 ```{r}
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS(  "gen_benchmark_esp_demand.rds")
 
@@ -339,7 +339,7 @@ irf_price_shock_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -354,7 +354,7 @@ With Monetary Policy
 
 ```{r}
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS(  "gen_benchmark_esp_mp_demand.rds")
 
@@ -373,7 +373,7 @@ irf_price_shock_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -386,7 +386,7 @@ ggsave("demand_shock_spain_mp.png", plot = irf_price_shock_esp, width = 10, heig
 # Testing on the pre-period
 
 ```{r}
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_pre_crisis_supply_test.rds")
 ```
@@ -406,7 +406,7 @@ irf_price_shock_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -418,7 +418,7 @@ ggsave("supply_shock_spain_mp_1var_pre_period.png", plot = irf_price_shock_esp, 
 
 
 ```{r}
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_pre_crisis_demand_test.rds")
 ```

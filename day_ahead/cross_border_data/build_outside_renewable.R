@@ -11,7 +11,7 @@ library(readxl)
 
 
 #I will put all these forecasts in the interconnexion border file
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 price_merge_CBF_tot <- read_parquet( "price_merge_CBF_tot.parquet")
 
@@ -149,7 +149,7 @@ new_price_merge_CBF_tot <- new_price_merge_CBF_tot %>%
          renewable_day_ahead_forecast_esp = day_ahead_forecast_esp)
 
 #save a final price_merge file
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 write_parquet(new_price_merge_CBF_tot, "final_price_merge_CBF_tot.parquet")
 
 colSums(is.na(new_price_merge_CBF_tot %>% 

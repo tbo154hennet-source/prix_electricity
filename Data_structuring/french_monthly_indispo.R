@@ -5,7 +5,7 @@ library(stats)
 library(ggplot2)
 library(lubridate)
   
-save_path_fr <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 
 bout_indispo_ENTSOE_data <- read_parquet("indispo_ENTSOE_data.parquet")

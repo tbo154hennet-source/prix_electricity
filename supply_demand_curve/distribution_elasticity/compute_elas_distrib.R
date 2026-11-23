@@ -3,7 +3,7 @@ library(arrow)
 library(fixest)
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 
 # Convert to data.table if not already
@@ -48,7 +48,7 @@ reconstruct_full_curve_shift_qty_supply_matched_local <- merge(
 )
 
 # Répertoire de sortie
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 # Valeurs de k à tester
 k_values <- c(5, 10, 15)
@@ -220,7 +220,7 @@ compute_local_slopes_reg <- function(dt, k, type = c("demand", "supply")) {
   return(local_slopes_reg)
 }
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 local_slopes_demand_reg <- compute_local_slopes_reg(reconstruct_full_curve_shift_qty_demand_matched_local, 10, type = "demand")
 local_slopes_supply_reg <- compute_local_slopes_reg(reconstruct_full_curve_shift_qty_supply_matched_local, 10, type = "supply")

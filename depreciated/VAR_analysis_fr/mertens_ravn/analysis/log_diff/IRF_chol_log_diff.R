@@ -108,7 +108,7 @@ irf_cholesky_fr <- run_chol_var_log_diff(
 )
 
 getwd()
-save_rds_path_irf <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path_irf <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path_irf)
 saveRDS(irf_cholesky_fr, file = 'irf_cholesky_fr_log_diff.rds')
 
@@ -125,7 +125,7 @@ irf_cholesky_fr <- run_chol_var_log_diff(
 )
 
 getwd()
-save_rds_path_irf <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path_irf <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path_irf)
 saveRDS(irf_cholesky_fr, file = 'irf_cholesky_fr_mp_gas_log_diff.rds')
 
@@ -179,7 +179,7 @@ irf_cholesky_esp <- run_chol_var_log_diff(
   ortho = TRUE,
   boot = TRUE
 )
-save_rds_path_irf <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path_irf <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path_irf)
 saveRDS(irf_cholesky_esp, file = 'irf_cholesky_esp_log_diff.rds')
 
@@ -196,7 +196,7 @@ irf_cholesky_esp_mp <- run_chol_var_log_diff(
   boot = TRUE
 )
 getwd()
-save_rds_path_irf <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path_irf <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path_irf)
 saveRDS(irf_cholesky_esp_mp, file = 'irf_cholesky_esp_mp_log_diff.rds')
 
@@ -213,7 +213,7 @@ irf_cholesky_esp_mp_spot <- run_chol_var_log_diff(
   boot = TRUE
 )
 getwd()
-save_rds_path_irf <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path_irf <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path_irf)
 saveRDS(irf_cholesky_esp_mp_spot, file = 'irf_cholesky_esp_spot_first_mp_log_diff.rds')
 
@@ -303,7 +303,7 @@ irf_cholesky_esp <- run_chol_var_log_diff(
   ortho = TRUE,
   boot = TRUE
 )
-save_rds_path_irf <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path_irf <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path_irf)
 saveRDS(irf_cholesky_esp, file = 'irf_cholesky_esp_log_diff_gas_ins.rds')
 

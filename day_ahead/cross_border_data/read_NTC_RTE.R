@@ -122,7 +122,7 @@ my_ntc_data_wider <- my_ntc_data_wider %>%
 
 
 getwd()
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 write_parquet(my_ntc_data_wider, "NTC_tot_data.parquet")
 
 #read physical flows

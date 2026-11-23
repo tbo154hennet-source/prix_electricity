@@ -6,7 +6,7 @@ library(arrow)
 library(lubridate)
 library(tidyr)
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 
 
@@ -76,7 +76,7 @@ final_dismissed_nuclear_uneffective_ENTSOE_indispo<- read_parquet("final_dismiss
 
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 
 final_real_indispo_rf <- read_parquet('final_real_indispo_rf.parquet') %>%
@@ -169,7 +169,7 @@ tot_publi_ENTSOE_indispo <- tot_publi_ENTSOE_indispo %>%
 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 final_indispo_tot_wide_esp_da <- read_parquet("final_indispo_tot_wide_esp.parquet")%>%
   mutate(creneau = as.character(hour(datetime_slot) + 1),
          electricity_delivery_date = as.character(as.Date(datetime_slot)),
@@ -376,7 +376,7 @@ first_stage_data  <-
 
 getwd()
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(first_stage_data, 'first_stage_data.parquet')
 

@@ -7,7 +7,7 @@ library(data.table)
 library(dplyr)
 library(lubridate)
 
-setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 local_slopes_demand <- as.data.table(
   read_parquet('local_slopes_demand_matched_FE.parquet')
@@ -86,7 +86,7 @@ mean_supply <- benchmark_supply$mean_local[[1]]
 # w_mean_supply <- weighted.mean(local_slopes_supply$slope, local_slopes_supply$price_residualized**2, na.rm= TRUE)
 # w_mean_supply <- mean(local_slopes_supply$slope, na.rm= TRUE)
 
-save_path <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/estimate_elasticity/outputs")
+save_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
 setwd(save_path)
 summary_synthetic <- read.csv( "elasticity_synthetic.csv")
 summary_shift_share <- read.csv( "elasticity_shift_share.csv")
@@ -109,8 +109,11 @@ summary_table<- summary_standard[2:nrow(summary_standard),] %>%
 )
 
 summary_table<-rbind(summary_table ,
-                     summary_synthetic_npc %>% 
-                       filter(Matching == "Unmatched" & Lag ==1) %>% 
+                     # Main specification of the text (prices >= 10 EUR, no lagged instruments); lagged instruments are
+                     # shown in the Tiedemann et al. (2023) row only (2026-11: on the corrected ENTSO-E forecasts the
+                     # lagged synthetic specification gives a wrong-signed supply elasticity).
+                     summary_synthetic %>% 
+                       filter(Matching == "Unmatched" & Lag ==0) %>% 
                        mutate(
                          Methodology = "Synthetic",
                          Elasticity = case_when(
@@ -120,7 +123,7 @@ summary_table<-rbind(summary_table ,
                          )) %>% 
                        dplyr::select(-Matching),
                          summary_shift_share %>% 
-                           filter(Lag ==1) %>% 
+                           filter(Lag ==0) %>% 
                            mutate(
                              Methodology = "Shift share",
                              Elasticity = case_when(
@@ -313,8 +316,7 @@ my_elas
 
 
 
-save_latex_path <- file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "elasticity")
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/elasticity"
 setwd(save_latex_path)
 ggsave(my_elas,
        filename = "elasticity_comparison.png" , width = 12, height = 6, dpi = 300)
-

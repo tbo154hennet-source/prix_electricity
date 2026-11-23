@@ -24,7 +24,7 @@ price_grid <- seq(-200, 1000, length.out = 1001)
 reconstruct_stocked_curve <- function(type, matched){
   
   if (type == "demand"){
-    setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+    setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
     curve_shift_data <- read_parquet( 'curve_shift_data_demand_qty_bis.parquet')
     curve_shift_data$AUCTION <- 0
     setwd("Z:/code_supply_demand/code_intraday")
@@ -33,7 +33,7 @@ reconstruct_stocked_curve <- function(type, matched){
     curve_shift_data <- rbind(curve_shift_data, curve_shift_data_intraday)
     
   }else if(type == "supply"){
-    setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+    setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
     curve_shift_data <- read_parquet( 'curve_shift_data_supply_qty_bis.parquet')
     curve_shift_data$AUCTION <- 0
     setwd("Z:/code_supply_demand/code_intraday")

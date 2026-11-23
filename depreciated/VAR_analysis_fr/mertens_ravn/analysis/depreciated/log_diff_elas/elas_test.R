@@ -4,7 +4,7 @@ library(stargazer)
 
 #vérifier macro
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_delta <- read_parquet("price_indispo_merge_delta_supply_demand.parquet")
 
 
@@ -42,7 +42,7 @@ monthly_price_indispo_merge_delta <- price_indispo_merge_delta %>%
   mutate(observation_date = as.Date(paste0(year, "-", sprintf("%02d", month), "-01")))
 
 #ajouter contrôles de l'économie
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data <- read_parquet('IV_data_esp.parquet') 
 

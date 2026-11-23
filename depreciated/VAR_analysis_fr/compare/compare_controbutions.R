@@ -1,7 +1,7 @@
 
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
 setwd(save_rds_path_hd)
 historical_decomp_iv_mr <-  readRDS("hd_iv_4v.rds")
 hd_cholesky <-   readRDS( "hd_chol_4v.rds")
@@ -9,7 +9,7 @@ historical_decomp_iv_double <- readRDS( "hd_iv_4v_double.rds")
 
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 historical_decomp_iv_1var <-  readRDS( "hd_iv_4v.rds")
 
@@ -131,7 +131,7 @@ gt_table_HICP <- contribution_table_clean %>%
 
 gt_table_HICP
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table_HICP,
@@ -163,7 +163,7 @@ gt_table_HICP_supply <- contribution_table_clean%>%
 gt_table_HICP_supply
 
 # Save to LaTeX
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table_HICP_supply,

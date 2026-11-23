@@ -7,7 +7,7 @@ library(dplyr)
 library(ggplot2)
 
 # Source commune avec les estimations IV.
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge_esp <- read_parquet(
   "price_indispo_merge_esp_npc_all_final_2026.parquet"
@@ -55,7 +55,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
   )
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 
 # Convert to data.table if not already
@@ -283,7 +283,7 @@ etable(supply, supply_FE,
        title = "Elasticity Estimates of Supply")
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 etable(
   demand, demand_FE,

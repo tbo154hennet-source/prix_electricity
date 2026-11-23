@@ -14,7 +14,7 @@ colnames(IV_data_log_diff_esp)
 #                 ESPAGNE
 ##############################################
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 #---------------------------
@@ -81,7 +81,7 @@ headers_var_gen_first_core <- c("gen_tot_log_diff","spot_price_log_diff",  "IPI_
 headers_var_gen_first_mp_core <- c(headers_var_gen_first_core, "ffr_diff")
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 #---------------------------

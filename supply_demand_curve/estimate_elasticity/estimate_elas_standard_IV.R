@@ -1,6 +1,6 @@
 library(purrr)
 library(fixest)
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 colnames(price_indispo_merge_esp_npc)
@@ -180,7 +180,7 @@ summary_table_standard$Lag <-c(rep(0,4), rep(1,2))
 summary_table_standard
 
 
-save_path <- "Z:/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
+save_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
 setwd(save_path)
 write.csv(summary_table_standard, "elasticity_standard.csv")
 

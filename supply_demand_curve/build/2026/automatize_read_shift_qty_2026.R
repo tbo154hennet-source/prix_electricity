@@ -176,11 +176,11 @@ result_list <- Filter(Negate(is.null), result_list)
 curve_shift_data <- rbindlist(result_list, use.names = TRUE, fill = TRUE)
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 curve_shift_data_2024 <- read_parquet( 'curve_shift_data_supply_qty_bis.parquet')
 tail(curve_shift_data, 28)
 head(curve_shift_data_2024)
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 curve_shift_data_2026 <- rbind(curve_shift_data_2024, curve_shift_data)
 write_parquet(curve_shift_data_2026, 'curve_shift_data_supply_qty_2026.parquet')
 

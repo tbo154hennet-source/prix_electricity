@@ -19,7 +19,7 @@ files_to_load <- c(
   "reconstruct_full_curve_shift_qty_demand_matched.parquet"
 )
 
-input_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs"
+input_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs"
 setwd(input_dir)
 
 # Example variables you already have in your workspace:
@@ -203,7 +203,7 @@ table_gt_instruments <- my_results_df %>%
   )
 
 # Chemin où sauvegarder
-save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 save_file <- file.path(save_plot_path, "instrument_var_share.tex")
 
 # Sauvegarder en LaTeX

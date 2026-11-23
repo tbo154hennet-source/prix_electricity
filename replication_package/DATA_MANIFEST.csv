@@ -37,7 +37,7 @@ Intra_day_micro/outputs/auction_reg_renewable_data.parquet,analysis-ready,derive
 Intra_day_micro/outputs/auction_reg_data.parquet,analysis-ready,derived,yes,"Intraday first-stage table"
 day_ahead/outputs/esp/df_wind_intrday,intermediate,derived,yes,"Intraday comparison plot input"
 day_ahead/outputs/esp/df_for_err_intrday,intermediate,derived,yes,"Intraday comparison plot input"
-VAR_analysis/data/IV_data_esp_log_elas_sd_2026.parquet,analysis-ready,derived,yes,"Spain monthly VAR input"
+VAR_analysis/data/IV_data_esp_log_elas_sd_2010.parquet,analysis-ready,derived,yes,"Spain monthly VAR input, 2010-01 to 2025-09; micro instruments observed from 2015-01"
 VAR_analysis/data/IV_data_fr_log_elas_sd_2026.parquet,analysis-ready,derived,yes,"France monthly VAR input"
 VAR_analysis/data/IV_data_esp_log_elas_sd_2026_pc.parquet,analysis-ready,derived,yes,"Spain price-counterfactual VAR input"
 VAR_analysis/data/D2E_carbone.xlsx,external,EU ETS market data,yes,"Carbon-price input for supplementary tables"

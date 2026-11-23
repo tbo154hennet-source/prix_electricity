@@ -3,10 +3,10 @@ library(ggpubr)
 # Charger le package
 library(ggbrace)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 results_all <- read.csv( "linear_response.csv")
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 coef_table_feols_all <- read.csv( "coef_table_feols_all_linear.csv")
 
 # m_ols <- feols(ols_formula, data = price_indispo_merge_feols_all, vcov_NW("datetime", lag = 24))
@@ -19,7 +19,7 @@ se_ols <-  2.79
 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 df_clean_no_lag <-  read.csv( "df_clean_da.csv")
 df_clean_lag <-  read.csv( "df_clean_da_seminar.csv")
 #df_clean_lag_no_unavail <-  read.csv( "df_clean_da_seminar_no_unavail.csv")
@@ -150,7 +150,7 @@ my_elas
 
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/post_seminaire"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire"
 setwd(save_latex_path)
 ggsave(my_elas,
        filename = "elasticity_check_lag_linear.png" , width = 12, height = 6, dpi = 300)

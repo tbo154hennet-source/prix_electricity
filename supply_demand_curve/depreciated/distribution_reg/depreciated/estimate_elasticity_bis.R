@@ -7,7 +7,7 @@ library(dplyr)
 
 
 # setwd(save_path_data)
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
 setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
 
@@ -50,7 +50,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
   )
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_unmatched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 
 # Convert to data.table if not already

@@ -1,11 +1,11 @@
 library(vars)
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_control_bis.R")
 source("bootstrap_auxiliary_control_ter.R")
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_diff_fr <-  read_parquet('IV_data_fr_diff.parquet')
 
@@ -187,7 +187,7 @@ run_VAR_bootstrap_alternative <- function(df,
 headers_controls_fr = c("Spot_gas_diff")
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 #nbre de variables dans la VAR
@@ -216,7 +216,7 @@ gen_benchmark_fr <- run_VAR_bootstrap_alternative(df = IV_data_diff_fr,
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/benchmark'
 setwd(save_rds_path)
 
 saveRDS(gen_benchmark_fr, "gen_benchmark_fr_gas_mp.rds")
@@ -250,7 +250,7 @@ gen_benchmark_fr <- run_VAR_bootstrap_alternative(df = IV_data_diff_fr,
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/benchmark'
 setwd(save_rds_path)
 
 saveRDS(gen_benchmark_fr, "gen_benchmark_fr.rds")

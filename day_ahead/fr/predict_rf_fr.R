@@ -5,7 +5,7 @@ library(lubridate)
 library(data.table)
 library(xgboost)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/fr")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr")
 filtered_indispo <- read_parquet("filtered_indispo_fr.parquet")
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
@@ -110,7 +110,7 @@ for (centrale in active_centrales) {
 }
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/rf")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf")
 saveRDS(models, 'rf_models_xgb_fr.rds')
 
 models <- readRDS('rf_models_xgb_fr.rds')
@@ -206,7 +206,7 @@ for (centrale in active_centrales){
 
 
 getwd()
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'rf_predictions_data_xgb_fr.parquet')
 
@@ -222,7 +222,7 @@ real_indispo_rf <- indispo_rf %>%
   filter(predicted_real_unavailability < -50) %>%
   rename(datetime = datetime_slot)
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 write_parquet(real_indispo_rf, 'real_indispo_rf_xgb_fr.parquet')
 

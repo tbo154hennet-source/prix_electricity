@@ -4,7 +4,7 @@ library(purrr)
 library(data.table)
 library(ggplot2)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 local_slopes_demand_5 <- read_parquet( "local_slopes_demand_5.parquet")
 local_slopes_demand_10 <- read_parquet( "local_slopes_demand_10.parquet")
@@ -114,7 +114,7 @@ pas_robustness_check <- ggplot(plot_df, aes(x = horizon, y = slope, color = type
   theme_minimal(base_size = 14)
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/elasticity"
 setwd(save_latex_path)
 ggsave(pas_robustness_check,
        filename = "pas_robustness_check.png" , width = 12, height = 6, dpi = 300)

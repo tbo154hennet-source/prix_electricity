@@ -130,7 +130,7 @@ price_renew <- merge(price_data,
 price_renew_hors_crise <- price_renew %>% 
   filter(year!='2022')
 
-save_path <- "Z:/prix_electricite_gitlab/Data_structuring/structured_output_indispo"
+save_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/structured_output_indispo"
 setwd(save_path)
 
 write_parquet(my_generation_data , 'generation_data.parquet')

@@ -160,7 +160,7 @@ apply(historical_decomp_iv_tibo_double, c(2,3), function(x) cumsum(x))
 # historical_decomp_extended[,,(n_vars +1)] <- hd_controls
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 list.files()
 saveRDS(historical_decomp_iv_tibo_double, "hd_iv_5v_double.rds")
@@ -199,7 +199,7 @@ contribution_table_wide_double <- contribution_data_double %>%
     values_from = Contribution
   )
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/contribution")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/contribution")
 write_csv(contribution_table_wide_double, "contribution_table_wide_double_mp.csv")
 
 

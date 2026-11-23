@@ -7,7 +7,7 @@ library(AER)
 
 #wind_forecast
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 
@@ -196,7 +196,7 @@ df_clean <- df_tot %>%
     )
   )
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write.csv(df_clean, "df_clean_macro.csv")
 # Passer en format large : lignes = Type, colonnes = Instrument
 df_plot_table_wide <- df_clean %>%
@@ -220,7 +220,7 @@ gt_table <- df_plot_table_wide %>%
 
 gt_table
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table,

@@ -40,13 +40,13 @@ for (col in duplicated_names){
 
 
 setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 write_parquet(generation_per_plant, "generation_by_plant_esp.parquet")
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 setDT(generation_per_plant)# Convertir en data.table
 
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 publi_bout_indispo_ENTSOE_data <- read_parquet( "save_indispo_with_pub_status_esp.parquet") %>% 
   arrange(datetime_pub)
@@ -80,7 +80,7 @@ expanded_indispo <- publi_bout_indispo_ENTSOE_data[, .(
 filtered_indispo <- expanded_indispo[expanded_indispo$production_resource_name %in% colnames(generation_per_plant), ]
 filtered_indispo <- filtered_indispo[, unique(names(filtered_indispo)), with = FALSE]
 
-#setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+#setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(filtered_indispo , "filtered_indispo_esp.parquet")
 
 
@@ -125,7 +125,7 @@ write_parquet(filtered_indispo , "filtered_indispo_esp.parquet")
 #   }),
 #   use.names = TRUE, fill = TRUE
 # )
-# setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 # write_parquet(long_indispo_with_production , "long_indispo_with_production.parquet")
 # 
 # 

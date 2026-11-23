@@ -129,7 +129,7 @@ irf_cholesky <- irf(vl, impulse = colnames(x), rfronse = colnames(x),
 cum_irfs_all <- lapply(irf_cholesky$irf, function(mat) apply(mat, 2, cumsum))
 
 #plot(irf_cholesky)
-# save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+# save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 # setwd(save_rds_path)
 # saveRDS(irf_cholesky, file = "irf_cholesky_fr.rds")
 

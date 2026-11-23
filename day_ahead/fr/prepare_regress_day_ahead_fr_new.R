@@ -79,7 +79,7 @@ gen_data <- full_join(dt_hourly,
         dt_hourly_after_threshold
         )
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(gen_data, "fr_generation_day_ahead.parquet")
 
 
@@ -172,7 +172,7 @@ temperature_openmeteo_data_test <- tempall_data_data %>%
 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 gas_prices <- read_parquet( "gas_price_formatted.parquet")
 
 price_indispo_merge_fr <- left_join(gen_data,
@@ -201,7 +201,7 @@ head(price_indispo_merge_fr  %>%
 )
 price_indispo_merge_fr <- price_indispo_merge_fr  %>% distinct(datetime, .keep_all = TRUE)
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/fr"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr"
 setwd(save_path_data)
 write_parquet(price_indispo_merge_fr, "price_indispo_merge_fr.parquet")
 
@@ -223,7 +223,7 @@ price_histo <- ggplot(price_indispo_merge_fr, aes(x = price_wins)) +
 price_histo
 # Sauvegarder dans le dossier voulu
 # ggsave(
-#   filename = "Z:/Overleaf_elec/images/data_description/price_histo.png",
+#   filename = "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description/price_histo.png",
 #   plot = price_histo,
 #   width = 8, height = 5, dpi = 300
 # )

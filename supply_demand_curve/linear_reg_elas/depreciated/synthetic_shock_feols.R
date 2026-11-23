@@ -230,7 +230,7 @@ write_parquet(price_indispo_merge_esp_npc, file_out)
 
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # Sauvegarder
 price_indispo_merge_esp_npc_date_FE <- read_parquet("price_indispo_merge_esp_npc_date_FE.parquet")
 

@@ -3,12 +3,12 @@ suppressPackageStartupMessages({
   library(arrow); library(dplyr); library(ggplot2); library(gt)
   library(MASS); library(tidyr); library(vars)
 })
-root <- "Z:/prix_electricite_gitlab"
+root <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 out <- file.path(root, "VAR_analysis_fr", "VAR_output")
 hd_dir <- file.path(out, "plot_irfs_rds", "diff", "hd")
 table_dir <- file.path(out, "tables")
 figure_dir <- file.path(out, "figures")
-latex_dir <- "Z:/Overleaf_elec/images/latex_tables"
+latex_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 invisible(lapply(c(hd_dir, table_dir, figure_dir, latex_dir), dir.create,
   recursive = TRUE, showWarnings = FALSE))
 p <- 12L; irhor <- 40L

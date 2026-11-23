@@ -57,7 +57,7 @@ VAR_series <- VAR_series %>%
 
 colnames(VAR_series)
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
 
@@ -107,7 +107,7 @@ monthly_energy_data <- price_indispo_merge %>%
 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -176,7 +176,7 @@ IV_data <- merge(IV_data, temperature_instrument,
 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 write_parquet(IV_data, 'IV_data_esp.parquet')
 

@@ -42,7 +42,7 @@ my_plot
 View(sample_n_data %>% 
   filter(log_price_add <= 4.5))
 
-save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("supply_elas_pb.png", plot = my_plot, width = 12, height = 6, dpi = 300)
@@ -148,7 +148,7 @@ etable(local_supply,
 #   fitstat = ~ n + r2,   # optional: number of obs and R²
 #   title = "Fixed Effects Estimations for Supply and Demand Curves"
 # )
-# save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+# save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 # setwd(save_plot_path)
 # # Save as .tex file
 # writeLines(etable_output, "etable_results.tex")
@@ -238,7 +238,7 @@ gt_table <- coef_wide %>%
 gt_table
 
 # Chemin où sauvegarder
-save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 save_file <- file.path(save_plot_path, "log_asinh_compare.tex")
 
 # Sauvegarder en LaTeX

@@ -21,7 +21,7 @@ then there are separate prices.
 
 
 ```{r}
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF <- read_parquet( "price_merge_CBF.parquet")
 
 price_merge_CBF <-price_merge_CBF %>% 
@@ -85,7 +85,7 @@ plot_NTC_fr_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/cross_border'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/cross_border'
 setwd(save_plot_path)
 ggsave("plot_price_comovements_fr_esp.png", plot = plot_NTC_fr_esp, width = 14 , height = 6, dpi = 300)
 

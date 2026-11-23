@@ -64,7 +64,7 @@ write.csv(plant_info,"plant_info.csv")
 #je les ai matcher à la main
 #stat sur les indispos pour lesquelles j'ai la taille associée
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 centrale_matching <- read.csv("centrale_matching_plant.csv")
 table <- read.csv("abbreviations.csv")
 plant_info <- read.csv("plant_info.csv")

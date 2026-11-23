@@ -9,7 +9,7 @@ instruments_tot <- c("Fore_Wind",
                  "cold_excess",
                  "heat_excess")
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 #coef_supply_unmatched_indispo <-  readRDS("reg_shift_result_qty_supply_unmatched_sparse_exo.rds")
 
 coef_supply_unmatched_indispo <-  readRDS("reg_shift_result_qty_supply_unmatched_sparse_exo_no_unavail.rds")
@@ -168,7 +168,7 @@ price_indispo_merge_esp_delta$delta_d_total <- rowSums(price_indispo_merge_esp_d
 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write_parquet(price_indispo_merge_esp_delta, "price_indispo_merge_esp_delta_supply_demand_exo_no_unavail.parquet")
 # # 
 

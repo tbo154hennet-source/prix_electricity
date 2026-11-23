@@ -87,7 +87,7 @@ check_coeherence <- iterate_var_ter(x= x_gas_pred, initial_obs = vars_gas_pred[1
 
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
 setwd(save_rds_path_hd)
 structural_shocks_IV_spot <- read_parquet("structural_shocks_IV_spot.parquet" )
 

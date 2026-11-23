@@ -3,7 +3,7 @@ library(arrow)
 library(fixest)
 
 # Répertoire de sortie
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 # Valeurs de k à tester
 k_values <- c(5, 10, 15)

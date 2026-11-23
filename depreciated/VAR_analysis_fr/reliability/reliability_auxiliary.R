@@ -1,6 +1,6 @@
 
 
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/reliability'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/reliability'
 setwd(source_path)
 source("weak_instrument_test.R")
 

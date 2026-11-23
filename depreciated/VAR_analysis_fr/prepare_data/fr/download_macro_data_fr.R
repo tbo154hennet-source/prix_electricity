@@ -81,7 +81,7 @@ VAR_series <- merge(
 )
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 write_parquet(VAR_series, 'VAR_series_fr_2026.parquet')
 

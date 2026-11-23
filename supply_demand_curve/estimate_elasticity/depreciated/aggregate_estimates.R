@@ -60,7 +60,7 @@ gt_table_stacked
 
 
 # Chemin où sauvegarder
-save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 save_file <- file.path(save_plot_path, "gt_table_feols_all.tex")
 
 # Sauvegarder en LaTeX

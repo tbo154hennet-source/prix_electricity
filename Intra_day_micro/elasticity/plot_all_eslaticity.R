@@ -1,6 +1,6 @@
 
 library(stringr)
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 
 df_wind_id <- read.csv( "df_wind_intrday")
 df_err_id <- read.csv( "df_for_err_intrday")
@@ -17,7 +17,7 @@ df_id <- bind_rows(df_wind_id %>%
   )
 
 
-save_path <- "Z:/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
+save_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
 setwd(save_path)
 
 summary_standard <- read.csv( "elasticity_standard.csv")
@@ -102,7 +102,7 @@ plot_supply_elas <- ggplot(df_all, aes(x = Type, y = Coef, color = Instrument)) 
 
 plot_supply_elas
 
-save_latex_path <- "Z:/Overleaf_elec/images/intra_day"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/intra_day"
 setwd(save_latex_path)
 
 # Save the plot as a PDF (or PNG)

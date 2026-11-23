@@ -11,7 +11,7 @@ library(arrow)
 
 #with renewables
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 auction_reg_renewable_data <- read_parquet( "auction_reg_renewable_data.parquet") %>% 
   mutate(Fore_Solar = Fore_Solar /1000,
@@ -187,7 +187,7 @@ df_wind_id <- df_wind_id %>%
 
 
 library(stringr)
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write.csv(df_wind_id, "df_wind_intrday")
 
 
@@ -245,7 +245,7 @@ etable(
 
 
 # Save to LaTeX
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 
 # Afficher un tableau
@@ -266,7 +266,7 @@ writeLines(latex_tab, "first_stage_wind_DK24.tex")
 
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 auction_reg_data <- read_parquet( "auction_reg_data.parquet")
 

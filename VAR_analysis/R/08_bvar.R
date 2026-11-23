@@ -45,7 +45,9 @@ fit_proxy_bvar <- function(country_data, proxy, norm_var, shock_name, cfg,
   reduced <- fit_reduced_var(
     country_data$data, variables, p, extra_columns = proxy
   )
-  sample <- reduced$sample
+  # The proxy is an equation of the system: keep the months where it is
+  # observed (from 2015 for the micro instruments).
+  sample <- reduced$sample[is.finite(reduced$sample[[proxy]]), , drop = FALSE]
   x <- bvar_lag_matrix(sample, variables, p)
   y <- as.matrix(sample[-seq_len(p), c(variables, proxy), drop = FALSE])
   m <- ncol(y)

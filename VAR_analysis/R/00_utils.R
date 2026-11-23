@@ -53,6 +53,17 @@ assert_columns <- function(data, columns, context) {
   invisible(TRUE)
 }
 
+# External instruments aligned with the VAR residuals. The VAR sample can start
+# before an instrument is observed (2010 versus 2015 for the micro proxies):
+# unobserved months are set to 0, which adds nothing to the moments
+# sum(z_t u_t), and `observed` keeps them out of first stages and centering.
+proxy_instrument <- function(sample, proxy, p) {
+  z <- as.matrix(sample[, proxy, drop = FALSE])[-seq_len(p), , drop = FALSE]
+  observed <- rowSums(is.finite(z)) > 0
+  z[!is.finite(z)] <- 0
+  list(z = if (ncol(z) == 1L) drop(z) else z, observed = observed)
+}
+
 finite_complete <- function(data, columns) {
   assert_columns(data, columns, "Model data")
   keep <- stats::complete.cases(data[, columns, drop = FALSE])

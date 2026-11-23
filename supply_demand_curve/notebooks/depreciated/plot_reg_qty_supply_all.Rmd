@@ -127,7 +127,7 @@ sum_up_factors <- c(
   "cold_excess_demand", "heat_excess_demand"
 )
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
 
@@ -136,7 +136,7 @@ price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
 ```
 
 ```{r}
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 coef_supply_unmatched_detailed <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_lv_detailed.rds")
 coef_supply_unmatched_data_detailed <- rbindlist(coef_supply_unmatched)
@@ -211,7 +211,7 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data,
 #Que se passe t-il si je regarde temperature demand ?
 
 ```{r}
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_demand_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_demand_variation.rds")
 coef_supply_unmatched_data_demand_variation <- rbindlist(coef_supply_unmatched_demand_variation)
 
@@ -229,7 +229,7 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_demand_variation
 
 
 ```{r}
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_nuclear_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_nuclear_variation.rds")
 coef_supply_unmatched_data_nuclear_variation <- rbindlist(coef_supply_unmatched_nuclear_variation)
 
@@ -247,7 +247,7 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_nuclear_variatio
 
 
 ```{r}
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_condensed_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_condensed_variation.rds")
 coef_supply_unmatched_data_condensed_variation <- rbindlist(coef_supply_unmatched_condensed_variation)
 
@@ -271,7 +271,7 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_condensed_variat
 
 ```{r}
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_wind_sun_variation <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_wind_sun_variation.rds")
 coef_supply_unmatched_data_wind_sun_variation <- rbindlist(coef_supply_unmatched_wind_sun_variation)
 
@@ -291,7 +291,7 @@ plot_shift_with_hist_qty(coef_data = coef_supply_unmatched_data_wind_sun_variati
 
 
 ```{r}
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_predicted_indispo_variation.rds")
 coef_supply_unmatched_predicted_indispo_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
 

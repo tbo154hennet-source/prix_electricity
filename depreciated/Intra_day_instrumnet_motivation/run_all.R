@@ -15,7 +15,7 @@ run_script <- function(file) {
 }
 
 
-setwd("Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation")
 
 # Step 1: Run the first script
 run_script("get_price_2021_2022.R")

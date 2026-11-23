@@ -1,5 +1,5 @@
 library(gt)
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/contribution")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/contribution")
 
 
 contribution_table_wide <- read_csv( "contribution_table_wide.csv")
@@ -103,7 +103,7 @@ gt_table_MP_mp <- contribution_pivoted %>%
 gt_table_MP_mp
 # Save the table
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table_MP_mp,
@@ -143,7 +143,7 @@ gt_table_MP_mp_supply <- contribution_pivoted %>%
 
 gt_table_MP_mp_supply
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table_MP_mp_supply,

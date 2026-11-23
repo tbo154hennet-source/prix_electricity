@@ -107,7 +107,7 @@ bout_indispo_ENTSOE_data <- indispo_ENTSOE_data %>%
 bout_indispo_ENTSOE_data$duration <- bout_indispo_ENTSOE_data$datetime_fin- bout_indispo_ENTSOE_data$datetime_debut
   
 #test4 <- bout_indispo_ENTSOE_data %>% filter(mrid =="uOKJuRKj0o1N8nLBuxbBvw")
-save_path_fr <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 
 

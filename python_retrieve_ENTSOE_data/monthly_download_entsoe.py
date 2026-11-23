@@ -78,7 +78,7 @@ start_date = pd.Timestamp('20150101', tz='Europe/Brussels')
 #end_date = pd.Timestamp('20170101', tz='Europe/Brussels')
 end_date = pd.Timestamp('20260101', tz='Europe/Brussels')
 test = client.query_installed_generation_capacity(country_code, start=start_date, end = end_date, psr_type=None)
-path = r'Z:\prix_electricite_gitlab'
+path = r'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab'
 os.chdir(path)
 test.to_csv('installed_generation_capacity_ES_2015_2025.csv')
 test

@@ -12,7 +12,7 @@ headers_var_gen_first_mp_decomp <- c(headers_var_gen_first_decomp, "ffr_diff")
 
 
 ### ESPAGNE - DECOMP ###
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 n <- length(headers_var_spot_first_decomp)
@@ -52,14 +52,14 @@ gen_benchmark_esp_decomp <- run_VAR(
   end_ts = c(2023, 12)
 )
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_decomp, "gen_benchmark_esp_decomp_supply.rds")
 saveRDS(gen_benchmark_esp_decomp_pre_crisis, "gen_benchmark_esp_decomp_pre_crisis_supply.rds")
 
 
 ### ESPAGNE - MP ###
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 n <- length(headers_var_spot_first_mp_decomp)
@@ -97,14 +97,14 @@ gen_benchmark_esp_decomp_mp <- run_VAR(
   end_ts = c(2023, 12)
 )
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_decomp_mp, "gen_benchmark_esp_decomp_mp_supply.rds")
 saveRDS(gen_benchmark_esp_decomp_mp_pre_crisis, "gen_benchmark_esp_decomp_mp_pre_crisis_supply.rds")
 
 
 ### FRANCE - DECOMP ###
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 n <- length(headers_var_spot_first_decomp)
@@ -142,14 +142,14 @@ gen_benchmark_fr_decomp <- run_VAR(
   end_ts = c(2023, 12)
 )
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_fr, "gen_benchmark_fr_decomp_supply.rds")
 saveRDS(gen_benchmark_fr_pre_crisis, "gen_benchmark_fr_decomp_pre_crisis_supply.rds")
 
 
 ### FRANCE - MP ###
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 n <- length(headers_var_spot_first_mp_decomp)
@@ -187,7 +187,7 @@ gen_benchmark_fr_mp_decomp <- run_VAR(
   end_ts = c(2023, 12)
 )
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_fr_mp_decomp, "gen_benchmark_fr_decomp_mp_supply.rds")
 saveRDS(gen_benchmark_fr_mp_decomp_pre_crisis, "gen_benchmark_fr_decomp_mp_pre_crisis_supply.rds")

@@ -9,7 +9,7 @@ library(estimatr)
 
 
 Sys.setenv(lang = "en_US")
-save_path_fr <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 
 
@@ -125,7 +125,7 @@ IV_data <- IV_data %>%
   arrange(Date)
 
 colnames(IV_data)
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 write_parquet(IV_data, 'low_freq_data.parquet')
 

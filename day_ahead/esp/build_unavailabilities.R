@@ -2,7 +2,7 @@
 library(data.table)
 
 #setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 #all_matched_indispo <- read_parquet("all_matched_indispo.parquet")
 
 all_matched_indispo <- read_parquet("all_matched_indispo.parquet") %>% 
@@ -105,7 +105,7 @@ nrow(all_matched_indispo)
 #   mutate(publication_status = ifelse(businesstype== "Planned maintenance", "Planned", publication_status))
 
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 #write_parquet(res, "save_pub_status.parquet")
 write_parquet(publi_all_matched_indispo, "day_ahead_indispo_formatted.parquet")
@@ -152,7 +152,7 @@ write_parquet(publi_all_matched_indispo, "day_ahead_indispo_formatted.parquet")
 # }
 # 
 # 
-# setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 # write_parquet(generation_per_plant, "generation_by_plant_esp.parquet")
 
 
@@ -161,7 +161,7 @@ write_parquet(publi_all_matched_indispo, "day_ahead_indispo_formatted.parquet")
 
 
 #setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 #write_parquet(generation_per_plant, "generation_by_plant_esp.parquet")
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 setDT(generation_per_plant)# Convertir en data.table
@@ -239,5 +239,5 @@ filtered_indispo <- expanded_indispo[expanded_indispo$production_resource_name %
 filtered_indispo <- filtered_indispo[, unique(names(filtered_indispo)), with = FALSE]
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write_parquet(filtered_indispo , "filtered_indispo_esp_OMIE_2026.parquet")

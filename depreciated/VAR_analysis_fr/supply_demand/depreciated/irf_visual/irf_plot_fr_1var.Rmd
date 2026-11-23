@@ -225,7 +225,7 @@ plot_irf_from_gen_benchmark_1var <- function(solution,  #irf_cholesky,
 
 ```{r}
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_fr <- readRDS(  "gen_benchmark_fr_supply.rds")
 
@@ -244,7 +244,7 @@ irf_price_shock_fr
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -261,7 +261,7 @@ ggsave("price_shock_france_1var.png", plot = irf_price_shock_fr, width = 10, hei
 
 ```{r}
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 gen_benchmark_fr <- readRDS(  "gen_benchmark_fr_demand.rds")
 
@@ -280,7 +280,7 @@ irf_price_shock_fr
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

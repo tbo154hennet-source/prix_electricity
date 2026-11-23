@@ -7,7 +7,7 @@ library(data.table)
 library(arrow)
 library(readxl)
 
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge_fit <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")%>% 
   mutate(
@@ -15,7 +15,7 @@ price_indispo_merge_fit <- read_parquet("price_indispo_merge_esp_npc_all_final_2
     month = as.numeric(as.character(month))
   )
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals")
 carbon_price_data <- read_excel("D2E_carbone.xlsx") %>% 
   rename(carbon_price = value) %>% 
   mutate(time = as.Date(time))
@@ -44,7 +44,7 @@ price_indispo_merge_fit <- merge(price_indispo_merge_fit,
 
 #Add wind capacity part
 
-path = 'Z:/prix_electricite_gitlab'
+path = 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab'
 setwd(path)
 
 installed_generation_capacity <- read.csv('installed_generation_capacity_ES_2015_2025.csv')

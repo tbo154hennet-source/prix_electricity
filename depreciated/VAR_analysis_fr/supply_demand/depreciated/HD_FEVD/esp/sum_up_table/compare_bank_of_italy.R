@@ -18,7 +18,7 @@
 
 inflation_12m =  slide_dbl(IV_data_log_diff_esp$HICP_log_diff, sum, .before = 11, .complete = TRUE)
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 
 hd_cholesky <- readRDS( "hd_chol_4v.rds")
@@ -102,7 +102,7 @@ contribution_table_wide <- contribution_data %>%
   )
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 
 hd_cholesky <- readRDS( "hd_chol_5v.rds")
@@ -126,7 +126,7 @@ contribution_table_wide_mp <- contribution_data %>%
   )
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 
 historical_decomp_iv_tibo_double <- readRDS("hd_iv_4v_double.rds")
@@ -153,7 +153,7 @@ contribution_table_wide_double <- contribution_data %>%
 
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 
 historical_decomp_iv_tibo_double <- readRDS("hd_iv_5v_double.rds")

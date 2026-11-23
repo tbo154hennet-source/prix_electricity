@@ -1,5 +1,5 @@
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_esp_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo_ortho.parquet")
 
 

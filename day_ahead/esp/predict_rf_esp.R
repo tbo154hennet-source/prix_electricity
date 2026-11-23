@@ -5,12 +5,12 @@ library(lubridate)
 library(data.table)
 library(xgboost)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 # filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE.parquet")
 filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE_2026.parquet")
 colnames(filtered_indispo)
 # setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_by_plant')
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 
 # setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot')
@@ -18,7 +18,7 @@ generation_by_fuel <- read_parquet('generation_by_fuel_format_esp.parquet')
 
 # gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/gas_news_data"
 # setwd(gas_path)
-gas_path <- "Z:/prix_electricite_gitlab/day_ahead/outputs"
+gas_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs"
 setwd(gas_path)
 list.files()
 gas_prices <- read_excel("gas.xlsx") %>% 
@@ -158,7 +158,7 @@ for (centrale in active_centrales) {
 }
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/rf")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf")
 saveRDS(models, 'rf_models_xgb_esp_day_ahead.rds')
 
 models <- readRDS('rf_models_xgb_esp_day_ahead.rds')
@@ -253,7 +253,7 @@ for (centrale in active_centrales){
 
 
 getwd()
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'rf_predictions_data_xgb_esp.parquet')
 
@@ -269,6 +269,6 @@ real_indispo_rf <- indispo_rf %>%
   filter(predicted_real_unavailability < -50) %>%
   rename(datetime = datetime_slot)
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 write_parquet(real_indispo_rf, 'real_indispo_rf_xgb_esp.parquet')

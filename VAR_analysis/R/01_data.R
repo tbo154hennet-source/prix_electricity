@@ -25,17 +25,22 @@ read_country_data <- function(path, country) {
 
   if (country == "Spain") {
     assert_columns(data, c("delta_s_tot", "delta_d_tot"), "Spanish proxies")
+    # The micro instruments start in 2015 while the VAR starts in 2010: the
+    # PCA uses observed months only and the proxies stay NA before.
+    observed <- is.finite(data$delta_s_tot) & is.finite(data$delta_d_tot)
     proxy_matrix <- scale(
       cbind(
-        supply = data$delta_s_tot,
-        demand = data$delta_d_tot
+        supply = data$delta_s_tot[observed],
+        demand = data$delta_d_tot[observed]
       ),
       center = TRUE,
       scale = FALSE
     )
     pca <- stats::prcomp(proxy_matrix)
-    data$proxy_supply_pc <- pca$x[, 1]
-    data$proxy_demand_pc <- pca$x[, 2]
+    data$proxy_supply_pc <- NA_real_
+    data$proxy_demand_pc <- NA_real_
+    data$proxy_supply_pc[observed] <- pca$x[, 1]
+    data$proxy_demand_pc[observed] <- pca$x[, 2]
 
     if (stats::cor(data$proxy_supply_pc, data$delta_s_tot, use = "complete.obs") < 0) {
       data$proxy_supply_pc <- -data$proxy_supply_pc
@@ -174,60 +179,61 @@ attach_kilian_proxies <- function(country_data, path) {
   stopifnot(country_data$country == "Spain")
   monthly <- construct_kilian_monthly_proxies(path)
   matched <- match(country_data$data$observation_date, monthly$observation_date)
-  if (anyNA(matched)) {
-    missing_dates <- country_data$data$observation_date[is.na(matched)]
-    stop(
-      "Kilian proxies do not cover the Spanish model sample: ",
-      paste(format(head(missing_dates, 6L), "%Y-%m"), collapse = ", ")
-    )
+  # Months before the high-frequency data (the VAR starts earlier) stay NA.
+  observed <- !is.na(matched)
+  if (!any(observed) ||
+      any(country_data$data$observation_date[!observed] >
+            min(monthly$observation_date))) {
+    stop("Kilian proxies have gaps inside the Spanish model sample.")
   }
   raw_columns <- c(
     "delta_s_tot_kilian_raw",
     "delta_d_tot_kilian_raw"
   )
-  country_data$data[, raw_columns] <- monthly[matched, raw_columns, drop = FALSE]
+  country_data$data[, raw_columns] <- NA_real_
+  country_data$data[observed, raw_columns] <-
+    monthly[matched[observed], raw_columns, drop = FALSE]
   calendar_month <- as.integer(format(
     country_data$data$observation_date,
     "%m"
   ))
+  monthly_mean <- function(x) ave(x, calendar_month, FUN = function(v) mean(v, na.rm = TRUE))
   country_data$data$delta_s_tot_kilian <-
-    country_data$data$delta_s_tot_kilian_raw - ave(
-      country_data$data$delta_s_tot_kilian_raw,
-      calendar_month,
-      FUN = mean
-    )
+    country_data$data$delta_s_tot_kilian_raw -
+    monthly_mean(country_data$data$delta_s_tot_kilian_raw)
   country_data$data$delta_d_tot_kilian <-
-    country_data$data$delta_d_tot_kilian_raw - ave(
-      country_data$data$delta_d_tot_kilian_raw,
-      calendar_month,
-      FUN = mean
-    )
+    country_data$data$delta_d_tot_kilian_raw -
+    monthly_mean(country_data$data$delta_d_tot_kilian_raw)
   columns <- c("delta_s_tot_kilian", "delta_d_tot_kilian")
-  if (any(!is.finite(as.matrix(country_data$data[, columns, drop = FALSE])))) {
+  if (any(!is.finite(as.matrix(country_data$data[observed, columns, drop = FALSE])))) {
     stop("The matched Kilian proxies contain non-finite values.")
   }
 
   proxy_matrix <- scale(
     cbind(
-      supply = country_data$data$delta_s_tot_kilian,
-      demand = country_data$data$delta_d_tot_kilian
+      supply = country_data$data$delta_s_tot_kilian[observed],
+      demand = country_data$data$delta_d_tot_kilian[observed]
     ),
     center = TRUE,
     scale = FALSE
   )
   pca <- stats::prcomp(proxy_matrix)
-  country_data$data$proxy_supply_kilian_pc <- pca$x[, 1]
-  country_data$data$proxy_demand_kilian_pc <- pca$x[, 2]
+  country_data$data$proxy_supply_kilian_pc <- NA_real_
+  country_data$data$proxy_demand_kilian_pc <- NA_real_
+  country_data$data$proxy_supply_kilian_pc[observed] <- pca$x[, 1]
+  country_data$data$proxy_demand_kilian_pc[observed] <- pca$x[, 2]
   if (stats::cor(
       country_data$data$proxy_supply_kilian_pc,
-      country_data$data$delta_s_tot_kilian
+      country_data$data$delta_s_tot_kilian,
+      use = "complete.obs"
     ) < 0) {
     country_data$data$proxy_supply_kilian_pc <-
       -country_data$data$proxy_supply_kilian_pc
   }
   if (stats::cor(
       country_data$data$proxy_demand_kilian_pc,
-      country_data$data$delta_d_tot_kilian
+      country_data$data$delta_d_tot_kilian,
+      use = "complete.obs"
     ) < 0) {
     country_data$data$proxy_demand_kilian_pc <-
       -country_data$data$proxy_demand_kilian_pc
@@ -316,7 +322,9 @@ attach_daily_mixed_frequency_proxies <- function(country_data, path) {
     drop = FALSE
   ]
   covered_months <- sort(unique(daily$observation_date))
+  # Months before the high-frequency data (the VAR starts earlier) stay NA.
   missing_months <- setdiff(country_data$data$observation_date, covered_months)
+  missing_months <- missing_months[missing_months > min(covered_months)]
   if (length(missing_months)) {
     stop(
       "Daily mixed-frequency proxies do not cover the Spanish sample: ",
@@ -392,12 +400,15 @@ attach_counterfactual_proxy <- function(country_data, path) {
     country_data$data$observation_date,
     proxy_data$observation_date
   )
-  if (anyNA(matched)) {
-    stop("Counterfactual proxy dates do not cover the Spanish model sample.")
+  observed <- !is.na(matched)
+  if (!any(observed) ||
+      any(country_data$data$observation_date[!observed] >
+            min(proxy_data$observation_date))) {
+    stop("Counterfactual proxy dates have gaps inside the Spanish model sample.")
   }
   country_data$data$delta_supply_incorpo <-
     proxy_data$delta_supply_incorpo[matched]
-  if (any(!is.finite(country_data$data$delta_supply_incorpo))) {
+  if (any(!is.finite(country_data$data$delta_supply_incorpo[observed]))) {
     stop("The historical counterfactual proxy contains non-finite values.")
   }
   country_data$counterfactual_proxy <- "delta_supply_incorpo"
@@ -463,12 +474,22 @@ read_micro_demand_elasticity <- function(cfg) {
   path <- cfg$data$micro_elasticity
   if (!file.exists(path)) stop("Micro-elasticity file not found: ", path)
   estimates <- utils::read.csv(path, check.names = FALSE)
-  assert_columns(estimates, c("Model", "Elasticity"), "Micro-elasticity table")
-  row <- estimates[estimates$Model == "IV Demand", , drop = FALSE]
-  if (nrow(row) != 1L || !is.finite(row$Elasticity[[1]])) {
-    stop("Expected one finite 'IV Demand' elasticity in: ", path)
+  if ("Lag" %in% names(estimates)) {
+    # supply_demand_curve/estimate_elasticity/estimate_elas_standard_IV.R: hourly IV of log load on log price
+    # instrumented by the day-ahead wind forecast (wind as a pure supply shifter, row "Supply", no lag), which
+    # identifies the slope of the demand curve.
+    assert_columns(estimates, c("Model", "Coef", "Lag"), "Micro-elasticity table")
+    row <- estimates[estimates$Model == "Supply" & estimates$Lag == 0, , drop = FALSE]
+    value <- row$Coef
+  } else {
+    assert_columns(estimates, c("Model", "Elasticity"), "Micro-elasticity table")
+    row <- estimates[estimates$Model == "IV Demand", , drop = FALSE]
+    value <- row$Elasticity
   }
-  as.numeric(row$Elasticity[[1]])
+  if (length(value) != 1L || !is.finite(value[[1]])) {
+    stop("Expected one finite wind-instrumented demand elasticity in: ", path)
+  }
+  as.numeric(value[[1]])
 }
 
 attach_wedge_proxy <- function(country_data) {

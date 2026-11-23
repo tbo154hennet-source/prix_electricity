@@ -1,4 +1,4 @@
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 tempall_data_data <- read_parquet("tempall_data_data.parquet")
 
 wind_solar_data <- read_parquet("wind_solar_data.parquet")
@@ -8,7 +8,7 @@ wind_solar_data <- read_parquet("wind_solar_data.parquet")
 #wind speed and sun exposition better for potential
 
 colnames(wind_solar_data)
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet( "price_indispo_merge_esp.parquet")
 colnames(price_indispo_merge_esp)
@@ -219,7 +219,7 @@ stargazer(
 )
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 
 output_file <- file.path(save_latex_path, "shift_share_relevance.tex")

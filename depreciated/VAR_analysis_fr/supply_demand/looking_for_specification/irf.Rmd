@@ -5,7 +5,7 @@ output: html_notebook
 
 
 ```{r}
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_irf_plot.R")
 ```

@@ -94,7 +94,7 @@ my_factors <- c(general_factors, control_factors, temp_main_effects)
 #                           "cold_spatial_mismatch", "heat_spatial_mismatch") )
 # my_factors_demand <- c(general_factors, control_factors, 
 #                         c("cold_excess_demand", "heat_excess_demand") )
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -112,7 +112,7 @@ coef_supply_unmatched <- lapply(price_grid_sparse, function(g) {
 #write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
 saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_lv.rds")
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -136,7 +136,7 @@ my_factors_detailed <- c(general_factors, control_factors, temp_detailed)
 #                           "cold_spatial_mismatch", "heat_spatial_mismatch") )
 # my_factors_demand <- c(general_factors, control_factors, 
 #                         c("cold_excess_demand", "heat_excess_demand") )
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -154,7 +154,7 @@ coef_supply_unmatched <- lapply(price_grid_sparse, function(g) {
 #write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
 saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_lv_detailed.rds")
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -188,7 +188,7 @@ my_factors_natural <- c(general_factors_natural, control_factors, temp_detailed)
 #                           "cold_spatial_mismatch", "heat_spatial_mismatch") )
 # my_factors_demand <- c(general_factors, control_factors, 
 #                         c("cold_excess_demand", "heat_excess_demand") )
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -206,7 +206,7 @@ coef_supply_unmatched <- lapply(price_grid_sparse, function(g) {
 #write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
 saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_lv_natural.rds")
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -239,7 +239,7 @@ my_factors_indispo<- c(general_factors_indispo, control_factors, temp_main_effec
 #                           "cold_spatial_mismatch", "heat_spatial_mismatch") )
 # my_factors_demand <- c(general_factors, control_factors, 
 #                         c("cold_excess_demand", "heat_excess_demand") )
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -257,7 +257,7 @@ coef_supply_unmatched <- lapply(price_grid_sparse, function(g) {
 #write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
 saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_lv_indispo.rds")
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -291,7 +291,7 @@ my_factors_mismatch <- c(general_factors, control_factors, temp_mismatch_effects
 #                           "cold_spatial_mismatch", "heat_spatial_mismatch") )
 # my_factors_demand <- c(general_factors, control_factors, 
 #                         c("cold_excess_demand", "heat_excess_demand") )
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -309,7 +309,7 @@ coef_supply_unmatched <- lapply(price_grid_sparse, function(g) {
 #write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
 saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_lv_mismatch.rds")
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 
@@ -337,7 +337,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_lv_
 
 
 # 
-# setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 # reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 # 
@@ -354,7 +354,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_lv_
 # #write_parquet(coef_supply_unmatched, "reg_shift_result_supply_unmatched.parquet")
 # saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse.rds")
 # 
-# setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_matched.parquet')
 # reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 # 
@@ -368,7 +368,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_lv_
 # saveRDS(coef_supply_matched, "reg_shift_result_qty_supply_matched_sparse.rds")
 # 
 # 
-# setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 # reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 # 
@@ -384,7 +384,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_lv_
 # 
 # getwd()
 # 
-# setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 # reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 # 
@@ -405,7 +405,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_lv_
 # #belle decomposition
 # 
 # 
-# save_path_data <- "Z:/prix_electricite_gitlab"
+# save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 # setwd(save_path_data)
 # 
 # renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
@@ -455,7 +455,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_lv_
 # 
 # #options(future.globals.maxSize = 5 * 1024^2 * 1024)  # 10 GiB
 # 
-# setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 # reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 # 
@@ -473,7 +473,7 @@ saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_sparse_lv_
 # saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_sparse_exo_no_unavail.rds")
 # 
 # 
-# setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # reconstruct_full_curve_shift <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 # reconstruct_full_curve_shift <- reconstruct_full_curve_shift[PRICE %in% price_grid_sparse]
 # 

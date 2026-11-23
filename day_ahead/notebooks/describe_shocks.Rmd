@@ -17,7 +17,7 @@ library(latex2exp)
 
 
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")%>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
@@ -26,7 +26,7 @@ price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")%>%
          Uneffective.Unavailable.Capacity = Uneffective.Unavailable.Capacity - Uneffective.Unavailable.Nuclear.Capacity
 )
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF <- read_parquet("price_merge_CBF.parquet")
 
 ```
@@ -108,20 +108,20 @@ unavail_plot
 
 ```{r}
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/day_ahead/outputs/rf'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/rf'
 setwd(save_path_entsoe_output)
 rf_predictions_data <- read_parquet( 'rf_predictions_data_xgb_esp.parquet')
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 filtered_indispo <- read_parquet("filtered_indispo_esp_OMIE.parquet")
 
 # 
-# save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+# save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 # setwd(save_path_data)
 # publi_bout_indispo <- read_parquet( "save_indispo_with_pub_status_esp.parquet") %>% 
 #   distinct()
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 #write_parquet(res, "save_pub_status.parquet")
 publi_all_matched_indispo <- read_parquet( "day_ahead_indispo_formatted.parquet")
@@ -247,7 +247,7 @@ final_plot
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("day_ahead_indispo_predicted.png", plot = final_plot, width = 8, height = 6, dpi = 300)
@@ -432,7 +432,7 @@ renew_plot
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("renewable_description.png", plot = renew_plot, width = 12, height = 6, dpi = 300)

@@ -187,7 +187,7 @@ US_trend <- merge(US_data, us_eu_exchang_rate, by = c("year", "month")) %>%
   mutate(price =  APU000072610*1000 )#* DEXUSEU ) 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data <-read_parquet( 'IV_data_fr.parquet')%>% 
   mutate(HICP_log_diff = log(HICP) - log(lag(HICP, 1)),
@@ -236,14 +236,14 @@ motivation_plot <- ggplot(data = IV_data) +
   )
 motivation_plot
 
-save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("trends_elec_inflation.png", plot = motivation_plot, width = 12, height = 6, dpi = 300)
 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data_esp <-read_parquet( 'IV_data_esp.parquet')%>% 
   mutate(HICP_log_diff = log(HICP) - log(lag(HICP, 1)),
@@ -293,7 +293,7 @@ motivation_plot <- ggplot(data = IV_data) +
   )
 motivation_plot
 
-save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("trends_elec_inflation_esp.png", plot = motivation_plot, width = 10, height = 6, dpi = 300)
@@ -302,7 +302,7 @@ ggsave("trends_elec_inflation_esp.png", plot = motivation_plot, width = 10, heig
 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/Output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/Output'
 setwd(save_var_path)
 IV_data_esp <-  read_parquet('IV_data_esp.parquet')
 IV_data_fr <-  read_parquet('IV_data_fr.parquet')
@@ -324,7 +324,7 @@ my_gas_plot <- ggplot()+
        y = "Price (EUR/MWh)",
        color = "Legend") 
 
-save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
 setwd(save_plot_path)
 ggsave("gas_elec_prices.png", plot = my_gas_plot, width = 18, height = 6, dpi = 300)
 
@@ -332,7 +332,7 @@ ggsave("gas_elec_prices.png", plot = my_gas_plot, width = 18, height = 6, dpi = 
 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff.parquet')
 
@@ -368,7 +368,7 @@ my_plot_adj_margin <- ggplot(data = IV_data_log_diff_esp) +
 my_plot_adj_margin 
 
 
-save_plot_path <- 'Z:/Overleaf_elec/images/motivation'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/motivation'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("plot_adj_margin.png", plot = my_plot_adj_margin , width = 12, height = 6, dpi = 300)

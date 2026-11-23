@@ -200,18 +200,23 @@ run_pipeline <- function(cfg, selected_stages = "all") {
     })
   }
 
+  # With the elasticity SVAR as central specification, the proxy-based contribution and
+  # counterfactual outputs are kept locally and do not overwrite the Overleaf files.
+  legacy_cfg <- cfg
+  if (identical(cfg$central_identification, "elasticity")) legacy_cfg$overleaf$enabled <- FALSE
+
   if (should_run("contributions")) {
     stage_log(cfg, "contributions", {
       run_spain_contributions(
         spain_supply(), spain_demand(), spain_gas_supply(),
-        cfg, inputs$Spain$data
+        legacy_cfg, inputs$Spain$data
       )
     })
   }
 
   if (should_run("counterfactuals")) {
     stage_log(cfg, "counterfactuals", {
-      run_counterfactuals(spain_supply(), cfg)
+      run_counterfactuals(spain_supply(), legacy_cfg)
     })
   }
 
@@ -546,12 +551,18 @@ run_pipeline <- function(cfg, selected_stages = "all") {
     })
   }
 
+  if (should_run("elasticity")) {
+    stage_log(cfg, "elasticity", {
+      run_elasticity_stage(inputs$Spain, cfg)
+    })
+  }
+
   manifest <- data.frame(
-    Order = seq_len(8),
+    Order = seq_len(9),
     Stage = c(
       "data", "irfs", "relevance", "contributions",
       "counterfactuals", "robustness-proxy",
-      "robustness-identification", "france"
+      "robustness-identification", "france", "elasticity"
     ),
     Description = c(
       "Load and validate Spain/France monthly inputs",
@@ -561,7 +572,8 @@ run_pipeline <- function(cfg, selected_stages = "all") {
       "No-gas-subsidy Iberian path and 2030-wind-capacity counterfactuals",
       "Wind and wedge proxy robustness",
       "Price-quantity Cholesky and Mertens-Ravn robustness",
-      "France wind-IV and Mertens-Ravn replication"
+      "France wind-IV and Mertens-Ravn replication",
+      "Central Bayesian elasticity SVAR (GLP prior) and alternative specifications"
     )
   )
   save_csv(manifest, cfg, "pipeline_manifest.csv")

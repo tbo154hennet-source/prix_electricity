@@ -5,7 +5,7 @@
 controls_vars <- c( "year", "month", "weekday", "creneau")
 controls_clean <- controls_vars[!grepl("^as\\.factor\\(", controls_vars)]
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_bronte_clean <- read_parquet( "price_indispo_merge_bronte_clean.parquet")
 colnames(price_indispo_merge_bronte_clean)
 price_indispo_merge_bronte_clean <- price_indispo_merge_bronte_clean %>% 
@@ -57,7 +57,7 @@ m_FSrefbis <-  ivreg(FSref_formula_str_bis , data = price_indispo_merge_bronte_c
 
 library(AER)
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 auction_reg_renewable_data <- read_parquet( "auction_reg_renewable_data.parquet") %>% 
@@ -154,7 +154,7 @@ m_FSall <-  ivreg(FSall_formula_str , data = auction_reg_renewable_data_bis[20:n
 
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 
 auction_reg_data <- read_parquet("auction_reg_data.parquet") %>%
@@ -265,7 +265,7 @@ reg_table_relevance <- stargazer(
 
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 
 output_file <- file.path(save_latex_path, "elasticity_relevance_table.tex")
@@ -300,7 +300,7 @@ library(AER)
 
 #wind_forecast
 
-save_var_path <- 'Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 

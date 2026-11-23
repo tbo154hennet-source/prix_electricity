@@ -91,7 +91,7 @@ plot_supply_demand_curve
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/supply_demand_curve'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/supply_demand_curve'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -125,7 +125,7 @@ plot_supply_demand_curve_bis
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/supply_demand_curve'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/supply_demand_curve'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

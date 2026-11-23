@@ -5,7 +5,7 @@ output: html_notebook
 
 ```{r}
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
 setwd(save_rds_path_hd)
 structural_shocks_IV_log_diff <- read_parquet( "structural_shocks_IV_log_diff_mp.parquet" )
 structural_shocks_IV_double <- read_parquet( "structural_shocks_IV_supply_demand.parquet" )

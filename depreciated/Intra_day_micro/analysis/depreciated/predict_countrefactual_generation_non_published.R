@@ -35,7 +35,7 @@ generation_by_fuel <- read_parquet('generation_by_fuel_format.parquet')
 
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 long_format_indispo_non_published <- read_parquet('long_format_indispo_non_published.parquet')
 long_format_nuclear_indispo_non_published <- read_parquet('long_format_nuclear_indispo_non_published.parquet')
@@ -164,7 +164,7 @@ for (centrale in centrales){
 
 
 getwd()
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'rf_theoretical_predictions_data.parquet')
 
@@ -202,7 +202,7 @@ ggplot(data = real_indispo_rf %>%
   theme_minimal()
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(real_indispo_rf, 'real_theoretical_indispo_rf.parquet')
 
@@ -216,7 +216,7 @@ final_real_indispo_rf <- real_indispo_rf %>%
   ) %>%
   ungroup()
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_real_indispo_rf, 
               'final_real_theoretical_indispo_rf.parquet')
@@ -269,7 +269,7 @@ long_indispo_limitantes <- long_indispo_with_production %>%
 
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 write_parquet(long_indispo_limitantes, 'long_indispo_theoretical_limitantes.parquet')
 
@@ -281,7 +281,7 @@ final_real_indispo_limitantes <- long_indispo_limitantes %>%
   summarise(Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_real_indispo_limitantes, 'final_real_theoretical_indispo_limitantes.parquet')
 

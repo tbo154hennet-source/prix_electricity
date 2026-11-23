@@ -82,7 +82,7 @@ for (col in duplicated_names){
 #Get plants for which I can match unavailabilities
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 dismissed_long_format_indispo <- read_parquet('dismissed_long_format_indispo.parquet')
@@ -198,7 +198,7 @@ for (centrale in active_centrales) {
 }
 
 
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
 saveRDS(models, 'rf_models_xgb.rds')
 
 models <- readRDS('rf_models_xgb.rds')
@@ -298,7 +298,7 @@ for (centrale in active_centrales){
 
 
 getwd()
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'xgb_predictions_data_all.parquet')
 
@@ -423,7 +423,7 @@ ggplot()+
   theme_minimal()
 
 getwd()
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(all_rf_indispo, 'all_rf_indispo.parquet')
 
@@ -472,7 +472,7 @@ final_dismissed_uneffective_rf <- dismissed_long_format_indispo_uneffective_rf  
   ungroup()
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_entsoe_output)
 getwd()
 write_parquet(final_real_indispo_rf, 'final_real_indispo_rf.parquet')

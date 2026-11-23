@@ -180,7 +180,7 @@ irf_gen_shock_fr
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -227,7 +227,7 @@ irf_gen_shock_fr
 ```
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

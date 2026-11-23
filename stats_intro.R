@@ -1,6 +1,6 @@
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data_esp <- read_parquet( 'IV_data_esp_elas.parquet')
 

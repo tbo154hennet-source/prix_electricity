@@ -26,7 +26,7 @@ names_instruments <- c("renewable_day_ahead_forecast",
                        "Published.Unavailable.Capacity")
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_control <- readRDS("reg_shift_result_qty_supply_unmatched_control.rds")
 coef_supply_unmatched_control <- rbindlist(coef_supply_unmatched_control)
 unique(coef_supply_unmatched_control$variable)
@@ -123,7 +123,7 @@ colnames(delta_q_matrix) <- c(paste0("delta_s_ortho_", instruments_tot ), paste0
 price_indispo_merge_esp_delta <- bind_cols(price_indispo_merge_esp, as.data.frame(delta_q_matrix))
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_esp_delta_sd  <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet")
 colnames(price_indispo_merge_esp_delta_sd)
 price_indispo_merge_esp_delta_tot <- merge(price_indispo_merge_esp_delta,

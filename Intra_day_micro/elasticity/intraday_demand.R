@@ -143,7 +143,7 @@ df_for_err_id <- tibble(
   dplyr::select(Model, Elasticity_CI, Instrument, Type)
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write.csv(df_for_err_id, "df_for_err_intrday")
 
 

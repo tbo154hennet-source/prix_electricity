@@ -26,7 +26,7 @@ sd(price_indispo_merge_esp$price)
 
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # --- Lire les fichiers ---
 local_slopes_demand_5 <- read_parquet("local_slopes_demand_5.parquet")
 local_slopes_demand_10 <- read_parquet("local_slopes_demand.parquet")
@@ -126,7 +126,7 @@ table_gt_instruments <- combined_table %>%
 
 
 # Chemin où sauvegarder
-save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 save_file <- file.path(save_plot_path, "instrument_var_share.tex")
 
 # Sauvegarder en LaTeX
@@ -189,7 +189,7 @@ hetero_elas <- ggplot(combined_binned, aes(x = price_bin, y = slope_bin, color =
 
 hetero_elas 
 
-save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("elasticity_price_heterogeneity.png", plot = hetero_elas, width = 12, height = 6, dpi = 300)

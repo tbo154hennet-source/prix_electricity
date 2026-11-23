@@ -8,7 +8,7 @@ library(purrr)
 library(gt)
 
 # --- 1. Charger les datasets ---
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 local_slopes_demand_5   <- read_parquet("local_slopes_demand_5.parquet")
 local_slopes_demand_10  <- read_parquet("local_slopes_demand.parquet")
@@ -30,7 +30,7 @@ local_slopes_demand_pond <- local_slopes_demand_pond%>%
 #   mutate(ifelse = is.na(slope), 0, slope)
 
 # --- 1. Charger les datasets ---
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 local_slopes_supply_5   <- read_parquet("local_slopes_supply_5.parquet")
 local_slopes_supply_10  <- read_parquet("local_slopes_supply.parquet")
@@ -224,7 +224,7 @@ latex_table <- df_wide %>%
 
 
 # --- Export LaTeX ---
-save_file <- "Z:/Overleaf_elec/images/post_seminaire/eta_wide_table.tex"
+save_file <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire/eta_wide_table.tex"
 cat(as.character(latex_table), file = save_file)
 
 

@@ -144,7 +144,7 @@ custom_legend <- get_legend(plot_legend)
 
 ```{r}
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 list_irfs_compare <- list( readRDS("gen_benchmark_esp_supply_with_crisis.rds")$lambda_0,
                            readRDS("gen_benchmark_fr_supply_with_crisis.rds")$lambda_0 , 
@@ -170,7 +170,7 @@ irf_price_shock_compare
 
 ```{r}
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 list_irfs_compare_bis <- list( readRDS("gen_benchmark_esp_mp_supply_with_crisis.rds")$lambda_0,
                            readRDS("gen_benchmark_fr_mp_supply_with_crisis.rds")$lambda_0 , 

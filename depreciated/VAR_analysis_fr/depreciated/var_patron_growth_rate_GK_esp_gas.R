@@ -1,5 +1,5 @@
 
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("auxiliary_control.R")
 source("bootstrap_auxiliary_control.R")

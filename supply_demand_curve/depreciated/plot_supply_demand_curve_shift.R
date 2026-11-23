@@ -26,7 +26,7 @@ sum_up_factors <- c(
   "cold_excess_mismatch", "heat_excess_mismatch"
 )
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/supply_demand_curve/outputs")
 coef_supply_unmatched <- readRDS("reg_shift_result_supply_unmatched.rds")
 coef_supply_unmatched_data <- rbindlist(coef_supply_unmatched)
 
@@ -75,7 +75,7 @@ plot_shift <- function(coef_data, variables, type){
 }
 
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet")
 

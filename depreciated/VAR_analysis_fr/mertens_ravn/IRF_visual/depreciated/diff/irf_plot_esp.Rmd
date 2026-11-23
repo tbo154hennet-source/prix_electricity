@@ -180,7 +180,7 @@ irf_gen_shock_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -230,7 +230,7 @@ irf_gen_shock_esp
 
 ```{r}
 # getwd()
-# save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+# save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 # setwd(save_plot_path)
 # # Assume your ggplot object is called 'p'
 # ggsave("qty_shock_spain.png", plot = irf_gen_shock_esp, width = 8, height = 6, dpi = 300)
@@ -276,7 +276,7 @@ irf_gen_shock_esp
 ```
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

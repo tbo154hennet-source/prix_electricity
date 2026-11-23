@@ -1,11 +1,11 @@
 library(vars)
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_control_bis.R")
 source("bootstrap_auxiliary_control_ter.R")
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_esp <-  read_parquet('IV_data_esp_log_diff_elas.parquet')
 
@@ -234,7 +234,7 @@ run_VAR_bootstrap_alternative <- function(df,
 headers_controls = c("avg_spot_price_log_diff")
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 #nbre de variables dans la VAR
@@ -262,13 +262,13 @@ gen_benchmark_esp <- run_VAR_bootstrap_alternative(df = IV_data_log_diff_esp,
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path)
 
 saveRDS(gen_benchmark_esp, "gen_benchmark_esp.rds")
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_diff_fr <-  read_parquet('IV_data_fr_log_diff_elas.parquet')
 colnames(IV_data_log_diff_fr)
@@ -296,7 +296,7 @@ gen_benchmark_fr <- run_VAR_bootstrap_alternative(df = IV_data_log_diff_fr,
                                    #,headers_controls = headers_controls_fr
                                    )
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_fr, "gen_benchmark_fr.rds")
 

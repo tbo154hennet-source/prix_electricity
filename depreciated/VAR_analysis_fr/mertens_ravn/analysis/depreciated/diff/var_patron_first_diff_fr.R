@@ -7,7 +7,7 @@ library(lubridate)
 library(data.table)
 library(ggplot2)
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_diff_fr <-  read_parquet('IV_data_fr_diff.parquet')
 

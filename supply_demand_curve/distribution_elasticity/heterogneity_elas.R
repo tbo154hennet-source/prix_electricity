@@ -3,7 +3,7 @@ library(fixest)
 library(dplyr)
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
 local_slopes_demand  <- read_parquet("local_slopes_demand_10.parquet")
 local_slopes_supply  <- read_parquet("local_slopes_supply_10.parquet")
@@ -64,7 +64,7 @@ plot_hetero_by_month <- ggplot() +
 
 plot_hetero_by_month
 
-# save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+# save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/elasticity"
 # setwd(save_latex_path)
 # ggsave(plot_hetero_by_month,
 #        filename = "elas_hetero_month.png" , width = 20, height = 6, dpi = 300)
@@ -121,7 +121,7 @@ plot_hetero_by_hour <- ggplot() +
 plot_hetero_by_hour
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/elasticity"
 setwd(save_latex_path)
 ggsave(plot_hetero_by_hour,
        filename = "elas_hetero_hour_long.png" , width = 12, height = 4, dpi = 300)
@@ -182,7 +182,7 @@ plot_hetero_by_quantile <- ggplot() +
 plot_hetero_by_quantile
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/elasticity"
 setwd(save_latex_path)
 ggsave(plot_hetero_by_quantile,
        filename = "elas_hetero_price_long.png" , width = 12, height = 4, dpi = 300)
@@ -336,7 +336,7 @@ plot_hetero_by_quantile_season
 # 
 # 
 # 
-# save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+# save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 # setwd(save_plot_path)
 # # Assume your ggplot object is called 'p'
 # ggsave("elasticity_price_heterogeneity_linear.png", plot = plot_hetero, width = 12, height = 6, dpi = 300)

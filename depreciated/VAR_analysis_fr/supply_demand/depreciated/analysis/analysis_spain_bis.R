@@ -114,7 +114,7 @@ run_VAR_bootstrap_alternative_1var <- function(df,
 headers_controls = c("avg_spot_price_log_diff")
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 #nbre de variables dans la VAR
@@ -142,7 +142,7 @@ gen_benchmark_esp <- run_VAR_bootstrap_alternative_1var(df = IV_data_log_diff_es
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 saveRDS(gen_benchmark_esp, "gen_benchmark_esp_supply.rds")
@@ -166,7 +166,7 @@ gen_benchmark_esp_mp <- run_VAR_bootstrap_alternative_1var(df = IV_data_log_diff
                                                           start_ts = c(2015, 1),
                                                           end_ts = c(2023, 12))
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_mp, "gen_benchmark_esp_mp_supply.rds")
 
@@ -189,7 +189,7 @@ gen_benchmark_esp_pre_crisis <- run_VAR_bootstrap_alternative_1var(df = IV_data_
                                                            start_ts = c(2015, 1),
                                                            end_ts = c(2022, 5))
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_pre_crisis, "gen_benchmark_esp_pre_crisis_supply_test.rds")
 
@@ -224,7 +224,7 @@ gen_benchmark_esp <- run_VAR_bootstrap_alternative_1var (df = IV_data_log_diff_e
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 saveRDS(gen_benchmark_esp, "gen_benchmark_esp_demand.rds")
@@ -248,7 +248,7 @@ gen_benchmark_esp_mp <- run_VAR_bootstrap_alternative_1var(df = IV_data_log_diff
                                                                start_ts = c(2015, 1),
                                                                end_ts = c(2023, 12))
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_mp, "gen_benchmark_esp_mp_demand.rds")
 
@@ -269,7 +269,7 @@ gen_benchmark_esp_pre_crisis <- run_VAR_bootstrap_alternative_1var(df = IV_data_
                                                                    start_ts = c(2015, 1),
                                                                    end_ts = c(2022, 5))
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_pre_crisis, "gen_benchmark_esp_pre_crisis_demand_test.rds")
 
@@ -291,7 +291,7 @@ headers_var_gen_first_mp_core <- c(headers_var_gen_first_core, "ffr_diff")
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 #nbre de variables dans la VAR
@@ -319,7 +319,7 @@ gen_benchmark_esp <- run_VAR_bootstrap_alternative_1var(df = IV_data_log_diff_es
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 saveRDS(gen_benchmark_esp, "gen_benchmark_esp_supply_core.rds")
@@ -343,7 +343,7 @@ gen_benchmark_esp_mp_core <- run_VAR_bootstrap_alternative_1var(df = IV_data_log
                                                                 start_ts = c(2015, 1),
                                                                 end_ts = c(2023, 12))
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_mp_core, "gen_benchmark_esp_mp_core_supply.rds")
 
@@ -381,7 +381,7 @@ gen_benchmark_esp <- run_VAR_bootstrap_alternative_1var (df = IV_data_log_diff_e
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 saveRDS(gen_benchmark_esp, "gen_benchmark_esp_demand_core.rds")
@@ -405,7 +405,7 @@ gen_benchmark_esp_mp_core <- run_VAR_bootstrap_alternative_1var(df = IV_data_log
                                                                 start_ts = c(2015, 1),
                                                                 end_ts = c(2023, 12))
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_mp_core, "gen_benchmark_esp_mp_core_demand.rds")
 

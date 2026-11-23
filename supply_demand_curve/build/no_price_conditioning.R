@@ -6,7 +6,7 @@ library(fixest)
 # Lire le fichier .parquet et convertir en data.table
 # save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 # setwd(save_path_data)
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
 setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
@@ -51,7 +51,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 
 
 
-save_path_data <- "Z:/prix_electricite_gitlab"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
@@ -68,8 +68,8 @@ price_indispo_merge_esp$Wind_Total <-
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(intraday_update_wind = intraday_Wind - Fore_Wind,
-         unpredicted_wind = intraday_Solar - Fore_Solar,
-         intraday_update_sun = Wind_Total - intraday_Wind,
+         unpredicted_wind = Wind_Total - intraday_Wind,
+         intraday_update_sun = intraday_Solar - Fore_Solar,
          unpredicted_sun = Solar -intraday_Solar
   )%>% 
   mutate(Published.Unavailable.Capacity = Published.Unavailable.Capacity - Published.Unavailable.Nuclear.Capacity,
@@ -126,8 +126,8 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 
 
 # Dossiers
-input_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs"
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+input_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 
 # Fichiers à traiter
 files_to_load <- c(
@@ -438,7 +438,7 @@ write.csv(contrib_table_tot , "contrib_table_tot_2026.csv")
 
 #correction gen not included
 
-# output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+# output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 # setwd(output_dir)
 # price_indispo_merge_npc_all <- read_parquet( "price_indispo_merge_esp_npc_all_final.parquet")
 # # rename(renewable_day_ahead_forecast = day_ahead_forecast)

@@ -225,7 +225,7 @@ dismissed_files <- list.files(pattern = "unavailabilities_dismissed_OMIE")
 unavailabilities_data <- map_dfr(unavailabilities_files, ~ read_parquet(.x))
 dismissed_data <- map_dfr(dismissed_files, ~ read_parquet(.x))
 #setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Unavailabilities_plants/formatted_OMIE")
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 
 write_parquet(unavailabilities_data, "unavailabilities_tot_OMIE.parquet")
 write_parquet(dismissed_data, "unavailabilities_dismissed_tot_OMIE.parquet")

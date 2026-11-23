@@ -1,7 +1,7 @@
 
 #comparison with alessandir gazzani
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_supply.rds")
@@ -17,7 +17,7 @@ cumulative_response <- gen_benchmark_esp$lambda_0
 passthrough_esp <- cumulative_response[12, 4, 1] # 0.0055844890
 print(passthrough_esp)
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_double.rds")

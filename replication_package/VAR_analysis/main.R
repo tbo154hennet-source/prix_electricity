@@ -22,7 +22,7 @@ invisible(lapply(module_files, source, local = FALSE))
 arguments <- commandArgs(trailingOnly = TRUE)
 if ("--help" %in% arguments || "-h" %in% arguments) {
   cat(
-    "Usage: Rscript VAR_analysis/main.R [--stage=all|irfs|relevance|contributions|counterfactuals|robustness|france]\n",
+    "Usage: Rscript VAR_analysis/main.R [--stage=all|irfs|relevance|contributions|counterfactuals|robustness|france|elasticity]\n",
     "Several stages can be comma-separated. Dependencies are loaded automatically.\n",
     "Environment variables:\n",
     "  VAR_EXPORT_OVERLEAF=false  Disable writes to <external Overleaf directory>\n",
@@ -30,6 +30,8 @@ if ("--help" %in% arguments || "-h" %in% arguments) {
     "  VAR_FORCE=true  Ignore cached RDS models and re-estimate\n",
     "  VAR_LAGS=12, VAR_HORIZON=40, VAR_SEED=20260914\n",
     "  VAR_CF_BOOT=200, VAR_CF_BLOCK=0  Wind-counterfactual bootstrap\n",
+    "  VAR_ELAS_DRAWS=2000, VAR_ELAS_HORIZON=24  Elasticity SVAR posterior draws and IRF horizon\n",
+    "  VAR_ELASTICITY_OVERLEAF=false  Export the elasticity-SVAR outputs to the Overleaf directory\n",
     sep = ""
   )
   quit(status = 0)
@@ -42,7 +44,7 @@ selected_stages <- if (length(stage_argument)) {
 }
 valid_stages <- c(
   "all", "irfs", "relevance", "contributions",
-  "counterfactuals", "robustness", "france"
+  "counterfactuals", "robustness", "france", "elasticity"
 )
 requested <- unlist(strsplit(selected_stages, ",", fixed = TRUE))
 invalid <- setdiff(requested, valid_stages)

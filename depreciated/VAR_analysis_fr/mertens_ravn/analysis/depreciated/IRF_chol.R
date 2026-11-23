@@ -69,7 +69,7 @@ run_chol_var <- function(df,
 }
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_fr <-  read_parquet('IV_data_fr_log.parquet')
 
@@ -85,7 +85,7 @@ irf_cholesky_fr <- run_chol_var(
   boot = TRUE
 )
 getwd()
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 saveRDS(irf_cholesky_fr, file = 'irf_cholesky_fr.rds')
 
@@ -109,7 +109,7 @@ saveRDS(irf_cholesky_fr_gas, file = 'irf_cholesky_esp_gas.rds')
 #ESP
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_esp <-  read_parquet('IV_data_esp_log.parquet')
 
@@ -124,7 +124,7 @@ irf_cholesky_esp <- run_chol_var(
   ortho = TRUE,
   boot = TRUE
 )
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 saveRDS(irf_cholesky_esp, file = 'irf_cholesky_esp.rds')
 
@@ -141,7 +141,7 @@ irf_cholesky_esp_mp <- run_chol_var(
   boot = TRUE
 )
 getwd()
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 saveRDS(irf_cholesky_esp_mp, file = 'irf_cholesky_esp_mp.rds')
 

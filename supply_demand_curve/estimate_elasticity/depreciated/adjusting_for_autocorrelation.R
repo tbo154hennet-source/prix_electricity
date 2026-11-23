@@ -475,7 +475,7 @@ df_clean <- df%>%
   )
 #d?doubler la ligne OLS
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 getwd()
 write.csv(df_clean, "df_clean_da_seminar_no_unavail.csv")
 

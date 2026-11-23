@@ -63,7 +63,7 @@ my_plot <- ggplot() +
 my_plot
 
 
-# save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+# save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 # setwd(save_plot_path)
 # # Assume your ggplot object is called 'p'
 # ggsave("elasticity_price_heterogeneity.png", plot = my_plot, width = 12, height = 6, dpi = 300)

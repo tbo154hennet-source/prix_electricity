@@ -15,11 +15,11 @@ library(sandwich)
 library(lmtest)
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_supply_unmatched <- read_parquet( 'reconstruct_full_curve_shift_qty_supply_unmatched.parquet')
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_unmatched <- read_parquet( 'reconstruct_full_curve_shift_qty_demand_unmatched.parquet')
 
 
@@ -139,7 +139,7 @@ estimate_coeff_shift_qty_controled <- function(price_test, reconstruct_full_curv
 }
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 price_indispo_merge_esp <- read_parquet("price_indispo_merge_esp_NTC.parquet") %>% as.data.table()
 setnames(price_indispo_merge_esp, "day_ahead_forecast", "renewable_day_ahead_forecast")
 
@@ -180,7 +180,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
          relative_humidity_mismatch = relative_humidity_demand - relative_humidity_supply,
          temperature_mismatch = temperature_demand - temperature_supply
   )
-save_path_data <- "Z:/prix_electricite_gitlab"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
@@ -255,7 +255,7 @@ coef_demand_unmatched<- future_lapply(price_grid_sparse, function(g) {
 #   })
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 saveRDS(coef_demand_unmatched, "reg_shift_result_qty_demand_unmatched_ortho_mat.rds")
 
 coef_supply_unmatched <- future_lapply(price_grid_sparse, function(g) {
@@ -268,7 +268,7 @@ coef_supply_unmatched <- future_lapply(price_grid_sparse, function(g) {
 })
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 saveRDS(coef_supply_unmatched, "reg_shift_result_qty_supply_unmatched_ortho_mat.rds")
 
 

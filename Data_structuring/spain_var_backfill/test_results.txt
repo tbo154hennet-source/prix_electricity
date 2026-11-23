@@ -1,0 +1,26 @@
+test_cli_full_ree_with_offline_json_fixtures (test_backfill.BackfillTests.test_cli_full_ree_with_offline_json_fixtures) ... load 2010: 12 months (Demanda | MWh -> GWh)
+generation 2010: 12 months (sum(3 technology series) | MWh -> GWh)
+load 2011: 12 months (Demanda | MWh -> GWh)
+generation 2011: 12 months (sum(3 technology series) | MWh -> GWh)
+load 2012: 12 months (Demanda | MWh -> GWh)
+generation 2012: 12 months (sum(3 technology series) | MWh -> GWh)
+load 2013: 12 months (Demanda | MWh -> GWh)
+generation 2013: 12 months (sum(3 technology series) | MWh -> GWh)
+load 2014: 12 months (Demanda | MWh -> GWh)
+generation 2014: 12 months (sum(3 technology series) | MWh -> GWh)
+ok
+test_cli_offline_price_full_2010_to_2014 (test_backfill.BackfillTests.test_cli_offline_price_full_2010_to_2014) ... ok
+test_demand_select_actual_and_mwh_convert (test_backfill.BackfillTests.test_demand_select_actual_and_mwh_convert) ... ok
+test_generation_sum_technologies_excluding_aggregate (test_backfill.BackfillTests.test_generation_sum_technologies_excluding_aggregate) ... ok
+test_price_correct_country_and_month (test_backfill.BackfillTests.test_price_correct_country_and_month) ... ok
+test_price_zero_distinguished_from_missing (test_backfill.BackfillTests.test_price_zero_distinguished_from_missing) ... ok
+test_ree_url_peninsular (test_backfill.BackfillTests.test_ree_url_peninsular) ... ok
+test_reject_incomplete_ree_calendar (test_backfill.BackfillTests.test_reject_incomplete_ree_calendar) ... ok
+test_zero_padding_marked_unobserved (test_backfill.BackfillTests.test_zero_padding_marked_unobserved) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.007s
+
+OK
+OK: 60 months (2010-01-01 to 2014-12-01) -> /tmp/tmpn9ievffc/monthly.csv
+OK: 60 months (2010-01-01 to 2014-12-01) -> /tmp/tmp7fxhdy_5/backfill.csv

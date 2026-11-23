@@ -22,16 +22,18 @@ invisible(lapply(module_files, source, local = FALSE))
 arguments <- commandArgs(trailingOnly = TRUE)
 if ("--help" %in% arguments || "-h" %in% arguments) {
   cat(
-    "Usage: Rscript VAR_analysis/main.R [--stage=all|irfs|relevance|contributions|counterfactuals|robustness|france|bvar]\n",
+    "Usage: Rscript VAR_analysis/main.R [--stage=all|irfs|relevance|contributions|counterfactuals|robustness|france|france2010|elasticity|bvar]\n",
     "Several stages can be comma-separated. Dependencies are loaded automatically.\n",
     "The bvar stage only runs when requested explicitly.\n",
     "Environment variables:\n",
-    "  VAR_EXPORT_OVERLEAF=false  Disable writes to Z:/Overleaf_elec/images\n",
+    "  VAR_EXPORT_OVERLEAF=false  Disable writes to C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images\n",
     "  VAR_USE_MSW_INFERENCE=false  Run point estimates only\n",
     "  VAR_FORCE=true  Ignore cached RDS models and re-estimate\n",
     "  VAR_LAGS=12, VAR_HORIZON=40, VAR_SEED=20260914\n",
     "  VAR_CF_BOOT=200, VAR_CF_BLOCK=0  Wind-counterfactual bootstrap\n",
     "  VAR_BVAR_DRAWS=5000, VAR_BVAR_HORIZON=24, VAR_BVAR_STABLE_ONLY=false\n",
+    "  VAR_ELAS_DRAWS=2000, VAR_ELAS_HORIZON=24  Elasticity SVAR posterior draws and IRF horizon\n",
+    "  VAR_ELASTICITY_OVERLEAF=false  Export the elasticity-SVAR outputs to Overleaf_elec\n",
     sep = ""
   )
   quit(status = 0)
@@ -44,7 +46,7 @@ selected_stages <- if (length(stage_argument)) {
 }
 valid_stages <- c(
   "all", "irfs", "relevance", "contributions",
-  "counterfactuals", "robustness", "france", "bvar"
+  "counterfactuals", "robustness", "france", "france2010", "elasticity", "bvar"
 )
 requested <- unlist(strsplit(selected_stages, ",", fixed = TRUE))
 invalid <- setdiff(requested, valid_stages)

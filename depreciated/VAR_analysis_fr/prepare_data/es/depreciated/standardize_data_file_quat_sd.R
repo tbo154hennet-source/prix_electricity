@@ -93,10 +93,10 @@ VAR_series <- VAR_series %>%
          CPElec = CP0451ESM086NEST
   )
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write_parquet(VAR_series, 'VAR_series_esp.parquet')
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet")
 
 
@@ -112,7 +112,7 @@ price_indispo_merge$delta_d_orth <- resid(
 
 
 # save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
-# save_path_data <-"Z:/prix_electricite_gitlab"
+# save_path_data <-"C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 # setwd(save_path_data)
 # 
 # renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
@@ -229,7 +229,7 @@ monthly_energy_data <- price_indispo_merge %>%
 #        dplyr::select(datetime, spot_gas, spot_gas_capped))
 # 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -326,7 +326,7 @@ IV_data <- merge(IV_data, monthly_weather_data %>%
 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 write_parquet(IV_data, 'IV_data_esp_elas_exo.parquet')
 

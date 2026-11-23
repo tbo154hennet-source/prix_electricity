@@ -1,5 +1,5 @@
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 IV_data <-read_parquet( 'IV_data_esp.parquet')
 
@@ -35,7 +35,7 @@ headers_var_gen_first_decomp = c(
 )
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 
 #nbre de variables dans la VAR
@@ -70,7 +70,7 @@ gen_benchmark_esp_decomp <- run_VAR_bootstrap(df = IV_data_log_esp,
                                               start_ts = c(2015, 1),
                                               end_ts = c(2023, 12),
                                               headers_controls = headers_controls_esp)
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_decomp, "gen_benchmark_esp_decomp.rds")
 

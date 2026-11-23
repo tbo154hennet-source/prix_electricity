@@ -1,6 +1,8 @@
 fit_reduced_var <- function(data, variables, p, extra_columns = character()) {
-  columns <- unique(c("observation_date", variables, extra_columns))
-  sample <- finite_complete(data, columns)
+  # Instruments are carried along but do not restrict the VAR sample: they may
+  # be unobserved (NA) at its start, see proxy_instrument().
+  assert_columns(data, extra_columns, "Model data")
+  sample <- finite_complete(data, unique(c("observation_date", variables)))
   if (nrow(sample) <= p + length(variables) * p) {
     warning(
       "The VAR has limited residual degrees of freedom: ",
@@ -92,7 +94,7 @@ fit_proxy_svar <- function(country_data, proxy, norm_var, shock_name, cfg,
     country_data$data, variables, cfg$p, extra_columns = proxy
   )
   residuals <- reduced$residuals
-  instrument <- reduced$sample[[proxy]][-seq_len(cfg$p)]
+  instrument <- proxy_instrument(reduced$sample, proxy, cfg$p)$z
   gamma <- matrix(drop(crossprod(instrument, residuals)), ncol = 1L)
   rownames(gamma) <- variables
   norm_index <- match(norm_var, variables)
@@ -116,7 +118,9 @@ fit_proxy_svar <- function(country_data, proxy, norm_var, shock_name, cfg,
           as.matrix(reduced$sample[, variables, drop = FALSE]),
           frequency = 12
         ),
-        z = reduced$sample[[proxy]],
+        # Unobserved months enter as 0: Gamma and theta are unchanged and the
+        # MSW variance only differs through the centering of z_t u_t.
+        z = ifelse(is.finite(reduced$sample[[proxy]]), reduced$sample[[proxy]], 0),
         p = cfg$p,
         confidence = cfg$confidence,
         NWlags = cfg$nw_lags,
@@ -157,7 +161,8 @@ fit_proxy_svar <- function(country_data, proxy, norm_var, shock_name, cfg,
 
 mixed_frequency_bootstrap_plot_data <- function(
     point_irf, residuals, instruments, norm_index, ma, shock_name,
-    replications, block_size, seed) {
+    replications, block_size, seed,
+    observed = rep(TRUE, nrow(instruments))) {
   output <- point_irf
   output$Lower68 <- NA_real_
   output$Upper68 <- NA_real_
@@ -179,8 +184,9 @@ mixed_frequency_bootstrap_plot_data <- function(
     }), use.names = FALSE)
     indices <- indices[seq_len(observations)]
     boot_instruments <- instruments[indices, , drop = FALSE]
-    boot_instruments <- scale(
-      boot_instruments,
+    boot_observed <- observed[indices]
+    boot_instruments[boot_observed, ] <- scale(
+      boot_instruments[boot_observed, , drop = FALSE],
       center = TRUE,
       scale = FALSE
     )
@@ -249,11 +255,16 @@ fit_mixed_frequency_proxy_svar <- function(
   if (any(colSums(observed_instruments) == 0L)) {
     stop("At least one daily proxy has no observation in the VAR sample.")
   }
+  # Months with no daily proxy at all precede the high-frequency data.
+  observed_months <- rowSums(observed_instruments) > 0
   # Missing entries only denote calendar days absent from a given month.
   # Daily proxies are already demeaned by month-of-year x day-of-month cell,
   # so zero is the neutral moment contribution for structurally missing days.
   instruments[!observed_instruments] <- 0
-  instruments <- scale(instruments, center = TRUE, scale = FALSE)
+  instruments[observed_months, ] <- scale(
+    instruments[observed_months, , drop = FALSE],
+    center = TRUE, scale = FALSE
+  )
   norm_index <- match(norm_var, variables)
   if (is.na(norm_index)) stop("Unknown normalization variable: ", norm_var)
 
@@ -287,8 +298,9 @@ fit_mixed_frequency_proxy_svar <- function(
   )
   point_irf <- irf_from_theta(ma, theta, shock_name)
 
-  target_residual <- residuals[, norm_index]
-  first_stage <- stats::lm(target_residual ~ instruments)
+  target_residual <- residuals[observed_months, norm_index]
+  first_stage_instruments <- instruments[observed_months, , drop = FALSE]
+  first_stage <- stats::lm(target_residual ~ first_stage_instruments)
   restricted <- stats::lm(target_residual ~ 1)
   first_stage_test <- stats::anova(restricted, first_stage)
   classical_f <- unname(first_stage_test$F[[2]])
@@ -320,7 +332,7 @@ fit_mixed_frequency_proxy_svar <- function(
     F_statistic = classical_f,
     HAC_F_statistic = hac_f,
     Proxy_residual_correlation = stats::cor(
-      joint_proxy,
+      joint_proxy[observed_months],
       target_residual,
       use = "complete.obs"
     ),
@@ -347,6 +359,7 @@ fit_mixed_frequency_proxy_svar <- function(
     point_irf = point_irf,
     residuals = residuals,
     instruments = instruments,
+    observed = observed_months,
     norm_index = norm_index,
     ma = ma,
     shock_name = shock_name,
@@ -426,9 +439,9 @@ fit_mertens_ravn <- function(country_data, demand_proxy, supply_proxy,
   )
   residuals <- reduced$residuals
   sigma <- reduced$sigma
-  instruments <- as.matrix(
-    reduced$sample[, c(supply_proxy, demand_proxy), drop = FALSE]
-  )[-seq_len(cfg$p), , drop = FALSE]
+  instruments <- proxy_instrument(
+    reduced$sample, c(supply_proxy, demand_proxy), cfg$p
+  )$z
   gamma <- t(crossprod(instruments, residuals))
   n <- length(variables)
   selector <- rbind(diag(2), matrix(0, n - 2L, 2L))

@@ -1,12 +1,12 @@
 library(MASS)
 
 
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("reliability_auxiliary.R")
 source("auxiliary_control.R")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
 IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')

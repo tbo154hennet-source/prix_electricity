@@ -1,8 +1,11 @@
-convolution_design <- function(psi, observations, pre_shocks = 0L) {
+convolution_design <- function(psi, observations, pre_shocks = 0L,
+                               require_impact = TRUE) {
   psi <- as.numeric(psi)
   observations <- as.integer(observations)
   pre_shocks <- as.integer(max(0L, pre_shocks))
-  if (!length(psi) || abs(psi[[1]]) < 1e-12) {
+  # Only the price IRF used to recover the shocks needs a non-zero impact; other
+  # responses (e.g. gas, exogenous within the month) may be zero on impact.
+  if (!length(psi) || (require_impact && abs(psi[[1]]) < 1e-12)) {
     stop("The contemporaneous price IRF is zero; the target is not identifiable.")
   }
 
@@ -138,7 +141,8 @@ propagate_price_target <- function(observed, irf, target_price,
   )
   for (jj in seq_len(ncol(observed))) {
     response_design <- convolution_design(
-      irf[, jj], nrow(observed), recovery$pre_shocks
+      irf[, jj], nrow(observed), recovery$pre_shocks,
+      require_impact = FALSE
     )
     path[, jj] <- as.numeric(response_design %*% recovery$shocks_full)
   }
@@ -216,19 +220,29 @@ read_wind_2030_target <- function(result, cfg) {
 
   dates <- as.Date(result$sample$observation_date)
   matched <- match(dates, source$Date)
-  if (anyNA(matched)) {
-    stop("Wind-2030 target does not cover the complete VAR sample.")
+  # The micro scenario starts in 2015 while the VAR can start earlier: before
+  # the scenario the target is the observed price (no counterfactual gap), and
+  # volatility ratios are computed over the scenario window only.
+  window <- !is.na(matched)
+  if (!any(window) || any(dates[!window] > min(source$Date))) {
+    stop("Wind-2030 target has gaps inside the VAR sample.")
   }
   hicp <- as.numeric(result$sample$HICP)
   transform_target <- function(log_nominal_price) {
-    log(exp(as.numeric(log_nominal_price)) / hicp * 100 + 1)
+    target <- as.numeric(result$sample$spot_price_log)
+    target[window] <- log(
+      exp(as.numeric(log_nominal_price[matched[window]])) /
+        hicp[window] * 100 + 1
+    )
+    target
   }
 
   list(
     source = source,
     dates = dates,
-    point = transform_target(source$mean_cf_adj[matched]),
-    raw = transform_target(source$mean_cf[matched])
+    window = window,
+    point = transform_target(source$mean_cf_adj),
+    raw = transform_target(source$mean_cf)
   )
 }
 
@@ -269,18 +283,41 @@ moving_block_indices <- function(observations, block_size) {
   ))[seq_len(observations)]
 }
 
-bootstrap_wind_counterfactual <- function(result, target_price, cfg) {
+bootstrap_wind_counterfactual <- function(result, target_price, cfg,
+                                          window = rep(TRUE, length(target_price))) {
   draws <- max(0L, as.integer(cfg$counterfactual_bootstrap))
   variables <- result$variables
   selected <- match(c("spot_price_log", "IPI_log", "HICP_log"), variables)
   if (anyNA(selected)) stop("Macro variables are absent from the Spanish VAR.")
 
+  # Bayesian source models (elasticity SVAR) carry posterior draws of the
+  # price-normalized supply IRF: uncertainty then comes from the posterior
+  # instead of a residual bootstrap with proxy re-identification.
+  if (!is.null(result$irf_draws)) {
+    observed <- as.matrix(result$sample[, variables, drop = FALSE])
+    observed_sd <- apply(observed[window, selected, drop = FALSE], 2, stats::sd)
+    ratios <- do.call(rbind, lapply(result$irf_draws, function(draw_irf) {
+      counterfactual <- try(propagate_price_target(
+        observed, draw_irf, target_price, method = "joint", ridge = 1e-8
+      )$counterfactual, silent = TRUE)
+      if (inherits(counterfactual, "try-error") ||
+          any(!is.finite(counterfactual[, selected, drop = FALSE]))) {
+        return(NULL)
+      }
+      apply(counterfactual[window, selected, drop = FALSE], 2, stats::sd) / observed_sd
+    }))
+    colnames(ratios) <- variables[selected]
+    return(list(ratios = ratios, accepted = nrow(ratios),
+                attempted = length(result$irf_draws), block_size = NA_integer_))
+  }
+
   observed <- as.matrix(result$sample[, variables, drop = FALSE])
   residuals <- sweep(result$residuals, 2, colMeans(result$residuals), "-")
-  instrument <- as.numeric(
-    result$sample[[result$proxy]][-seq_len(result$fit$p)]
-  )
-  instrument <- instrument - mean(instrument)
+  instrument <- proxy_instrument(result$sample, result$proxy, result$fit$p)
+  observed_instrument <- instrument$observed
+  instrument <- instrument$z
+  instrument[observed_instrument] <- instrument[observed_instrument] -
+    mean(instrument[observed_instrument])
   residual_observations <- nrow(residuals)
   block_size <- as.integer(cfg$counterfactual_block_size)
   if (!is.finite(block_size) || block_size <= 0L) {
@@ -293,7 +330,7 @@ bootstrap_wind_counterfactual <- function(result, target_price, cfg) {
     ncol = length(selected),
     dimnames = list(NULL, variables[selected])
   )
-  observed_sd <- apply(observed[, selected, drop = FALSE], 2, stats::sd)
+  observed_sd <- apply(observed[window, selected, drop = FALSE], 2, stats::sd)
   accepted <- 0L
   attempted <- 0L
   max_attempts <- max(draws * 4L, draws)
@@ -348,7 +385,7 @@ bootstrap_wind_counterfactual <- function(result, target_price, cfg) {
         stop("Non-finite bootstrap counterfactual.")
       }
       apply(
-        counterfactual[, selected, drop = FALSE],
+        counterfactual[window, selected, drop = FALSE],
         2, stats::sd
       ) / observed_sd
     }, silent = TRUE)
@@ -375,15 +412,16 @@ bootstrap_wind_counterfactual <- function(result, target_price, cfg) {
 }
 
 summarise_volatility_ratios <- function(point_counterfactual, bootstrap,
-                                        variables) {
+                                        variables,
+                                        window = rep(TRUE, nrow(point_counterfactual$observed))) {
   selected_names <- c("spot_price_log", "IPI_log", "HICP_log")
   selected <- match(selected_names, variables)
   labels <- c("P_elec", "IPI", "HICP")
   observed <- point_counterfactual$observed
   counterfactual <- point_counterfactual$counterfactual
   point <- vapply(selected, function(jj) {
-    stats::sd(counterfactual[, jj], na.rm = TRUE) /
-      stats::sd(observed[, jj], na.rm = TRUE)
+    stats::sd(counterfactual[window, jj], na.rm = TRUE) /
+      stats::sd(observed[window, jj], na.rm = TRUE)
   }, numeric(1))
 
   if (nrow(bootstrap$ratios)) {
@@ -674,7 +712,7 @@ plot_iberian_inflation <- function(result, point, lower, upper) {
     ggplot2::guides(fill = "none") +
     ggplot2::theme_minimal(base_size = 14)
 }
-run_counterfactuals <- function(source_model, cfg) {
+run_counterfactuals <- function(source_model, cfg, cache_tag = "") {
   irf <- counterfactual_irf_matrix(source_model)
   observed <- as.matrix(
     source_model$sample[, source_model$variables, drop = FALSE]
@@ -918,13 +956,16 @@ run_counterfactuals <- function(source_model, cfg) {
   bootstrap_name <- paste0(
     "counterfactual_wind2030_v3_p", cfg$p,
     "_h", cfg$horizon,
-    "_b", cfg$counterfactual_bootstrap
+    "_b", cfg$counterfactual_bootstrap, cache_tag
   )
   bootstrap <- cache_model(cfg, bootstrap_name, function() {
-    bootstrap_wind_counterfactual(source_model, wind_target$point, cfg)
+    bootstrap_wind_counterfactual(
+      source_model, wind_target$point, cfg, window = wind_target$window
+    )
   })
   ratios <- summarise_volatility_ratios(
-    wind_point, bootstrap, source_model$variables
+    wind_point, bootstrap, source_model$variables,
+    window = wind_target$window
   )
   ratios$Wind_capacity_2030_MW <- cfg$wind_capacity_2030_mw
   ratios$Price_target_RMSE_log <- sqrt(mean(

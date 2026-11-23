@@ -4,7 +4,7 @@
 # a different VAR when computing demand and supply decompositions.
 
 pipeline_file <- file.path(
-  'Z:/prix_electricite_gitlab', 'VAR_analysis_fr', 'supply_demand',
+  'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab', 'VAR_analysis_fr', 'supply_demand',
   'HD_FEVD', 'esp', 'compare_HD_with_without_gas.R'
 )
 

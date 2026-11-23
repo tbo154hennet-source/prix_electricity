@@ -1,5 +1,5 @@
 library(vars)
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_control_bis.R")
 source("bootstrap_auxiliary_control_ter_bis.R")
@@ -10,7 +10,7 @@ library(dplyr)
 library(tidyr)
 library(readxl)
 
-setwd("Z:/prix_electricite_gitlab/Kaenzig_replication/data")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Kaenzig_replication/data")
 # Load .mat file
 data <- readMat("dataBaseM.mat")
 data$sampleDates[1]
@@ -19,7 +19,7 @@ vars_kanzig <- ts(data$data, frequency = 12)
 #proxies_kanzig <- ts(data$dataExo, frequency = 12)
 kanzig_dates <- unlist(data$sampleDates)
 
-setwd("Z:/prix_electricite_gitlab/Kaenzig_replication/instrument")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Kaenzig_replication/instrument")
 proxy_matlab <- readMat("OilSurprisesMLog.mat")
 proxy_matlab$sampleDatesProxy[[1]][[1]][[1]]
 proxy_matlab$sampleDatesProxy[[528]][[1]][[1]]

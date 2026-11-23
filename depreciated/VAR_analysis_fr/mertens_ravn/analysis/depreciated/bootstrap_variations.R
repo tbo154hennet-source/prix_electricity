@@ -53,7 +53,7 @@ gen_benchmark_esp_gas_mp <- run_VAR_bootstrap(df = IV_data_log_esp,
                                               end_ts = c(2023, 12),
                                               headers_controls = headers_controls_esp)
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 setwd(save_rds_path)
 saveRDS(gen_benchmark_esp_gas_mp, "gen_benchmark_esp_gas_mp.rds")
 

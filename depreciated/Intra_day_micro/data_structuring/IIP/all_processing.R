@@ -1,6 +1,6 @@
 
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_IIP_output)
 
 actual_IIP_indispo <- read_parquet('actual_IIP_indispo.parquet') %>% 
@@ -95,7 +95,7 @@ long_format_indispo <- bind_rows(result_list)
 
 
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_indispo, 'long_format_indispo_IIP.parquet')
@@ -108,7 +108,7 @@ final_publi_IIP_indispo <- long_format_indispo %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 write_parquet(final_publi_IIP_indispo, 'final_publi_IIP_indispo.parquet')
 
@@ -141,7 +141,7 @@ result_list <- lapply(seq_len(nrow(non_duplicated_indispo_nuclear)), function(i)
 # Conversion finale en dataframe
 long_format_indispo_nuclear <- bind_rows(result_list)
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_indispo_nuclear, 'long_format_nuclear_indispo_IIP.parquet')
@@ -155,7 +155,7 @@ final_publi_nuclear_IIP_indispo <- long_format_indispo_nuclear %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 write_parquet(final_publi_nuclear_IIP_indispo, 'final_publi_nuclear_IIP_indispo_IIP.parquet')
 
@@ -165,7 +165,7 @@ write_parquet(final_publi_nuclear_IIP_indispo, 'final_publi_nuclear_IIP_indispo_
 #theoretical and non published
 
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_IIP_output)
 actual_IIP_indispo_theoretical <- read_parquet('actual_IIP_indispo_theoretical.parquet') %>% 
   filter(as.numeric(first_affec_tim_period) < as.numeric(last_affec_tim_period)) %>%
@@ -200,7 +200,7 @@ length(result_list)
 flat_result_list <- unlist(result_list, recursive = FALSE)
 long_format_indispo_theoretical <- bind_rows(flat_result_list)
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_indispo_theoretical, 'long_format_indispo_theoretical_IIP.parquet')
@@ -215,7 +215,7 @@ final_publi_IIP_indispo <- long_format_indispo_theoretical %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 write_parquet(final_publi_IIP_indispo, 'final_publi_IIP_indispo_theoretical.parquet')
 
@@ -245,7 +245,7 @@ result_list <- lapply(seq_len(nrow(non_duplicated_indispo_nuclear_theoretical)),
 # Conversion finale en dataframe
 long_format_indispo_nuclear_theoretical <- bind_rows(result_list)
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_indispo_nuclear_theoretical, 'long_format_nuclear_indispo_theoretical_IIP.parquet')
@@ -259,7 +259,7 @@ final_publi_nuclear_IIP_indispo <- long_format_indispo_nuclear_theoretical %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 write_parquet(final_publi_nuclear_IIP_indispo, 'final_publi_nuclear_IIP_indispo_theoretical.parquet')
 
@@ -268,7 +268,7 @@ write_parquet(final_publi_nuclear_IIP_indispo, 'final_publi_nuclear_IIP_indispo_
 
 
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 long_format_indispo <-  read_parquet( 'long_format_indispo_IIP.parquet')
@@ -302,13 +302,13 @@ final_not_publi_IIP_indispo <- long_format_indispo_non_published  %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_indispo_non_published , 'long_format_indispo_non_published_IIP.parquet')
 
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 
 write_parquet(final_not_publi_IIP_indispo, 'final_not_publi_IIP_indispo.parquet')
@@ -318,7 +318,7 @@ write_parquet(final_not_publi_IIP_indispo, 'final_not_publi_IIP_indispo.parquet'
 
 
 # Définir le chemin de sauvegarde
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 
@@ -345,19 +345,19 @@ final_not_publi_IIP_nuclear <- long_format_nuclear_non_published %>%
   ungroup()
 
 # Sauvegarder les résultats
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_nuclear_non_published, 'long_format_nuclear_non_published_IIP.parquet')
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 
 write_parquet(final_not_publi_IIP_nuclear, 'final_not_publi_IIP_nuclear.parquet')
 
 
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_IIP_output)
 
 actual_IIP_indispo <- read_parquet('non_duplicated_indispo_theoretical_IIP.parquet')
@@ -424,7 +424,7 @@ result_list <- lapply(seq_len(nrow(actual_IIP_indispo)), function(i) {
 uneffective_indispo <- do.call(bind_rows, result_list)
 
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_IIP_output)
 
 write_parquet(uneffective_indispo, 'uneffective_indispo_IIP.parquet')
@@ -453,7 +453,7 @@ result_list <- lapply(seq_len(nrow(uneffective_indispo)), function(i) {
 # Conversion finale en dataframe
 long_format_indispo_uneffective <- bind_rows(result_list)
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_indispo_uneffective, 'long_format_indispo_uneffective_IIP.parquet')
@@ -466,7 +466,7 @@ final_uneffective_IIP_indispo <- long_format_indispo_uneffective %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 write_parquet(final_publi_IIP_indispo, 'final_uneffective_IIP_indispo.parquet')
 
@@ -493,7 +493,7 @@ result_list <- lapply(seq_len(nrow(uneffective_indispo_nuclear)), function(i) {
 # Conversion finale en dataframe
 long_format_indispo_nuclear_uneffective <- bind_rows(result_list)
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_IIP_output)
 
 write_parquet(long_format_indispo_nuclear_uneffective, 'long_format_indispo_nuclear_uneffective_IIP.parquet')
@@ -506,7 +506,7 @@ final_uneffective_nuclear_IIP_indispo <- long_format_indispo_nuclear %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity))) %>%
   ungroup()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final'
 setwd(save_path_IIP_output)
 write_parquet(final_uneffective_nuclear_IIP_indispo, 'final_uneffective_nuclear_IIP_indispo.parquet')
 

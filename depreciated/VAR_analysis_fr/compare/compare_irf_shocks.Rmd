@@ -7,7 +7,7 @@
 library(latex2exp)
 library(abind)
 
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_irf_plot.R")
 
@@ -107,7 +107,7 @@ irf_demand_shock_variation
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

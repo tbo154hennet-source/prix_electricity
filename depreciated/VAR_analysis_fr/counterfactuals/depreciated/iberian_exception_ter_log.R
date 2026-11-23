@@ -2,7 +2,7 @@
 library(MASS)
 library(slider)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 pred_post_df <- read_parquet( "prediction_gas_price_counterfactual_monthly.parquet")
 
 weighted_mean <- function(x, w) {
@@ -14,7 +14,7 @@ counterfactual_gas_evolution <- pred_post_df %>%
   rename(counterfactual_spot_price = predicted_price) %>% 
   arrange(year, month)
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_esp <- read_parquet( 'IV_data_esp_log_elas_sd_2026_pc.parquet')
 
@@ -189,7 +189,7 @@ for (i in 1:nboot) {
 }
 
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(boot_counterfactual_HICP, "boot_counterfactual_HICP.csv")
 
 
@@ -404,7 +404,7 @@ counterfactual <- ggplot() +
 counterfactual
 
 
-save_plot_path <- 'Z:/Overleaf_elec/images/policy'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/policy'
 setwd(save_plot_path)
 ggsave("iberian_exception_plot_inflation_counterfactual.png", plot = counterfactual, width = 14 , height = 6, dpi = 300)
 

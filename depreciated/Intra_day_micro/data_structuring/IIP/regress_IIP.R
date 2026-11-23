@@ -6,7 +6,7 @@ library(lubridate)
 library(tidyr)
 library(tidyverse)
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/IIP'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/IIP'
 setwd(save_path_IIP_output)
 list.files()
 
@@ -75,7 +75,7 @@ tot_publi_IIP_indispo <- tot_publi_IIP_indispo %>%
 #   left_join(final_uneffective_rf %>%
 #               mutate(Uneffective.Predicted.Unavailable.Capacity = -predicted_real_unavailability) %>%
 #               select(-predicted_real_unavailability))
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 final_indispo_tot_wide_esp_da <- read_parquet("final_indispo_tot_wide_esp.parquet")%>%
   mutate(creneau = as.character(hour(datetime_slot) + 1),
          electricity_delivery_date = as.character(as.Date(datetime_slot)),
@@ -199,7 +199,7 @@ first_stage_data  <-
 
 getwd()
 
-save_path_IIP_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/IIP'
+save_path_IIP_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/IIP'
 setwd(save_path_IIP_output)
 write_parquet(first_stage_data, 'first_stage_data_IIP.parquet')
 

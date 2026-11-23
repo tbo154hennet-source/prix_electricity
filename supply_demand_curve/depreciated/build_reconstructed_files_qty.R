@@ -36,7 +36,7 @@ reconstruct_stocked_curve <- function(type, matched){
 
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # G?n?re toutes les combinaisons possibles
 combinations <- expand.grid(
   matched = c( "unmatched", "matched"),

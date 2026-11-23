@@ -39,12 +39,12 @@ names_instruments <- c(
                        "heat_excess_supply",
                        "heat_excess_demand")
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet")
 #price_indispo_merge_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo_no_unavail.parquet")
 
 
-# setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 # price_indispo_merge_delta_exo <- read_parquet("price_indispo_merge_delta_supply_demand_exo.parquet") %>% 
 #   rename(delta_s_total_exo = delta_s_total,
 #          delta_d_total_exo = delta_d_total
@@ -67,7 +67,7 @@ capacity_fields <- c(colnames_with_capacity,
                      "renewable_day_ahead_forecast",  "unpredicted_renewables", "intraday_update_renewables")
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
-save_path_data <- "Z:/prix_electricite_gitlab"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 setwd(save_path_data)
 
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
@@ -416,7 +416,7 @@ df_new <- df_clean %>%
     df_clean %>% filter(Model != "OLS")
   )
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 getwd()
 write.csv(df_clean, "df_clean_da.csv")
 
@@ -443,7 +443,7 @@ gt_table <- df_plot_table_wide %>%
   )
 gt_table
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table,
@@ -485,7 +485,7 @@ print(coefs_logprice)
 
 
 # 
-# setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+# setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 # price_indispo_merge_delta_tot <- read_parquet( "price_indispo_merge_delta_supply_demand_ortho.parquet")
 # colnames(price_indispo_merge_delta_tot)
 # 

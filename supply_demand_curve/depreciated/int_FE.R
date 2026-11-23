@@ -14,7 +14,7 @@ files_to_load <- c(
   #"reconstruct_full_curve_shift_qty_demand_matched.parquet"
 )
 
-input_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs"
+input_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs"
 setwd(input_dir)
 
 # Example variables you already have in your workspace:

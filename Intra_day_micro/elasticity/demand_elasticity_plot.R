@@ -1,5 +1,5 @@
 library(ggplot2)
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 
@@ -205,7 +205,7 @@ my_plot <- ggplot() +
 
 my_plot
 
-save_plot_path <- 'Z:/Overleaf_elec/images/intra_day'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/intra_day'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("covid_elec_forecast_error.png", plot = my_plot, width = 12, height = 6, dpi = 300)

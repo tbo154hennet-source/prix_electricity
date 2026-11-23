@@ -7,11 +7,11 @@ output: html_notebook
 
 ```{r}
 library(slider)
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
 setwd(save_rds_path_hd)
 historical_decomp_iv_tibo <- readRDS( "hd_iv_4v_double.rds")
 #historical_decomp_iv_tibo <- historical_decomp_iv_tibo[, , c(2, 1)]
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 hd_cholesky <- readRDS( "hd_chol_4v.rds")
 
@@ -152,7 +152,7 @@ ne_hd_compare_12
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 #ggsave("ne_hd_4v.png", plot = ne_hd, width = 10, height = 6, dpi = 300)

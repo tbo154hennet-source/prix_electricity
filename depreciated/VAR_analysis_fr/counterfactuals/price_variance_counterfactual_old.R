@@ -169,7 +169,7 @@ wind_counterfactuals <- ggplot(monthly_mean_data, aes(x = date)) +
 
 wind_counterfactuals
 
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("wind_counterfactuals.png", plot = wind_counterfactuals  , width = 12, height = 6, dpi = 300)
@@ -181,7 +181,7 @@ var(monthly_mean_data$price_log_counterfactual_var_mean)
 var(monthly_mean_data$price_mean)
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(monthly_mean_data  %>%
 dplyr::select(year, month, price_log_counterfactual_only_var,
 price_mean, price_log_counterfactual_var_mean) ,

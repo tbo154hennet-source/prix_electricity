@@ -1,8 +1,8 @@
 library(fixest)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 price_indispo_merge_esp_sd <-read_parquet("price_indispo_merge_esp_npc_no_cbf.parquet")
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_esp_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet") 
 # Sélectionner toutes les colonnes contenant "fitted" et "supply"
 cols_fitted_supply <- grep("fit.*supply", names(price_indispo_merge_esp_sd), value = TRUE)
@@ -393,7 +393,7 @@ coef_table_feols_YMWH <- data.frame(
 coef_table_feols_YMWH 
 
 getwd()
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 write.csv(coef_table_feols_YMWH, "coef_table_feols_YMWH.csv")
 
 coef_table_feols_YMWH <- read.csv( "coef_table_feols_YMWH.csv")

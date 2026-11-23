@@ -2,7 +2,7 @@
 #get a version with wind speed
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_fore_wind_sun <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_fore_wind_sun_variation.rds")
 coef_supply_unmatched_fore_wind_sun_data <- rbindlist(coef_supply_unmatched_fore_wind_sun)
 #coef_supply_unmatched_data_ins <- coef_supply_unmatched_data[coef_supply_unmatched_data$variable %in% names_instruments,]
@@ -97,7 +97,7 @@ colnames(delta_q_matrix) <- c(paste0("delta_s_", instruments), paste0("delta_d_"
 
 # Ajouter au dataframe
 price_indispo_merge_delta <- bind_cols(price_indispo_merge, as.data.frame(delta_q_matrix))
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write_parquet(price_indispo_merge_delta, "price_indispo_merge_delta_supply_demand_renewable.parquet")
 
 
@@ -105,12 +105,12 @@ write_parquet(price_indispo_merge_delta, "price_indispo_merge_delta_supply_deman
 
 #using only wind as bronte did
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_bronte <- read_parquet("price_indispo_merge_delta_supply_demand_renewable.parquet")
 
 colnames(price_indispo_merge_bronte)
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
 
@@ -206,10 +206,10 @@ price_indispo_merge_bronte_clean %>%
   cor( use = "pairwise.complete.obs")
 
 getwd()
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write_parquet(price_indispo_merge_bronte_clean, "price_indispo_merge_bronte_clean.parquet")
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_bronte_clean <- read_parquet( "price_indispo_merge_bronte_clean.parquet")
 
 
@@ -365,7 +365,7 @@ gt_table <- df_wind_plot_table_wide %>%
 gt_table
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/latex_tables"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables"
 setwd(save_latex_path)
 gtsave(
   gt_table,

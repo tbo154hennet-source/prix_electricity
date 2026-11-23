@@ -1,8 +1,8 @@
 
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("auxiliary_control.R")
-source_path <- 'Z:/prix_electricite_gitlab/spain_comparison'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/spain_comparison'
 setwd(source_path)
 source("bootstrap_auxiliary_control_spain.R")
 save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/esp/macro_exercise'

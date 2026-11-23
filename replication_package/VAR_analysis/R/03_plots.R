@@ -48,7 +48,44 @@ prepare_iv_plot_data <- function(result) {
   out <- merge(out, band90, by = c("Variable", "Horizon"), all.x = TRUE)
   out$Horizon <- out$Horizon - 1L
   out$Shock <- result$shock
+  # When the MSW Wald statistic is below the chi2(1) critical value, the
+  # weak-IV robust set is unbounded, (-inf, a] U [b, +inf) or the real line, and
+  # varexternal reports a and b as lower/upper. The point estimate always lies
+  # in the set, so a point outside [lower, upper] reveals it; unboundedness
+  # holds at every horizon for a given level.
+  unbounded <- function(lower, upper) {
+    any(!is.finite(lower) | !is.finite(upper) |
+          out$Estimate < lower - 1e-12 | out$Estimate > upper + 1e-12)
+  }
+  out$Unbounded68 <- unbounded(out$Lower68, out$Upper68)
+  out$Unbounded90 <- unbounded(out$Lower90, out$Upper90)
+  if (out$Unbounded68[[1]]) out[c("Lower68", "Upper68")] <- NA_real_
+  if (out$Unbounded90[[1]]) out[c("Lower90", "Upper90")] <- NA_real_
   out
+}
+
+unbounded_caption <- function(data, method = NULL) {
+  if (!"Unbounded90" %in% names(data)) return(NULL)
+  flagged <- function(column) {
+    rows <- data[!is.na(data[[column]]) & data[[column]], , drop = FALSE]
+    if (is.null(method)) return(nrow(rows) > 0)
+    unique(as.character(rows[[method]]))
+  }
+  notes <- c(
+    if (is.null(method) && flagged("Unbounded68")) "68%",
+    if (is.null(method) && flagged("Unbounded90")) "90%"
+  )
+  if (!is.null(method)) {
+    notes <- c(
+      vapply(flagged("Unbounded68"), function(m) paste0("68% (", m, ")"), ""),
+      vapply(flagged("Unbounded90"), function(m) paste0("90% (", m, ")"), "")
+    )
+  }
+  if (!length(notes)) return(NULL)
+  paste(strwrap(paste0(
+    "Weak IV, MSW set unbounded (band not drawn): ",
+    paste(notes, collapse = ", ")
+  ), width = 70), collapse = "\n")
 }
 
 label_irf_variables <- function(data) {
@@ -106,7 +143,8 @@ plot_iv_irf <- function(result, title, subtitle = "MSW confidence intervals") {
     ggplot2::facet_wrap(~Variable, scales = "free_y", nrow = 2) +
     ggplot2::labs(
       title = title, subtitle = subtitle,
-      x = "Months after shock", y = "Response"
+      x = "Months after shock", y = "Response",
+      caption = unbounded_caption(data)
     ) +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(
@@ -174,7 +212,8 @@ plot_irf_comparison <- function(results, shock, title, subtitle = NULL) {
     ggplot2::labs(
       title = title, subtitle = subtitle,
       x = "Months after shock", y = "Response",
-      colour = NULL, linetype = NULL
+      colour = NULL, linetype = NULL,
+      caption = unbounded_caption(data, "Method")
     ) +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(

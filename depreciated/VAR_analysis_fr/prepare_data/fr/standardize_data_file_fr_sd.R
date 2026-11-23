@@ -8,7 +8,7 @@ library(ggplot2)
 library(lubridate)
 library(purrr)
 
-var_path <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output"
+var_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output"
 setwd(var_path)
 
 VAR_series <- read_parquet("VAR_series_fr_2026.parquet")
@@ -16,7 +16,7 @@ VAR_series <- read_parquet("VAR_series_fr_2026.parquet")
 colnames(VAR_series)
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/fr")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/fr")
 price_indispo_merge <- read_parquet("price_indispo_merge_fr.parquet")
 
 colnames(price_indispo_merge)
@@ -43,7 +43,7 @@ IV_data <- merge(VAR_series, monthly_VAR_data , by= c('month', 'year'))%>%
   arrange(last_Date)
 tail(IV_data)
 
-save_var_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_var_path)
 write_parquet(IV_data, 'IV_data_fr_new.parquet')
 

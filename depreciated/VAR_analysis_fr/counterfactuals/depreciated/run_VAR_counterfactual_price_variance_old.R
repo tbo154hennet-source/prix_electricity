@@ -1,13 +1,13 @@
 
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 source("auxiliary_irf_plot.R")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data_log_esp <- read_parquet( 'IV_data_esp_log_elas_sd_2026_pc.parquet')
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data <- read_parquet('IV_data_esp_elas_sd_2026.parquet')%>%
   mutate(across(contains("spot"), ~ . / HICP*100 )) %>% 
@@ -15,7 +15,7 @@ IV_data <- read_parquet('IV_data_esp_elas_sd_2026.parquet')%>%
   filter(observation_date <= as.Date("2025-09-01") ) 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 #pred_post_df <- read_parquet( "prediction_gas_price_counterfactual_2022.parquet")
 price_var_counterfactual <- read_parquet("price_variance_counterfactual_esp_ter.parquet")
 
@@ -308,7 +308,7 @@ for (i in 1:nboot) {
 }
 
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(boot_counterfactual_IPI, "boot_counterfactual_IPI_wind.csv")
 write.csv(boot_counterfactual_spot, "boot_counterfactual_spot_wind.csv")
 

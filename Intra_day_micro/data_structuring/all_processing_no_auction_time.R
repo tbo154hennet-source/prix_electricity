@@ -1,5 +1,5 @@
 
-save_path_OMIE_all_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_all_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_all_output)
 getwd()
 long_format_indispo <- read_parquet('long_format_indispo_OMIE_all.parquet') %>% 
@@ -36,7 +36,7 @@ long_format_indispo_uneffective <- read_parquet('long_format_indispo_uneffective
 long_format_indispo_uneffective_nuclear <- read_parquet('long_format_indispo_nuclear_uneffective_OMIE_all.parquet') %>%
   filter(in_auction_time == 0)
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 rf_predictions_data <- read_parquet('xgb_predictions_data_OMIE_all.parquet')
 
@@ -157,7 +157,7 @@ tot_publi_OMIE_without_auction <- tot_publi_OMIE_without_auction %>%
   )
 
 getwd()
-save_path_OMIE_all_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_all_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_all_output)
 write_parquet(tot_publi_OMIE_without_auction, 'tot_publi_OMIE_without_auction_time.parquet')
 

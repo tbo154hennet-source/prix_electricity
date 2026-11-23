@@ -1,6 +1,6 @@
 
 library(stringr)
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 price_merge_CBF_max <- read_parquet("final_price_merge_CBF_tot.parquet")
 
@@ -167,8 +167,9 @@ flow <- "NET_FLOW_ES_FR"
 # Loop through each NET_FLOW column
 for (flow in net_flow_col) {
   print(flow)
-  # Collapse predictors into a string: gen columns + renew columns
-  predictors <- paste(c(gen_col, renew_col), collapse = " + ")
+  # Exogenous predictors only: day-ahead renewable forecasts (the day-ahead
+  # total-generation forecasts gen_tot_da_* reflect auction schedules).
+  predictors <- paste(renew_col, collapse = " + ")
 
   # Create the formula: flow ~ predictors
   formula <- as.formula(paste(flow, "~", predictors, "+ as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau)"))
@@ -318,7 +319,7 @@ cat("R² Linear model (saturated):", round(r2lin_cap_sat, 4), "\n")
 colnames(price_merge_CBF_max)
 getwd()
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF_max$year <- as.numeric(as.character(price_merge_CBF_max$year))
 price_merge_CBF_max$month <- as.numeric(as.character(price_merge_CBF_max$month))
 price_merge_CBF_max$creneau <- as.numeric(as.character(price_merge_CBF_max$creneau))
@@ -328,7 +329,7 @@ write_parquet(price_merge_CBF_max,
               "price_merge_CBF_max.parquet")
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF_max <- read_parquet("price_merge_CBF_max.parquet")
 #plot the series at the monthly level
 #show how well I predict net cross border flows

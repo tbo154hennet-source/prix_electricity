@@ -1,7 +1,7 @@
 library(ggplot2)
 library(ggpubr)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 df_clean_no_lag <-  read.csv( "df_clean_da.csv")
 df_clean_lag <-  read.csv( "df_clean_da_seminar.csv")
 #df_clean_lag_no_unavail <-  read.csv( "df_clean_da_seminar_no_unavail.csv")
@@ -155,7 +155,7 @@ my_elas
 
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/intra_day"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/intra_day"
 setwd(save_latex_path)
 ggsave(my_elas,
        filename = "elasticity_check_lag_no_unavail.png" , width = 12, height = 6, dpi = 300)

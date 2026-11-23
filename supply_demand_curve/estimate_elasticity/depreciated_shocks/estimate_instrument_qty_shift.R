@@ -10,7 +10,7 @@ library(lubridate)
 library(ggplot2)
 library(purrr)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 instruments <- c("renewable_day_ahead_forecast",
                  #"Published.Unavailable.Nuclear.Capacity"
                  "cbf_es",
@@ -32,7 +32,7 @@ names_instruments <- c("renewable_day_ahead_forecast",
                        "heat_excess_demand",
                        "Published.Predicted.Unavailable.Capacity")
 
-save_path_data <- "Z:/prix_electricite_gitlab/day_ahead/outputs/esp"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp"
 setwd(save_path_data)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_NTC.parquet")
 price_indispo_merge <- price_indispo_merge %>%
@@ -75,7 +75,7 @@ price_indispo_merge <- price_indispo_merge %>%
 price_indispo_merge <- price_indispo_merge[!rowSums(sapply(price_indispo_merge, is.infinite)), ]
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_supply_unmatched_predicted_indispo <- readRDS("reg_shift_result_qty_supply_unmatched_sparse_predicted_indispo_variation.rds")
 coef_supply_unmatched_predicted_indispo_data <- rbindlist(coef_supply_unmatched_predicted_indispo)
 #coef_supply_unmatched_data_ins <- coef_supply_unmatched_data[coef_supply_unmatched_data$variable %in% names_instruments,]
@@ -190,7 +190,7 @@ colnames(delta_q_matrix) <- c(paste0("delta_s_", instruments), paste0("delta_d_"
 
 # Ajouter au dataframe
 price_indispo_merge_delta <- bind_cols(price_indispo_merge, as.data.frame(delta_q_matrix))
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 write_parquet(price_indispo_merge_delta, "price_indispo_merge_delta_supply_demand.parquet")
 
 

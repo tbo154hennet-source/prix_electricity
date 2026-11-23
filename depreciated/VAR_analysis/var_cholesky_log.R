@@ -52,7 +52,7 @@ dimnames(cholesky_lambda_log ) <- list(
 cholesky_lambda_log[,,1,] <- irf_lower_bound[,,1:2]
 cholesky_lambda_log[,,2,] <- irf_upper_bound[,,1:2]
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output/plot_irfs'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/plot_irfs'
 setwd(save_rds_path)
 saveRDS(irf_main, "irf_main.rds")
 saveRDS(cholesky_lambda_log, "cholesky_lambda_log.rds")

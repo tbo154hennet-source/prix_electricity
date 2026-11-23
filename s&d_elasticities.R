@@ -1,11 +1,11 @@
 library(vars)
-source_path <- 'Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/auxiliary'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/depreciated/VAR_analysis_fr/auxiliary'
 setwd(source_path)
 list.files()
 source("auxiliary_control_bis.R")
 source("bootstrap_auxiliary_control_ter.R")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/depreciated/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 list.files()
 IV_data_log <- read_parquet('IV_data_esp_log.parquet')

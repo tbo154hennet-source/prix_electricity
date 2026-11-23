@@ -435,13 +435,38 @@ gas_supply_electricity_path <- function(supply, gas_supply) {
   reconstructed_price_irf <- causal_filter(
     supply_price_irf, equivalent_supply_irf
   )
+  price_irf_reconstruction_error <- max(abs(
+    reconstructed_price_irf - gas_price_irf
+  ))
+  max_abs_reconstruction_error <- max(abs(
+    total_hd - via_electricity_hd - direct_gas_hd
+  ))
+  equivalent_supply_shocks <- causal_filter(equivalent_supply_irf, gas_shocks)
+  # The recursion inverts the electricity-supply price IRF. It diverges when
+  # that IRF is not minimum phase (e.g. the price response keeps rising after
+  # impact): the split is then not identified and is not reported, only the
+  # gas-supply total is.
+  # Threshold 10: beyond, the inversion is close to divergence and the two channels are offsetting
+  # magnitudes many times the gas-supply total (benchmark proxy SVAR, max equivalent shock 23).
+  stable <- max(abs(equivalent_supply_irf)) <= 10
+  if (!stable) {
+    warning(
+      "Gas-supply path decomposition diverges (max |equivalent electricity-",
+      "supply shock| = ", signif(max(abs(equivalent_supply_irf)), 3),
+      "); only the gas-supply total is reported."
+    )
+    via_electricity_irf[] <- NA_real_
+    direct_gas_irf[] <- NA_real_
+    via_electricity_hd[] <- NA_real_
+    direct_gas_hd[] <- NA_real_
+    equivalent_supply_shocks[] <- NA_real_
+  }
   list(
+    stable = stable,
     gas_irf = gas_irf,
     supply_irf = supply_irf,
     equivalent_supply_irf = equivalent_supply_irf,
-    equivalent_supply_shocks = causal_filter(
-      equivalent_supply_irf, gas_shocks
-    ),
+    equivalent_supply_shocks = equivalent_supply_shocks,
     via_electricity_irf = irf_matrix_to_long(
       via_electricity_irf, "Gas supply", "Via electricity market"
     ),
@@ -452,12 +477,8 @@ gas_supply_electricity_path <- function(supply, gas_supply) {
     via_electricity_hd = via_electricity_hd,
     direct_gas_hd = direct_gas_hd,
     without_electricity_hd = direct_gas_hd,
-    price_irf_reconstruction_error = max(abs(
-      reconstructed_price_irf - gas_price_irf
-    )),
-    max_abs_reconstruction_error = max(abs(
-      total_hd - via_electricity_hd - direct_gas_hd
-    ))
+    price_irf_reconstruction_error = price_irf_reconstruction_error,
+    max_abs_reconstruction_error = max_abs_reconstruction_error
   )
 }
 historical_decomposition_long <- function(decomposition) {
@@ -502,6 +523,22 @@ combine_extended_gas_channel_hd <- function(supply, demand, gas_path) {
     stop("Supply and demand models must use the same dates.")
   }
   common_variables <- intersect(supply$variables, demand$variables)
+  if (!gas_path$stable) {
+    hd <- array(
+      NA_real_,
+      dim = c(length(supply$dates), length(common_variables), 3L),
+      dimnames = list(
+        NULL, common_variables,
+        c("Electricity supply", "Electricity demand", "Gas supply")
+      )
+    )
+    hd[, , "Electricity supply"] <-
+      supply$hd[, common_variables, 1, drop = FALSE][, , 1]
+    hd[, , "Electricity demand"] <-
+      demand$hd[, common_variables, 1, drop = FALSE][, , 1]
+    hd[, , "Gas supply"] <- gas_path$total_hd[, common_variables, drop = FALSE]
+    return(list(hd = hd, dates = supply$dates, variables = common_variables))
+  }
   hd <- array(
     NA_real_,
     dim = c(length(supply$dates), length(common_variables), 4L),
@@ -558,21 +595,25 @@ energy_contribution_table <- function(supply, demand, gas_supply, gas_path,
   gas_total <- gas_supply$hd[, common_variables, 1, drop = FALSE][, , 1]
   gas_via_electricity <- gas_path$via_electricity_hd[, common_variables, drop = FALSE]
   gas_direct <- gas_path$direct_gas_hd[, common_variables, drop = FALSE]
+  split <- isTRUE(gas_path$stable)
+  shock_names <- c(
+    "Gas supply",
+    if (split) c(
+      "of which: direct gas effect",
+      "of which: gas supply via electricity price"
+    ),
+    "Electricity supply", "Electricity demand"
+  )
   components <- array(
     NA_real_,
-    dim = c(nrow(electricity_supply), length(common_variables), 5L),
-    dimnames = list(
-      NULL, common_variables,
-      c(
-        "Gas supply", "of which: direct gas effect",
-        "of which: gas supply via electricity price",
-        "Electricity supply", "Electricity demand"
-      )
-    )
+    dim = c(nrow(electricity_supply), length(common_variables), length(shock_names)),
+    dimnames = list(NULL, common_variables, shock_names)
   )
   components[, , "Gas supply"] <- gas_total
-  components[, , "of which: direct gas effect"] <- gas_direct
-  components[, , "of which: gas supply via electricity price"] <- gas_via_electricity
+  if (split) {
+    components[, , "of which: direct gas effect"] <- gas_direct
+    components[, , "of which: gas supply via electricity price"] <- gas_via_electricity
+  }
   components[, , "Electricity supply"] <- electricity_supply
   components[, , "Electricity demand"] <- electricity_demand
   decomposition <- list(
@@ -598,8 +639,8 @@ energy_contribution_table <- function(supply, demand, gas_supply, gas_path,
       row
     }
     gas <- get_row("Gas supply")
-    direct <- get_row("of which: direct gas effect")
-    via <- get_row("of which: gas supply via electricity price")
+    direct <- if (split) get_row("of which: direct gas effect")
+    via <- if (split) get_row("of which: gas supply via electricity price")
     elec_supply <- get_row("Electricity supply")
     elec_demand <- get_row("Electricity demand")
     observed <- gas
@@ -633,15 +674,17 @@ energy_contribution_table <- function(supply, demand, gas_supply, gas_path,
       other$Share_of_cumulative_inflation_percent
     observed$Shock <- "Observed inflation"
     gas$Shock <- "Gas supply"
-    direct$Shock <- "of which: direct effect"
-    via$Shock <- "of which: transit through electricity"
+    if (split) {
+      direct$Shock <- "of which: direct effect"
+      via$Shock <- "of which: transit through electricity"
+    }
     elec_supply$Shock <- "Electricity supply"
     elec_demand$Shock <- "Electricity demand"
     other$Shock <- "Other/unidentified factors"
     result <- dplyr::bind_rows(
       observed, gas, direct, via, elec_supply, elec_demand, other
     )
-    result$Hierarchy_level <- c(0L, 1L, 2L, 2L, 1L, 1L, 1L)
+    result$Hierarchy_level <- c(0L, 1L, if (split) c(2L, 2L), 1L, 1L, 1L)
     result
   })
   dplyr::bind_rows(rows)
@@ -848,6 +891,11 @@ export_combined_three_shock_contributions <- function(
       command("midrule")
     )
     for (layout in row_layout) {
+      # Gas-channel split rows are absent when the decomposition diverges.
+      if (is.null(layout$electricity) &&
+          !any(energy_episode$Shock == layout$energy)) {
+        next
+      }
       electricity_row <- if (is.null(layout$electricity)) {
         NULL
       } else {
@@ -996,7 +1044,8 @@ run_spain_contributions <- function(supply, demand, gas_supply, cfg,
         "Equivalent electricity-supply shock minimum over IRF horizon",
         "Equivalent electricity-supply shock maximum over IRF horizon",
         "Gas-induced electricity-price IRF: max reconstruction error",
-        "Gas total = via electricity + direct gas: max HD error"
+        "Gas total = via electricity + direct gas: max HD error",
+        "Split reported (max |equivalent shock| <= 10)"
       ),
       Value = c(
         gas_supply$theta["spot_gas_log", 1],
@@ -1005,7 +1054,8 @@ run_spain_contributions <- function(supply, demand, gas_supply, cfg,
         min(gas_path$equivalent_supply_irf),
         max(gas_path$equivalent_supply_irf),
         gas_path$price_irf_reconstruction_error,
-        gas_path$max_abs_reconstruction_error
+        gas_path$max_abs_reconstruction_error,
+        as.numeric(gas_path$stable)
       )
     ),
     cfg, "gas_supply_path_decomposition_diagnostics.csv"

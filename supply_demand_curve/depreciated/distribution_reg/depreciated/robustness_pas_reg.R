@@ -1,4 +1,4 @@
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 
 # Convert to data.table if not already
@@ -24,7 +24,7 @@ reconstruct_full_curve_shift_qty_demand_matched_local <- merge(
 
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 
 # Convert to data.table if not already
@@ -118,7 +118,7 @@ local_slopes_demand_20 <- reconstruct_full_curve_shift_qty_demand_matched_local_
   by = .(DATE, Hour)
 ]
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 write_parquet(local_slopes_demand_20, "local_slopes_demand_20.parquet")
 
 

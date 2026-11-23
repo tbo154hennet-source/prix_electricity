@@ -44,18 +44,18 @@ load_batches <- function(folder) {
   return(dt)
 }
 
-wind_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/wind_batches")%>% 
+wind_dt <- load_batches("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs/wind_batches")%>% 
   arrange(date)
 
 
-solar_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_batches")%>% 
+solar_dt <- load_batches("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_batches")%>% 
   arrange(date)
 
 tail(wind_dt)
 
 #il faut weight les points selon les capacity 
 # Définir le répertoire de travail
-setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 df_wind_spain_big <- read.csv("df_wind_spain_big.csv")%>% 
   dplyr::select(generation_gwh_avg, efficiency, capacity_mw, latitude, longitude, name, gppd_idnr)
 
@@ -170,7 +170,7 @@ tail(wind_solar_data, 10)
 wind_solar_data_test <- tail(wind_solar_data, 100)
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(wind_solar_data, "wind_solar_data.parquet")
 
 

@@ -1,6 +1,6 @@
 
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 
 actual_OMIE_indispo <- read_parquet('actual_OMIE_indispo.parquet') %>% 
@@ -102,7 +102,7 @@ long_format_indispo <-  bind_rows(result_list) %>%    group_by(electricity_deliv
 
 
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_indispo, 'long_format_indispo_OMIE.parquet')
@@ -117,7 +117,7 @@ final_publi_OMIE_indispo <- long_format_indispo %>%
   ) %>%
   ungroup()
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 write_parquet(final_publi_OMIE_indispo, 'final_publi_OMIE_indispo.parquet')
 
@@ -150,7 +150,7 @@ result_list <- lapply(seq_len(nrow(non_duplicated_indispo_nuclear)), function(i)
 # Conversion finale en dataframe
 long_format_indispo_nuclear <-  bind_rows(result_list) %>%    group_by(electricity_delivery_date, creneau, production_resource_psr_name, auction_before, Unavailable.Capacity) %>%     arrange(desc(datetime_pub)) %>%    slice_head(n=1)
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_indispo_nuclear, 'long_format_nuclear_indispo_OMIE.parquet')
@@ -165,7 +165,7 @@ final_publi_nuclear_OMIE_indispo <- long_format_indispo_nuclear %>%
             Available.Capacity = sum(as.numeric(Available.Capacity))) %>%
   ungroup()
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 write_parquet(final_publi_nuclear_OMIE_indispo, 'final_publi_nuclear_OMIE_indispo_OMIE.parquet')
 
@@ -175,7 +175,7 @@ write_parquet(final_publi_nuclear_OMIE_indispo, 'final_publi_nuclear_OMIE_indisp
 #theoretical and non published
 
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 actual_OMIE_indispo_theoretical <- read_parquet('actual_OMIE_indispo_theoretical.parquet') %>% 
   filter(as.numeric(first_affec_tim_period) < as.numeric(last_affec_tim_period)) %>%
@@ -212,7 +212,7 @@ length(result_list)
 flat_result_list <- unlist(result_list, recursive = FALSE)
 long_format_indispo_theoretical <- bind_rows(flat_result_list)
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_indispo_theoretical, 'long_format_indispo_theoretical_OMIE.parquet')
@@ -228,7 +228,7 @@ final_publi_OMIE_indispo <- long_format_indispo_theoretical %>%
             Available.Capacity = sum(as.numeric(Available.Capacity))) %>%
   ungroup()
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 write_parquet(final_publi_OMIE_indispo, 'final_publi_OMIE_indispo_theoretical.parquet')
 
@@ -258,7 +258,7 @@ result_list <- lapply(seq_len(nrow(non_duplicated_indispo_nuclear_theoretical)),
 # Conversion finale en dataframe
 long_format_indispo_nuclear_theoretical <-  bind_rows(result_list) %>%    group_by(electricity_delivery_date, creneau, production_resource_psr_name, auction_before, Unavailable.Capacity) %>%     arrange(desc(datetime_pub)) %>%    slice_head(n=1)
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_indispo_nuclear_theoretical, 'long_format_nuclear_indispo_theoretical_OMIE.parquet')
@@ -273,7 +273,7 @@ final_publi_nuclear_OMIE_indispo <- long_format_indispo_nuclear_theoretical %>%
             Available.Capacity = sum(as.numeric(Available.Capacity))) %>%
   ungroup()
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 write_parquet(final_publi_nuclear_OMIE_indispo, 'final_publi_nuclear_OMIE_indispo_theoretical.parquet')
 
@@ -282,7 +282,7 @@ write_parquet(final_publi_nuclear_OMIE_indispo, 'final_publi_nuclear_OMIE_indisp
 
 
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 long_format_indispo <-  read_parquet( 'long_format_indispo_OMIE.parquet')
@@ -324,13 +324,13 @@ final_not_publi_OMIE_indispo <- long_format_indispo_non_published  %>%
             Unavailable.Capacity = sum(as.numeric(Unavailable.Capacity)),             Available.Capacity = sum(as.numeric(Available.Capacity))) %>%
   ungroup()
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_indispo_non_published , 'long_format_indispo_non_published_OMIE.parquet')
 
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 
 write_parquet(final_not_publi_OMIE_indispo, 'final_not_publi_OMIE_indispo.parquet')
@@ -340,7 +340,7 @@ write_parquet(final_not_publi_OMIE_indispo, 'final_not_publi_OMIE_indispo.parque
 
 
 # Définir le chemin de sauvegarde
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 
@@ -376,19 +376,19 @@ final_not_publi_OMIE_nuclear <- long_format_nuclear_non_published %>%
   ungroup()
 
 # Sauvegarder les résultats
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_nuclear_non_published, 'long_format_nuclear_non_published_OMIE.parquet')
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 
 write_parquet(final_not_publi_OMIE_nuclear, 'final_not_publi_OMIE_nuclear.parquet')
 
 
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 
 non_duplicated_indispo <- non_duplicated_indispo %>%
@@ -472,7 +472,7 @@ result_list <- lapply(seq_len(nrow(non_duplicated_indispo_tot)), function(i) {
 uneffective_indispo <- do.call(bind_rows, result_list)
 
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 
 write_parquet(uneffective_indispo, 'uneffective_indispo_OMIE.parquet')
@@ -502,7 +502,7 @@ result_list <- lapply(seq_len(nrow(uneffective_indispo)), function(i) {
 # Conversion finale en dataframe
 long_format_indispo_uneffective <-  bind_rows(result_list) %>%    group_by(electricity_delivery_date, creneau, production_resource_psr_name, auction_before, Unavailable.Capacity) %>%     arrange(desc(datetime_pub)) %>%    slice_head(n=1)
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_indispo_uneffective, 'long_format_indispo_uneffective_OMIE.parquet')
@@ -516,7 +516,7 @@ final_uneffective_OMIE_indispo <- long_format_indispo_uneffective %>%
             Available.Capacity = sum(as.numeric(Available.Capacity))) %>%
   ungroup()
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 write_parquet(final_uneffective_OMIE_indispo, 'final_uneffective_OMIE_indispo.parquet')
 
@@ -543,7 +543,7 @@ result_list <- lapply(seq_len(nrow(uneffective_indispo_nuclear)), function(i) {
 # Conversion finale en dataframe
 long_format_indispo_nuclear_uneffective <-  bind_rows(result_list) %>%    group_by(electricity_delivery_date, creneau, production_resource_psr_name, auction_before, Unavailable.Capacity) %>%     arrange(desc(datetime_pub)) %>%    slice_head(n=1)
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_OMIE_output)
 
 write_parquet(long_format_indispo_nuclear_uneffective, 'long_format_indispo_nuclear_uneffective_OMIE.parquet')
@@ -557,7 +557,7 @@ final_uneffective_nuclear_OMIE_indispo <- long_format_indispo_nuclear %>%
             Available.Capacity = sum(as.numeric(Available.Capacity))) %>%
   ungroup()
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/final/OMIE'
 setwd(save_path_OMIE_output)
 write_parquet(final_uneffective_nuclear_OMIE_indispo, 'final_uneffective_nuclear_OMIE_indispo.parquet')
 

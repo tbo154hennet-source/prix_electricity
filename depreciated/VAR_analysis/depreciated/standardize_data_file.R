@@ -9,7 +9,7 @@ library(estimatr)
 
 
 Sys.setenv(lang = "en_US")
-save_path_fr <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_path_fr <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 setwd(save_path_fr)
 
 monthly_indispo <- read_parquet('monthly_indispo.parquet')
@@ -18,7 +18,7 @@ price_renew_final <- read_parquet( 'price_renew.parquet')
 macro_data <- read_parquet( 'macro_data_monthly_index.parquet')
 temperature_data <- read.csv("temperature_instrument.csv")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 surprise_serie<- read_parquet("surprise_serie.parquet") %>% 
   rename(abs_shock = shock, relative_shock = Delta)
@@ -83,7 +83,7 @@ colnames(IV_data)
 write_parquet(IV_data, 'low_freq_data.parquet')
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 IV_data <- read_parquet('low_freq_data.parquet')
 # meme chose pour IV demand

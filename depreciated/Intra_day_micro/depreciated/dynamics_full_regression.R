@@ -3,7 +3,7 @@ library(stringr)
 decalage = 0
 table_coefficients_predicted <- NULL
 
-save_path_OMIE_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_OMIE_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_OMIE_output)
 price_diff_data <- read_parquet('price_diff_data.parquet')
 

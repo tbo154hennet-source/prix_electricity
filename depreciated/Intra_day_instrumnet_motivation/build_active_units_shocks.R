@@ -111,7 +111,7 @@ corres$name <- gsub("\\?\\?", "Ñ", corres$name)
 # ou je n'ai pas encore tout aggrege en sommant les indispos
 # utiliser read_IPP_plant_suite
 
-save_path_esp <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
 setwd(save_path_esp)
 
 
@@ -340,7 +340,7 @@ updated_final_indispo <- updated_non_duplicated_indispo %>%
             centrale_unavailability = sum(as.numeric(centrale_unavailability))) %>%
   ungroup()
 
-save_path_esp <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
+save_path_esp <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/outputs'
 setwd(save_path_esp)
 
 

@@ -358,7 +358,7 @@ price_merge_CBF <- read_parquet("price_merge_CBF_max.parquet")
 colnames(price_merge_CBF)
 crossborder_data <- price_merge_CBF %>% 
   filter(gen_tot_fr > 0 & gen_tot_esp > 0) %>%
-  summarise(NTC_ES_FR = NTC_ES_FR,
+  transmute(NTC_ES_FR = NTC_ES_FR,
             NTC_FR_ES = NTC_FR_ES,
             NTC_ES_PT = NTC_ES_PT,
             NTC_PT_ES = NTC_PT_ES,

@@ -167,8 +167,9 @@ flow <- "NET_FLOW_ES_FR"
 # Loop through each NET_FLOW column
 for (flow in net_flow_col) {
   print(flow)
-  # Collapse predictors into a string: gen columns + renew columns
-  predictors <- paste(c(gen_col, renew_col), collapse = " + ")
+  # Exogenous predictors only: day-ahead renewable forecasts (the day-ahead
+  # total-generation forecasts gen_tot_da_* reflect auction schedules).
+  predictors <- paste(renew_col, collapse = " + ")
 
   # Create the formula: flow ~ predictors
   formula <- as.formula(paste(flow, "~", predictors, "+ as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau)"))

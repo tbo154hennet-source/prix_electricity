@@ -157,7 +157,7 @@ plot_shift_with_hist(coef_data = coef_supply_unmatched_data,
 
 price_grid <- seq(-200, 1000, length.out = 1001)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 list.files()
 coef_supply_unmatched_qty <- readRDS("reg_shift_result_qty_supply_unmatched.rds")
 coef_supply_unmatched_qty_data <- rbindlist(coef_supply_unmatched_qty)

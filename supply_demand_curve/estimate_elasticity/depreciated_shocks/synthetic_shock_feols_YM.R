@@ -1,7 +1,7 @@
 
 
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # Sauvegarder
 price_indispo_merge_esp_npc_YM <- read_parquet("price_indispo_merge_esp_npc_no_cbf_YM.parquet")
 
@@ -384,7 +384,7 @@ coef_table_feols_YM
 getwd()
 write.csv(coef_table_feols_YM, "coef_table_feols_YM.csv")
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_table_feols_YM <- read.csv( "coef_table_feols_YM.csv")
 
 coef_table_wide_feols_YM <- coef_table_feols_YM %>%

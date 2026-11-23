@@ -68,7 +68,7 @@ irf_cholesky <- irf(vl, impulse = colnames(x), response = colnames(x),
 cum_irfs_all <- lapply(irf_cholesky$irf, function(mat) apply(mat, 2, cumsum))
 
 #plot(irf_cholesky)
-# save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
+# save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds'
 # setwd(save_rds_path)
 # saveRDS(irf_cholesky, file = "irf_cholesky_fr.rds")
 
@@ -241,7 +241,7 @@ apply(historical_decomp_iv_tibo, c(2,3), function(x) cumsum(x))
 # historical_decomp_extended[,,1:n_vars] <- hd_cholesky
 # historical_decomp_extended[,,(n_vars +1)] <- hd_controls
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
 setwd(save_rds_path_hd)
 saveRDS(historical_decomp_iv_tibo, "hd_iv_4v_fr.rds")
 saveRDS(hd_cholesky, "hd_chol_4v_fr.rds")

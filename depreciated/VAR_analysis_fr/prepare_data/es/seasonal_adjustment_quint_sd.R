@@ -7,7 +7,7 @@ library(arrow)
 library(purrr)
 Sys.setenv(lang = "en_US")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 IV_data <- read_parquet('IV_data_esp_elas_sd_2026.parquet') 
 
@@ -99,7 +99,7 @@ for (var in colnames(IV_data)) {
 getwd()
 seasonally_adjusted_df <- as.data.frame(adjusted_data)
 seasonally_adjusted_df$observation_date <- as.Date(IV_data$observation_date)
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(seasonally_adjusted_df, "DATASET_levels_sa.csv")
 
 

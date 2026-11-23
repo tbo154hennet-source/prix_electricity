@@ -35,7 +35,7 @@ generation_by_fuel <- read_parquet('generation_by_fuel_format.parquet')
 
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/long_format'
 setwd(save_path_entsoe_output)
 long_format_indispo_credible <- read_parquet('long_format_indispo_credible.parquet')
 long_format_indispo_nuclear_credible <- read_parquet('long_format_nuclear_indispo_credible.parquet')
@@ -165,7 +165,7 @@ for (centrale in centrales){
 
 
 getwd()
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'rf_predictions_data.parquet')
 
@@ -203,7 +203,7 @@ ggplot(data = real_indispo_rf %>%
   theme_minimal()
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(real_indispo_rf, 'real_indispo_rf.parquet')
 

@@ -34,6 +34,87 @@ en cache dans output/models. Variables d’environnement utiles :
 - VAR_GAS_SUPPLY_SHOCKS : chemin du classeur GasSupplyShocks.xlsx ; la feuille
   2025update est utilisée comme instrument externe Alessandri-Gazzani.
 
+## Échantillon espagnol
+
+Le VAR espagnol est estimé sur 2010-01 à 2025-09
+(data/IV_data_esp_log_elas_sd_2010.parquet). Les sept variables du VAR sont
+prolongées avant 2015 par des sources publiques raccordées par ratio sur
+2015-2016 : prix OMIE, demande et production REE, IPI INE, HICP et taux BCE
+(FRED), gaz TTF et, avant 2012, indice gaz Europe du FMI. Elles sont ensuite
+désaisonnalisées (X-13) sur toute la période. Le fichier est produit dans le
+dépôt source par Data_structuring/spain_var_backfill/build_spain_var_2010.R.
+
+Les instruments micro ne sont observés qu’à partir de 2015-01 et valent NA
+avant. Ils valent 0 dans les moments sum(z_t u_t), où ces mois n’ajoutent rien,
+de sorte que la normalisation theta = Gamma / Gamma_norm est celle des mois
+observés ; premières étapes, F de relevance et centrages n’utilisent que les
+mois observés. Le contrefactuel éolien 2030 et ses ratios d’écart-type portent
+sur 2015-2025, période du scénario micro.
+
+## Identification centrale : SVAR bayésien à élasticités (étape `elasticity`)
+
+Le module `R/09_elasticity_svar.R` identifie les chocs d'offre et de demande
+d'électricité sans restriction de signe sur les réponses et sans a priori sur
+la valeur des pentes :
+
+- forme réduite : a priori Minnesota + sum-of-coefficients + single-unit-root,
+  hyperparamètres au mode a posteriori de la vraisemblance marginale
+  (Giannone, Lenza et Primiceri, 2015) ;
+- bloc électrique sur les innovations prix/charge, nettes de l'innovation gaz
+  (TTF exogène dans le mois) : courbe d'offre de pente eps_s, courbe de
+  demande de pente eps_d, chocs orthogonaux (Baumeister et Hamilton) ;
+- seuls les signes eps_s > 0 et eps_d < 0 sont imposés (eps_s tiré sur
+  [0,01 ; 1,5]) ;
+- proxies physiques mensuels (`attach_physical_proxies`), construits
+  directement au pas du VAR (anomalies : résidus sur indicatrices de mois
+  calendaire et tendance) :
+  - offre (`phys_supply`) : énergie non fossile disponible = anomalies
+    standardisées du vent réalisé à 100 m et des précipitations cumulées sur
+    6 mois (hydraulicité), orthogonalisées sur les anomalies de froid et de
+    chaleur ;
+  - demande (`phys_demand`) : anomalie des degrés-jours d'inconfort
+    (`cold_excess` + `heat_excess`), orthogonalisée sur le vent et
+    l'hydraulicité.
+  Comme dans un proxy-SVAR à deux proxies, ils entrent dans la vraisemblance
+  par deux restrictions d'exclusion.
+
+Les élasticités micro servent de validation : les pentes implicites des
+proxies au premier stage (eps_d = -0,038 pour l'offre, eps_s = 0,236 pour la
+demande) retrouvent l'élasticité horaire de l'offre (0,237) et l'élasticité
+journalière de la demande (-0,04).
+
+Robustesses présentées :
+- `*_elasticity_benchmark.png` : mêmes proxies avec a priori sur les pentes
+  (eps_s ~ N(0,20 ; 0,04), eps_d ~ N(-0,04 ; 0,03)) ; ancienne spécification
+  centrale (shifts synthétiques horaires agrégés à la Kilian + a priori) et sa
+  version sans a priori ;
+- `*_elasticity_robustness_identification.png` : a priori VAR diffus,
+  innovations non nettes du gaz, a priori sur les pentes, Mertens-Ravn appliqué
+  à chaque tirage a posteriori (proxies physiques + élasticité micro de
+  demande ; médiane seule, bandes trop larges) ;
+- `*_elasticity_robustness_proxies.png` : proxies résidualisés sur les retards
+  du VAR (exogénéité lead-lag), proxy d'offre seul, proxy de demande seul ;
+- `*_elasticity_robustness_temperature.png` : la température déplace aussi
+  l'offre (courbes horaires : froid -161 MW d'offre pour +180 MW de demande).
+  (a) restriction d'exclusion corrigée : cov(z, v_s) = kappa cov(z, v_d), kappa
+  = -0,66 estimé sur les déplacements mensuels des courbes dus à la
+  température (`attach_temperature_shifts`) ; (b) proxy de demande issu des
+  courbes (`curve_demand`), purgé du déplacement d'offre dû à la température ;
+- `*_elasticity_robustness_synthetic.png` : famille des shifts synthétiques
+  (avec et sans a priori, éolien + température, wedge ibérique).
+
+Autres variantes estimées et reportées dans `elasticity_svar_specifications.csv` :
+p = 6, Minnesota seul, a priori d'offre centré sur l'élasticité horaire, sans
+proxy (a priori seuls), shifts synthétiques en niveaux, un seul shift
+synthétique, composante température seule, prévision éolienne seule.
+
+Sorties dans `output/elasticity/` (IRF, tableau des spécifications, validation
+par les proxies, figures benchmark et robustesse, décompositions historiques,
+contributions avec bandes a posteriori, contrefactuels ; le choc gaz
+Alessandri-Gazzani est identifié sur la même forme réduite). Ces sorties sont
+exportées vers Overleaf par défaut (`VAR_ELASTICITY_OVERLEAF=false` pour
+désactiver).
+
 ## Ordre du pipeline
 
 1. Chargement et validation des données mensuelles Espagne et France.
@@ -53,7 +134,7 @@ en cache dans output/models. Variables d’environnement utiles :
    - restriction de courbe de demande appliquée au choc d’offre :
      réponse quantité / réponse prix = élasticité micro ;
    - élasticité-prix de la demande lue automatiquement dans
-     day_ahead/outputs/esp/df_clean_da.csv, ligne IV Demand.
+     supply_demand_curve/estimate_elasticity/outputs/elasticity_standard.csv, ligne Supply sans retard (IV horaire instrumentée par la prévision de vent, pente de la demande).
 8. France :
    - IV vent pour l’offre et température pour la demande ;
    - identification Mertens-Ravn avec la même élasticité micro ;

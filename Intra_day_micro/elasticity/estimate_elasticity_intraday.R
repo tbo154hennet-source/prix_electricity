@@ -1,6 +1,6 @@
 library(data.table)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/code_intraday")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/code_intraday")
 #reconstruct_full_curve_shift_supply <- read_parquet( 'reconstruct_full_curve_shift_qty_intraday_supply_unmatched.parquet')
 reconstruct_full_curve_shift_supply_matched <- as.data.table(read_parquet( 'reconstruct_full_curve_shift_qty_intraday_supply_matched.parquet')
 )
@@ -19,7 +19,7 @@ auction_summary <- reconstruct_full_curve_shift_supply_matched[
 
 write_parquet(auction_summary, 'auction_summary_intraday.parquet')
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/code_intraday")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/code_intraday")
 auction_summary <-  read_parquet( 'auction_summary_intraday.parquet')
 #get day ahead exchanged quantity
 auction_summary <- auction_summary %>%
@@ -34,7 +34,7 @@ View(auction_summary %>%
        filter( DATE == as.Date("2020-03-15") & Hour ==1 ))
 #estimate elasticity
 
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 
@@ -83,7 +83,7 @@ colnames(first_stage_data_clean)
 
 
 
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 
@@ -166,7 +166,7 @@ View(auction_reg_renewable_data  %>%
        dplyr::select(datetime, auction, price_da, price_diff_0to1, price_diff_1to5, price_diff_5))
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs'
 setwd(save_path_entsoe_output)
 write_parquet(auction_reg_renewable_data, "auction_reg_renewable_data.parquet")
 write_parquet(auction_reg_data, "auction_reg_data.parquet")

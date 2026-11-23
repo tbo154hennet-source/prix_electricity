@@ -198,7 +198,7 @@ ne_hd_compare_12
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("ne_hd_12_elec.png", plot = ne_hd_12_elec, width = 8, height = 6, dpi = 300)

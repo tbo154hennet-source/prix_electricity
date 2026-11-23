@@ -29,7 +29,7 @@ make_config <- function(root_dir) {
     data = list(
       spain = file.path(
         root_dir, "VAR_analysis", "data",
-        "IV_data_esp_log_elas_sd_2026.parquet"
+        "IV_data_esp_log_elas_sd_2010.parquet"
       ),
       spain_high_frequency_proxies = file.path(
         root_dir, "supply_demand_curve", "outputs",
@@ -41,7 +41,7 @@ make_config <- function(root_dir) {
         "IV_data_fr_log_elas_sd_2026.parquet"
       ),
       micro_elasticity = file.path(
-        root_dir, "day_ahead", "outputs", "esp", "df_clean_da.csv"
+        root_dir, "supply_demand_curve", "estimate_elasticity", "outputs", "elasticity_standard.csv"
       ),
       spain_counterfactual_proxy = file.path(
         root_dir, "VAR_analysis", "data",
@@ -69,10 +69,36 @@ make_config <- function(root_dir) {
     nw_lags = as.integer(Sys.getenv("VAR_NW_LAGS", "0")),
     mixed_frequency_bootstrap = as.integer(Sys.getenv("VAR_MF_BOOT", "500")),
     use_inference = bool_env("VAR_USE_MSW_INFERENCE", TRUE),
+    # "elasticity": the Bayesian elasticity SVAR is the central specification and exports the
+    # contribution and counterfactual outputs; the proxy-based stages then write locally only.
+    central_identification = Sys.getenv("VAR_CENTRAL", "elasticity"),
     force = bool_env("VAR_FORCE", FALSE),
     seed = as.integer(Sys.getenv("VAR_SEED", "20260914")),
     counterfactual_bootstrap = as.integer(Sys.getenv("VAR_CF_BOOT", "200")),
     counterfactual_block_size = as.integer(Sys.getenv("VAR_CF_BLOCK", "0")),
+    # Central identification: Bayesian SVAR with priors on the electricity curve slopes (09_elasticity_svar.R).
+    elasticity = list(
+      draws = as.integer(Sys.getenv("VAR_ELAS_DRAWS", "2000")),
+      proposals = as.integer(Sys.getenv("VAR_ELAS_PROPOSALS", "400")),
+      proposal_range = c(0.01, 0.70),
+      horizon = as.integer(Sys.getenv("VAR_ELAS_HORIZON", "24")),
+      p_central = 12L,
+      # Supply slope: micro hourly IV 0.237 (s.e. 0.033); daily local projections at 30 days 0.161 (0.034).
+      prior_supply = c(0.20, 0.04),
+      prior_supply_micro = c(0.237, 0.033),
+      # Demand slope: daily local projections, -0.02 to -0.05 between 1 and 30 days.
+      prior_demand = c(-0.04, 0.03),
+      # Synthetic proxies: full hourly supply and demand curve shifts, Kilian-aggregated (two-proxy exclusions).
+      supply_proxy = "k_S_syn_surp",
+      demand_proxy = "k_D_syn_surp",
+      # robustness: temperature component of the demand shift only
+      temperature_proxy = "k_D_block_surp",
+      # benchmark without slope priors: wider support for the supply slope
+      proposal_range_flat = c(0.01, 1.5),
+      # posterior draws kept for the historical decompositions and contribution bands
+      stored_draws = as.integer(Sys.getenv("VAR_ELAS_STORED", "300")),
+      export_overleaf = bool_env("VAR_ELASTICITY_OVERLEAF", TRUE)
+    ),
     wind_capacity_2030_mw = 62000,
     windows = list(
       inflation = as.Date(c("2021-04-01", "2022-09-01")),
@@ -84,6 +110,9 @@ make_config <- function(root_dir) {
     ),
     plot_names = list(
       spain_supply = "supply_msw_main_plot.png",
+      spain_supply_elasticity = "supply_elasticity_main_plot.png",
+      spain_demand_elasticity = "demand_elasticity_main_plot.png",
+      spain_elasticity_slopes = "elasticity_slopes_prior_posterior.png",
       spain_demand = "demand_msw_main_plot.png",
       spain_wind = "supply_msw_wind_plot.png",
       spain_wedge = "supply_msw_wedge_plot.png",

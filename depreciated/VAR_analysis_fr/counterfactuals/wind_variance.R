@@ -4,7 +4,7 @@ library(tidyr)
 library(zoo)
 
 #decrease price unifrmly wothout additional uncertianty at the monthly level
-path = 'Z:/prix_electricite_gitlab'
+path = 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab'
 setwd(path)
 
 installed_generation_capacity <- read.csv('installed_generation_capacity_ES_2015_2025.csv')
@@ -46,7 +46,7 @@ wind_monthly <- monthly_grid %>%
   )
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge <- read_parquet("price_indispo_merge_esp.parquet")
 
 
@@ -203,6 +203,6 @@ labs(title = "Spot Price Stds Over Time",
 theme_minimal()
 
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals/output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/counterfactuals/output")
 write_parquet(all_variance_data, "all_variance_data.parquet")
 

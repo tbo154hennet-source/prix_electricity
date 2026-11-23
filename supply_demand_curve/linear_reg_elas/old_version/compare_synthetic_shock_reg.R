@@ -4,12 +4,12 @@ library(sandwich)
 library(lmtest)
 library(stargazer)
 # Ton dossier d'outputs
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 price_indispo_merge_esp_sd <-read_parquet("price_indispo_merge_esp_npc_no_cbf.parquet")
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_esp_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet") 
 # Sélectionner toutes les colonnes contenant "fitted" et "supply"
 cols_fitted_supply <- grep("fit.*supply", names(price_indispo_merge_esp_sd), value = TRUE)

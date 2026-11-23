@@ -85,7 +85,7 @@ generation_by_fuel_final <- generation_by_fuel %>%
 #   ungroup()
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot")
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/formatted_OMIE")
 write_parquet(generation_by_fuel_final, 'generation_by_fuel_format_esp.parquet')
 
 # setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Generation_tot")
@@ -120,7 +120,7 @@ renewable_forecasts <- renewable_forecasts %>%
 
 save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/Wind_solar_forecast/ES"
 setwd(save_path_data)
-save_path_data <- "Z:/prix_electricite_gitlab"
+save_path_data <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
 setwd(save_path_data)
 write_parquet(renewable_forecasts, 'renewable_forecasts_esp.parquet')
 

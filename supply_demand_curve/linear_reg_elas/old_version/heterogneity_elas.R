@@ -316,7 +316,7 @@ plot_hetero_by_quantile_season
 # 
 # 
 # 
-# save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+# save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 # setwd(save_plot_path)
 # # Assume your ggplot object is called 'p'
 # ggsave("elasticity_price_heterogeneity_linear.png", plot = plot_hetero, width = 12, height = 6, dpi = 300)

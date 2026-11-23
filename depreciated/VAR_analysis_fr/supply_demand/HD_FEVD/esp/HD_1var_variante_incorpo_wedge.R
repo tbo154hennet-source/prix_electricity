@@ -78,7 +78,7 @@ data_IV_incorpo_all %>%
   dplyr::select(all_of(c(  "supply", "demand",  "supply_incorpo"))) %>% 
   cor()
 
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("structural_shocks_simple.png", plot = my_stru_shock_simple , width = 12, height = 6, dpi = 300)
@@ -134,7 +134,7 @@ apply(historical_decomp_iv_tibo, c(2,3), function(x_supply) cumsum(x_supply))
 # historical_decomp_ex_supplytended[,,1:n_vars_supply_incorpo] <- hd_cholesky
 # historical_decomp_ex_supplytended[,,(n_vars_supply_incorpo +1)] <- hd_controls
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var/hd"
 setwd(save_rds_path_hd)
 saveRDS(historical_decomp_iv_tibo, "hd_iv_log_incorpo.rds")
 

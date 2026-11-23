@@ -1,6 +1,6 @@
 
 
-var_path <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output"
+var_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output"
 setwd(var_path)
 
 VAR_series <- read_parquet("VAR_series_esp_2026.parquet")
@@ -8,7 +8,7 @@ VAR_series <- read_parquet("VAR_series_esp_2026.parquet")
 head(VAR_series %>% 
        filter(observation_date >= as.Date("2015-01-01")))
 
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
 
@@ -122,7 +122,7 @@ monthly_energy_data <- price_indispo_merge %>%
 #        dplyr::select(datetime, spot_gas, spot_gas_capped))
 # 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 
 weighted_mean <- function(x, w) {
   sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
@@ -166,7 +166,7 @@ monthly_crossborder_data <- price_merge_CBF %>%
 #monthly_crossborder_data$renewable_forecast_hors_esp
 
 
-# setwd('Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output')
+# setwd('C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output')
 # gas_fundamental_data <- read_parquet("gas_fundamental_data.parquet")
 
 
@@ -196,7 +196,7 @@ monthly_weather_data <- price_indispo_merge %>%
 ### at the macro level use for instrument cooling degree hours and heating degree hours
 ### and use deseasonnalize
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 tempall_data_data <- read_parquet( "tempall_data_data.parquet")
 
 colnames(tempall_data_data)
@@ -257,7 +257,7 @@ IV_data <- merge(IV_data, temp_monthly %>%
 
 
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output'
 setwd(save_var_path)
 write_parquet(IV_data, 'IV_data_esp_elas_sd_2026.parquet')
 dim(IV_data)
@@ -332,7 +332,7 @@ renewable_energy_decomposition <- ggplot(data = plot_data_elec) +
        y = "Prévision (MW)", x = "Date", fill = "Zone") +
   theme_minimal()
 
-save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

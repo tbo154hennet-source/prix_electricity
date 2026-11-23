@@ -51,7 +51,7 @@ From this directory:
 Rscript main.R --check-only
 Rscript main.R --stage=all
 ```
-<!-- cd Z:\prix_electricite_gitlab\replication_package
+<!-- cd C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab\replication_package
 & "C:\INSEE\R\R-4.6.1\bin\Rscript.exe" main.R --stage=all -->
 
 Available stages are `descriptive`, `elasticity`, `intraday`, and `macro`.

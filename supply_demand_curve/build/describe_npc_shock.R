@@ -1,7 +1,7 @@
 library(ggplot2)
 
-input_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs"
-output_dir <- "Z:/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
+input_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs"
+output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 
 setwd(output_dir)
 price_indispo_merge_esp_npc <- read_parquet( "price_indispo_merge_esp_npc_all_final_2026.parquet")
@@ -147,7 +147,7 @@ synthetic_plot <- ggplot(plot_table, aes(x = Instrument, y = Contribution, fill 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 synthetic_plot
 
-save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("describe_synthetic_shocks_npc.png", plot = synthetic_plot, width = 12, height = 6, dpi = 300)

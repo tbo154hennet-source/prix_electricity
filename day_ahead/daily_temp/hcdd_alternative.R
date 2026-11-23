@@ -1,6 +1,6 @@
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 tempall_data_data <- read_parquet( "tempall_data_data.parquet")
 
 colnames(tempall_data_data)

@@ -143,13 +143,13 @@ plot_irf_from_gen_benchmark <- function(solution, irf_cholesky,
 # For Spain
 
 ```{r}
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path)
 irf_cholesky_esp <- readRDS("irf_cholesky_esp_log_diff.rds")
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp.rds")
 
@@ -180,7 +180,7 @@ irf_gen_shock_esp
 
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -190,13 +190,13 @@ ggsave("price_shock_spain.png", plot = irf_price_shock_esp, width = 8, height = 
 ```
 
 ```{r}
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path)
 irf_cholesky_esp <- readRDS("irf_cholesky_esp_mp_gas_log_diff.rds")
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_gas_mp.rds")
 
@@ -232,7 +232,7 @@ irf_gen_shock_esp
 ```
 
 ```{r}
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'
@@ -251,13 +251,13 @@ ggsave("price_shock_spain_mp_gas.png", plot = irf_price_shock_esp, width = 8, he
 
 
 ```{r}
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path)
 irf_cholesky_esp <- readRDS("irf_cholesky_esp_gas_log_diff.rds")
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_gas.rds")
 
@@ -289,13 +289,13 @@ irf_gen_shock_esp
 
 
 ```{r}
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/irf'
 setwd(save_rds_path)
 irf_cholesky_esp <- readRDS("irf_cholesky_esp_log_diff_gas_ins.rds")
 
 
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path)
 gen_benchmark_esp <- readRDS( "gen_benchmark_esp_gas_ins.rds")
 

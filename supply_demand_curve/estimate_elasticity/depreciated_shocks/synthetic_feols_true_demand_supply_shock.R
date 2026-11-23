@@ -1,10 +1,10 @@
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # Sauvegarder
 
 price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_no_CBF.parquet")
 price_indispo_merge_esp_FE <- read_parquet("price_indispo_merge_esp_FE.parquet")
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_esp_delta <- read_parquet("price_indispo_merge_esp_delta_supply_demand_exo.parquet") 
 
 select_fitted <- function(x, type) {
@@ -430,7 +430,7 @@ gt_table_stacked
 
 
 # Chemin où sauvegarder
-save_plot_path <- 'Z:/Overleaf_elec/images/post_seminaire'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/post_seminaire'
 save_file <- file.path(save_plot_path, "gt_table_feols_all.tex")
 
 # Sauvegarder en LaTeX

@@ -3,7 +3,7 @@ library(tseries)  # for adf.test
 library(urca)     # for ur.kpss, ur.df etc.
 
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 IV_data_diff <- read_parquet( 'IV_data_esp_diff.parquet')
 IV_data_log <- read_parquet( 'IV_data_esp_log.parquet')
 

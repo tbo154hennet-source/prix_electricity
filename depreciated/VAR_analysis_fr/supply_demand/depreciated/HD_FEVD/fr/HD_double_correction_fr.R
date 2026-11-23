@@ -68,7 +68,7 @@ structural_shocks_IV_double_bis <- structural_shocks_IV_double[c(2,1), ]
 structural_shocks_IV_double_bis[2,] <- -structural_shocks_IV_double_bis[2,]
 
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/structur_shock"
 setwd(save_rds_path_hd)
 write_parquet(as.data.frame(structural_shocks_IV_double_bis), "structural_shocks_IV_supply_demand_fr.parquet" )
 
@@ -97,7 +97,7 @@ my_stru_shock <- ggplot()+
        y = "Shock Value")
 
 my_stru_shock 
-save_plot_path <- 'Z:/Overleaf_elec/images/macro'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/macro'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("structural_shocks.png", plot = my_stru_shock , width = 12, height = 6, dpi = 300)
@@ -221,7 +221,7 @@ historical_decomp_iv_tibo_double_bis <- historical_decomp_iv_tibo_double_bis[, ,
 # historical_decomp_extended[,,1:n_vars] <- hd_cholesky
 # historical_decomp_extended[,,(n_vars +1)] <- hd_controls
 
-save_rds_path_hd <- "Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
+save_rds_path_hd <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/diff/hd"
 setwd(save_rds_path_hd)
 saveRDS(historical_decomp_iv_tibo_double_bis, "hd_iv_4v_double_bis_fr.rds")
 hd_cholesky_double_bis <- readRDS( "hd_chol_4v_fr.rds")

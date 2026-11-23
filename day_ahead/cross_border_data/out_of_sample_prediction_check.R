@@ -71,7 +71,7 @@ price_merge_CBF_max <- price_merge_CBF_max %>%
   )
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/cross_border")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/cross_border")
 price_merge_CBF_max$year <- as.numeric(as.character(price_merge_CBF_max$year))
 price_merge_CBF_max$month <- as.numeric(as.character(price_merge_CBF_max$month))
 price_merge_CBF_max$creneau <- as.numeric(as.character(price_merge_CBF_max$creneau))
@@ -120,7 +120,7 @@ out_of_sample_pred_countries <- ggplot(price_merge_CBF_max_monthly, aes(x = Date
   theme_minimal()
 out_of_sample_pred_countries
 
-save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 
 # Assume your ggplot object is called 'p'

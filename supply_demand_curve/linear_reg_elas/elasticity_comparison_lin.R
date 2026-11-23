@@ -7,7 +7,7 @@ library(data.table)
 library(dplyr)
 library(lubridate)
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 list.files()
 local_slopes_demand_lin <- as.data.table(
   read_parquet('local_slopes_reg_demand_matched_FE.parquet')
@@ -82,7 +82,7 @@ w_mean_supply <- benchmark_supply_lin$weighted_local[[1]]
 
 # w_mean_supply <- weighted.mean(price_indispo_merge_esp_elas$slope_supply, price_indispo_merge_esp_elas$resid_price^2, na.rm= TRUE)
 
-save_path <- "Z:/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
+save_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/estimate_elasticity/outputs"
 setwd(save_path)
 summary_synthetic <- read.csv( "elasticity_synthetic_lin.csv")
 summary_shift_share <- read.csv( "elasticity_shift_share_lin.csv")
@@ -303,7 +303,7 @@ my_elas
 
 
 
-save_latex_path <- "Z:/Overleaf_elec/images/elasticity"
+save_latex_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/elasticity"
 setwd(save_latex_path)
 ggsave(my_elas,
        filename = "elasticity_comparison_lin.png" , width = 12, height = 6, dpi = 300)

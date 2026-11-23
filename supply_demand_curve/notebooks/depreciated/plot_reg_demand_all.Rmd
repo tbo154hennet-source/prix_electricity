@@ -5,7 +5,7 @@ output: html_notebook
 
 
 ```{r}
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 # coef_supply_unmatched <- readRDS("reg_shift_result_qty_supply_unmatched_sparse.rds")
 # coef_demand_unmatched_data <- rbindlist(coef_supply_unmatched)
 # 
@@ -87,7 +87,7 @@ plot_shift_with_hist_qty(coef_data = coef_demand_unmatched_data,
 
 ```{r}
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 coef_demand_unmatched_wind_sun_variation <- readRDS("reg_shift_result_qty_demand_unmatched_sparse_wind_sun_variation.rds")
 coef_demand_unmatched_data_wind_sun_variation <- rbindlist(coef_demand_unmatched_wind_sun_variation)
 

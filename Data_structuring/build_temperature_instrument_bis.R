@@ -161,7 +161,7 @@ ggplot(temperature_instrument %>%
 
 
 
-save_path <- 'Z:/prix_electricite_gitlab/Data_structuring/output'
+save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Data_structuring/output'
 
 setwd(save_path)
 

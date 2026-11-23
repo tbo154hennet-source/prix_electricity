@@ -91,7 +91,7 @@ indispo_IIP_data  <- indispo_IIP_data  %>%
 # 
 # Event.ID = substr(Message.ID,18,25)
 
-save_path <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE'
+save_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE'
 
 setwd(save_path)
 write_parquet(indispo_IIP_data , 'indispo_IIP_data.parquet')

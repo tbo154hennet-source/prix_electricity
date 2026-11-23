@@ -79,7 +79,7 @@ for (col in duplicated_names){
 #Get plants for which I can match unavailabilities
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs/long_format'
 setwd(save_path_entsoe_output)
 
 dismissed_long_format_indispo <- read_parquet('dismissed_long_format_indispo.parquet')
@@ -163,7 +163,7 @@ for (centrale in active_centrales[1:10]) {
 
 
 getwd()
-setwd("Z:/prix_electricite_gitlab/Intra_day_micro/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_micro/outputs")
 saveRDS(rf_models, 'rf_models_all.rds')
 
 rf_models <- readRDS( 'rf_models_all.rds')
@@ -272,7 +272,7 @@ for (centrale in centrales[1:4]){
 
 
 getwd()
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/rf_prediction'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(rf_predictions_data, 'rf_predictions_data_all.parquet')
 
@@ -354,7 +354,7 @@ ggplot()+
 
 
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/rf_prediction'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/rf_prediction'
 setwd(save_path_entsoe_output)
 write_parquet(real_indispo_rf, 'real_indispo_rf_dismissed.parquet')
 
@@ -368,7 +368,7 @@ final_real_indispo_rf <- real_indispo_rf %>%
   ) %>%
   ungroup()
 
-save_path_entsoe_output <- 'Z:/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
+save_path_entsoe_output <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/Intra_day_instrumnet_motivation/ENTSOE/outputs/final'
 setwd(save_path_entsoe_output)
 write_parquet(final_real_indispo_rf_dismissed, 
               'final_real_indispo_rf.parquet')

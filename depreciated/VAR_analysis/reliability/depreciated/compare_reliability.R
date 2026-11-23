@@ -1,10 +1,10 @@
-source_path <- 'Z:/prix_electricite_gitlab/VAR_analysis'
+source_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis'
 setwd(source_path)
 source("reliability_auxiliary.R")
 source("auxiliary_control.R")
 library(MASS)
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
 IV_data_log <- read_parquet('low_freq_data_log.parquet')
@@ -16,7 +16,7 @@ IV_data_log_diff <- read_parquet('low_freq_data_log_diff.parquet')
 
 #in growth rates
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 
 headers_proxies = c(
@@ -48,7 +48,7 @@ headers_var = c("gen_tot_log_diff",
                 "NE_Index_log_diff"
 )
 vars<- ts(IV_data_log_diff[, c(headers_var)], frequency=12)
-save_reliable_path <- "Z:/prix_electricite_gitlab/VAR_analysis/VAR_output/reliability"
+save_reliable_path <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output/reliability"
 setwd(save_reliable_path)
 get_table(vars,p, proxies, "reliability_table_gr_wind_solar.png", headers_proxies)
 

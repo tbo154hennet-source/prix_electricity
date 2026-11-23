@@ -3,7 +3,7 @@ suppressPackageStartupMessages({
   library(arrow); library(dplyr); library(ggplot2); library(gt)
   library(MASS); library(tidyr); library(vars)
 })
-root <- 'Z:/prix_electricite_gitlab'
+root <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab'
 out <- file.path(root, 'VAR_analysis_fr', 'VAR_output')
 dirs <- c(hd = file.path(out, 'plot_irfs_rds', '1var', 'hd'),
   tables = file.path(out, 'tables'), figures = file.path(out, 'figures'),
@@ -457,7 +457,7 @@ gt_table_including_gas <- contribution_table_including_gas %>%
 gtsave(
   gt_table_including_gas,
   file.path(
-    "Z:/Overleaf_elec/images/latex_tables",
+    "C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/latex_tables",
     "cumulative_contributions.tex"
   )
 )

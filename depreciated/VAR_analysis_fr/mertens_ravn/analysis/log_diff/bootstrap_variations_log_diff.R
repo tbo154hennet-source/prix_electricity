@@ -38,7 +38,7 @@ gen_benchmark_esp_spot_first <- run_VAR_bootstrap_alternative(df = IV_data_log_d
                                                   block_size = 15,
                                                   start_ts = c(2015, 1),
                                                   end_ts = c(2023, 12))
-save_rds_path_bench <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path_bench <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path_bench)
 saveRDS(gen_benchmark_esp_spot_first, "gen_benchmark_esp_spot_first.rds")
 
@@ -68,7 +68,7 @@ gen_benchmark_esp_gas_mp <- run_VAR_bootstrap_alternative(df = IV_data_log_diff_
                                               end_ts = c(2023, 12),
                                               headers_controls = headers_controls)
 
-save_rds_path_bench <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
+save_rds_path_bench <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/log_diff/benchmark'
 setwd(save_rds_path_bench)
 saveRDS(gen_benchmark_esp_gas_mp, "gen_benchmark_esp_gas_mp.rds")
 

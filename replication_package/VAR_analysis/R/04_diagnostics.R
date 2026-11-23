@@ -5,8 +5,9 @@ proxy_relevance_row <- function(result, label) {
     return(row)
   }
   equation <- match(result$norm_var, result$variables)
-  y <- result$residuals[, equation]
-  z <- result$sample[[result$proxy]][-seq_len(result$fit$p)]
+  instrument <- proxy_instrument(result$sample, result$proxy, result$fit$p)
+  y <- result$residuals[instrument$observed, equation]
+  z <- instrument$z[instrument$observed]
   model <- stats::lm(y ~ z)
   summary_model <- summary(model)
   classical_f <- unname(summary_model$fstatistic[["value"]])

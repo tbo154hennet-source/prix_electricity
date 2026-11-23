@@ -80,7 +80,7 @@ omie_prices <- rbindlist(
 )
 head(omie_prices)
 tail(omie_prices)
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(
   omie_prices, "omie_day_ahead_prices.parquet")
 
@@ -115,7 +115,7 @@ day_ahead_prices <- day_ahead_prices %>%
   #filter(delivery_date >= as.Date('2018-01-01')) %>% 
   arrange(datetime)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(
   day_ahead_prices, "esp_day_ahead_prices.parquet")
 
@@ -150,7 +150,7 @@ day_ahead_prices_all <- rbind(day_ahead_prices %>%
 						   select(datetime, price = price_es)  %>% 
 						   filter(datetime >= max(day_ahead_prices$datetime))
 						 )
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(
   day_ahead_prices_all, "esp_day_ahead_prices_all.parquet")
 
@@ -225,13 +225,13 @@ gen_data <- full_join(dt_hourly,
         dt_hourly_after_threshold
         )
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(gen_data, "esp_generation_day_ahead.parquet")
 
 
 
 # #extend the generation data from supply and demand curve 2026
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_supply <- read_parquet('reconstruct_full_curve_shift_qty_supply_matched.parquet')
 
 head(reconstruct_full_curve_shift_supply)
@@ -388,7 +388,7 @@ ggplot()+
   scale_color_manual(name="Lignes", values=c("OMIE"="green", "Curve"="orange"))+
   theme_minimal()
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(
   gen_data_aligned, "esp_generation_day_ahead_all.parquet")
 

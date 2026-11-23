@@ -2,7 +2,7 @@
 library(MASS)
 library(slider)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 pred_post_df <- read_parquet( "prediction_gas_price_counterfactual_monthly.parquet")
 
 weighted_mean <- function(x, w) {
@@ -59,7 +59,7 @@ coef = coef(vl)
 bet = do.call(cbind, lapply(1:n, function(x) coef[[x]][,1]))
 res = residuals(vl)
 
-save_rds_path <- 'Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
+save_rds_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output/plot_irfs_rds/1var'
 setwd(save_rds_path)
 list.files()
 gen_benchmark_esp_supply_mp <- readRDS(  "gen_benchmark_esp_mp_supply_save.rds")
@@ -173,7 +173,7 @@ for (i in 1:boot_size) {
 
 getwd()
 
-setwd("Z:/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis_fr/VAR_output")
 write.csv(boot_counterfactual_level_HICP, "boot_counterfactual_level_HICP.csv")
 write.csv(boot_counterfactual_HICP, "boot_counterfactual_HICP.csv")
 
@@ -355,7 +355,7 @@ counterfactual <- ggplot() +
 counterfactual
 
 
-save_plot_path <- 'Z:/Overleaf_elec/images/policy'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/policy'
 setwd(save_plot_path)
 ggsave("iberian_exception_plot_inflation_counterfactual.png", plot = counterfactual, width = 14 , height = 6, dpi = 300)
 

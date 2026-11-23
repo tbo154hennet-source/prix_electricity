@@ -1,4 +1,4 @@
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
 
 # Convert to data.table if not already
@@ -177,7 +177,7 @@ local_slopes_demand <- reconstruct_full_curve_shift_qty_demand_matched_local_bis
   by = .(DATE, Hour)
 ]
 library(arrow)
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 write_parquet(local_slopes_demand, "local_slopes_demand_5.parquet")
 
 local_slopes_demand <-  read_parquet( "local_slopes_demand.parquet")
@@ -245,7 +245,7 @@ local_slopes_supply <- reconstruct_full_curve_shift_qty_supply_matched_local_bis
   },
   by = .(DATE, Hour)
 ]
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 write_parquet(local_slopes_supply, "local_slopes_supply_5.parquet")
 
 local_slopes_supply <- read_parquet("local_slopes_supply.parquet")
@@ -330,7 +330,7 @@ local_slopes_demand_pond <- reconstruct_full_curve_shift_qty_demand_matched_loca
 local_slopes_demand_pond <- local_slopes_demand_pond %>% 
   distinct()
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 write_parquet(local_slopes_demand_pond, "local_slopes_demand_pond.parquet")
 
 rm(reconstruct_full_curve_shift_qty_demand_matched_local)
@@ -381,7 +381,7 @@ local_slopes_supply_pond <- reconstruct_full_curve_shift_qty_supply_matched_loca
 local_slopes_supply_pond <- local_slopes_supply_pond %>% 
   distinct()
 
-setwd("Z:/prix_electricite_gitlab/supply_demand_curve/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 write_parquet(local_slopes_supply_pond, "local_slopes_supply_pond.parquet")
 
 

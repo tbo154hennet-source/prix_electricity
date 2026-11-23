@@ -78,16 +78,16 @@ load_batches <- function(folder) {
   return(dt)
 }
 
-solar_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_batches")
-setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+solar_dt <- load_batches("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_batches")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 list.files()
 
-solar_temp_dt <- load_batches("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_temp_batches")
+solar_temp_dt <- load_batches("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs/solar_temp_batches")
 
 solar_all_dt <- merge(solar_dt, solar_temp_dt, 
                       by = c("latitude", "longitude", "date"), all.x = TRUE)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 
 df_solar_spain_big <- read.csv("df_solar_spain_big.csv")%>% 
   dplyr::select(generation_gwh_avg, efficiency, capacity_mw, latitude, longitude, name, gppd_idnr)
@@ -131,7 +131,7 @@ sol_all_openmeteo_data <- solar_all_dt[, .(
 
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 # Charger les données
 temperature_demand_data <- as.data.table(read_parquet("temperature_pop_all.parquet"))
 
@@ -162,7 +162,7 @@ colnames(temperature_demand_openmeteo_data) <- c("date", paste0(setdiff(colnames
 
 # Définir le répertoire de travail
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 full_plant <- read_parquet("temperature_plants_all.parquet")
 
 full_plant <- full_plant %>%
@@ -200,7 +200,7 @@ temperature_openmeteo_plant_data <- full_plant[, .(
   relative_humidity_2m_sth = weighted.mean(relative_humidity_2m, power_mw, na.rm = TRUE),
   precipitation_sth = weighted.mean(precipitation, power_mw, na.rm = TRUE) # pas besoin de pondérer une somme
 ), by = date]
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(temperature_openmeteo_plant_data, "temperature_openmeteo_plant_data.parquet")
 
 
@@ -225,7 +225,7 @@ tempall_data_data <-  merge(tempall_data_data,
                             by = c("date")
 )
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(tempall_data_data, "tempall_data_data.parquet")
 
 
@@ -233,7 +233,7 @@ write_parquet(tempall_data_data, "tempall_data_data.parquet")
 
 library(readxl)
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 
 temp_instrument_data <- t(read_excel('temperature_data.xlsx'))
 temp_instrument_data <- as.data.frame(temp_instrument_data[c(-1,-2),])
@@ -334,7 +334,7 @@ ggplot()+
 #cas français
 
 # Définir le répertoire de travail
-setwd("Z:/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/daily_temp/outputs")
 # Charger les données
 full_pop <- as.data.table(read_parquet("temperature_pop_fr.parquet"))
 
@@ -374,7 +374,7 @@ temperature_openmeteo_data_monthly <- temperature_openmeteo_data[, .(
 ), by = .(year, month)]
 
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs")
 write_parquet(temperature_openmeteo_data, "temperature_openmeteo_data_fr.parquet")
 
 

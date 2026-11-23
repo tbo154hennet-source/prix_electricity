@@ -1,5 +1,5 @@
 
-setwd("Z:/prix_electricite_gitlab/day_ahead/outputs/esp")
+setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/day_ahead/outputs/esp")
 price_indispo_merge_esp_delta <- read_parquet( "price_indispo_merge_esp_delta_supply_demand_exo.parquet")
 
 cols_supply <- colnames(price_indispo_merge_esp_delta)[grepl("delta_s", colnames(price_indispo_merge_esp_delta))]
@@ -113,7 +113,7 @@ synthetic_plot <- ggplot(synthetic_var_data_grouped , aes(x = variable_group, y 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 synthetic_plot
 
-save_plot_path <- 'Z:/Overleaf_elec/images/data_description'
+save_plot_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/Overleaf_elec/images/data_description'
 setwd(save_plot_path)
 # Assume your ggplot object is called 'p'
 ggsave("describe_synthetic_shocks_unmatched_FE.png", plot = synthetic_plot, width = 12, height = 6, dpi = 300)

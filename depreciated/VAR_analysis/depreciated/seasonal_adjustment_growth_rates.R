@@ -6,7 +6,7 @@ library(forecast)
 library(arrow)
 Sys.setenv(lang = "en_US")
 
-save_var_path <- 'Z:/prix_electricite_gitlab/VAR_analysis/VAR_output'
+save_var_path <- 'C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/VAR_analysis/VAR_output'
 setwd(save_var_path)
 IV_data <- read_parquet('low_freq_data.parquet')
 # meme chose pour IV demand
