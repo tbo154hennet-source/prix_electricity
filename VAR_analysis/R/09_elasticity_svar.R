@@ -188,6 +188,73 @@ attach_synthetic_level_proxies <- function(country_data, path) {
   for (name in c("syn_S_lvl_cy", "syn_D_lvl_cy")) data[[name]] <- NA_real_
   data$syn_S_lvl_cy[rows] <- stats::resid(stats::lm(s[rows] ~ calendar + year))
   data$syn_D_lvl_cy[rows] <- stats::resid(stats::lm(d[rows] ~ calendar + year))
+  data$syn_S_lvl <- s; data$syn_D_lvl <- d  # raw monthly levels, for the out-of-sample decomposition
+  country_data$data <- data
+  country_data
+}
+
+# Residual of a monthly series on calendar-month and year fixed effects over its observed months (NA elsewhere).
+calendar_year_residual <- function(x, dates) {
+  out <- rep(NA_real_, length(x)); rows <- which(is.finite(x))
+  calendar <- factor(format(dates[rows], "%m")); year <- factor(format(dates[rows], "%Y"))
+  out[rows] <- stats::resid(stats::lm(x[rows] ~ calendar + year))
+  out
+}
+
+# Monthly weather from 2010: realised wind speed at 100 m at the wind farms (ERA5; Open-Meteo backfill before
+# 2015, wind_speed_100m of the VAR data after, same farms and capacity weights) and demand-weighted temperature
+# and precipitation (Open-Meteo backfill at the demand points before 2015, hourly micro file after).
+monthly_weather_2010 <- function(country_data, cfg) {
+  dates <- as.Date(country_data$data$observation_date); key <- format(dates, "%Y-%m")
+  wind_bf <- utils::read.csv(cfg$data$wind_backfill_2010)
+  wind_bf_value <- wind_bf$ws_capw[match(key, substr(wind_bf$date, 1, 7))]
+  wind <- ifelse(is.finite(country_data$data$wind_speed_100m), country_data$data$wind_speed_100m, wind_bf_value)
+
+  hourly <- as.data.frame(arrow::read_parquet(cfg$data$spain_high_frequency_proxies,
+                                              col_select = c("datetime", "temperature_demand", "precipitation_demand")))
+  hourly <- hourly[!duplicated(hourly$datetime) & is.finite(hourly$temperature_demand), , drop = FALSE]
+  month <- format(hourly$datetime, "%Y-%m", tz = "GMT")
+  agg <- function(v) tapply(v, month, mean, na.rm = TRUE)
+  micro <- data.frame(month = names(agg(hourly$temperature_demand)),
+                      heat = as.numeric(agg(pmax(hourly$temperature_demand - 18, 0))),
+                      cold = as.numeric(agg(pmax(18 - hourly$temperature_demand, 0))),
+                      precipitation = as.numeric(agg(hourly$precipitation_demand)))
+  bf <- utils::read.csv(cfg$data$demand_weather_backfill_2010)
+  bf <- data.frame(month = bf$month, heat = bf$heat_excess_demand, cold = bf$cold_excess_demand,
+                   precipitation = bf$precipitation_demand)
+  pick <- function(col) {
+    m <- micro[[col]][match(key, micro$month)]
+    ifelse(is.finite(m), m, bf[[col]][match(key, bf$month)])
+  }
+  data.frame(observation_date = dates, wind = wind, heat = pick("heat"), cold = pick("cold"),
+             precipitation = pick("precipitation"))
+}
+
+# Robustness proxies observed from 2010 (the benchmark proxies start in 2015):
+#   wind_S_lvl_cy: realised wind speed, net of calendar-month and year fixed effects (supply proxy);
+#   syn_*_oos_cy:  synthetic supply and demand shifts, out of sample before 2015 -- the monthly shifts are projected
+#                  on calendar months and weather (wind, heat and cold excess, precipitation) over 2015-2025 and
+#                  the projection is applied to the 2010-2014 weather; observed shifts from 2015.
+attach_proxies_2010 <- function(country_data, cfg) {
+  data <- country_data$data
+  dates <- as.Date(data$observation_date)
+  weather <- monthly_weather_2010(country_data, cfg)
+  data$wind_S_lvl_cy <- calendar_year_residual(weather$wind, dates)
+  calendar <- factor(format(dates, "%m"))
+  design <- data.frame(calendar = calendar, weather[, c("wind", "heat", "cold", "precipitation")])
+  fit_rows <- is.finite(data$syn_S_lvl) & is.finite(data$syn_D_lvl) & stats::complete.cases(design)
+  r2 <- c()
+  for (curve in c("S", "D")) {
+    y <- data[[paste0("syn_", curve, "_lvl")]]
+    model <- stats::lm(y ~ ., data = cbind(y = y, design)[fit_rows, ])
+    r2[curve] <- summary(model)$r.squared
+    predicted <- rep(NA_real_, nrow(data)); ok <- stats::complete.cases(design)
+    predicted[ok] <- stats::predict(model, newdata = design[ok, ])
+    spliced <- ifelse(is.finite(y), y, predicted)
+    data[[paste0("syn_", curve, "_oos_cy")]] <- calendar_year_residual(spliced, dates)
+  }
+  message(sprintf("Out-of-sample synthetic decomposition: weather R2 supply %.2f, demand %.2f", r2["S"], r2["D"]))
+  country_data$proxy_2010_r2 <- r2
   country_data$data <- data
   country_data
 }
@@ -209,6 +276,15 @@ fit_benchmark_msw <- function(country_data, cfg) {
 # `block` months), so that the bands reflect both reduced-form uncertainty and the sampling uncertainty of the
 # proxy covariance, which matters with weak proxies. Point models (posterior mean of B and Sigma, unweighted
 # moments) feed the historical decompositions and the policy counterfactuals.
+add_hydro_storage <- function(country_data, path) {
+  if (!file.exists(path)) stop("Hydro reserves not found: ", path)
+  hydro <- utils::read.csv(path)
+  dates <- as.Date(paste0(hydro$month, "-01"))
+  country_data$data$hydro_storage_log <- log(hydro$total_mwh)[match(country_data$data$observation_date, dates)]
+  country_data$variables <- c(country_data$variables, "hydro_storage_log")
+  country_data
+}
+
 bayesian_proxy_benchmark <- function(country_data, cfg, proxies = c(Supply = "syn_S_lvl_cy", Demand = "syn_D_lvl_cy"),
                                      name = "Benchmark: monthly proxy SVAR, Bayesian reduced form") {
   set.seed(cfg$seed + 7L)
@@ -1238,12 +1314,31 @@ run_elasticity_stage <- function(country_data, cfg, get_model = function(name, b
   save_csv(ols_q, ocfg, "irfs_spain_benchmark_ols_msw.csv")
   save_plot(plot_elasticity_irf(ols_q, "Supply"), ocfg, "supply_proxy_ols_msw.png", overleaf_dir = "macro", width = 14, height = 8)
   save_plot(plot_elasticity_irf(ols_q, "Demand"), ocfg, "demand_proxy_ols_msw.png", overleaf_dir = "macro", width = 14, height = 8)
+  # Robustness: same benchmark with the stock of hydro reservoirs (REE, all reservoirs, log MWh) as an extra
+  # endogenous variable, so that the shocks are identified net of the hydro storage dynamics.
+  hydro_fit <- bayesian_proxy_benchmark(add_hydro_storage(country_data, cfg$data$hydro_reserves), cfg,
+                                        name = "Benchmark with hydro reservoir storage")
+  hydro_q <- elasticity_quantiles(hydro_fit, horizon = cfg$elasticity$horizon)
+  save_csv(hydro_q, ocfg, "irfs_spain_benchmark_hydro_storage.csv")
+  # Robustness on proxies observed from 2010: wind speed as the supply proxy, and the synthetic decomposition
+  # applied out of sample before 2015 (same Bayesian proxy SVAR).
+  country_2010 <- attach_proxies_2010(country_data, cfg)
+  wind_fit <- bayesian_proxy_benchmark(country_2010, cfg, proxies = c(Supply = "wind_S_lvl_cy", Demand = "syn_D_lvl_cy"),
+                                       name = "Benchmark, supply proxy: wind speed from 2010")
+  oos_fit <- bayesian_proxy_benchmark(country_2010, cfg, proxies = c(Supply = "syn_S_oos_cy", Demand = "syn_D_oos_cy"),
+                                      name = "Benchmark, synthetic proxies out of sample before 2015")
+  wind_q <- elasticity_quantiles(wind_fit, horizon = cfg$elasticity$horizon)
+  oos_q <- elasticity_quantiles(oos_fit, horizon = cfg$elasticity$horizon)
+  save_csv(dplyr::bind_rows(wind_q, oos_q), ocfg, "irfs_spain_benchmark_proxies_2010.csv")
   comparison_keys <- c("fixed_micro", "fixed_micro_no_gas", "mertens_ravn_benchmark")
-  comparison <- dplyr::bind_rows(benchmark_q, quantiles[quantiles$Specification %in%
+  comparison <- dplyr::bind_rows(benchmark_q, hydro_q, wind_q, oos_q, ols_q, quantiles[quantiles$Specification %in%
                                                           vapply(fits[comparison_keys], function(f) f$spec$name, ""), ])
   comparison$Specification <- factor(comparison$Specification,
-                                     levels = c(benchmark_name, vapply(fits[comparison_keys], function(f) f$spec$name, "")))
-  no_band <- comparison$Specification == fits$mertens_ravn_benchmark$spec$name
+                                     levels = c(benchmark_name, hydro_fit$spec$name, wind_fit$spec$name,
+                                                oos_fit$spec$name, ols_name,
+                                                vapply(fits[comparison_keys], function(f) f$spec$name, "")))
+  # Median lines only for Mertens-Ravn and the OLS/MSW sets (much wider bands), so that the other bands stay readable
+  no_band <- comparison$Specification %in% c(fits$mertens_ravn_benchmark$spec$name, ols_name)
   comparison$Lower68[no_band] <- NA_real_; comparison$Upper68[no_band] <- NA_real_
   for (shock in c("Supply", "Demand")) {
     save_plot(plot_elasticity_comparison(comparison, shock, c("spot_price_log", "load_tot_log", "HICP_log", "IPI_log")),

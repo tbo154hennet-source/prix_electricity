@@ -97,7 +97,8 @@ variable_label <- function(variable) {
     IPI_log = "Ind Prod",
     HICP_log = "HICP",
     ffr = "Policy rate",
-    spot_gas_log = "Gas price"
+    spot_gas_log = "Gas price",
+    hydro_storage_log = "Hydro storage"
   )
   unname(labels[variable]) %||% variable
 }

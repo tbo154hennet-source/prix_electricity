@@ -1,6 +1,7 @@
 output_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs/coef_reg_no_conditioning"
 setwd(output_dir)
 price_indispo_merge_esp_npc <- read_parquet("price_indispo_merge_esp_npc_all_final_2026.parquet")
+controls_vec <- c("year", "month", "weekday", "creneau")
 
 #un faible nombre de duplicates
 price_indispo_merge_esp_npc %>%

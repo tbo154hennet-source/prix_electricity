@@ -55,6 +55,18 @@ make_config <- function(root_dir) {
         root_dir, "day_ahead", "outputs",
         "prediction_gas_price_counterfactual_monthly.parquet"
       ),
+      # Monthly hydro reservoir stock, REE apidatos (generacion/reservas-hidroelectricas), 2010-2025
+      hydro_reserves = Sys.getenv(
+        "VAR_HYDRO_RESERVES",
+        "C:/Users/DBT3KD/Desktop/Etude_macro_elec/DATA/hydro_reserves_ree/hydro_reserves_es_monthly.csv"
+      ),
+      # Pre-2015 weather backfills (Open-Meteo ERA5) for the 2010 robustness proxies
+      wind_backfill_2010 = file.path(
+        root_dir, "Data_structuring", "spain_wind_backfill", "wind_monthly_2010_2015.csv"
+      ),
+      demand_weather_backfill_2010 = file.path(
+        root_dir, "Data_structuring", "spain_weather_backfill", "demand_weather_monthly_2010_2015.csv"
+      ),
       wind_2030 = file.path(
         root_dir, "day_ahead", "outputs",
         "price_variance_counterfactual_esp_ter.parquet"
