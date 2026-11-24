@@ -1331,20 +1331,29 @@ run_elasticity_stage <- function(country_data, cfg, get_model = function(name, b
   oos_q <- elasticity_quantiles(oos_fit, horizon = cfg$elasticity$horizon)
   save_csv(dplyr::bind_rows(wind_q, oos_q), ocfg, "irfs_spain_benchmark_proxies_2010.csv")
   comparison_keys <- c("fixed_micro", "fixed_micro_no_gas", "mertens_ravn_benchmark")
-  comparison <- dplyr::bind_rows(benchmark_q, hydro_q, wind_q, oos_q, ols_q, quantiles[quantiles$Specification %in%
-                                                          vapply(fits[comparison_keys], function(f) f$spec$name, ""), ])
-  comparison$Specification <- factor(comparison$Specification,
-                                     levels = c(benchmark_name, hydro_fit$spec$name, wind_fit$spec$name,
-                                                oos_fit$spec$name, ols_name,
-                                                vapply(fits[comparison_keys], function(f) f$spec$name, "")))
-  # Median lines only for Mertens-Ravn and the OLS/MSW sets (much wider bands), so that the other bands stay readable
-  no_band <- comparison$Specification %in% c(fits$mertens_ravn_benchmark$spec$name, ols_name)
-  comparison$Lower68[no_band] <- NA_real_; comparison$Upper68[no_band] <- NA_real_
-  for (shock in c("Supply", "Demand")) {
-    save_plot(plot_elasticity_comparison(comparison, shock, c("spot_price_log", "load_tot_log", "HICP_log", "IPI_log")),
-              ocfg, sprintf("%s_benchmark_robustness.png", tolower(shock)), overleaf_dir = "macro",
-              width = 14, height = 10, theme_overrides = ggplot2::theme(legend.position = "bottom",
-                                                                        legend.text = ggplot2::element_text(size = 12)))
+  # Identification robustness (<shock>_benchmark_robustness.png): fixed demand slope with/without gas netting,
+  # Mertens-Ravn, OLS reduced form. Proxy and data robustness (<shock>_proxy_robustness.png): proxies observed
+  # from 2010 and hydro reservoir storage as an extra VAR variable.
+  comparison_sets <- list(
+    benchmark_robustness = list(
+      data = dplyr::bind_rows(benchmark_q, ols_q, quantiles[quantiles$Specification %in%
+                                                   vapply(fits[comparison_keys], function(f) f$spec$name, ""), ]),
+      levels = c(benchmark_name, vapply(fits[comparison_keys], function(f) f$spec$name, ""), ols_name)),
+    proxy_robustness = list(
+      data = dplyr::bind_rows(benchmark_q, wind_q, oos_q, hydro_q),
+      levels = c(benchmark_name, wind_fit$spec$name, oos_fit$spec$name, hydro_fit$spec$name)))
+  for (set in names(comparison_sets)) {
+    comparison <- comparison_sets[[set]]$data
+    comparison$Specification <- factor(comparison$Specification, levels = comparison_sets[[set]]$levels)
+    # Median lines only for Mertens-Ravn and the OLS/MSW sets (much wider bands), so that the other bands stay readable
+    no_band <- comparison$Specification %in% c(fits$mertens_ravn_benchmark$spec$name, ols_name)
+    comparison$Lower68[no_band] <- NA_real_; comparison$Upper68[no_band] <- NA_real_
+    for (shock in c("Supply", "Demand")) {
+      save_plot(plot_elasticity_comparison(comparison, shock, c("spot_price_log", "load_tot_log", "HICP_log", "IPI_log")),
+                ocfg, sprintf("%s_%s.png", tolower(shock), set), overleaf_dir = "macro",
+                width = 14, height = 10, theme_overrides = ggplot2::theme(legend.position = "bottom",
+                                                                          legend.text = ggplot2::element_text(size = 12)))
+    }
   }
 
   for (group in names(groups)) {

@@ -625,6 +625,7 @@ run_pipeline <- function(cfg, selected_stages = "all") {
         france_wind(), france_demand(), cfg, demand_elasticity,
         get_model, cache_name
       )
+      run_france_elasticity(cfg, get_model, demand_elasticity)
     })
   }
 

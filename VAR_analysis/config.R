@@ -43,6 +43,11 @@ make_config <- function(root_dir) {
       micro_elasticity = file.path(
         root_dir, "supply_demand_curve", "estimate_elasticity", "outputs", "elasticity_standard.csv"
       ),
+      # French hourly demand elasticity, wind forecast as a pure supply shifter
+      # (supply_demand_curve/estimate_elasticity/fr/estimate_elas_standard_IV_fr.R)
+      micro_elasticity_fr = file.path(
+        root_dir, "supply_demand_curve", "estimate_elasticity", "outputs", "elasticity_standard_fr.csv"
+      ),
       spain_counterfactual_proxy = file.path(
         root_dir, "VAR_analysis", "data",
         "IV_data_esp_log_elas_sd_2026_pc.parquet"
@@ -160,7 +165,11 @@ make_config <- function(root_dir) {
       spain_demand_identification = "demand_shock_spain_irf_compare.png",
       france_supply_identification = "supply_shock_france_irf_compare.png",
       france_demand_identification = "demand_shock_france_irf_compare.png",
-      france_wind = "wind_supply_shock_fr.png",
+      # 2015-2025 wind proxy SVAR (stage france); the paper figure is now the Bayesian one below
+      france_wind = "wind_supply_shock_fr_proxy_2015.png",
+      # stage france2010: Bayesian SVAR 2010-2025, demand slope fixed at the French hourly estimate
+      france_supply_elasticity = "wind_supply_shock_fr.png",
+      france_demand_elasticity = "demand_shock_fr_elasticity.png",
       iberian_shock = "iberian_shock.png",
       iberian_price = "iberian_exception_plot_price_counterfactual.png",
       iberian_inflation = "iberian_exception_plot_inflation_counterfactual.png",

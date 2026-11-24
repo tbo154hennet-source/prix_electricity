@@ -166,3 +166,79 @@ run_france_extended_stage <- function(benchmark_wind, benchmark_demand, cfg,
   )
   invisible(list(supply = supply, demand = demand, mr = mr))
 }
+
+# ----------------------------------------------------------------------------------------------------
+# Bayesian SVAR with the demand slope fixed at the French hourly estimate (fast-track identification of the
+# working paper: Step 1, wind as a pure supply shifter in the hourly data; Step 2, the elasticity SVAR of
+# 09_elasticity_svar.R with eps_d fixed, GLP reduced form, innovations netted of the gas price). No proxy is
+# needed, so the 2010-2014 months identify the shocks as well.
+# ----------------------------------------------------------------------------------------------------
+read_france_demand_elasticity <- function(cfg) {
+  path <- cfg$data$micro_elasticity_fr
+  if (!file.exists(path)) {
+    stop("French hourly elasticity not found: ", path,
+         "\nRun supply_demand_curve/estimate_elasticity/fr/estimate_elas_standard_IV_fr.R")
+  }
+  estimates <- utils::read.csv(path)
+  assert_columns(estimates, c("Coef", "Se", "FE"), "French hourly elasticity")
+  # first row: same fixed effects as the Spanish standard IV (year, month, hour)
+  c(coef = estimates$Coef[[1]], se = estimates$Se[[1]])
+}
+
+france_elasticity_specs <- function(cfg, eps_fr, eps_es) {
+  # central reduced form: OLS (diffuse prior, posterior centred on OLS); GLP shrinkage as robustness
+  base <- list(p = cfg$elasticity$p_central, var_prior = "diffuse", proxies = list(), gas_netted = TRUE)
+  spec <- function(name, ...) utils::modifyList(c(base, list(name = name)), list(...))
+  list(
+    central = spec(sprintf("France 2010-25, hourly French demand elasticity (%.3f)", eps_fr), fixed_demand = eps_fr),
+    glp = spec("France 2010-25, GLP prior", fixed_demand = eps_fr, var_prior = "glp"),
+    spanish = spec(sprintf("France 2010-25, hourly Spanish demand elasticity (%.3f)", eps_es), fixed_demand = eps_es),
+    no_gas = spec("France 2010-25, innovations not netted of gas", fixed_demand = eps_fr, gas_netted = FALSE),
+    sample_2015 = spec("France 2015-25, hourly French demand elasticity", fixed_demand = eps_fr)
+  )
+}
+
+run_france_elasticity <- function(cfg, get_model, demand_elasticity_es) {
+  ocfg <- france_extended_cfg(cfg)                     # local tables and robustness figures
+  pcfg <- cfg; pcfg$figure_dir <- ocfg$figure_dir; pcfg$table_dir <- ocfg$table_dir   # main figures: Overleaf too
+  micro <- read_france_demand_elasticity(cfg)
+  message("French hourly demand elasticity: ", round(micro[["coef"]], 4), " (s.e. ", round(micro[["se"]], 4), ")")
+  specs <- france_elasticity_specs(cfg, micro[["coef"]], demand_elasticity_es)
+  long <- read_country_data(cfg$data$france_2010, "France")
+  short <- read_country_data(cfg$data$france, "France")
+  tag <- sprintf("_d%d_h%d", cfg$elasticity$draws, cfg$elasticity$horizon)
+  fits <- lapply(names(specs), function(key) {
+    data <- if (key == "sample_2015") short else long
+    get_model(paste0("france2010_elasticity_bvar_", specs[[key]]$var_prior, "_", key, tag, "_eps", round(1000 * specs[[key]]$fixed_demand)), function() {
+      message("France elasticity SVAR: ", specs[[key]]$name)
+      fit_elasticity_bvar(data, specs[[key]], cfg)
+    })
+  })
+  names(fits) <- names(specs)
+
+  horizon <- cfg$elasticity$horizon
+  quantiles <- dplyr::bind_rows(lapply(fits, elasticity_quantiles, horizon = horizon))
+  save_csv(quantiles, ocfg, "irfs_france_elasticity_svar.csv")
+  slopes <- dplyr::bind_rows(lapply(fits, function(fit) {
+    q <- stats::quantile(fit$eps_s, c(0.5, 0.05, 0.95))
+    data.frame(Specification = fit$spec$name, Demand_slope = fit$spec$fixed_demand,
+               Supply_slope_median = q[[1]], Supply_slope_p05 = q[[2]], Supply_slope_p95 = q[[3]],
+               Draws_kept = length(fit$eps_s), Draws = cfg$elasticity$draws,
+               Sample_start = format(min(fit$sample$observation_date), "%Y-%m"),
+               Sample_end = format(max(fit$sample$observation_date), "%Y-%m"))
+  }))
+  save_csv(slopes, ocfg, "france_elasticity_svar_slopes.csv")
+
+  central_q <- quantiles[quantiles$Specification == fits$central$spec$name, , drop = FALSE]
+  save_plot(plot_elasticity_irf(central_q, "Supply"), pcfg, cfg$plot_names$france_supply_elasticity,
+            overleaf_dir = "macro", width = 14, height = 8)
+  save_plot(plot_elasticity_irf(central_q, "Demand"), pcfg, cfg$plot_names$france_demand_elasticity,
+            overleaf_dir = "macro", width = 14, height = 8)
+  legend_bottom <- ggplot2::theme(legend.position = "bottom")
+  for (shock in c("Supply", "Demand")) {
+    save_plot(plot_elasticity_comparison(quantiles, shock), ocfg,
+              paste0(tolower(shock), "_shock_france_elasticity_robustness.png"),
+              width = 14, height = 9, theme_overrides = legend_bottom)
+  }
+  invisible(list(fits = fits, slopes = slopes, quantiles = quantiles))
+}
