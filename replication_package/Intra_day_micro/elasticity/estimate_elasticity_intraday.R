@@ -61,7 +61,7 @@ first_stage_data_clean <- first_stage_data%>%
   )%>% 
   rename(day_ahead_renewable_forecast= day_ahead_forecast)
 
-# CrÃ©er une variable factorielle pour clusteriser
+# Créer une variable factorielle pour clusteriser
 first_stage_data_clean <- first_stage_data_clean %>% 
   mutate(cluster_var = interaction(auction_date_plus_one, auction))
 

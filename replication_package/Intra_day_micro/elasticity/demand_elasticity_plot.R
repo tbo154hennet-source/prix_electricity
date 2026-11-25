@@ -39,7 +39,7 @@ df_2020_daily_var <- price_indispo_merge_esp_npc %>%
     hour = hour(datetime),
     load_error = load_tot - load_forecast,
     gen_error  = gen_tot - gen_forecast_net
-    # slot = if_else(hour < 5 | hour >= 23, "night", "day")  # ex: nuit 20hâ€“7h59
+    # slot = if_else(hour < 5 | hour >= 23, "night", "day")  # ex: nuit 20h–7h59
   ) %>%
   group_by(date) %>%
   summarise(
@@ -84,21 +84,21 @@ df_2020_daily_var <- price_indispo_merge_esp_npc %>%
 
 
 
-# PÃ©riode	Niveau	Type de mesure
-# 14â€“15 mars â€“ 21 juin 2020	National	Confinement strict national, Ã©tat dâ€™alerte ðŸ‡ªðŸ‡¸ðŸ“
-# Phases du plan de dÃ©confinement
+# Période	Niveau	Type de mesure
+# 14–15 mars – 21 juin 2020	National	Confinement strict national, état d’alerte ðŸ‡ªðŸ‡¸ðŸ“
+# Phases du plan de déconfinement
 # 29 mars, tuightening of lockdown, all non essential activity has beeen stopped
 
 #the closure of non-essential activities (1st-14th April).
 
-# ðŸŸ¡ Phase 0 â€“ Â« prÃ©paration Â»
-# DÃ©but : ~2 mai 2020
-# ðŸŸ¢ Phase 1 â€“ Â« levÃ©e progressive Â»
-# DÃ©but majoritaire : 11 mai 2020
-# ðŸ”µ Phase 2 â€“ Â« dÃ©confinement intermÃ©diaire Â»
-# DÃ©but : ~18â€“25 mai 2020 (selon rÃ©gions)
-# Octobre 2020	National/Regional	Nouvel Ã©tat dâ€™alerte national limitÃ© pour soutenir les confinements locaux ðŸ‡ªðŸ‡¸ðŸ“
-# 4â€“14 dÃ©cembre 2020	Madrid (rÃ©gional)	Confinement gÃ©ographique Madrid
+# 🟡 Phase 0 – « préparation »
+# Début : ~2 mai 2020
+# 🟢 Phase 1 – « levée progressive »
+# Début majoritaire : 11 mai 2020
+# 🔵 Phase 2 – « déconfinement intermédiaire »
+# Début : ~18–25 mai 2020 (selon régions)
+# Octobre 2020	National/Regional	Nouvel état d’alerte national limité pour soutenir les confinements locaux ðŸ‡ªðŸ‡¸ðŸ“
+# 4–14 décembre 2020	Madrid (régional)	Confinement géographique Madrid
 
 lockdowns <- data.frame(
   start = as.POSIXct(c(
@@ -158,7 +158,7 @@ my_plot <- ggplot() +
   )+
   
   
-  # sÃ©ries
+  # séries
   geom_line(data = df_2020 %>% 
               filter(as.numeric(month) >= 2 & as.numeric(month) <= 5) %>% 
               group_by(date) %>% 
@@ -220,7 +220,7 @@ ggsave("covid_elec_forecast_error.png", plot = my_plot, width = 12, height = 6, 
 
 
 
-#justifier le seuil de jours dÃ©finis
+#justifier le seuil de jours définis
 
 
 
@@ -238,12 +238,12 @@ sd_load_precovid <- price_indispo_merge_esp_npc %>%
   pull(sd)
 
 
-# 3) Bornes fixes Â±1.96Ïƒ_annuel
+# 3) Bornes fixes ±1.96σ_annuel
 df_2020 <- df_2020 %>%
   mutate(
     load_error_upper =  1.96 * sd_load_precovid,
     load_error_lower = -1.96 * sd_load_precovid,
-    # indicateurs dâ€™anormalitÃ©
+    # indicateurs d’anormalité
     load_error_abnormal = abs(load_error) > 1.96 * sd_load_precovid,
     gen_error_abnormal  = abs(gen_error)  > 1.96 * sd_load_precovid
   )
@@ -271,7 +271,7 @@ my_plot_seuil <- ggplot(
     inherit.aes = FALSE,
     alpha = 0.25
   ) +
-  # sÃ©rie
+  # série
   geom_line(
     data = wind_reg_data %>%
       filter(year == 2020, as.numeric(month) >= 2, as.Date(datetime) <= as.Date("2020-05-15")),

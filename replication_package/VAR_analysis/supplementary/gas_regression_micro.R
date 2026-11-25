@@ -2,7 +2,7 @@
 #get micro price counterfactual using the spot gas coefficient
 # petit tableau avec la valeur des coefficents respectifs pour la France et l'Allemagne
 
-#diffÃ©rence entre prÃ©diction et effective
+#différence entre prédiction et effective
 library(readxl)
 library(arrow)
 library(sandwich)
@@ -55,16 +55,16 @@ carbon_price_data <- read_excel("D2E_carbone.xlsx") %>%
   # mutate(Date = as.Date(Date))
 
 #pour l'instant carbon price ne va que jusqu'en 2018
-#Une seule annÃ©e de donnÃ©es puisque donnÃ©es micro Espagne commencent en 2018
+#Une seule année de données puisque données micro Espagne commencent en 2018
 
 all_dates <- seq.Date(min(carbon_price_data$time),
                       max(carbon_price_data$time),
                       by = "day")
 
 carbon_price_data_complete <- carbon_price_data %>%
-  # CrÃ©er toutes les dates
+  # Créer toutes les dates
   complete(time = all_dates) %>%
-  # Remplir les NA par la derniÃ¨re valeur connue (backfill)
+  # Remplir les NA par la dernière valeur connue (backfill)
   fill(carbon_price , .direction = "up")
 
 
@@ -94,9 +94,9 @@ iberian_cap <- data.frame(
   mutate(my_date = as.Date(paste0(Month, "-01")),
          year = as.character(year(my_date)),
          month =  as.integer(month(my_date)))
-#gÃ©rrer facteur manquant
+#gérrer facteur manquant
 
-all_years <- sort(unique(price_indispo_merge_esp$year))  # toutes les annÃ©es possibles
+all_years <- sort(unique(price_indispo_merge_esp$year))  # toutes les années possibles
 
 
 
@@ -171,7 +171,7 @@ m_post <- lm(
   equation,
   data= price_indispo_merge_esp_post_iberic)
 summary(m_cap)
-# Matrice de variance-covariance clusterisÃ©e
+# Matrice de variance-covariance clusterisée
 
 vcov_esp_pre_cap  <-  NeweyWest(m_pre_cap, lag = 12, prewhite = FALSE, adjust = TRUE)
 cl_se_esp_pre_cap <- sqrt(diag(vcov_esp_pre_cap))
@@ -294,7 +294,7 @@ m_fr_post <- lm(
   data= price_indispo_merge_fr_post_iberic)
 
 
-# Matrice de variance-covariance clusterisÃ©e
+# Matrice de variance-covariance clusterisée
 # France
 vcov_fr_pre  <- NeweyWest(m_fr_pre, lag = 12, prewhite = FALSE, adjust = TRUE)
 cl_se_fr_pre <- sqrt(diag(vcov_fr_pre))
@@ -316,7 +316,7 @@ reg_table <- stargazer(
 
 library(broom)   # pour tidy()
 
-# mettre tous tes modÃ¨les dans une liste nommÃ©e
+# mettre tous tes modèles dans une liste nommée
 models <- list(
   "ES_Pre"       = m_pre,
   "ES_Post"      = m_post,
@@ -326,7 +326,7 @@ models <- list(
   "FR_Post"      = m_fr_post
 )
 
-# liste de SE NW correspondant aux modÃ¨les
+# liste de SE NW correspondant aux modèles
 se_list <- list(
   "ES_Pre"       = cl_se_esp_pre,
   "ES_Post"      = cl_se_esp_post,
@@ -336,7 +336,7 @@ se_list <- list(
   "FR_Post"      = cl_se_fr_post
 )
 
-# fonction pour extraire coef + SE dÃ©jÃ  calculÃ©s
+# fonction pour extraire coef + SE déjà calculés
 extract_coef <- function(model, se_vec, var){
   coefs <- coef(model)
   
@@ -351,17 +351,17 @@ extract_coef <- function(model, se_vec, var){
   }
 }
 
-# toutes les variables dâ€™intÃ©rÃªt
+# toutes les variables d’intérêt
 vars <- c("gas_price", "spot_gas_capped")
 
 # extraction
 results <- imap_dfr(models, function(mod, name){
-  se_vec <- se_list[[name]]   # rÃ©cupÃ©rer le vecteur de SE NW correspondant
+  se_vec <- se_list[[name]]   # récupérer le vecteur de SE NW correspondant
   map_dfr(vars, ~extract_coef(mod, se_vec, .x)) %>%
     mutate(model = name)
 })
 
-# sÃ©parer infos du nom du modÃ¨le
+# séparer infos du nom du modèle
 results <- results %>%
   separate(model, into = c("Country","Period","Cap"), sep = "_", fill = "right") %>%
   mutate(
@@ -373,7 +373,7 @@ results_stars <- results %>%
   filter(!is.na(estimate)) %>% 
   mutate(
     tval = estimate / se,
-    pval = 2 * (1 - pnorm(abs(tval))),   # test bilatÃ©ral
+    pval = 2 * (1 - pnorm(abs(tval))),   # test bilatéral
     stars = case_when(
       pval < 0.01 ~ "***",
       pval < 0.05 ~ "**",
@@ -409,7 +409,7 @@ table_latex <-results_stars %>%
     Pre = "Pre Period",
     Post = "Iberic Exception"
   ) %>%
-  fmt_missing(everything(), missing_text = "") %>%  # si reste NA â†’ vide
+  fmt_missing(everything(), missing_text = "") %>%  # si reste NA → vide
   tab_options(
     table.font.size = "small",
     table.align = "center"
@@ -422,13 +422,13 @@ setwd(file.path(Sys.getenv("REPLICATION_OUTPUT_DIR", "output"), "latex_tables"))
 gtsave(table_latex, "table_gas_pass.tex")
 
 
-#gÃ©rrer facteur manquant
+#gérrer facteur manquant
 
 
 
 
 
-# RecupÃ©rer les niveaux utilisÃ©s dans le modÃ¨le
+# Recupérer les niveaux utilisés dans le modèle
 data_2022 <- price_indispo_merge_esp_iberic %>% 
   filter(year == "2022" )
 
@@ -448,7 +448,7 @@ se_values  <- pred_post$se.fit
 # upper <- fit_values + 1.96 * se_values
 # lower <- fit_values - 1.96 * se_values
 
-# CrÃ©er un data.frame pour inspection ou plotting
+# Créer un data.frame pour inspection ou plotting
 pred_post_df <- data.frame(
   year = data_2022$year,
   month = data_2022$month,
@@ -567,16 +567,16 @@ pi_upper <- yhat + tval * se_pred
 
 mf <- model.frame(formula(m_pre), data = data_2022_2023, na.action = na.omit)
 
-idx_kept <- as.integer(rownames(mf))             # indices originaux conservÃ©s
+idx_kept <- as.integer(rownames(mf))             # indices originaux conservés
 idx_all  <- seq_len(nrow(data_2022_2023))
 
 idx_dropped <- setdiff(idx_all, idx_kept)
 idx_dropped
 
-# sous-Ã©chantillonner les colonnes de data_2022_2023 sur les mÃªmes lignes
+# sous-échantillonner les colonnes de data_2022_2023 sur les mêmes lignes
 d_used <- data_2022_2023[idx_kept, ]
 
-# construire le data.frame final, alignÃ©
+# construire le data.frame final, aligné
 pred_post_2022_2023 <- data.frame(
   predicted_price = yhat,
   se.fit = se_fit,
@@ -704,13 +704,13 @@ monthly_observed_price <- price_indispo_merge_esp %>%
 price_plot <- ggplot( ) +
   geom_line(data = monthly_observed_price %>% filter(delivery_date >= as.Date("2021-01-01") &delivery_date <=  as.Date("2024-01-01")),
             aes(x =delivery_date,y = price, color ="Elec ES", linetype = "Observed"), size = 0.7) +
-  # ObservÃ©
+  # Observé
   geom_line(data = pred_post_df_plot_2022_2023, aes(x =date,y = price, color ="Elec ES", linetype = "Observed"), size = 0.7) +
-  # PrÃ©diction
+  # Prédiction
   #geom_line(data = pred_post_df_plot, aes(x =date, y = predicted_price, color ="Elec", linetype = "Counterfactual"), color = "blue", size = 0.7) +
   # Intervalle de confiance
   #geom_ribbon(data = pred_post_df_plot, aes(x =date, ymin = lower, ymax = upper), fill = "blue", alpha = 0.2) +
-  # PrÃ©diction
+  # Prédiction
   geom_line(data = pred_post_df_plot_2022_2023, aes(x =date, y = predicted_price, color ="Elec ES", linetype = "Counterfactual"), size = 0.7) +
   # Intervalle de confiance
   geom_ribbon(data = pred_post_df_plot_2022_2023, aes(x =date, ymin = pi_lower, ymax = pi_upper, fill = "Elec 95% CI"), alpha = 0.2)+#,show.legend = FALSE ) +
@@ -723,7 +723,7 @@ price_plot <- ggplot( ) +
   geom_line(data = price_indispo_merge_fr_plot %>% filter(year >= 2021), aes(x = delivery_date, y = price, color ="Elec FR", linetype = "Observed"))+
   
   labs(
-    #title = "Prix prÃ©dit vs. observÃ© (Post 2022)",
+    #title = "Prix prédit vs. observé (Post 2022)",
     x = "Date",
     y = expression(paste("Price (", "\u20AC","/Mwh)"))
   ) +
@@ -770,7 +770,7 @@ ggsave("iberian_exception_plot_price_counterfactual.png", plot = price_plot, wid
 #   #geom_line(data = pred_post_df_plot, aes(x =date, y = predicted_price, color ="Elec", linetype = "Counterfactual"), color = "blue", size = 0.7) +
 #   # Intervalle de confiance
 #   #geom_ribbon(data = pred_post_df_plot, aes(x =date, ymin = lower, ymax = upper), fill = "blue", alpha = 0.2) +
-#   # PrÃ©diction
+#   # Prédiction
 #   geom_line(data = pred_post_2022_2023, aes(x =datetime, y = predicted_price, color ="hourly"), size = 0.7) +
 #   # Intervalle de confiance
 #   geom_ribbon(data = pred_post_2022_2023, aes(x =datetime, ymin = lwr.PI, ymax =  upr.PI, fill ="hourly"), alpha = 0.2)+#,show.legend = FALSE ) +
@@ -783,7 +783,7 @@ ggsave("iberian_exception_plot_price_counterfactual.png", plot = price_plot, wid
 #   # Intervalle de confiance
 #   geom_ribbon(data = monthly_pred, aes(x =datetime, ymin = pi_lower, ymax = pi_upper, fill = "monthly"), alpha = 0.2)+#,show.legend = FALSE ) +
 #   labs(
-#     #title = "Prix prÃ©dit vs. observÃ© (Post 2022)",
+#     #title = "Prix prédit vs. observé (Post 2022)",
 #     x = "Date",
 #     y = expression(paste("Price (", "\u20AC","/Mwh)"))
 #   ) +

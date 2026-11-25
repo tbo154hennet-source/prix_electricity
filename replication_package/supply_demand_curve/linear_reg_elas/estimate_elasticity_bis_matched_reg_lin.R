@@ -2,21 +2,26 @@ library(data.table)
 library(arrow)
 library(fixest)
 
-# RÃ©pertoire de sortie
+# Répertoire de sortie
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs"))
 
-# Valeurs de k Ã  tester
+# Same local sample as the log-log benchmark (estimate_elasticity_bis_matched.R):
+# +/- 10 EUR around the clearing price, quantity within 2,000 MWh of gen_forecast_net.
+reconstruct_full_curve_shift_qty_demand_matched_local <- as.data.table(read_parquet('curve_local_window_demand.parquet'))[abs(PRICE - price) <= 10]
+reconstruct_full_curve_shift_qty_supply_matched_local <- as.data.table(read_parquet('curve_local_window_supply.parquet'))[abs(PRICE - price) <= 10]
+
+# Valeurs de k à tester
 k_values <- c(5, 10, 15)
 
-# Fonction gÃ©nÃ©rique pour calculer les pentes locales
+# Fonction générique pour calculer les pentes locales
 compute_local_slopes <- function(dt, k, type = c("demand", "supply")) {
   type <- match.arg(type)
   
-  # Ã‰tape 1 : garder les k observations les plus proches
+  # Étape 1 : garder les k observations les plus proches
   dt_k <- dt[, head(.SD[order(abs(PRICE - price))], k), by = .(DATE, Hour)]
   dt_k <- dt_k[is.finite(PRICE) & is.finite(QTY)]
   
-  # Ã‰tape 2 : rÃ©gression locale
+  # Étape 2 : régression locale
   local_slopes <- dt_k[
     , {
       if (.N > 1) {
@@ -57,7 +62,7 @@ compute_local_slopes <- function(dt, k, type = c("demand", "supply")) {
     by = .(DATE, Hour)
   ]
   
-  # Ã‰tape 3 : sauvegarde
+  # Étape 3 : sauvegarde
   outfile <- sprintf("local_slopes_reg_%s_%d.parquet", type, k)
   write_parquet(local_slopes, outfile)
 
@@ -76,7 +81,7 @@ compute_local_slopes <- function(dt, k, type = c("demand", "supply")) {
   )
   benchmark_difference <- benchmark_fe - benchmark_aggregation
   
-  message(sprintf("âœ… Saved %s", outfile))
+  message(sprintf("✅ Saved %s", outfile))
   benchmark_summary <- data.table(
     type = type,
     k = k,
@@ -210,6 +215,4 @@ for (k in k_values) {
   local_slopes_demand <- compute_local_slopes(reconstruct_full_curve_shift_qty_demand_matched_local, k, type = "demand")
   local_slopes_supply <- compute_local_slopes(reconstruct_full_curve_shift_qty_supply_matched_local, k, type = "supply")
 }
-
-
 

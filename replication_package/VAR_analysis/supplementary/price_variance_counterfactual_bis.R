@@ -29,16 +29,16 @@ carbon_price_data <- read_excel("D2E_carbone.xlsx") %>%
 # mutate(Date = as.Date(Date))
 
 #pour l'instant carbon price ne va que jusqu'en 2018
-#Une seule annÃ©e de donnÃ©es puisque donnÃ©es micro Espagne commencent en 2018
+#Une seule année de données puisque données micro Espagne commencent en 2018
 
 all_dates <- seq.Date(min(carbon_price_data$time),
                       max(carbon_price_data$time),
                       by = "day")
 
 carbon_price_data_complete <- carbon_price_data %>%
-  # CrÃ©er toutes les dates
+  # Créer toutes les dates
   complete(time = all_dates) %>%
-  # Remplir les NA par la derniÃ¨re valeur connue (backfill)
+  # Remplir les NA par la dernière valeur connue (backfill)
   fill(carbon_price , .direction = "up")
 
 price_indispo_merge_fit <- merge(price_indispo_merge_fit,

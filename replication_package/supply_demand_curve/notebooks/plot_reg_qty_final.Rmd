@@ -10,7 +10,7 @@ temp_main_effects <- c("temp_spatial_mismatch_supply","temperature_discomfort_de
 
 temp_detailed <-  c("cold_spatial_mismatch_supply", "heat_spatial_mismatch_supply",
                   "cold_excess_demand", "heat_excess_demand")
-  # DÃ©finir les couleurs pour chaque pretty_variable
+  # Définir les couleurs pour chaque pretty_variable
 custom_colors_base <- c(
     "Plant Unavailability (MWh)" = "deeppink"	, # Blue
     "Placebo Unavailability (MWh)" = "pink",           # Transparent Blue (unpublished)
@@ -36,16 +36,16 @@ custom_colors_base <- c(
     "Intraday Update Wind (MWh)" = "darkgreen",         # Olive
     "Intraday Update Solar (MWh)" = "darkgoldenrod",  
     "Unpredicted Solar (MWh)" = "lightgoldenrod", # Transparent Green
-    "Excess Cold Demand (Â°C)" = "#17becf",                         # Cyan
-    "Excess Heat Demand (Â°C)" = "indianred",                          # Light Red
-    "Excess Cold PV (Â°C)" = "darkblue",                         # Cyan
-    "Excess Heat PV (Â°C)" = "darkred",                          # Light Red
-    "Excess Cold Th (Â°C)"= "blue",
-    "Excess Heat Th (Â°C)" = "red",
+    "Excess Cold Demand (°C)" = "#17becf",                         # Cyan
+    "Excess Heat Demand (°C)" = "indianred",                          # Light Red
+    "Excess Cold PV (°C)" = "darkblue",                         # Cyan
+    "Excess Heat PV (°C)" = "darkred",                          # Light Red
+    "Excess Cold Th (°C)"= "blue",
+    "Excess Heat Th (°C)" = "red",
     "Local Temperature Deviation"= "red",
-    "Local PV Temperature Deviation (Â°C)" = "gold",
-    "Local Supply Temperature Deviation (Â°C)" = "cyan",
-    "Local Demand Temperature Deviation (Â°C)" = "red",
+    "Local PV Temperature Deviation (°C)" = "gold",
+    "Local Supply Temperature Deviation (°C)" = "cyan",
+    "Local Demand Temperature Deviation (°C)" = "red",
    "Local Temperature Deviation Supply Effect" = "blue",
     "Local Temperature Deviation Demand Effect"= "red",
     "Spatial Mismatch Temperature Supply Effect"= "darkblue",
@@ -82,16 +82,16 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom
       variable == "cbf_es" ~ "CBF (MWh)",
       variable == "Fore_Wind" ~ "Wind Day-ahead Forecast (MWh)",
       variable == "Fore_Solar" ~ "Solar Day-ahead Forecast (MWh)",
-      variable == "cold_excess_supply" ~ "Excess Cold (Â°C)",
-      variable == "heat_excess_supply" ~ "Excess Heat (Â°C)",
-      variable == "cold_excess_ss" ~ "Excess Cold PV (Â°C)",
-      variable == "heat_excess_ss" ~ "Excess Heat PV (Â°C)",
-      variable == "cold_excess_sth" ~ "Excess Cold Th (Â°C)",
-      variable == "heat_excess_sth" ~ "Excess Heat Th (Â°C)",
-      variable == "cold_excess_demand" ~ "Excess Cold Demand (Â°C)",
-      variable == "heat_excess_demand" ~ "Excess Heat Demand (Â°C)",
-      variable == "temperature_discomfort_ss" ~ "Local PV Temperature Deviation (Â°C)",
-      variable == "temperature_discomfort_sth" ~ "Local Th Temperature Deviation (Â°C)",
+      variable == "cold_excess_supply" ~ "Excess Cold (°C)",
+      variable == "heat_excess_supply" ~ "Excess Heat (°C)",
+      variable == "cold_excess_ss" ~ "Excess Cold PV (°C)",
+      variable == "heat_excess_ss" ~ "Excess Heat PV (°C)",
+      variable == "cold_excess_sth" ~ "Excess Cold Th (°C)",
+      variable == "heat_excess_sth" ~ "Excess Heat Th (°C)",
+      variable == "cold_excess_demand" ~ "Excess Cold Demand (°C)",
+      variable == "heat_excess_demand" ~ "Excess Heat Demand (°C)",
+      variable == "temperature_discomfort_ss" ~ "Local PV Temperature Deviation (°C)",
+      variable == "temperature_discomfort_sth" ~ "Local Th Temperature Deviation (°C)",
       variable == "temperature_discomfort_demand" ~ "Local Temperature Deviation",
       variable == "temperature_discomfort_demand_bis" ~ "Local Temperature Deviation Demand Effect",
       variable =="temp_spatial_mismatch_supply"~ "Spatial Mismatch Temperature Supply Effect",
@@ -112,12 +112,12 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom
   # %>% 
   #   filter(price_test >= -100)
   
-  # DÃ©finir un facteur de mise Ã  l'Ã©chelle pour que l'histogramme rentre dans l'Ã©chelle principale
+  # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
   scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge$gen_tot_da, plot = FALSE)$counts)
   
   #si on prend simplement le std
-  #il y a une variabilitÃ© factice de la part des renouvelables
-  #parce que varie significativement durant la journÃ©Ã©
+  #il y a une variabilité factice de la part des renouvelables
+  #parce que varie significativement durant la journéé
   
   # sd_price_indispo_merge <- price_indispo_merge %>%
   # group_by(creneau) %>% 
@@ -163,7 +163,7 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom
     scale_fill_manual(values = custom_colors) +
     labs(
       #title = paste0("Shift of the ", type, " Curve"),
-      x = "Price (â‚¬)",
+      x = "Price (€)",
       y = "Quantity (MWh)",
       color = "Variable",
       fill = "Variable"
@@ -180,11 +180,11 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom
 
 
   if (matched == "matched"){
-    # DÃ©finir un facteur de mise Ã  l'Ã©chelle pour que l'histogramme rentre dans l'Ã©chelle principale
+    # Définir un facteur de mise à l'échelle pour que l'histogramme rentre dans l'échelle principale
     scale_factor <- max(plot_data$estimate, na.rm = TRUE) / max(hist(price_indispo_merge$price, plot = FALSE)$counts)
   
     my_plot <- my_plot + 
-    # Histogramme mis Ã  l'Ã©chelle
+    # Histogramme mis à l'échelle
     geom_histogram(
       data = price_indispo_merge,
       mapping = aes( x = price,  y = ..count.. * scale_factor),
@@ -195,8 +195,8 @@ plot_shift_with_hist_qty <- function(coef_data, variables, type, matched, custom
     
     # Axe secondaire
     # scale_y_continuous(
-    #   name = "Price (â‚¬/GWh)",
-    #   sec.axis = sec_axis(~ . / scale_factor, name = "FrÃ©quence de gen_tot")
+    #   name = "Price (€/GWh)",
+    #   sec.axis = sec_axis(~ . / scale_factor, name = "Fréquence de gen_tot")
     # )
   }
   my_plot <- my_plot +
@@ -374,7 +374,7 @@ coef_supply_combined <- rbind(coef_supply_unmatched_data_natural%>%
   filter(variable %in%new_renewable_factors)
 
 unique(coef_supply_combined$variable)
-  # DÃ©finir les couleurs pour chaque pretty_variable
+  # Définir les couleurs pour chaque pretty_variable
 custom_colors_wind_sun <- c(
     "Supply Solar Irradiance (W/m2)" = "gold",                     # Brown
     "Supply Wind Speed (m/s)" = "green",   # Gray

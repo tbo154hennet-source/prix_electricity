@@ -36,7 +36,7 @@ wind_solar_data_tot <- merge(
 
 
 #on essaye d'expliquer la prod de renouvelables avec mes infos et on regarde le R2
-#est ce que bien encapsulÃ©
+#est ce que bien encapsulé
 
 wind_solar_data_tot %>% 
   dplyr::select(wind_speed_100m_supply, wind_speed_100m_demand,
@@ -119,7 +119,7 @@ stargazer(
 #in demand doesn't play
 #same for irradiance
 
-#alors mÃªme qu'ils sont corrÃ©lÃ©s respectivement Ã  90 et 98 %
+#alors même qu'ils sont corrélés respectivement à 90 et 98 %
 
 wind_solar_data_tot<- wind_solar_data_tot %>%
   mutate(
@@ -132,7 +132,7 @@ wind_solar_data_tot<- wind_solar_data_tot %>%
   )
 
 
-#mettre en Ã©vidence la dÃ©croissance du rendement des panneaux solaires
+#mettre en évidence la décroissance du rendement des panneaux solaires
 
 
 m_sr <- lm(data =wind_solar_data_tot,
@@ -156,7 +156,7 @@ m_sr3 <- lm(data =wind_solar_data_tot,
               as.factor(year) + as.factor(month) + as.factor(weekday) + as.factor(creneau)
 )
 
-#Attention le fait de contÃ´ler par  global_tilted_irradiance est essentiel
+#Attention le fait de contôler par  global_tilted_irradiance est essentiel
 
 stargazer(
   #m_wind, 

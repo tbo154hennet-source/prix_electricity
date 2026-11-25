@@ -7,16 +7,16 @@ price_merge_CBF_max <- read_parquet("final_price_merge_CBF_tot.parquet")
 price_merge_CBF_max$weekday <- weekdays(price_merge_CBF_max$delivery_date)
 price_merge_CBF_max$creneau <- hour(price_merge_CBF_max$datetime)
 
-# vÃ©rifier l'approximation day ahead commercial flows,
-# par rapport Ã  flux totaux
-#on cherche Ã  savoir quelle erreur on fait lorsque l'on prend tot Ã  la place de day-ahead 
+# vérifier l'approximation day ahead commercial flows,
+# par rapport à flux totaux
+#on cherche à savoir quelle erreur on fait lorsque l'on prend tot à la place de day-ahead 
 
 verif_data <- price_merge_CBF_max %>% 
   filter(datetime >= as.POSIXct("2022-01-01 00:00:00", tz = "UTC"))
 
 colnames(verif_data)
 
-# On suppose que les colonnes sont nommÃ©es de la forme "SCH_EX_DA_GB_FR" ou "SCH_EX_TOT_GB_FR"
+# On suppose que les colonnes sont nommées de la forme "SCH_EX_DA_GB_FR" ou "SCH_EX_TOT_GB_FR"
 
 # Step 1: Get the suffix (e.g., "GB_FR") from each column
 colnames_split <- strcapture("SCH_EX_(DA|TOT)_(.+)", colnames(verif_data),
@@ -68,7 +68,7 @@ colnames(col_info) <- c("match", "type", "zone", "full_name")
 price_merge_CBF_max <- price_merge_CBF_max %>% 
   mutate(across(all_of(col_info$match), ~as.numeric(.)))
 
-# 2. Pour chaque zone, crÃ©er une colonne fusionnÃ©e
+# 2. Pour chaque zone, créer une colonne fusionnée
 for (z in unique(col_info$zone)) {
   da_col <- col_info$full_name[col_info$type == "DA" & col_info$zone == z]
   tot_col <- col_info$full_name[col_info$type == "TOT" & col_info$zone == z]
@@ -127,7 +127,7 @@ price_merge_CBF_max <- price_merge_CBF_max %>%
 # Liste des pays partenaires avec la France
 partners <- c("ES", "PT", "BE", "CH", "DE", "GB", "IT", "FR")
 
-# CrÃ©er les noms des colonnes entrantes et sortantes
+# Créer les noms des colonnes entrantes et sortantes
 incoming_cols <- c(paste0("SCH_EX_COMBINED_", partners, "_FR"), paste0("SCH_EX_COMBINED_", partners, "_ES"))
 outgoing_cols <- c(paste0("SCH_EX_COMBINED_FR_", partners), paste0("SCH_EX_COMBINED_ES_", partners))
 net_cols <- c(paste0("NET_FLOW_FR_", partners), paste0("NET_FLOW_ES_", partners))
@@ -177,7 +177,7 @@ for (flow in net_flow_col) {
   # Example: use formula in a linear model
   model <- lm(formula, data = price_merge_CBF_max)
 
-  cat(flow, " RÂ² ", round(summary(model)$r.squared, 3), "\n")
+  cat(flow, " R² ", round(summary(model)$r.squared, 3), "\n")
   
   price_merge_CBF_max[[paste0(flow, "_pred")]] <- predict(model, price_merge_CBF_max)
   
@@ -211,12 +211,12 @@ for (flow in net_flow_col) {
   # 
   # models_xgb[[flow]] <- xgb_model
   # 
-  # # Print RÂ² for the fitted model
+  # # Print R² for the fitted model
   # predictions <- predict(xgb_model, X_matrix)
   # rss <- sum((predictions - y_data)^2)
   # tss <- sum((y_data - mean(y_data))^2)
   # r2_xgb <- 1 - rss / tss
-  # cat(flow, " XGBoost RÂ² ", round(r2_xgb, 3), "\n")
+  # cat(flow, " XGBoost R² ", round(r2_xgb, 3), "\n")
   # 
   # # Predict using XGBoost
   # price_merge_CBF_max[[paste0(flow, "_pred")]] <- predict(xgb_model, X_matrix)
@@ -254,11 +254,11 @@ for (flow in net_flow_col) {
   obs <- price_merge_CBF_max[[flow]]
   pred  <- price_merge_CBF_max[[paste0(flow, "_pred_sat")]]
   
-  # Compute RÂ² manually
+  # Compute R² manually
   r2_sat <- 1 - sum((obs - pred)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
   
   
-  cat(flow, " Pseudo saturated RÂ² ", r2_sat, "\n")
+  cat(flow, " Pseudo saturated R² ", r2_sat, "\n")
   
 }
 
@@ -294,12 +294,12 @@ obs <- price_merge_CBF_max$CBF_ES
 pred <- price_merge_CBF_max$CBF_ES_pred
 pred_sat <- price_merge_CBF_max$CBF_ES_pred_sat
 
-# Compute RÂ² manually
+# Compute R² manually
 r2lin <- 1 - sum((obs - pred)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
 r2lin_cap_sat <- 1 - sum((obs - pred_sat)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
 
-cat("RÂ² Linear model:", round(r2lin, 4), "\n")
-cat("RÂ² Linear model (saturated):", round(r2lin_cap_sat, 4), "\n")
+cat("R² Linear model:", round(r2lin, 4), "\n")
+cat("R² Linear model (saturated):", round(r2lin_cap_sat, 4), "\n")
 
 
 
@@ -307,12 +307,12 @@ obs <- price_merge_CBF_max$CBF_FR
 pred <- price_merge_CBF_max$CBF_FR_pred
 pred_sat <- price_merge_CBF_max$CBF_FR_pred_sat
 
-# Compute RÂ² manually
+# Compute R² manually
 r2lin <- 1 - sum((obs - pred)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
 r2lin_cap_sat <- 1 - sum((obs - pred_sat)^2, na.rm = TRUE) / sum((obs - mean(obs, na.rm = TRUE))^2, na.rm = TRUE)
 
-cat("RÂ² Linear model:", round(r2lin, 4), "\n")
-cat("RÂ² Linear model (saturated):", round(r2lin_cap_sat, 4), "\n")
+cat("R² Linear model:", round(r2lin, 4), "\n")
+cat("R² Linear model (saturated):", round(r2lin_cap_sat, 4), "\n")
 
 
 

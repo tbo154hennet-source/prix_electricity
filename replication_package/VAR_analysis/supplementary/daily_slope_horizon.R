@@ -7,7 +7,7 @@
 # of daily log price and log load, current and lagged log gas price. Newey-West standard errors (lag H + 7).
 # Usage: Rscript VAR_analysis/supplementary/daily_slope_horizon.R [hourly parquet]
 suppressPackageStartupMessages({library(arrow); library(fixest)})
-root_dir <- "C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab"
+root_dir <- Sys.getenv("REPLICATION_ROOT", ".")
 args <- commandArgs(trailingOnly = TRUE)
 path <- if (length(args)) args[[1]] else
   file.path(root_dir, "supply_demand_curve/outputs/coef_reg_no_conditioning/price_indispo_merge_esp_npc_all_final_2026.parquet")

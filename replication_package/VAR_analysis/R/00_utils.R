@@ -152,12 +152,24 @@ save_plot <- function(plot, cfg, filename, overleaf_dir = "macro",
   invisible(internal)
 }
 
+# LaTeX tables are written as a bare tabular: gt wraps them in a table float with its own caption and notes,
+# which cannot be \input inside the figure/resizebox environments of the paper.
+bare_tabular <- function(path) {
+  lines <- readLines(path, warn = FALSE)
+  start <- grep("^\\\\begin\\{tabular", lines)[1]
+  end <- tail(grep("^\\\\end\\{tabular", lines), 1)
+  if (!is.na(start) && length(end) && end >= start) writeLines(lines[start:end], path)
+  invisible(path)
+}
+
 save_gt <- function(table, cfg, filename) {
-  internal <- file.path(cfg$table_dir, filename)
-  gt::gtsave(table, internal)
-  if (cfg$overleaf$enabled) {
-    gt::gtsave(table, file.path(cfg$overleaf$tables, filename))
+  write <- function(path) {
+    gt::gtsave(table, path)
+    if (grepl("[.]tex$", path)) bare_tabular(path)
   }
+  internal <- file.path(cfg$table_dir, filename)
+  write(internal)
+  if (cfg$overleaf$enabled) write(file.path(cfg$overleaf$tables, filename))
   invisible(internal)
 }
 

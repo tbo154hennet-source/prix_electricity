@@ -13,13 +13,13 @@ execute_code_shift_qty <- function(curve, type){
                          skip = 1)
   
   setDT(csv_file2)
-  # 2. Utiliser la premiÃ¨re ligne comme noms de colonnes
+  # 2. Utiliser la première ligne comme noms de colonnes
   setnames(csv_file2, as.character(csv_file2[1, ]))
   
   # 3. Filtrer les lignes pour 'Pais' == "ES" ou "MI"
   csv_file2 <- csv_file2[Pais == "ES" | Pais == "MI"]
   
-  # 4. Supprimer la premiÃ¨re ligne (devenue l'ancienne ligne d'en-tÃªte) et ne garder que les colonnes 1:2 et 5:8
+  # 4. Supprimer la première ligne (devenue l'ancienne ligne d'en-tête) et ne garder que les colonnes 1:2 et 5:8
   csv_file2 <- csv_file2[-1, .SD, .SDcols = c(1:2, 5:8)]
   
   # 5. Renommer les colonnes
@@ -39,7 +39,7 @@ execute_code_shift_qty <- function(curve, type){
     csv_file2 <- csv_file2[OFFER_TYPE == "C"]
     #for demand desc(price)
     csv_file2 <- csv_file2[
-      order(DATE, Hour, OFFER_TYPE, MATCHED, desc(PRICE)),  # tri nÃ©cessaire avant cumsum
+      order(DATE, Hour, OFFER_TYPE, MATCHED, desc(PRICE)),  # tri nécessaire avant cumsum
       CUM_ENERGY := cumsum(ENERGY),
       by = .(DATE, Hour, OFFER_TYPE, MATCHED)
     ]
@@ -60,7 +60,7 @@ execute_code_shift_qty <- function(curve, type){
     csv_file2 <- csv_file2[OFFER_TYPE == "V"]
     #for supply asc(price)
     csv_file2 <- csv_file2[
-      order(DATE, Hour, OFFER_TYPE, MATCHED, PRICE),  # tri nÃ©cessaire avant cumsum
+      order(DATE, Hour, OFFER_TYPE, MATCHED, PRICE),  # tri nécessaire avant cumsum
       CUM_ENERGY := cumsum(ENERGY),
       by = .(DATE, Hour, OFFER_TYPE, MATCHED)
     ]
@@ -92,25 +92,25 @@ execute_code_shift_qty <- function(curve, type){
   
   
   #cela fait beaucoup de points
-  #je cherche Ã  allÃ©ger ma structure de donnÃ©es
-  #beaucoup de NA dans les matched, je les enlÃ¨ve
+  #je cherche à alléger ma structure de données
+  #beaucoup de NA dans les matched, je les enlève
   result2 <- na.omit(result2)
   
   #fonction en escalier
   #superflus de stocker des points sur les marches horizontales
-  # Supprimer les lignes oÃ¹ PRICE est identique au prÃ©cÃ©dent (par groupe)
+  # Supprimer les lignes où PRICE est identique au précédent (par groupe)
   result2 <- result2[
     ,
     .SD[c(TRUE, diff(QTY) != 0)],
     by = .(DATE, Hour, OFFER_TYPE, MATCHED)
   ]
   
-  #dans mon exemple permet de rÃ©duire d'un facteur 10
+  #dans mon exemple permet de réduire d'un facteur 10
   # 96 000 -> drop na 51 000 -> 10 000
   
   
   return(result2)
-  # âœ… Ajouter correctement Ã  la liste globale
+  # ✅ Ajouter correctement à la liste globale
   #result_list[[length(result_list) + 1]] <<- result2
 }
 
@@ -118,7 +118,7 @@ execute_code_shift_qty <- function(curve, type){
 # Nettoyer les fichiers ? traiter
 curve_path <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "data/omie/Supply_demand_curves")
 setwd(curve_path)
-# Liste des fichiers dans le rÃ©pertoire courant
+# Liste des fichiers dans le répertoire courant
 my_files <- list.files()
 # Filtrer les fichiers qui finissent par .1
 files_ending_with_1 <- my_files[grep("\\.1$", my_files)]
@@ -127,9 +127,9 @@ files_ending_with_1[1]
 
 #cum_grid <- seq(0, 60000,length.out = 1000)
 price_grid <- seq(-200, 1000, length.out = 1001)
-#on prend une grille distordue pour reprÃ©senter avec meilleure prÃ©cision
-#la partie la plus utilisÃ©e de la grid
-#ce n'est pas forcÃ©ment lÃ  oÃ¹ l'Ã©quilibre se fait qu'il y a le plus de changements
+#on prend une grille distordue pour représenter avec meilleure précision
+#la partie la plus utilisée de la grid
+#ce n'est pas forcément là où l'équilibre se fait qu'il y a le plus de changements
 
 
 # Fonction enveloppante pour la gestion des erreurs

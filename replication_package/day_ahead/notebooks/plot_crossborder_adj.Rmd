@@ -64,10 +64,10 @@ plot_NTC_fr_esp <-  ggplot(data = plot_example, aes(x = datetime))+
   geom_line(aes(y = NTC_FR_ESP, color = "FR -> ES"), linetype ="dashed")+
   geom_line(aes(y = SCH_EX_DA_ES_FR, color = "ES -> FR"))+
   geom_line(aes(y = SCH_EX_DA_FR_ES, color = "FR -> ES"))+
-    # Mise en place de l'Ã©chelle secondaire pour les prix
+    # Mise en place de l'échelle secondaire pour les prix
   scale_y_continuous(
     name = "NTC & Exchanges",
-    sec.axis = sec_axis(~ . / 20, name = "Price (â‚¬/MWh)") # Ajuste l'Ã©chelle inverse
+    sec.axis = sec_axis(~ . / 20, name = "Price (€/MWh)") # Ajuste l'échelle inverse
   ) +
   theme_minimal()+
   theme(legend.text = element_text(size = 15),      # taille du texte
@@ -94,7 +94,7 @@ ggsave("plot_price_comovements_fr_esp.png", plot = plot_NTC_fr_esp, width = 14 ,
 
 
 
-Faire apparaÃ®tre le seuil de saturation
+Faire apparaître le seuil de saturation
 
 
 
@@ -205,13 +205,13 @@ ggplot()+
 ```
 
 
-Cette reprÃ©sentation laisse entendre que chaque point reprÃ©sente autant de points de donnÃ©es.
-Donc, que la situation de saturation apparaÃ®t autant lorsque la demande est trÃ¨s grande ou trÃ¨s faible.
+Cette représentation laisse entendre que chaque point représente autant de points de données.
+Donc, que la situation de saturation apparaît autant lorsque la demande est très grande ou très faible.
 
 
 
 
-Illustration de l'exception ibÃ©rique
+Illustration de l'exception ibérique
 
 ```{r}
 exception_start_date <- as.POSIXct("15-06-2022 00:00:00", 
@@ -229,7 +229,7 @@ ggplot(plot_data)+
   geom_vline(xintercept = exception_start_date, linetype = "dashed", color = "red") +
   geom_vline(xintercept = exception_end_date, linetype = "dashed", color = "red") +
   labs(title = "Day-ahead electricity prices in France and Spain",
-       x = "Date", y = "Price (â‚¬/MWh)") +
+       x = "Date", y = "Price (€/MWh)") +
   theme_minimal()
 
 

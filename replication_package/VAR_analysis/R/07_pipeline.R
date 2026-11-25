@@ -137,6 +137,24 @@ run_pipeline <- function(cfg, selected_stages = "all") {
       cfg
     )
   })
+  bvar_name <- function(base) {
+    paste0(
+      base, "_p", cfg$p, "_h", cfg$bvar$horizon, "_d", cfg$bvar$draws,
+      if (cfg$bvar$stable_only) "_stable" else ""
+    )
+  }
+  spain_supply_bvar <- function() get_model(bvar_name("spain_bvar_supply_benchmark"), function() {
+    fit_proxy_bvar(
+      inputs$Spain, inputs$Spain$supply_proxy,
+      "spot_price_log", "Supply", cfg
+    )
+  })
+  spain_demand_bvar <- function() get_model(bvar_name("spain_bvar_demand_benchmark"), function() {
+    fit_proxy_bvar(
+      inputs$Spain, inputs$Spain$demand_proxy,
+      "load_tot_log", "Demand", cfg
+    )
+  })
 
   if (should_run("irfs")) {
     stage_log(cfg, "irfs", {
@@ -468,6 +486,56 @@ run_pipeline <- function(cfg, selected_stages = "all") {
     })
   }
 
+  # Opt-in: not part of "all", the manuscript figures stay OLS/MSW.
+  if ("bvar" %in% requested) {
+    stage_log(cfg, "bvar", {
+      horizon <- cfg$bvar$horizon
+      subtitle <- paste0(
+        "Benchmark PCA proxy; diffuse NIW prior; 68% and 90% posterior bands"
+      )
+      supply_bvar <- spain_supply_bvar()
+      demand_bvar <- spain_demand_bvar()
+      save_plot(
+        plot_iv_irf(supply_bvar, "Spain: electricity supply shock (BVAR)", subtitle),
+        cfg, cfg$plot_names$spain_supply_bvar,
+        overleaf_dir = "macro", width = 10, height = 6
+      )
+      save_plot(
+        plot_iv_irf(demand_bvar, "Spain: electricity demand shock (BVAR)", subtitle),
+        cfg, cfg$plot_names$spain_demand_bvar,
+        overleaf_dir = "macro", width = 10, height = 6
+      )
+      save_plot(
+        plot_irf_comparison(
+          list(
+            "OLS (MSW)" = truncate_plot_irfs(spain_supply(), horizon),
+            "BVAR" = supply_bvar
+          ),
+          "Supply",
+          "Spain: supply shock, OLS vs BVAR"
+        ),
+        cfg, cfg$plot_names$spain_supply_bvar_ols,
+        overleaf_dir = "macro", width = 12, height = 7
+      )
+      save_plot(
+        plot_irf_comparison(
+          list(
+            "OLS (MSW)" = truncate_plot_irfs(spain_demand(), horizon),
+            "BVAR" = demand_bvar
+          ),
+          "Demand",
+          "Spain: demand shock, OLS vs BVAR"
+        ),
+        cfg, cfg$plot_names$spain_demand_bvar_ols,
+        overleaf_dir = "macro", width = 12, height = 7
+      )
+      save_csv(
+        rbind(supply_bvar$plot_irfs, demand_bvar$plot_irfs),
+        cfg, "irf_bvar_spain.csv"
+      )
+    })
+  }
+
   if (should_run("france")) {
     stage_log(cfg, "france", {
       wind <- france_wind()
@@ -551,6 +619,16 @@ run_pipeline <- function(cfg, selected_stages = "all") {
     })
   }
 
+  if (should_run("france2010")) {
+    stage_log(cfg, "france2010", {
+      run_france_extended_stage(
+        france_wind(), france_demand(), cfg, demand_elasticity,
+        get_model, cache_name
+      )
+      run_france_elasticity(cfg, get_model, demand_elasticity)
+    })
+  }
+
   if (should_run("elasticity")) {
     stage_log(cfg, "elasticity", {
       run_elasticity_stage(inputs$Spain, cfg)
@@ -558,11 +636,11 @@ run_pipeline <- function(cfg, selected_stages = "all") {
   }
 
   manifest <- data.frame(
-    Order = seq_len(9),
+    Order = seq_len(10),
     Stage = c(
       "data", "irfs", "relevance", "contributions",
       "counterfactuals", "robustness-proxy",
-      "robustness-identification", "france", "elasticity"
+      "robustness-identification", "france", "france2010", "elasticity"
     ),
     Description = c(
       "Load and validate Spain/France monthly inputs",
@@ -573,6 +651,7 @@ run_pipeline <- function(cfg, selected_stages = "all") {
       "Wind and wedge proxy robustness",
       "Price-quantity Cholesky and Mertens-Ravn robustness",
       "France wind-IV and Mertens-Ravn replication",
+      "France VAR extended to 2010 with wind proxies (local outputs)",
       "Central Bayesian elasticity SVAR (GLP prior) and alternative specifications"
     )
   )

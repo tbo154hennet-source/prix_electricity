@@ -4,61 +4,20 @@ library(fixest)
 
 
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
-reconstruct_full_curve_shift_qty_demand_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_demand_matched.parquet')
+# Local windows (+/- 15 EUR around the clearing price, quantity within 2,000 MWh of
+# gen_forecast_net, clearing price >= 10 EUR) written by estimate_elasticity_bis_matched.R.
+reconstruct_full_curve_shift_qty_demand_matched_local <- as.data.table(read_parquet('curve_local_window_demand.parquet'))
+reconstruct_full_curve_shift_qty_supply_matched_local <- as.data.table(read_parquet('curve_local_window_supply.parquet'))
 
-# Convert to data.table if not already
-setDT(reconstruct_full_curve_shift_qty_demand_matched)
-
-test <- reconstruct_full_curve_shift_qty_demand_matched[0:10000,]
-# Add year column
-reconstruct_full_curve_shift_qty_demand_matched[, year := year(DATE)]
-reconstruct_full_curve_shift_qty_demand_matched[, month := month(DATE)]
-
-# Supprimer les lignes contenant des NA dans n'importe quelle colonne
-reconstruct_full_curve_shift_qty_demand_matched<- reconstruct_full_curve_shift_qty_demand_matched[complete.cases(reconstruct_full_curve_shift_qty_demand_matched)]
-
-#fusion
-reconstruct_full_curve_shift_qty_demand_matched_local <- merge(
-  reconstruct_full_curve_shift_qty_demand_matched,
-  price_indispo_merge_esp_npc[, .(delivery_date, Hour, price, gen_tot, load_tot)],
-  by.x = c("DATE", "Hour"),
-  by.y = c("delivery_date", "Hour")
-)
-
-
-reconstruct_full_curve_shift_qty_supply_matched<- read_parquet( 'reconstruct_full_curve_shift_qty_supply_matched.parquet')
-
-# Convert to data.table if not already
-setDT(reconstruct_full_curve_shift_qty_supply_matched)
-
-test <- reconstruct_full_curve_shift_qty_supply_matched[0:10000,]
-# Add year column
-reconstruct_full_curve_shift_qty_supply_matched[, year := year(DATE)]
-reconstruct_full_curve_shift_qty_supply_matched[, month := month(DATE)]
-
-# Supprimer les lignes contenant des NA dans n'importe quelle colonne
-reconstruct_full_curve_shift_qty_supply_matched<- reconstruct_full_curve_shift_qty_supply_matched[complete.cases(reconstruct_full_curve_shift_qty_supply_matched)]
-
-#fusion
-reconstruct_full_curve_shift_qty_supply_matched_local <- merge(
-  reconstruct_full_curve_shift_qty_supply_matched,
-  price_indispo_merge_esp_npc[, .(delivery_date, Hour, price, gen_tot, load_tot)],
-  by.x = c("DATE", "Hour"),
-  by.y = c("delivery_date", "Hour")
-)
-
-# Répertoire de sortie
-setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
-
-# Valeurs de k à tester
+# Price brackets to test (half-width in EUR); 10 EUR is the benchmark of estimate_elasticity_bis_matched.R.
 k_values <- c(5, 10, 15)
 
 # Fonction générique pour calculer les pentes locales
 compute_local_slopes <- function(dt, k, type = c("demand", "supply")) {
   type <- match.arg(type)
-  
-  # Étape 1 : garder les k observations les plus proches
-  dt_k <- dt[, head(.SD[order(abs(PRICE - price))], k), by = .(DATE, Hour)]
+
+  # Étape 1 : garder les observations à +/- k euros du prix d'équilibre
+  dt_k <- dt[abs(PRICE - price) <= k]
   dt_k <- dt_k[is.finite(PRICE) & is.finite(QTY) & PRICE > 0 & QTY > 0]
   # Étape 2 : régression locale
   

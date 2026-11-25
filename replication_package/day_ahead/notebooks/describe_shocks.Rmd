@@ -192,17 +192,17 @@ plot1 <- ggplot() +
   theme(
     axis.title.x = element_blank(),
     axis.text.x  = element_text(size = 12, angle = 20, hjust = 1),
-    #axis.ticks.x = element_line(size = 12, angle = 20, hjust = 1),   # enlÃ¨ve les ticks
+    #axis.ticks.x = element_line(size = 12, angle = 20, hjust = 1),   # enlève les ticks
     axis.title.y = element_text(size = 14),
     axis.text.y  = element_text(size = 14),
     legend.position = "none"
-  ) # DÃ©sactiver les ticks de l'axe des x
+  ) # Désactiver les ticks de l'axe des x
 
 
 # plot1 <-plot1 +
 #   theme(legend.position = "none")
 #   
-# DeuxiÃ¨me graphique: Nombre d'indisponibilitÃ©s (n_indispo)
+# Deuxième graphique: Nombre d'indisponibilités (n_indispo)
 plot2 <- ggplot() +
   geom_col(data = plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Declared unavailability")) +
   geom_col(data = rf_plot_data, aes(x = as.factor(plant_type), y = -n_indispo, fill = plant_type, alpha="Effective unavailability"), 
@@ -230,7 +230,7 @@ plot2 <-plot2 +
     legend.position = "none"
   ) 
 
-# Ajouter un titre personnalisÃ© comme annotation
+# Ajouter un titre personnalisé comme annotation
 #+annotate("text", x = Inf, y = -Inf, label = "Number of Power Outages", 
 #hjust = 1.4, vjust = -1.5, size = 5)
 # Assembler les deux graphiques verticalement avec patchwork
@@ -241,7 +241,7 @@ final_plot <- plot_grid(combined_plot, custom_legend ,
 
 
 
-# Afficher le graphique combinÃ©
+# Afficher le graphique combiné
 final_plot
 ```
 

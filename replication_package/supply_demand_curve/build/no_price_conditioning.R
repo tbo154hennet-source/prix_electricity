@@ -14,7 +14,7 @@ price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp $delivery_da
 price_indispo_merge_esp$creneau <- hour(price_indispo_merge_esp$datetime)
 
 price_indispo_merge_esp$global_tilted_irradiance <- price_indispo_merge_esp$global_tilted_irradiance/1000
-# PrÃ©traitement sur l'autre table
+# Prétraitement sur l'autre table
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(Hour = creneau + 1)
 
@@ -128,7 +128,7 @@ price_indispo_merge_esp <- price_indispo_merge_esp %>%
 input_dir <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs")
 output_dir <- file.path(Sys.getenv("REPLICATION_ROOT", "."), "supply_demand_curve/outputs/coef_reg_no_conditioning")
 
-# Fichiers Ã  traiter
+# Fichiers à traiter
 files_to_load <- c(
   "reconstruct_full_curve_shift_qty_supply_unmatched.parquet",
   "reconstruct_full_curve_shift_qty_supply_matched.parquet",
@@ -136,7 +136,7 @@ files_to_load <- c(
   "reconstruct_full_curve_shift_qty_demand_matched.parquet"
 )
 
-# Variables Ã  transformer en facteurs
+# Variables à transformer en facteurs
 factor_vars <- c("year","month", "creneau", "weekday")
 
 #factor_vars <- c("year_month", "creneau","weekday")
@@ -268,7 +268,7 @@ get_fitted_no_price <- function(data_price, data_reg, factors = NULL, instrument
   # }
   
   
-  # Contribution Ã  la variance
+  # Contribution à la variance
   var_total <- var(fitted_vals)
   effects <- sweep(X_no_intercept, 2, coefs_no_intercept, `*`)
   contrib <- apply(effects, 2, var)
@@ -400,19 +400,19 @@ summary(price_indispo_merge_esp_npc$fit_supply_unmatched)
 
 
 
-# SÃ©lectionner toutes les colonnes contenant "fitted" et "supply"
+# Sélectionner toutes les colonnes contenant "fitted" et "supply"
 cols_fitted_supply <- grep("fit.*supply", names(price_indispo_merge_esp_npc), value = TRUE)
 
-# Calculer la corrÃ©lation
+# Calculer la corrélation
 table_cor_supply <- price_indispo_merge_esp_npc[, ..cols_fitted_supply] %>%
   as.data.frame() %>%
   cor(use = "complete.obs")
 table_cor_supply
 
-# SÃ©lectionner toutes les colonnes contenant "fitted" et "supply"
+# Sélectionner toutes les colonnes contenant "fitted" et "supply"
 cols_fitted_demand <- grep("fit.*demand", names(price_indispo_merge_esp_npc), value = TRUE)
 
-# Calculer la corrÃ©lation
+# Calculer la corrélation
 table_cor_demand <- price_indispo_merge_esp_npc[, ..cols_fitted_demand] %>%
   as.data.frame() %>%
   cor(use = "complete.obs")

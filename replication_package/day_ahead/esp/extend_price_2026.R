@@ -29,7 +29,7 @@ read_omie_file <- function(f) {
     c("year", "month", "day", "period", "price_es", "price_pt", "none")
   )
 
-  # Conversion en numÃ©rique
+  # Conversion en numérique
   dt[, `:=`(
     year  = as.integer(year),
     month = as.integer(month),
@@ -42,14 +42,14 @@ read_omie_file <- function(f) {
   # Date
   dt[, date := as.Date(paste(year, month, day, sep = "-"))]
 
-  # ðŸ” Uniformisation quart-horaire â†’ horaire
+  # ðŸ” Uniformisation quart-horaire → horaire
   if (nrow(dt) == 96) {
     dt[, hour := ceiling(period / 4)]
   } else {
     dt[, hour := period]
   }
 
-  # AgrÃ©gation horaire (robuste si mÃ©lange)
+  # Agrégation horaire (robuste si mélange)
   dt_hourly <- dt[
     , .(
       price_es = mean(price_es, na.rm = TRUE),
@@ -58,8 +58,8 @@ read_omie_file <- function(f) {
     by = .(date, hour)
   ]
 
-  # Datetime (OMIE : heure 1 = 00:00â€“01:00)
-  # Heure de dÃ©but H-1
+  # Datetime (OMIE : heure 1 = 00:00–01:00)
+  # Heure de début H-1
 	dt_hourly[, datetime := as.POSIXct(
 	paste(date, sprintf("%02d:00:00", hour - 1)),
 	format = "%Y-%m-%d %H:%M:%S",
@@ -91,7 +91,7 @@ setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "data/entsoe/day_ahead_pric
 # Lister tous les fichiers dans le dossier avec l'extension .parquet
 parquet_files <- list.files(pattern = "\\.parquet$")
 # Lire tous les fichiers parquet et les fusionner dans un seul dataframe
-# Liste des noms de colonnes souhaitÃ©s
+# Liste des noms de colonnes souhaités
 colnames_target <- c( "price", "datetime")
 
 # Lecture + renommage dans lapply
@@ -138,7 +138,7 @@ ggplot()+
 			aes(x=datetime, y=price, color="ENTSOE"))+
   labs(title="Comparaison des prix day-ahead Espagne : OMIE vs ENTSOE",
 	   x="Date",
-	   y="Prix (â‚¬/MWh)")+
+	   y="Prix (€/MWh)")+
   scale_color_manual(name="Source", values=c("OMIE"="blue", "ENTSOE"="red"))+
   theme_minimal()
 
@@ -239,7 +239,7 @@ tail(reconstruct_full_curve_shift_supply)
 colnames(reconstruct_full_curve_shift_supply)
 library(data.table)
 
-# DÃ©tecter quart-horaire
+# Détecter quart-horaire
 reconstruct_full_curve_shift_supply[, is_quarter := grepl("Q[1-4]$", Hour)]
 reconstruct_full_curve_shift_supply[, hour := sub("Q[1-4]$", "", Hour)]
 reconstruct_full_curve_shift_supply[, hour_num := as.integer(sub("^H", "", hour))]

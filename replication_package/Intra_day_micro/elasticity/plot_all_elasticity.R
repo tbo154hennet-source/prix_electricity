@@ -57,7 +57,7 @@ df_clean_da <- bind_rows(summary_standard, summary_synthetic)%>%
 # Step 1: Combine the three dataframes
 df_all <- bind_rows(df_id %>% 
                       # Instrument  == "OLS" & Elasticity = "Demand"
-                      #est la mÃªme OLS sur le subsample COVID
+                      #est la même OLS sur le subsample COVID
                       filter(Instrument  == "IV" | Elasticity == "Supply") %>% 
                       dplyr::select(Instrument, Type, Elasticity, Coef, Se), 
                     df_clean_da%>% 

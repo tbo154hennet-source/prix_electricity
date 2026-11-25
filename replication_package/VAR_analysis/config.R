@@ -43,6 +43,11 @@ make_config <- function(root_dir) {
       micro_elasticity = file.path(
         root_dir, "supply_demand_curve", "estimate_elasticity", "outputs", "elasticity_standard.csv"
       ),
+      # French hourly demand elasticity, wind forecast as a pure supply shifter
+      # (supply_demand_curve/estimate_elasticity/fr/estimate_elas_standard_IV_fr.R)
+      micro_elasticity_fr = file.path(
+        root_dir, "supply_demand_curve", "estimate_elasticity", "outputs", "elasticity_standard_fr.csv"
+      ),
       spain_counterfactual_proxy = file.path(
         root_dir, "VAR_analysis", "data",
         "IV_data_esp_log_elas_sd_2026_pc.parquet"
@@ -67,6 +72,11 @@ make_config <- function(root_dir) {
         root_dir, "day_ahead", "outputs",
         "price_variance_counterfactual_esp_ter.parquet"
       ),
+      # France extended to 2010-01: Data_structuring/france_var_backfill/build_france_var_2010.R
+      france_2010 = file.path(
+        root_dir, "VAR_analysis", "data",
+        "IV_data_fr_log_elas_sd_2010.parquet"
+      ),
       france_price_level = file.path(
         root_dir, "Data_structuring", "output", "IV_data_fr_elas.parquet"
       )
@@ -84,6 +94,11 @@ make_config <- function(root_dir) {
     seed = as.integer(Sys.getenv("VAR_SEED", "20260914")),
     counterfactual_bootstrap = as.integer(Sys.getenv("VAR_CF_BOOT", "200")),
     counterfactual_block_size = as.integer(Sys.getenv("VAR_CF_BLOCK", "0")),
+    bvar = list(
+      draws = as.integer(Sys.getenv("VAR_BVAR_DRAWS", "5000")),
+      horizon = as.integer(Sys.getenv("VAR_BVAR_HORIZON", "24")),
+      stable_only = bool_env("VAR_BVAR_STABLE_ONLY", FALSE)
+    ),
     # Central identification: Bayesian SVAR with priors on the electricity curve slopes (09_elasticity_svar.R).
     elasticity = list(
       draws = as.integer(Sys.getenv("VAR_ELAS_DRAWS", "2000")),
@@ -107,6 +122,17 @@ make_config <- function(root_dir) {
       stored_draws = as.integer(Sys.getenv("VAR_ELAS_STORED", "300")),
       export_overleaf = bool_env("VAR_ELASTICITY_OVERLEAF", TRUE)
     ),
+    # Stage france2010: wind supply proxies, the first one is the central one
+    # (ERA5 load factor, observed from 2010, net of the degree-day anomalies:
+    # windy winter months are mild, so raw wind also loads on heating demand).
+    france_2010 = list(
+      supply_proxies = c(
+        "wind_era5_cf_log_tadj", "wind_era5_cf_log", "Fore_Wind_log",
+        "wind_rte_cf_log_tadj", "wind_rte_cf_log",
+        "wind_era5_surprise_tadj", "wind_era5_surprise",
+        "wind_rte_surprise_tadj", "wind_rte_surprise"
+      )
+    ),
     wind_capacity_2030_mw = 62000,
     windows = list(
       inflation = as.Date(c("2021-04-01", "2022-09-01")),
@@ -122,6 +148,10 @@ make_config <- function(root_dir) {
       spain_demand_elasticity = "demand_elasticity_main_plot.png",
       spain_elasticity_slopes = "elasticity_slopes_prior_posterior.png",
       spain_demand = "demand_msw_main_plot.png",
+      spain_supply_bvar = "supply_bvar_main_plot.png",
+      spain_demand_bvar = "demand_bvar_main_plot.png",
+      spain_supply_bvar_ols = "supply_bvar_vs_ols_spain.png",
+      spain_demand_bvar_ols = "demand_bvar_vs_ols_spain.png",
       spain_wind = "supply_msw_wind_plot.png",
       spain_wedge = "supply_msw_wedge_plot.png",
       spain_proxy_compare = "irf_wind_delta_supply_demand_spain.png",
@@ -131,7 +161,11 @@ make_config <- function(root_dir) {
       spain_demand_identification = "demand_shock_spain_irf_compare.png",
       france_supply_identification = "supply_shock_france_irf_compare.png",
       france_demand_identification = "demand_shock_france_irf_compare.png",
-      france_wind = "wind_supply_shock_fr.png",
+      # 2015-2025 wind proxy SVAR (stage france); the paper figure is now the Bayesian one below
+      france_wind = "wind_supply_shock_fr_proxy_2015.png",
+      # stage france2010: Bayesian SVAR 2010-2025, demand slope fixed at the French hourly estimate
+      france_supply_elasticity = "wind_supply_shock_fr.png",
+      france_demand_elasticity = "demand_shock_fr_elasticity.png",
       iberian_shock = "iberian_shock.png",
       iberian_price = "iberian_exception_plot_price_counterfactual.png",
       iberian_inflation = "iberian_exception_plot_inflation_counterfactual.png",
@@ -140,5 +174,3 @@ make_config <- function(root_dir) {
     )
   )
 }
-
-

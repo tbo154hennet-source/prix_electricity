@@ -97,13 +97,13 @@ setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "data/entsoe/cross_border_f
 #file <- files_ex[1]
 #name <- "BZN|GB(IFA) -> BZN|FR...22"
 #name <- "BZN|DE-LU -> BZN|FR...22"
-# Fonction pour gÃ©nÃ©rer les nouveaux noms
+# Fonction pour générer les nouveaux noms
 get_new_colname <- function(name, index) {
   # Extraire les pays (entre BZN|XX et BZN|YY)
   # Adjust the regex to capture only the first two letters before the hyphen
   # Adjust the regex to capture only the first two letters before any non-letter characters
 
-  # Expression rÃ©guliÃ¨re pour capturer les codes pays (GB, FR, etc.)
+  # Expression régulière pour capturer les codes pays (GB, FR, etc.)
   country_codes <- regmatches(name, gregexpr("(?<=BZN\\|)[A-Z]{2}", name, perl=TRUE))
   
   # Affichage des codes pays extraits
@@ -119,7 +119,7 @@ get_new_colname <- function(name, index) {
 excel_files <- list.files(pattern = "\\.xlsx$")
   
 sch_ex_data_es <- excel_files %>%
-    map(~ read_excel(.x, skip = 5) %>% slice(-1)) %>%  # Skip 5 lignes, puis enlever la premiÃ¨re ligne restante
+    map(~ read_excel(.x, skip = 5) %>% slice(-1)) %>%  # Skip 5 lignes, puis enlever la première ligne restante
     bind_rows() %>%
     arrange(MTU)
   
@@ -147,7 +147,7 @@ sch_ex_data_es <-sch_ex_data_es %>%
   
   
 
-# Appliquer la fonction Ã  tous les noms
+# Appliquer la fonction à tous les noms
 new_colnames <- mapply(get_new_colname, bzn_cols, seq_along(bzn_cols))
 colnames(sch_ex_data_es) <- c(new_colnames, "time")
 
@@ -162,7 +162,7 @@ setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "data/entsoe/cross_border_f
 excel_files <- list.files(pattern = "\\.xlsx$")
 
 sch_ex_data_fr <- excel_files %>%
-  map(~ read_excel(.x, skip = 5) %>% slice(-1)) %>%  # Skip 5 lignes, puis enlever la premiÃ¨re ligne restante
+  map(~ read_excel(.x, skip = 5) %>% slice(-1)) %>%  # Skip 5 lignes, puis enlever la première ligne restante
   bind_rows() %>%
   arrange(MTU)
 
@@ -185,7 +185,7 @@ new_colnames_fr <- mapply(get_new_colname, # Remove first and last column names
                        my_cols, seq_along(my_cols))
 
 
-# Appliquer la fonction Ã  tous les noms
+# Appliquer la fonction à tous les noms
 colnames(sch_ex_data_fr) <- c(new_colnames_fr, "time")
 
 
@@ -263,15 +263,15 @@ price_merge_CBF <- merge(price_indispo_merge_fr  %>%
                          by= c("datetime", "year", "month", "day", "delivery_date")
 )
 
-#exception ibÃ©rique
-#Le 15 juin 2022, lâ€™exception ibÃ©rique est entrÃ©e en vigueur, pour une durÃ©e initiale de 12 mois
-#plafonne le prix du gaz utilisÃ© dans la production d'Ã©lectricitÃ©
+#exception ibérique
+#Le 15 juin 2022, l’exception ibérique est entrée en vigueur, pour une durée initiale de 12 mois
+#plafonne le prix du gaz utilisé dans la production d'électricité
 #d'abord 55 euros
-#puis extension un an plus tard jusqu'en dÃ©cembre 2023 Ã  65 euros
+#puis extension un an plus tard jusqu'en décembre 2023 à 65 euros
 
-# Si le dispositif a effectivement servi Ã  amortir l'impact de la flambÃ©e des cours du gaz en 2022
-# sur la note des consommateurs, il n'a de fait plus Ã©tÃ© activÃ© depuis fÃ©vrier 2023,
-# lorsque les prix du marchÃ© gazier avaient retrouvÃ© une certaine normalitÃ©.
+# Si le dispositif a effectivement servi à amortir l'impact de la flambée des cours du gaz en 2022
+# sur la note des consommateurs, il n'a de fait plus été activé depuis février 2023,
+# lorsque les prix du marché gazier avaient retrouvé une certaine normalité.
 
 class(price_merge_CBF$datetime)
 exception_start_date <- as.POSIXct("15-06-2022 00:00:00", 
@@ -290,7 +290,7 @@ iberic_exception_plot <- ggplot(plot_data)+
   geom_vline(xintercept = exception_start_date, linetype = "dashed", color = "red") +
   geom_vline(xintercept = exception_end_date, linetype = "dashed", color = "red") +
   labs(title = "Day-ahead electricity prices in France and Spain",
-       x = "Date", y = "Price (â‚¬/MWh)") +
+       x = "Date", y = "Price (€/MWh)") +
   theme_minimal()
 
 
@@ -302,12 +302,12 @@ iberic_exception_diff <- ggplot(plot_data )+
   geom_vline(xintercept = exception_start_date, linetype = "dashed", color = "red") +
   geom_vline(xintercept = exception_end_date, linetype = "dashed", color = "red") +
   labs(#title = "Day-ahead electricity prices in France and Spain",
-       x = "Date", y = "Price (â‚¬/MWh)") +
+       x = "Date", y = "Price (€/MWh)") +
   theme_minimal()
 iberic_exception_diff
 
 #regarder quelles sont les dates perdues dans le merge
-#donnÃ©es 2024
+#données 2024
 
 
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "data/entsoe/cross_border_flows"))

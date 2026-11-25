@@ -12,7 +12,7 @@ library(fixest)
 
 
 
-# Liste des colonnes Ã  sÃ©lectionner
+# Liste des colonnes à sélectionner
 time_factors <- c("year", "month", "delivery_date", "creneau", "weekday", "datetime")
 
 
@@ -27,7 +27,7 @@ price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp $delivery_da
 price_indispo_merge_esp$creneau <- hour(price_indispo_merge_esp$datetime)
 
 price_indispo_merge_esp$global_tilted_irradiance <- price_indispo_merge_esp$global_tilted_irradiance/1000
-# PrÃ©traitement sur l'autre table
+# Prétraitement sur l'autre table
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(Hour = creneau + 1)
 
@@ -86,7 +86,7 @@ colnames(price_indispo_merge_esp)
 estimate_coeff_shift_qty <- function(price_test, reconstruct_full_curve_shift,
                                  factors){
   
-  # Ã‰tape 1 : filtrage et prÃ©traitement
+  # Étape 1 : filtrage et prétraitement
   reg_data_test <- reconstruct_full_curve_shift[PRICE == price_test]
   # Fusion finale
   reg_data_test <- merge(
@@ -100,29 +100,29 @@ estimate_coeff_shift_qty <- function(price_test, reconstruct_full_curve_shift,
   
   # setdiff(c("PRICE",supply_factors), colnames(reg_data_test))
   #reg_data_test <- reg_data_test[complete.cases(.SD), .SD, .SDcols = c("PRICE",supply_factors)]
-  # DÃ©finir les colonnes utiles AVANT le data.table
+  # Définir les colonnes utiles AVANT le data.table
   
-  # Variables Ã  transformer en facteurs
+  # Variables à transformer en facteurs
   factor_vars <- c("year", "month", "creneau", "weekday")
-  # CrÃ©er les termes factorisÃ©s : as.factor(var)
+  # Créer les termes factorisés : as.factor(var)
   factor_terms <- paste0("as.factor(", factor_vars, ")")
   
   # Combiner tous les termes
   all_rhs_terms <- c(factor_terms, factors )
   #colnames(reg_data_test)
-  # Filtrer en gardant les lignes complÃ¨tes uniquement pour PRICE + variables sÃ©lectionnÃ©es
+  # Filtrer en gardant les lignes complètes uniquement pour PRICE + variables sélectionnées
   reg_data_test <- reg_data_test[
     complete.cases(reg_data_test[, .SD, .SDcols = c("QTY", factor_vars, factors)])
   ]
 
   #colSums(is.na(reg_data_test))
   # View(reg_data_test[!complete.cases(reg_data_test)])
-  # CrÃ©e la formule dynamiquement
+  # Crée la formule dynamiquement
   formula <- reformulate(
     all_rhs_terms,  # droite de la formule
-    response = "QTY"      # variable Ã  gauche
+    response = "QTY"      # variable à gauche
   )
-  # Applique la formule Ã  lm()
+  # Applique la formule à lm()
   # lm_grid_point <- lm(
   #   formula = formula,
   #   data = reg_data_test)

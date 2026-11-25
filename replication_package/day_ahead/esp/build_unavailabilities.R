@@ -22,17 +22,17 @@ all_matched_indispo <-
 # Convertir le dataframe en data.table
 setDT(all_matched_indispo)
 
-# Convertir en data.table pour plus de rapiditÃ©
+# Convertir en data.table pour plus de rapidité
 all_matched_indispo <- as.data.table(all_matched_indispo)
 
 
 
-# Fonction pour trouver le prochain midi aprÃ¨s une date donnÃ©e
+# Fonction pour trouver le prochain midi après une date donnée
 next_noon <- function(dt) {
   #dt <- as.POSIXct(dt, tz = "Europe/Brussels")  # Assurez-vous que dt est bien en POSIXct
   noon_today <- as.POSIXct(format(dt, "%Y-%m-%d 12:00:00"), tz = "Europe/Brussels")
   
-  # Si l'heure actuelle est dÃ©jÃ  aprÃ¨s midi, prendre midi du jour suivant
+  # Si l'heure actuelle est déjà après midi, prendre midi du jour suivant
   if (dt >= noon_today) {
     noon_today <- noon_today + days(1)
   }
@@ -144,7 +144,7 @@ write_parquet(publi_all_matched_indispo, "day_ahead_indispo_formatted.parquet")
 #   # Get the indexes of the duplicated columns
 #   indexes <- which(colnames(generation_per_plant) == col)
 #   
-#   # Fusionner les colonnes avec le mÃªme nom en prenant les valeurs non-NA
+#   # Fusionner les colonnes avec le même nom en prenant les valeurs non-NA
 #   generation_per_plant[[indexes[1]]] <- coalesce(generation_per_plant[[indexes[1]]],
 #                                                  generation_per_plant[[indexes[2]]])
 #   # Remove the column by its index
@@ -167,8 +167,8 @@ generation_per_plant <- read_parquet("generation_by_plant_esp.parquet")
 setDT(generation_per_plant)# Convertir en data.table
 
 generation_per_plant <- generation_per_plant %>% 
-  mutate(`ABOÃ‘O 1`= ifelse(is.na(`ABOÃ‘O 1`),`ABOÂ¿O 1` , `ABOÃ‘O 1`),
-         `ABOÃ‘O 2` = ifelse(is.na(`ABOÃ‘O 2`),`ABOÂ¿O 2` , `ABOÃ‘O 2`)
+  mutate(`ABOÑO 1`= ifelse(is.na(`ABOÑO 1`),`ABO¿O 1` , `ABOÑO 1`),
+         `ABOÑO 2` = ifelse(is.na(`ABOÑO 2`),`ABO¿O 2` , `ABOÑO 2`)
                            )
 
 
@@ -182,7 +182,7 @@ colnames(centrale_matching) <- c("centrale_name","psr_resource_name",
 matching_table <- merge(table, centrale_matching,
                         by = "psr_resource_name", all.x = TRUE) %>% 
   filter(!is.na(centrale_name) & !is.na(Installed.Capacity)) %>% 
-  filter(centrale_name!= "ABOÂ¿O 2" & centrale_name!="ABOÂ¿O 1") %>% 
+  filter(centrale_name!= "ABO¿O 2" & centrale_name!="ABO¿O 1") %>% 
   distinct(psr_resource_name, centrale_name, .keep_all = TRUE) %>% 
   rename(production_resource_name = centrale_name)
 # sum(duplicated(matching_table$psr_resource_name))
@@ -190,16 +190,16 @@ matching_table <- merge(table, centrale_matching,
 
 
 
-# Fonction pour gÃ©nÃ©rer les heures pleines
+# Fonction pour générer les heures pleines
 generate_hourly_dates <- function(start_datetime, end_datetime) {
   start_datetime <- as.POSIXct(start_datetime, tz = "Europe/Brussels")
   end_datetime <- as.POSIXct(end_datetime, tz = "Europe/Brussels")
   
-  # Trouver la premiÃ¨re et la derniÃ¨re heure pleine
+  # Trouver la première et la dernière heure pleine
   start_hourly <- ceiling(as.numeric(start_datetime) / 3600) * 3600
   end_hourly <- floor(as.numeric(end_datetime) / 3600) * 3600
   
-  # GÃ©nÃ©rer la sÃ©quence d'heures pleines
+  # Générer la séquence d'heures pleines
   seq(from = as.POSIXct(start_hourly, origin = "1970-01-01", tz = "Europe/Brussels"),
       to = as.POSIXct(end_hourly, origin = "1970-01-01", tz = "Europe/Brussels"), by = "hour")
 }
@@ -216,13 +216,13 @@ publi_all_matched_indispo  <- publi_all_matched_indispo  %>%
 colnames(publi_all_matched_indispo)
 setDT(publi_all_matched_indispo)  # Convertir en data.table
 
-publi_all_matched_indispo <- merge(publi_all_matched_indispo, matching_table[3:nrow(matching_table),] %>% #enlever la double possibilitÃ© pour ABONO 
+publi_all_matched_indispo <- merge(publi_all_matched_indispo, matching_table[3:nrow(matching_table),] %>% #enlever la double possibilité pour ABONO 
                                      dplyr::select(psr_resource_name, production_resource_name) %>% distinct(),
                           by = "psr_resource_name")
 
 
 
-# 1. GÃ©nÃ©rer toutes les dates de prÃ©diction pour chaque indispo
+# 1. Générer toutes les dates de prédiction pour chaque indispo
 # 1. GÃƒÂ©nÃƒÂ©rer toutes les dates de prÃƒÂ©diction pour chaque indispo
 expanded_indispo <- publi_all_matched_indispo[, .(
   datetime_slot = generate_hourly_dates(start_datetime, end_datetime)

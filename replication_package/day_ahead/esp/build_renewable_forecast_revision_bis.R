@@ -39,7 +39,7 @@ generation_by_fuel  <- parquet_files %>%
   arrange(`__index_level_0__`)
 
 
-# SÃ©lectionner les colonnes spÃ©cifiques pour calculer la somme
+# Sélectionner les colonnes spécifiques pour calculer la somme
 wind_solar_headers <- c(
   "('Solar', 'Actual Aggregated')",
   "('Wind Offshore', 'Actual Aggregated')",
@@ -65,7 +65,7 @@ hydro_headers <- c(
   "('Marine', 'Actual Aggregated')"
 )
 
-# Calculer la somme des colonnes spÃ©cifiÃ©es
+# Calculer la somme des colonnes spécifiées
 generation_by_fuel_final <- generation_by_fuel %>%
   rowwise() %>%
   mutate(across(-`__index_level_0__`, as.numeric)) %>%

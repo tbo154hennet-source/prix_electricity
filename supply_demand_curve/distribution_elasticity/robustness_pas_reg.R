@@ -107,7 +107,7 @@ pas_robustness_check <- ggplot(plot_df, aes(x = horizon, y = slope, color = type
   ) +
   scale_x_continuous(breaks = c(5, 10, 15)) +
   labs(
-    x = "Horizon",
+    x = "Price bracket around the clearing price (+/- EUR)",
     y = "Elasticity",
     color = ""
   ) +

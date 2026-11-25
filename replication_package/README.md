@@ -14,9 +14,11 @@ intermediate scripts or data needed by those producers.
   (`day_ahead/outputs`, `supply_demand_curve/outputs`,
   `Intra_day_micro/outputs`, and `VAR_analysis/data`).
 
-The validated archive contains 2,252 files: 2,193 ENTSO-E extracts plus the
-compact raw/analysis-ready inputs and inventory. Its uncompressed size is
-726,436,719 bytes (692.78 MiB); the ZIP is 444,582,609 bytes (423.99 MiB).
+The archive (rebuilt on 2026-11-25 after the correction of the Spanish
+wind/solar forecast extracts and of the local-slope window) contains 2,261 files:
+2,193 ENTSO-E extracts plus the compact raw/analysis-ready inputs, the external
+series of `data/external/` and the inventory. Its uncompressed size is about
+759 MB (724 MiB); the ZIP is 477,355,156 bytes (455.2 MiB).
 
 Extract the archive **into this directory**, preserving paths. On PowerShell:
 
@@ -26,8 +28,8 @@ Expand-Archive -LiteralPath data/replication_data.zip -DestinationPath .
 
 The archive is deliberately not tracked by Git. Verify it with
 `data/CHECKSUMS.txt`. `DATA_MANIFEST.csv` identifies the required datasets and
-`FIGURE_MANIFEST.csv` maps all 38 active manuscript artifacts to their retained
-producer. After extraction, `data/ARCHIVE_CONTENTS.csv` gives every archived
+`FIGURE_MANIFEST.csv` maps all 39 active manuscript artifacts (and the numbers
+of the hydro-arbitrage paragraph) to their retained producer. After extraction, `data/ARCHIVE_CONTENTS.csv` gives every archived
 path and byte size.
 
 ## R environment
@@ -65,6 +67,19 @@ Two active supplementary tables retain their direct producers under
 `generated-manual` in `FIGURE_MANIFEST.csv`. Two static manuscript images have
 no producer in the repository and are marked `reference-only`.
 
+External series (`data/external/`): the Alessandri-Gazzani gas supply shocks;
+the monthly hydro reservoir stock of Red Electrica (apidatos.ree.es, endpoint
+`generacion/reservas-hidroelectricas`); and ERA5 weather from the Open-Meteo
+archive for 2010-2015 (wind speed at the wind farms, demand-weighted temperature
+and precipitation), downloaded by the scripts of
+`Data_structuring/spain_wind_backfill/` and `Data_structuring/spain_weather_backfill/`.
+They extend the robustness proxies back to 2010.
+
+The macro stage runs every VAR stage of `VAR_analysis/main.R` (Spain, including
+the Bayesian proxy benchmark and its robustness, and France 2010-2025), then
+`VAR_analysis/supplementary/hydro_arbitrage.R` for the hydro paragraph. It takes
+about an hour with the default number of posterior draws.
+
 The default run uses the archived ENTSO-E extracts. The ENTSO-E API call is
 present but commented in `main.R`, as the data are already bundled.
 
@@ -92,5 +107,5 @@ should be revoked and replaced because it was committed in plain text.
 - Robustness plots actively referenced by the manuscript are kept. Slide-only,
   exploratory, and deprecated outputs are excluded unless they are an input to
   a retained producer.
-- `reference_outputs/` contains all 38 active manuscript artifacts for visual
+- `reference_outputs/` contains all 39 active manuscript artifacts for visual
   and tabular comparison.

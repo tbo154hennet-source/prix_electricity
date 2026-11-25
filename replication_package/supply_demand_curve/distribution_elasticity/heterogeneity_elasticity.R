@@ -131,7 +131,7 @@ ggsave(plot_hetero_by_hour,
 
 slopes_demand_by_quantile <- local_slopes_demand%>%
   mutate(
-    price_quantile = ntile(mean_log_price, 100)   # 20 groupes Ã©gaux
+    price_quantile = ntile(mean_log_price, 100)   # 20 groupes égaux
   ) %>%
   group_by(price_quantile) %>%
   summarise(
@@ -142,7 +142,7 @@ slopes_demand_by_quantile <- local_slopes_demand%>%
   )
 slopes_supply_by_quantile <- local_slopes_supply%>%
   mutate(
-    price_quantile = ntile(mean_log_price, 100)   # 20 groupes Ã©gaux
+    price_quantile = ntile(mean_log_price, 100)   # 20 groupes égaux
   ) %>%
   group_by(price_quantile) %>%
   summarise(
@@ -272,7 +272,7 @@ plot_hetero_by_quantile_season
 # reconstruct_full_curve_shift_qty_supply_matched_local_bis <- reconstruct_full_curve_shift_qty_supply_matched_local_bis %>%
 #   mutate(price_group = ntile(PRICE, 100))  # 5 groupes de prix (tu peux changer)
 # 
-# # ModÃ¨le avec interaction
+# # Modèle avec interaction
 # local_supply_hetero <- feols(log(QTY) ~ i(price_group, log(PRICE +1 ), ref = 1) | Hour_Date, 
 #                              data = reconstruct_full_curve_shift_qty_supply_matched_local_bis)
 # 

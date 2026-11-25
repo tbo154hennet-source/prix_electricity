@@ -46,7 +46,7 @@ long_final_indispo_esp <- left_join(
          "production_resource_name" = "centrale")
 )
 
-# gÃ©rer le cas de bord voir l'exemple ci-dessous
+# gérer le cas de bord voir l'exemple ci-dessous
 # test2 <- long_final_indispo %>%
 #   filter(datetime_slot== "2018-01-19 15:00:00" & production_resource_name == "COMPOSTI 4" )
 long_final_indispo_esp  <- long_final_indispo_esp  %>% 
@@ -117,12 +117,12 @@ getwd()
 #   mutate(transitions = Cluster.Capacity != lag(Cluster.Capacity, default = first(Cluster.Capacity)),
 #          n_unique_values = n_distinct(Cluster.Capacity, na.rm = TRUE),  # Count distinct values
 #          n_transitions = sum(transitions, na.rm = TRUE),
-#          #ex 2 valeurs d'indispo diffÃ©rentes
+#          #ex 2 valeurs d'indispo différentes
 #          #il devrait y avoir une indispo
 #          
 #          # cas de bord n_transitions = 0, n_unique_values=0
 #          Cluster.Capacity = ifelse( n_transitions > max(n_unique_values -1,0) , max(Cluster.Capacity, na.rm = TRUE), Cluster.Capacity)
-#   ) %>%  # Fixer Ã  la valeur max du jour
+#   ) %>%  # Fixer à la valeur max du jour
 #   ungroup()
 
 
@@ -172,8 +172,8 @@ setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs/esp"))
 final_indispo_tot_wide_esp <- read_parquet("final_indispo_tot_wide_esp.parquet")
 
 
-#Pour source de prix et de quantitÃ©,
-#on complÃ¨te avec auction_summary
+#Pour source de prix et de quantité,
+#on complète avec auction_summary
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "day_ahead/outputs"))
 gen_data_aligned <- read_parquet("esp_generation_day_ahead.parquet")
 
@@ -207,7 +207,7 @@ setwd(save_path_data)
 renewable_forecasts <- read_parquet('renewable_forecasts_esp.parquet')
 colnames(renewable_forecasts)
 # max(renewable_forecasts$`__index_level_0__`)
-#nota bene intradailiy forecast commence Ã  partir du 13 fÃ©vrier 2018 13-02-2018
+#nota bene intradailiy forecast commence à partir du 13 février 2018 13-02-2018
 #sample start
 
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
@@ -228,7 +228,7 @@ tail(tempall_data_data)
 # colnames(temperature_openmeteo_data)
 
 #question sou-jacente
-#quelle est la temporalitÃ© d'ajustement au froid
+#quelle est la temporalité d'ajustement au froid
 
 # mean_temperatures_hour <- tempall_data_data %>% 
 #   mutate(week = week(date),
@@ -280,8 +280,8 @@ temperature_openmeteo_data_test <- tempall_data_data %>%
     cold_excess_ss      = pmax(T_base - temperature_ss, 0),
     cold_excess_sth     = pmax(T_base - temperature_sth, 0),
     cold_excess_demand  = pmax(T_base - temperature_demand, 0),
-    #distnce Ã  la tempÃ©rautre de confort 
-    #18Â°C dans la littÃ©rature
+    #distnce à la tempérautre de confort 
+    #18°C dans la littérature
     temperature_discomfort_ss = abs(temperature_ss - T_base),
     temperature_discomfort_sth = abs(temperature_sth - T_base),
     temperature_discomfort_demand = abs(temperature_demand - T_base)

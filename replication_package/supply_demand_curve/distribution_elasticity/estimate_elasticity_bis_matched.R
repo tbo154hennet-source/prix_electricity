@@ -20,7 +20,7 @@ price_indispo_merge_esp$weekday <- weekdays(price_indispo_merge_esp$date)
 price_indispo_merge_esp$creneau <- hour(price_indispo_merge_esp$datetime)
 
 price_indispo_merge_esp$global_tilted_irradiance <- price_indispo_merge_esp$global_tilted_irradiance/1000
-# PrÃ©traitement sur l'autre table
+# Prétraitement sur l'autre table
 price_indispo_merge_esp <- price_indispo_merge_esp %>% 
   mutate(Hour = as.character(creneau + 1))
 
@@ -78,23 +78,36 @@ demand_FE <- feols(log(QTY) ~ log(PRICE) | Hour+ DATE + month + year,
                    data = reconstruct_full_curve_shift_qty_demand_matched)
 
 
-#fusion
-reconstruct_full_curve_shift_qty_demand_matched_local <- merge(
-  reconstruct_full_curve_shift_qty_demand_matched,
-  price_indispo_merge_esp[, .(date, Hour, price, gen_tot, load_tot)],
-  by.x = c("DATE", "Hour"),
-  by.y = c("date", "Hour")
-)
+# Local window around the market-clearing point, identical for supply and demand:
+# curve points within +/- price_window EUR of the clearing price and within
+# +/- qty_window MWh of the day-ahead generation forecast net of pumping
+# (gen_forecast_net, the day-ahead quantity; load_tot sums all markets and sits
+# about 3,700 MWh above the OMIE matched volume), for clearing prices >= 10 EUR.
+# Matched demand bids only exist at or above the clearing price, so the demand
+# window is in practice one-sided (above the price).
+# The +/- 15 EUR window is saved for the bracket robustness (compute_elas_distrib.R)
+# and the linear specification (estimate_elasticity_bis_matched_reg_lin.R).
+price_window <- 10
+price_window_max <- 15
+qty_window <- 2000
+local_window <- function(curve, half_width = price_window_max) {
+  merged <- merge(
+    curve,
+    price_indispo_merge_esp[, .(date, Hour, price, gen_tot, load_tot, gen_forecast_net)],
+    by.x = c("DATE", "Hour"),
+    by.y = c("date", "Hour")
+  )
+  merged[
+    is.finite(gen_forecast_net) & price >= 10 &
+      PRICE >= price - half_width & PRICE <= price + half_width &
+      QTY >= gen_forecast_net - qty_window & QTY <= gen_forecast_net + qty_window
+  ]
+}
 
-
-# Filtrage par groupe
-reconstruct_full_curve_shift_qty_demand_matched_local <- reconstruct_full_curve_shift_qty_demand_matched_local[
-  , .SD[
-    PRICE >= price - 20 & PRICE <= price  &
-      QTY   >= load_tot - 2000 & QTY   <= load_tot + 2000 &
-      price >= 10
-  ],
-  by = .(DATE, Hour)
+reconstruct_full_curve_shift_qty_demand_matched_window <- local_window(reconstruct_full_curve_shift_qty_demand_matched)
+write_parquet(reconstruct_full_curve_shift_qty_demand_matched_window, "curve_local_window_demand.parquet")
+reconstruct_full_curve_shift_qty_demand_matched_local <- reconstruct_full_curve_shift_qty_demand_matched_window[
+  abs(PRICE - price) <= price_window
 ]
 
 
@@ -214,21 +227,11 @@ supply_FE <- feols(log(QTY) ~ log(PRICE) | Hour^DATE,
                    data = reconstruct_full_curve_shift_qty_supply_matched)
 
 length(unique(reconstruct_full_curve_shift_qty_supply_matched$DATE))
-#fusion
-reconstruct_full_curve_shift_qty_supply_matched_local <- merge(
-  reconstruct_full_curve_shift_qty_supply_matched,
-  price_indispo_merge_esp[, .(date, Hour, price, gen_tot, load_tot)],
-  by.x = c("DATE", "Hour"),
-  by.y = c("date", "Hour")
-)
-
-# Filtrage par groupe
-reconstruct_full_curve_shift_qty_supply_matched_local <- reconstruct_full_curve_shift_qty_supply_matched_local[
-  , .SD[
-    PRICE >= price - 40 & PRICE <= price +40 &
-      QTY   >= load_tot - 2000 & QTY   <= load_tot + 2000
-  ],
-  by = .(DATE, Hour)
+# Same local window as for demand.
+reconstruct_full_curve_shift_qty_supply_matched_window <- local_window(reconstruct_full_curve_shift_qty_supply_matched)
+write_parquet(reconstruct_full_curve_shift_qty_supply_matched_window, "curve_local_window_supply.parquet")
+reconstruct_full_curve_shift_qty_supply_matched_local <- reconstruct_full_curve_shift_qty_supply_matched_window[
+  abs(PRICE - price) <= price_window
 ]
 
 reconstruct_full_curve_shift_qty_supply_matched_local_bis <- reconstruct_full_curve_shift_qty_supply_matched_local[
@@ -264,7 +267,7 @@ print(local_elasticity_FE_benchmarks)
 
 
 
-#avoir une Ã©last
+#avoir une élast
 
 etable(demand, demand_FE,
        local_demand, local_demand_FE,
@@ -273,7 +276,7 @@ etable(demand, demand_FE,
                 "log(PRICE)" = "log Price"),
        title = "Elasticity Estimates of demand")
 
-#avoir une Ã©last
+#avoir une élast
 
 etable(supply, supply_FE,
        local_supply, local_supply_FE,
@@ -318,9 +321,9 @@ subset_data <- reconstruct_full_curve_shift_qty_supply_matched_local[
 ggplot(subset_data, aes(x = QTY, y = PRICE,  color = factor(Hour))) +#, color = factor(DATE))) +
   geom_line() +
   labs(
-    title = "Nuage de points : Prix vs QuantitÃ© (5 journÃ©es, heures 10 et 14)",
+    title = "Nuage de points : Prix vs Quantité (5 journées, heures 10 et 14)",
     
-    x = "QuantitÃ©",
+    x = "Quantité",
     y = "Prix",
     color = "Hour"
   ) +
@@ -334,8 +337,8 @@ subset_data <- reconstruct_full_curve_shift_qty_supply_matched[
 ggplot(subset_data, aes(x = QTY, y = PRICE,  color = factor(Hour))) +#, color = factor(DATE))) +
   geom_line() +
   labs(
-    title = "Nuage de points : Prix vs QuantitÃ© (5 journÃ©es, heures 10 et 14)",
-    x = "QuantitÃ©",
+    title = "Nuage de points : Prix vs Quantité (5 journées, heures 10 et 14)",
+    x = "Quantité",
     y = "Prix",
     
     color = "Date"
@@ -358,9 +361,9 @@ subset_data <- reconstruct_full_curve_shift_qty_demand_matched_local[
 ggplot(subset_data, aes(x = PRICE, y = QTY, color = factor(DATE))) +
   geom_point(alpha = 0.6) +
   labs(
-    title = "Nuage de points : Prix vs QuantitÃ© (5 journÃ©es)",
+    title = "Nuage de points : Prix vs Quantité (5 journées)",
     x = "Prix",
-    y = "QuantitÃ©",
+    y = "Quantité",
     color = "Date"
   ) +
   theme_minimal()

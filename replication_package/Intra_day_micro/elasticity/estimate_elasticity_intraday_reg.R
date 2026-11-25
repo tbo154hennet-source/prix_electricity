@@ -5,9 +5,9 @@ library(tidyr)
 library(purrr)
 library(arrow)
 
-# nota bene gen_da est une prÃ©diction
-# alors que j'obtiens le day ahead rÃ©alisÃ© avec mes auction data
-#potentiellement un instrument supplÃ©mentaire voir benati
+# nota bene gen_da est une prédiction
+# alors que j'obtiens le day ahead réalisé avec mes auction data
+#potentiellement un instrument supplémentaire voir benati
 
 #with renewables
 
@@ -25,13 +25,13 @@ auction_reg_renewable_data <- read_parquet( "auction_reg_renewable_data.parquet"
   )
 
 
-#se dÃ©barrasser des jours avec des sessions d'enchÃ¨re incomplÃ¨tes
+#se débarrasser des jours avec des sessions d'enchère incomplètes
 auction_reg_renewable_data %>% 
   group_by(number_auctions) %>% 
   summarise(n = n())
 colnames(auction_reg_renewable_data)
 #je me restreins aux jours complets 
-# l faudrait dÃ©tailler par auction
+# l faudrait détailler par auction
 
 auction_reg_renewable_data <- auction_reg_renewable_data %>%
   filter(
@@ -43,7 +43,7 @@ auction_reg_renewable_data <- auction_reg_renewable_data %>%
   distinct()
 
 
-# CrÃ©er une version "nettoyee
+# Créer une version "nettoyee
 controls_vars <- c("spot_gas",    
                    "as.factor(year)" , "as.factor(month)",
                    "as.factor(weekday)", "as.factor(creneau)"
@@ -67,7 +67,7 @@ present_vars <- c(
 library(fixest)
 library(dplyr)
 
-# donnÃ©es
+# données
 wind_reg_data <- auction_reg_renewable_data %>%
   dplyr::select(all_of(c(present_vars, "datetime"))) %>%
   filter(price_da > 1) %>%
@@ -77,7 +77,7 @@ wind_reg_data <- auction_reg_renewable_data %>%
          creneau = factor(creneau)
          )
 
-# RHS OLS (tu enlÃ¨ves price_da et load_tot_da comme tu faisais)
+# RHS OLS (tu enlèves price_da et load_tot_da comme tu faisais)
 rhs_ols <- c(
   "right_term",
   controls_vars,
@@ -108,7 +108,7 @@ m_iv_wind_fx <- feols(
 etable(
   m_ols_wind_fx,
   m_iv_wind_fx,
-  se = "standard",          # SE dÃ©jÃ  dÃ©finies via vcov DK
+  se = "standard",          # SE déjà définies via vcov DK
   dict = c(right_term = "right_term"),
   keep = "right_term",
   headers = c("OLS (DK24)", "IV (DK24)")
@@ -119,7 +119,7 @@ etable(
 
 # Fonction pour extraire coef + IVF
 extract_coef_ivf <- function(model, var_name = "fit_log(price + 1)", IV = TRUE) {
-  # Si model est une liste (supply/demand), prendre le premier Ã©lÃ©ment
+  # Si model est une liste (supply/demand), prendre le premier élément
   if (is.list(model) && inherits(model[[1]], "fixest")) {
     mod <- model[[1]]
   } else if (inherits(model, "fixest")) {
@@ -138,7 +138,7 @@ extract_coef_ivf <- function(model, var_name = "fit_log(price + 1)", IV = TRUE) 
     
     # Retourne un tibble
     return(tibble(
-      Model = deparse(substitute(model)),  # nom du modÃ¨le
+      Model = deparse(substitute(model)),  # nom du modèle
       Coef = coef_val,
       Se = se_val,
       IVF = ivf_val$ivf1$stat
@@ -149,7 +149,7 @@ extract_coef_ivf <- function(model, var_name = "fit_log(price + 1)", IV = TRUE) 
     coef_val <- mod$coefficients[var_name]
     se_val <-mod$se[var_name]
     return(tibble(
-      Model = deparse(substitute(model)),  # nom du modÃ¨le
+      Model = deparse(substitute(model)),  # nom du modèle
       Coef = coef_val,
       Se = se_val,
       IVF = NA_real_
@@ -206,13 +206,13 @@ write_parquet(wind_reg_data, "wind_reg_data.parquet")
 
 library(fixest)
 
-# DÃ©pendantes Ã  estimer
+# Dépendantes à estimer
 dep_vars <- c("price_diff_0to1", "price_diff_1to5", "price_diff_5")
 
 # RHS commun
 rhs_vars <- c("update_wind", controls_vars, controls_others)
 
-# time var pour DK (Ã  adapter)
+# time var pour DK (à adapter)
 time_var <- "datetime"  # ou "auction_date_plus_one" si c'est ta vraie dimension temps
 
 # (Optionnel) FE si tu en as: fe_vars <- c("creneau", "month", "weekday") etc.
@@ -243,7 +243,7 @@ etable(
     Fore_Wind = "Wind day-ahead forecast",
     update_wind = "Wind update"
   ),
-  headers = c("DA + Auction 1", "Auction 2â€“5", "Auction 6"),
+  headers = c("DA + Auction 1", "Auction 2–5", "Auction 6"),
   fitstat = c("n", "r2", "f")
 )
 
@@ -260,7 +260,7 @@ latex_tab <- etable(
     Fore_Wind = "Wind day-ahead forecast",
     update_wind = "Wind update"
   ),
-  headers = c("DA + Auction 1", "Auction 2â€“5", "Auction 6"),
+  headers = c("DA + Auction 1", "Auction 2–5", "Auction 6"),
   fitstat = c("n", "r2", "f"),
   tex = TRUE
 )
@@ -275,7 +275,7 @@ setwd(save_path_entsoe_output)
 auction_reg_data <- read_parquet( "auction_reg_data.parquet")
 
 colnames(auction_reg_data )
-#on s'intÃ©resse maintenant aux indispo de centrales
+#on s'intéresse maintenant aux indispo de centrales
 # RHS commun
 
 rhs_vars <- c("Published.Unavailable.Capacity"  , "Unpublished.Unavailable.Capacity",

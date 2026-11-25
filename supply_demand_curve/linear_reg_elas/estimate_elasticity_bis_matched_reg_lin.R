@@ -5,6 +5,11 @@ library(fixest)
 # Répertoire de sortie
 setwd("C:/Users/DBT3KD/Desktop/Etude_macro_elec/prix_electricite_gitlab/supply_demand_curve/outputs")
 
+# Same local sample as the log-log benchmark (estimate_elasticity_bis_matched.R):
+# +/- 10 EUR around the clearing price, quantity within 2,000 MWh of gen_forecast_net.
+reconstruct_full_curve_shift_qty_demand_matched_local <- as.data.table(read_parquet('curve_local_window_demand.parquet'))[abs(PRICE - price) <= 10]
+reconstruct_full_curve_shift_qty_supply_matched_local <- as.data.table(read_parquet('curve_local_window_supply.parquet'))[abs(PRICE - price) <= 10]
+
 # Valeurs de k à tester
 k_values <- c(5, 10, 15)
 

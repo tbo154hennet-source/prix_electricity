@@ -24,7 +24,7 @@ list.files()
 gas_prices <- read_excel("gas.xlsx") %>% 
   mutate(time = as.Date(time),
          spot_gas = as.numeric(paste0(
-           `Gaz naturel, contrats Ã  terme aux Pays-Bas (TTF), euros par megawatt-heure`
+           `Gaz naturel, contrats à terme aux Pays-Bas (TTF), euros par megawatt-heure`
            ,".",virgule ))) %>% 
   dplyr::select(time, spot_gas)
 
@@ -71,7 +71,7 @@ for (col in duplicated_names){
   # Get the indexes of the duplicated columns
   indexes <- which(colnames(generation_per_plant) == col)
   
-  # Fusionner les colonnes avec le mÃªme nom en prenant les valeurs non-NA
+  # Fusionner les colonnes avec le même nom en prenant les valeurs non-NA
   generation_per_plant[[indexes[1]]] <- coalesce(generation_per_plant[[indexes[1]]],
                                                  generation_per_plant[[indexes[2]]])
   # Remove the column by its index

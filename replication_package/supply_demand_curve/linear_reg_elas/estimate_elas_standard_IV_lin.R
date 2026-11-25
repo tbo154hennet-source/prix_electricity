@@ -120,7 +120,7 @@ etable(ols_m,ols_mc,
 
 # Fonction pour extraire coef + IVF
 extract_coef_ivf <- function(model, var_name = "fit_price", IV = TRUE) {
-  # Si model est une liste (supply/demand), prendre le premier Ã©lÃ©ment
+  # Si model est une liste (supply/demand), prendre le premier élément
   if (is.list(model) && inherits(model[[1]], "fixest")) {
     mod <- model[[1]]
   } else if (inherits(model, "fixest")) {
@@ -138,7 +138,7 @@ extract_coef_ivf <- function(model, var_name = "fit_price", IV = TRUE) {
     
     # Retourne un tibble
     return(tibble(
-      Model = deparse(substitute(model)),  # nom du modÃ¨le
+      Model = deparse(substitute(model)),  # nom du modèle
       Coef = coef_val,
       Se = se_val,
       IVF = ivf_val$ivf1$stat
@@ -146,7 +146,7 @@ extract_coef_ivf <- function(model, var_name = "fit_price", IV = TRUE) {
     
   }else{
     return(tibble(
-      Model = deparse(substitute(model)),  # nom du modÃ¨le
+      Model = deparse(substitute(model)),  # nom du modèle
       Coef = coef_val,
       Se = se_val,
       IVF = NA_real_
@@ -155,7 +155,7 @@ extract_coef_ivf <- function(model, var_name = "fit_price", IV = TRUE) {
   
 }
 
-# Liste combinÃ©e
+# Liste combinée
 
 all_models_ols_lin <- list(ols_m,ols_mc)
 all_models_standard_lin <- list(#,

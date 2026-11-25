@@ -31,7 +31,7 @@ day_ahead_forecast <- parquet_files %>%
   bind_rows() %>%  # Fusionner tous les dataframes
   arrange(`__index_level_0__`)
 
-#correct l'absence de tout un mois en prenant Ã  la place la intradaily 
+#correct l'absence de tout un mois en prenant à la place la intradaily 
 setwd(file.path(Sys.getenv("REPLICATION_ROOT", "."), "data/entsoe/Wind_solar_forecast/PT"))
 additional_forecast <- read_parquet("2018-07PT.parquet")
 

@@ -1,15 +1,15 @@
 
 #ajout d'une estimation de la demand elasticity
-#en considÃ©rant forecast error 
+#en considérant forecast error 
 #pour les jours proche d'une annonce covid
 
 
 #Load errors are predominantly demand driven
 # Est ce que l'on peut les expliquer en demand + renewables
-# en contrÃ´lant par les update de wind et sun
+# en contrôlant par les update de wind et sun
 
 
-# Assure-toi que tes FE sont bien des facteurs (tu l'as dÃ©jÃ  fait plus haut)
+# Assure-toi que tes FE sont bien des facteurs (tu l'as déjà fait plus haut)
 wind_reg_data <- wind_reg_data %>%
   mutate(
     year    = factor(year),

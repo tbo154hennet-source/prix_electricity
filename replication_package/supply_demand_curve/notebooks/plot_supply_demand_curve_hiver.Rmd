@@ -25,7 +25,7 @@ csv_file <- read.csv2(curve, header = FALSE,
 colnames(csv_file) <- as.character(csv_file[1, ]) 
 csv_file <- csv_file %>% 
   filter(Pais == "ES" | Pais == "MI")
-csv_file <- csv_file[-1, c(1:2, 5:8)]  # Supprimer la premiÃ¨re ligne devenue superflue
+csv_file <- csv_file[-1, c(1:2, 5:8)]  # Supprimer la première ligne devenue superflue
 colnames(csv_file) <- c('Hour', 'DATE', 'OFFER_TYPE','ENERGY', 'PRICE', 'MATCHED' )
   
 
@@ -43,7 +43,7 @@ plot_data <- csv_file %>%
          PRICE = as.numeric(gsub(",", ".", PRICE)))
 
 
-    # Remplace les virgules par des points et convertit en numÃ©rique
+    # Remplace les virgules par des points et convertit en numérique
 
 # Filtrer les courbes d'offre et de demande
 supply_curve <- plot_data %>%
@@ -56,7 +56,7 @@ demand_curve <- plot_data %>%
   arrange(desc(PRICE)) %>%
   mutate(cum_energy = cumsum(as.numeric(ENERGY)))
 
-# Filtrer les offres et demandes qui ont Ã©tÃ© "matched"
+# Filtrer les offres et demandes qui ont été "matched"
 matched_supply_curve <- plot_data %>%
   filter(OFFER_TYPE == 'V' & MATCHED == 'C') %>%
   arrange(PRICE) %>%
@@ -158,7 +158,7 @@ find_intersection <- function(supply_curve, demand_curve) {
     # Trouver le point de la courbe de demande le plus proche en cum_energy
     closest_idx <- which.min(abs(demand_curve$cum_energy - supply_curve$cum_energy[i]))
     
-    # VÃ©rifier si l'offre dÃ©passe ou Ã©gale la demande Ã  ce point
+    # Vérifier si l'offre dépasse ou égale la demande à ce point
     if (supply_curve$PRICE[i] >= demand_curve$PRICE[closest_idx]) {
       intersection <- data.frame(
         cum_energy = supply_curve$cum_energy[i],
@@ -175,7 +175,7 @@ find_intersection <- function(supply_curve, demand_curve) {
 
 
 ```{r}
-# Filtrer les offres et demandes qui ont Ã©tÃ© "matched"
+# Filtrer les offres et demandes qui ont été "matched"
 supply_curve_adj <- plot_data %>%
   filter(OFFER_TYPE == 'V' ) %>%
   filter(MATCHED == 'C' | PRICE > matched_eq_price ) %>% 
@@ -201,11 +201,11 @@ ggplot() +
   theme_minimal()
 
 ```
-Je fais l'expÃ©rience de pensÃ©e qu'il n'y a pas d'interconnexion.
+Je fais l'expérience de pensée qu'il n'y a pas d'interconnexion.
 Donc j'ai besoinde combler avec de la production nationale.
 
 export espagne vers France de 207 MWh
-Donc, il faut que j'ai de l'Ã©nergie en trop.
+Donc, il faut que j'ai de l'énergie en trop.
 
 
 ```{r}
@@ -239,7 +239,7 @@ new_supply_curve_adj <- plot_data %>%
 new_intersection_point_adj <- find_intersection(new_supply_curve_adj, demand_curve_adj)
 
 
-# Extraire les coordonnÃ©es du point d'Ã©quilibre
+# Extraire les coordonnées du point d'équilibre
 new_equilibrium_energy <- round(new_intersection_point_adj$cum_energy, 0)
 new_equilibrium_price <- round(new_intersection_point_adj$price, 2)
 
@@ -254,23 +254,23 @@ equilibrium_price_str <- paste(as.character(delta_price), "\u20AC", sep = " ")
 # price_label <- expression(paste("p[eq] = ", equilibrium_price_str))
 # 
 
-# Tracer les courbes avec l'Ã©quilibre
+# Tracer les courbes avec l'équilibre
 ggplot() +
   geom_step(data = new_supply_curve_adj, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Without CBF"), direction = "hv") +
   geom_step(data = demand_curve_adj, aes(x = cum_energy, y = PRICE, color = "Demand curve", linetype = "Original"), direction = "hv") +
   geom_step(data = supply_curve_adj, aes(x = cum_energy, y = PRICE, color = "Supply curve", linetype = "Original"), direction = "hv") +
-  #Indiquez le point d'Ã©quilibre
+  #Indiquez le point d'équilibre
   geom_segment(aes(x = 0, y = matched_eq_price, 
                    xend = matched_eq_energy, yend = matched_eq_price, color = "Equilibrium_demand"), 
                linetype = "dashed") +
-  # Ajouter une ligne horizontale pointillÃ©e rouge limitÃ©e au segment [0, equilibrium_price]
+  # Ajouter une ligne horizontale pointillée rouge limitée au segment [0, equilibrium_price]
   geom_segment(aes(x = matched_eq_energy, y = 0, 
                    xend = matched_eq_energy, yend = matched_eq_price, color = "Equilibrium_price"), 
                linetype = "dashed") + 
   geom_segment(aes(x = 0, y = new_equilibrium_price, 
                    xend = new_equilibrium_energy, yend = new_equilibrium_price, color = "Equilibrium_demand"),
                linetype = "dashed") +
-  # Ajouter une ligne horizontale pointillÃ©e rouge limitÃ©e au segment [0, equilibrium_price]
+  # Ajouter une ligne horizontale pointillée rouge limitée au segment [0, equilibrium_price]
   geom_segment(aes(x =new_equilibrium_energy, y = 0, 
                    xend = new_equilibrium_energy, yend = new_equilibrium_price, color = "Equilibrium_price"), 
                linetype = "dashed") + 
@@ -281,8 +281,8 @@ ggplot() +
                "Equilibrium_demand" = "red", "Equilibrium_price" = "red"),
     labels = c(
       "Demand curve",
-     paste0("Î”q = ", equilibrium_energy_str),
-      paste0("Î”p = ", equilibrium_price_str),
+     paste0("Δq = ", equilibrium_energy_str),
+      paste0("Δp = ", equilibrium_price_str),
       "Supply curve"
     )
   ) +
@@ -291,7 +291,7 @@ ggplot() +
   labs(title = "Supply-Demand Curve with Equilibrium") +
   theme_minimal()
 ```
-Estimation du bÃ©nÃ©fice Ã  l'import 
+Estimation du bénéfice à l'import 
 
 
 ```{r}
@@ -299,7 +299,7 @@ benefits <- matched_eq_energy * delta_price
 rebound_effect <- matched_eq_price * delta_energy
 net_benefits <- benefits - rebound_effect
 
-# CrÃ©er le tableau
+# Créer le tableau
 mini_tableau <- data.frame(
   "Benefits" = benefits,
   "Rebound Cost" = rebound_effect,

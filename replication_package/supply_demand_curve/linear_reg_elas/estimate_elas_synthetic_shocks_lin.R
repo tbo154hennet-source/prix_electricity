@@ -29,7 +29,7 @@ cols_fitted_demand_npc <- select_fitted(price_indispo_merge_esp_npc, "demand")
 ############### IV estimation using my aggregate Supply and demand shocks
 
 
-# CrÃ©er une liste pour stocker les rÃ©sultats
+# Créer une liste pour stocker les résultats
 iv_results_feols_all <- list()
 
 # Boucle sur chaque couple correspondant (match par suffixe)
@@ -41,7 +41,7 @@ for(s_col in c(cols_fitted_supply_npc)){
   # Nom de la colonne demand correspondante
   d_col <- sub("supply", "demand", s_col)
   print(suffix)
-  # VÃ©rifier que la colonne existe
+  # Vérifier que la colonne existe
   if(!d_col %in% names(price_indispo_merge_esp_npc)) next
   
   
@@ -98,7 +98,7 @@ for(s_col in c(cols_fitted_supply_npc)){
   # Nom de la colonne demand correspondante
   d_col <- sub("supply", "demand", s_col)
   print(suffix)
-  # VÃ©rifier que la colonne existe
+  # Vérifier que la colonne existe
   #if(!d_col %in% names(price_indispo_merge_delta_clean)) next
   
   
@@ -185,12 +185,12 @@ for(s_col in c(cols_fitted_supply_npc)){
 
 c(cols_fitted_supply_npc)
 
-#on se dÃ©barrasse des _nfe
+#on se débarrasse des _nfe
 names(iv_results_feols_all_lag_lin)
 
 iv_results_feols_all_fe <- iv_results_feols_all[!grepl("nfe", names(iv_results_feols_all))]
 
-# Aplatir tous les modÃ¨les dans une seule liste
+# Aplatir tous les modèles dans une seule liste
 all_models_lin <- unlist(
   lapply(iv_results_feols_all_fe, function(x) x),
   recursive = FALSE
@@ -203,7 +203,7 @@ etable(all_models_lin,
 
 iv_results_feols_all_lag_lin_fe <- iv_results_feols_all_lag_lin[!grepl("nfe", names(iv_results_feols_all_lag_lin))]
 
-# Aplatir tous les modÃ¨les dans une seule liste
+# Aplatir tous les modèles dans une seule liste
 all_models_lag_lin <- unlist(
   lapply(iv_results_feols_all_lag_lin_fe, function(x) x),
   recursive = FALSE
@@ -217,7 +217,7 @@ etable(all_models_lag_lin,
 
 
 
-# Liste combinÃ©e
+# Liste combinée
 all_models_combined_lin <- c(all_models_lin, all_models_lag_lin)
 
 # Extraire infos

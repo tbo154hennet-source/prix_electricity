@@ -2,7 +2,7 @@ options(future.globals.maxSize = 5 * 1024^2 * 1024)  # 10 GiB
 
 
 ################### NEW Temperature plots
-# Variables Ã  transformer en facteurs
+# Variables à transformer en facteurs
 factor_vars <- c("year","month", "creneau", "weekday")
 
 #factor_vars <- c("year_month", "creneau","weekday")
@@ -37,25 +37,25 @@ colnames(price_indispo_merge_esp)
                           
 price_indispo_merge_esp <- price_indispo_merge_esp %>%
 
-  # # Renommer ss â†’ supply
+  # # Renommer ss → supply
   rename(
     cold_excess_supply = cold_excess_ss,
     heat_excess_supply = heat_excess_ss,
     temperature_discomfort_supply = temperature_discomfort_ss
   ) %>%
 
-  # CrÃ©er le mismatch froid
+  # Créer le mismatch froid
   mutate(
     cold_spatial_mismatch_supply =
       residuals(lm(cold_excess_supply ~ cold_excess_demand, data = .)),
     cold_spatial_mismatch_demand =
       residuals(lm(cold_excess_demand ~ cold_excess_supply, data = .)),
-    # CrÃ©er le mismatch chaud
+    # Créer le mismatch chaud
     heat_spatial_mismatch_demand =
       residuals(lm(heat_excess_demand ~ heat_excess_supply, data = .)),
     heat_spatial_mismatch_supply=
       residuals(lm(heat_excess_supply ~ heat_excess_demand, data = .)),
-    # CrÃ©er le mismatch chaud
+    # Créer le mismatch chaud
     temp_spatial_mismatch_supply=
       residuals(lm(temperature_discomfort_supply ~ temperature_discomfort_demand, data = .)),
     temp_spatial_mismatch_demand=

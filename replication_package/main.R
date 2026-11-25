@@ -83,6 +83,7 @@ if ("descriptive" %in% selected) {
   run_rmd("supply_demand_curve/notebooks/plot_supply_demand_curve_hiver.Rmd")
   run_rmd("supply_demand_curve/notebooks/plot_reg_qty_final.Rmd")
   run_r("supply_demand_curve/estimate_elasticity/required_legacy/describe_synthetic_shocks.R")
+  run_r("supply_demand_curve/estimate_elasticity/required_legacy/describe_synthetic_shocks_log_normalized.R")
   run_rmd("day_ahead/notebooks/describe_shocks.Rmd")
   run_rmd("day_ahead/notebooks/plot_crossborder_adj.Rmd")
   run_r("day_ahead/cross_border_data/out_of_sample_prediction_check.R")
@@ -105,6 +106,7 @@ if ("macro" %in% selected) {
   rscript <- file.path(R.home("bin"), "Rscript")
   status <- system2(rscript, file.path(replication_root, "VAR_analysis", "main.R"))
   if (!identical(status, 0L)) stop("The macro pipeline failed with status ", status)
+  run_r("VAR_analysis/supplementary/hydro_arbitrage.R")
 }
 
 message("Replication stages completed: ", paste(selected, collapse = ", "))

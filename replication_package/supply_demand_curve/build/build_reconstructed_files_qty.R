@@ -30,7 +30,7 @@ reconstruct_stocked_curve <- function(type, matched){
     , .(PRICE_test = price_grid), 
     by = .(DATE, Hour, OFFER_TYPE, MATCHED)
   ]
-  # Faire un join non-Ã©qui : on cherche le dernier grid_point <= grid_point_test
+  # Faire un join non-équi : on cherche le dernier grid_point <= grid_point_test
   reconstruct_full_curve_shift <- curve_shift_data[grid_dt, 
                                                    on = .(DATE, Hour, OFFER_TYPE, MATCHED, PRICE <= PRICE_test),
                                                    mult = "last",
@@ -101,7 +101,7 @@ for (i in 1:nrow(combinations)) {
 }
 
 
-#pour la fin de pÃ©riode convertir les donnÃ©es Ã  l'Ã©chelle du 1/4 d'heures en horaires
+#pour la fin de période convertir les données à l'échelle du 1/4 d'heures en horaires
 
 
 

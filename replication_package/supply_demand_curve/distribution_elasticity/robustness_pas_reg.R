@@ -24,7 +24,7 @@ local_slopes_supply_15 <- read_parquet( "local_slopes_supply_15.parquet")
 #   # Winsorisation
 #   df[, slope_w := pmin(pmax(slope, q[1]), q[2])]
 #   
-#   # RÃ©sumÃ© via ta fonction existante
+#   # Résumé via ta fonction existante
 #   desc <- describe_local_slopes(df)
 #   
 #   tibble(
@@ -33,7 +33,7 @@ local_slopes_supply_15 <- read_parquet( "local_slopes_supply_15.parquet")
 #     w_mean_plus_alpha = desc$w_mean + desc$alpha
 #   )
 # }
-# # RÃ©sultats
+# # Résultats
 # results_demand <- lapply(all_demand, process_local_slopes)
 # results_supply <- lapply(all_supply, process_local_slopes)
 
@@ -51,12 +51,12 @@ all_supply <- list(
 )
 
 
-# Moyennes pondÃ©rÃ©es â€“ demand
+# Moyennes pondérées – demand
 demand_means <- sapply(all_demand, function(x) {
   weighted.mean(x$slope, x$mean_log_price^2, na.rm = TRUE)
 })
 
-# Moyennes pondÃ©rÃ©es â€“ supply
+# Moyennes pondérées – supply
 supply_means <- sapply(all_supply, function(x) {
   weighted.mean(x$slope, x$mean_log_price^2, na.rm = TRUE)
 })
@@ -107,7 +107,7 @@ pas_robustness_check <- ggplot(plot_df, aes(x = horizon, y = slope, color = type
   ) +
   scale_x_continuous(breaks = c(5, 10, 15)) +
   labs(
-    x = "Horizon",
+    x = "Price bracket around the clearing price (+/- EUR)",
     y = "Elasticity",
     color = ""
   ) +
